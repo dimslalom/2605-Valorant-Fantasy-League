@@ -1,0 +1,8 @@
+[
+  {
+    "id": "haven",
+    "name": "Haven",
+    "zones": ["a-site", "b-site", "c-site", "mid", "spawn"],
+    "paths": {}
+  }
+]

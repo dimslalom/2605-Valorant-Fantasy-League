@@ -1,0 +1,292 @@
+[
+  {
+    "id": "prx-forsaken-gold-001",
+    "player": "forsakeN",
+    "org": "PRX",
+    "org_logo": "/assets/orgs/prx.png",
+    "region": "Pacific",
+    "nationality": "ID",
+    "tier": "gold",
+    "edition": null,
+    "rating": 91,
+    "role": "Duelist",
+    "agents": ["Jett", "Chamber"],
+    "photo": "/assets/players/gold-img-f0rsakeN.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 89,
+      "ability": 84,
+      "mentality": 88,
+      "synergy": 86
+    },
+    "power": {
+      "name": "Big Tiger",
+      "description": "Positioning ×2 for the next 3 duels",
+      "effect": "positioning_multiplier",
+      "value": 2,
+      "duration": 3
+    },
+    "palette": "gold"
+  },
+  {
+    "id": "mibr-aspas-gold-001",
+    "player": "Aspas",
+    "org": "MIBR",
+    "org_logo": "/assets/orgs/mibr.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "gold",
+    "edition": null,
+    "rating": 93,
+    "role": "Duelist",
+    "agents": ["Jett", "Raze"],
+    "photo": "/assets/players/gold-img-aspas.png",
+    "stats": {
+      "aim": 97,
+      "positioning": 88,
+      "ability": 85,
+      "mentality": 90,
+      "synergy": 84
+    },
+    "power": {
+      "name": "Flick King",
+      "description": "AIM +15 on the next duel when below 30% HP",
+      "effect": "aim_bonus_lowhealth",
+      "value": 15,
+      "duration": 1
+    },
+    "palette": "gold"
+  },
+  {
+    "id": "sen-tenz-silver-001",
+    "player": "TenZ",
+    "org": "Sentinels",
+    "org_logo": "/assets/orgs/sentinels.png",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Duelist",
+    "agents": ["Jett", "Reyna"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 72,
+      "ability": 75,
+      "mentality": 78,
+      "synergy": 70
+    },
+    "power": {
+      "name": "Clutch Factor",
+      "description": "AIM +10 when 1v2 or worse",
+      "effect": "aim_bonus_clutch",
+      "value": 10,
+      "duration": 1
+    },
+    "palette": "silver"
+  },
+  {
+    "id": "fnc-nats-gold-001",
+    "player": "nAts",
+    "org": "Fnatic",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "RU",
+    "tier": "gold",
+    "edition": null,
+    "rating": 90,
+    "role": "Sentinel",
+    "agents": ["Cypher", "Killjoy"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 94,
+      "ability": 91,
+      "mentality": 92,
+      "synergy": 89
+    },
+    "power": {
+      "name": "Tactical Genius",
+      "description": "SYNERGY +12 for all teammates this round",
+      "effect": "synergy_team_bonus",
+      "value": 12,
+      "duration": 1
+    },
+    "palette": "gold"
+  },
+  {
+    "id": "fnc-derke-silver-001",
+    "player": "Derke",
+    "org": "Fnatic",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "FI",
+    "tier": "silver",
+    "edition": null,
+    "rating": 81,
+    "role": "Duelist",
+    "agents": ["Neon", "Jett"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 76,
+      "ability": 79,
+      "mentality": 77,
+      "synergy": 74
+    },
+    "power": {
+      "name": "Euro Flair",
+      "description": "ABILITY +10 when using agent ultimate",
+      "effect": "ability_bonus_ult",
+      "value": 10,
+      "duration": 1
+    },
+    "palette": "silver"
+  },
+  {
+    "id": "prx-d3ffo-silver-001",
+    "player": "d3ffo",
+    "org": "PRX",
+    "org_logo": "/assets/orgs/prx.png",
+    "region": "Pacific",
+    "nationality": "ID",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Sentinel",
+    "agents": ["Sage", "Killjoy"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 73,
+      "positioning": 80,
+      "ability": 78,
+      "mentality": 75,
+      "synergy": 81
+    },
+    "power": {
+      "name": "Support Wall",
+      "description": "SYNERGY +8 for adjacent teammates",
+      "effect": "synergy_adjacent_bonus",
+      "value": 8,
+      "duration": 2
+    },
+    "palette": "silver"
+  },
+  {
+    "id": "prx-sykko-silver-001",
+    "player": "Sykko",
+    "org": "PRX",
+    "org_logo": "/assets/orgs/prx.png",
+    "region": "Pacific",
+    "nationality": "MY",
+    "tier": "silver",
+    "edition": null,
+    "rating": 74,
+    "role": "Controller",
+    "agents": ["Omen", "Astra"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 70,
+      "positioning": 78,
+      "ability": 82,
+      "mentality": 73,
+      "synergy": 77
+    },
+    "power": {
+      "name": "Smoke Screen",
+      "description": "Enemy AIM -8 for 2 duels after ability use",
+      "effect": "enemy_aim_debuff",
+      "value": -8,
+      "duration": 2
+    },
+    "palette": "silver"
+  },
+  {
+    "id": "prx-lmemore-silver-001",
+    "player": "Lmemore",
+    "org": "PRX",
+    "org_logo": "/assets/orgs/prx.png",
+    "region": "Pacific",
+    "nationality": "PH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 73,
+    "role": "Initiator",
+    "agents": ["Fade", "Breach"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 71,
+      "positioning": 75,
+      "ability": 80,
+      "mentality": 72,
+      "synergy": 79
+    },
+    "power": {
+      "name": "Reveal",
+      "description": "Enemy POSITIONING -10 for next round",
+      "effect": "enemy_positioning_debuff",
+      "value": -10,
+      "duration": 1
+    },
+    "palette": "silver"
+  },
+  {
+    "id": "nrg-jawgemo-silver-001",
+    "player": "jawgemo",
+    "org": "NRG",
+    "org_logo": "/assets/orgs/nrg.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 78,
+    "role": "Duelist",
+    "agents": ["Phoenix", "Jett"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 74,
+      "ability": 76,
+      "mentality": 79,
+      "synergy": 72
+    },
+    "power": {
+      "name": "Grind Season",
+      "description": "AIM +5 each consecutive round won (max +15)",
+      "effect": "aim_streak_bonus",
+      "value": 5,
+      "duration": -1
+    },
+    "palette": "silver"
+  },
+  {
+    "id": "fnc-chronicle-gold-001",
+    "player": "Chronicle",
+    "org": "Fnatic",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "GB",
+    "tier": "gold",
+    "edition": null,
+    "rating": 88,
+    "role": "Sentinel",
+    "agents": ["Killjoy", "Chamber"],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 91,
+      "ability": 87,
+      "mentality": 86,
+      "synergy": 88
+    },
+    "power": {
+      "name": "Lockdown",
+      "description": "POSITIONING +15 when defending a site",
+      "effect": "positioning_bonus_defense",
+      "value": 15,
+      "duration": 1
+    },
+    "palette": "gold"
+  }
+]

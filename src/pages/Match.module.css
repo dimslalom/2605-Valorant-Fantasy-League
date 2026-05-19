@@ -1,0 +1,50 @@
+.page {
+  display: flex;
+  height: 100vh;
+  background: #0d0f17;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(232, 224, 255, 0.1);
+  padding: 20px 16px;
+}
+
+.sidebar:last-child {
+  border-right: none;
+  border-left: 1px solid rgba(232, 224, 255, 0.1);
+}
+
+.sidebarTitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(232, 224, 255, 0.5);
+  margin-bottom: 12px;
+}
+
+.playerList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.playerItem {
+  font-size: 13px;
+  color: #e8e0ff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(232, 224, 255, 0.05);
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
