@@ -37,8 +37,10 @@ export default function PlayerCard({ card, selected = false, onClick, displaySca
         {/* z=0 — card background */}
         <img className={styles.layerBg} src={`/assets/card-bg/${card.palette}-bg.png`} alt="" aria-hidden="true" />
 
-        {/* z=1 — player photo, top-anchored, natural width */}
-        <img className={styles.layerPhoto} src={card.photo} alt={card.player} />
+        {/* z=1 — player photo, top-anchored, natural width (hidden when no real photo yet) */}
+        {card.photo !== '/assets/players/placeholder.png' && (
+          <img className={styles.layerPhoto} src={card.photo} alt={card.player} />
+        )}
 
         {/* z=2 — stat panel bg (full 400×580 PNG, transparent at top) */}
         <img className={styles.layerStatBg} src={`/assets/stat-bg/${card.palette}-stat-bg.png`} alt="" aria-hidden="true" />

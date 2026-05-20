@@ -1,292 +1,4682 @@
 [
   {
-    "id": "prx-forsaken-gold-001",
-    "player": "forsakeN",
-    "org": "PRX",
-    "org_logo": "/assets/orgs/prx.png",
-    "region": "Pacific",
-    "nationality": "ID",
-    "tier": "gold",
+    "id": "fnatic-crashies-silver-001",
+    "player": "crashies",
+    "org": "FNATIC",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "US",
+    "tier": "silver",
     "edition": null,
-    "rating": 91,
-    "role": "Duelist",
-    "agents": ["Jett", "Chamber"],
-    "photo": "/assets/players/gold-img-f0rsakeN.png",
+    "rating": 81,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/silver-img-crashies.png",
     "stats": {
-      "aim": 93,
+      "aim": 77,
       "positioning": 89,
-      "ability": 84,
-      "mentality": 88,
+      "ability": 83,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fnatic-boaster-silver-001",
+    "player": "Boaster",
+    "org": "FNATIC",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "GB",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 71,
+      "positioning": 85,
+      "ability": 79,
+      "mentality": 85,
       "synergy": 86
     },
-    "power": {
-      "name": "Big Tiger",
-      "description": "Positioning ×2 for the next 3 duels",
-      "effect": "positioning_multiplier",
-      "value": 2,
-      "duration": 3
-    },
-    "palette": "gold"
+    "power": null,
+    "palette": "silver"
   },
   {
-    "id": "mibr-aspas-gold-001",
-    "player": "Aspas",
-    "org": "MIBR",
-    "org_logo": "/assets/orgs/mibr.png",
-    "region": "Americas",
-    "nationality": "BR",
-    "tier": "gold",
+    "id": "teamliquid-nats-silver-001",
+    "player": "nAts",
+    "org": "Team Liquid",
+    "org_logo": "/assets/orgs/teamliquid.png",
+    "region": "EMEA",
+    "nationality": "RU",
+    "tier": "silver",
     "edition": null,
-    "rating": 93,
-    "role": "Duelist",
-    "agents": ["Jett", "Raze"],
-    "photo": "/assets/players/gold-img-aspas.png",
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
     "stats": {
-      "aim": 97,
-      "positioning": 88,
-      "ability": 85,
-      "mentality": 90,
+      "aim": 82,
+      "positioning": 89,
+      "ability": 84,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamvitality-chronicle-silver-001",
+    "player": "Chronicle",
+    "org": "Team Vitality",
+    "org_logo": "/assets/orgs/teamvitality.png",
+    "region": "EMEA",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 92,
+      "ability": 88,
+      "mentality": 92,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "t1-stax-silver-001",
+    "player": "stax",
+    "org": "T1",
+    "org_logo": "/assets/orgs/t1.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 86,
+      "ability": 82,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nongshimredforce-rb-silver-001",
+    "player": "Rb",
+    "org": "Nongshim RedForce",
+    "org_logo": "/assets/orgs/nongshimredforce.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 84,
+      "ability": 78,
+      "mentality": 84,
       "synergy": 84
     },
-    "power": {
-      "name": "Flick King",
-      "description": "AIM +15 on the next duel when below 30% HP",
-      "effect": "aim_bonus_lowhealth",
-      "value": 15,
-      "duration": 1
-    },
-    "palette": "gold"
+    "power": null,
+    "palette": "silver"
   },
   {
-    "id": "sen-tenz-silver-001",
-    "player": "TenZ",
-    "org": "Sentinels",
-    "org_logo": "/assets/orgs/sentinels.png",
+    "id": "gentlemates-starxo-silver-001",
+    "player": "starxo",
+    "org": "Gentle Mates",
+    "org_logo": "/assets/orgs/gentlemates.png",
+    "region": "EMEA",
+    "nationality": "PL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 81,
+    "role": "Flex",
+    "agents": [
+      "skye",
+      "sage"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 77,
+      "positioning": 88,
+      "ability": 83,
+      "mentality": 88,
+      "synergy": 88
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "100thieves-asuna-silver-001",
+    "player": "Asuna",
+    "org": "100 Thieves",
+    "org_logo": "/assets/orgs/100thieves.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "kayo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 91,
+      "ability": 88,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kresports-saadhak-silver-001",
+    "player": "saadhak",
+    "org": "KRÜ Esports",
+    "org_logo": "/assets/orgs/kresports.png",
+    "region": "Americas",
+    "nationality": "AR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 77,
+      "positioning": 89,
+      "ability": 85,
+      "mentality": 88,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "furia-nerve-silver-001",
+    "player": "nerve",
+    "org": "FURIA",
+    "org_logo": "/assets/orgs/furia.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 91,
+      "ability": 85,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "furia-eeiu-silver-001",
+    "player": "eeiu",
+    "org": "FURIA",
+    "org_logo": "/assets/orgs/furia.png",
     "region": "Americas",
     "nationality": "CA",
     "tier": "silver",
     "edition": null,
-    "rating": 82,
-    "role": "Duelist",
-    "agents": ["Jett", "Reyna"],
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
-      "aim": 90,
-      "positioning": 72,
-      "ability": 75,
-      "mentality": 78,
-      "synergy": 70
+      "aim": 82,
+      "positioning": 90,
+      "ability": 85,
+      "mentality": 89,
+      "synergy": 90
     },
-    "power": {
-      "name": "Clutch Factor",
-      "description": "AIM +10 when 1v2 or worse",
-      "effect": "aim_bonus_clutch",
-      "value": 10,
-      "duration": 1
-    },
+    "power": null,
     "palette": "silver"
   },
   {
-    "id": "fnc-nats-gold-001",
-    "player": "nAts",
-    "org": "Fnatic",
-    "org_logo": "/assets/orgs/fnatic.png",
-    "region": "EMEA",
-    "nationality": "RU",
-    "tier": "gold",
+    "id": "t1-buzz-silver-001",
+    "player": "BuZz",
+    "org": "T1",
+    "org_logo": "/assets/orgs/t1.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
     "edition": null,
-    "rating": 90,
-    "role": "Sentinel",
-    "agents": ["Cypher", "Killjoy"],
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
-      "aim": 84,
-      "positioning": 94,
-      "ability": 91,
-      "mentality": 92,
-      "synergy": 89
+      "aim": 89,
+      "positioning": 82,
+      "ability": 82,
+      "mentality": 83,
+      "synergy": 82
     },
-    "power": {
-      "name": "Tactical Genius",
-      "description": "SYNERGY +12 for all teammates this round",
-      "effect": "synergy_team_bonus",
-      "value": 12,
-      "duration": 1
-    },
-    "palette": "gold"
+    "power": null,
+    "palette": "silver"
   },
   {
-    "id": "fnc-derke-silver-001",
-    "player": "Derke",
-    "org": "Fnatic",
-    "org_logo": "/assets/orgs/fnatic.png",
+    "id": "globalesports-autumn-silver-001",
+    "player": "Autumn",
+    "org": "Global Esports",
+    "org_logo": "/assets/orgs/globalesports.png",
+    "region": "Pacific",
+    "nationality": "AU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 77,
+      "ability": 76,
+      "mentality": 77,
+      "synergy": 77
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kresports-mwzera-silver-001",
+    "player": "mwzera",
+    "org": "KRÜ Esports",
+    "org_logo": "/assets/orgs/kresports.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 89,
+      "ability": 88,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamheretics-boo-silver-001",
+    "player": "Boo",
+    "org": "Team Heretics",
+    "org_logo": "/assets/orgs/teamheretics.png",
     "region": "EMEA",
-    "nationality": "FI",
+    "nationality": "LT",
     "tier": "silver",
     "edition": null,
     "rating": 81,
-    "role": "Duelist",
-    "agents": ["Neon", "Jett"],
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 75,
+      "positioning": 91,
+      "ability": 81,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "rexregumqeon-crazyguy-silver-001",
+    "player": "crazyguy",
+    "org": "Rex Regum Qeon",
+    "org_logo": "/assets/orgs/rexregumqeon.png",
+    "region": "Pacific",
+    "nationality": "VN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 86,
+      "ability": 86,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "mibr-tex-silver-001",
+    "player": "tex",
+    "org": "MIBR",
+    "org_logo": "/assets/orgs/mibr.png",
+    "region": "Americas",
+    "nationality": "DE",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 82,
+      "ability": 77,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamliquid-purp0-silver-001",
+    "player": "purp0",
+    "org": "Team Liquid",
+    "org_logo": "/assets/orgs/teamliquid.png",
+    "region": "EMEA",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
       "aim": 88,
-      "positioning": 76,
-      "ability": 79,
-      "mentality": 77,
-      "synergy": 74
+      "positioning": 92,
+      "ability": 84,
+      "mentality": 92,
+      "synergy": 91
     },
-    "power": {
-      "name": "Euro Flair",
-      "description": "ABILITY +10 when using agent ultimate",
-      "effect": "ability_bonus_ult",
-      "value": 10,
-      "duration": 1
-    },
+    "power": null,
     "palette": "silver"
   },
   {
-    "id": "prx-d3ffo-silver-001",
-    "player": "d3ffo",
-    "org": "PRX",
-    "org_logo": "/assets/orgs/prx.png",
+    "id": "kiwoomdrx-free1ng-silver-001",
+    "player": "free1ng",
+    "org": "Kiwoom DRX",
+    "org_logo": "/assets/orgs/kiwoomdrx.png",
     "region": "Pacific",
-    "nationality": "ID",
+    "nationality": "KR",
     "tier": "silver",
     "edition": null,
-    "rating": 76,
-    "role": "Sentinel",
-    "agents": ["Sage", "Killjoy"],
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "tejo"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
-      "aim": 73,
-      "positioning": 80,
-      "ability": 78,
-      "mentality": 75,
+      "aim": 82,
+      "positioning": 81,
+      "ability": 76,
+      "mentality": 81,
       "synergy": 81
     },
-    "power": {
-      "name": "Support Wall",
-      "description": "SYNERGY +8 for adjacent teammates",
-      "effect": "synergy_adjacent_bonus",
-      "value": 8,
-      "duration": 2
-    },
+    "power": null,
     "palette": "silver"
   },
   {
-    "id": "prx-sykko-silver-001",
-    "player": "Sykko",
-    "org": "PRX",
-    "org_logo": "/assets/orgs/prx.png",
-    "region": "Pacific",
-    "nationality": "MY",
+    "id": "g2esports-babybay-silver-001",
+    "player": "BABYBAY",
+    "org": "G2 Esports",
+    "org_logo": "/assets/orgs/g2esports.png",
+    "region": "Americas",
+    "nationality": "US",
     "tier": "silver",
     "edition": null,
-    "rating": 74,
-    "role": "Controller",
-    "agents": ["Omen", "Astra"],
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "chamber"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
-      "aim": 70,
-      "positioning": 78,
-      "ability": 82,
-      "mentality": 73,
-      "synergy": 77
+      "aim": 91,
+      "positioning": 88,
+      "ability": 83,
+      "mentality": 88,
+      "synergy": 88
     },
-    "power": {
-      "name": "Smoke Screen",
-      "description": "Enemy AIM -8 for 2 duels after ability use",
-      "effect": "enemy_aim_debuff",
-      "value": -8,
-      "duration": 2
-    },
+    "power": null,
     "palette": "silver"
   },
   {
-    "id": "prx-lmemore-silver-001",
-    "player": "Lmemore",
-    "org": "PRX",
-    "org_logo": "/assets/orgs/prx.png",
-    "region": "Pacific",
-    "nationality": "PH",
-    "tier": "silver",
-    "edition": null,
-    "rating": 73,
-    "role": "Initiator",
-    "agents": ["Fade", "Breach"],
-    "photo": "/assets/players/placeholder.png",
-    "stats": {
-      "aim": 71,
-      "positioning": 75,
-      "ability": 80,
-      "mentality": 72,
-      "synergy": 79
-    },
-    "power": {
-      "name": "Reveal",
-      "description": "Enemy POSITIONING -10 for next round",
-      "effect": "enemy_positioning_debuff",
-      "value": -10,
-      "duration": 1
-    },
-    "palette": "silver"
-  },
-  {
-    "id": "nrg-jawgemo-silver-001",
-    "player": "jawgemo",
+    "id": "nrg-brawk-silver-001",
+    "player": "brawk",
     "org": "NRG",
     "org_logo": "/assets/orgs/nrg.png",
     "region": "Americas",
     "nationality": "US",
     "tier": "silver",
     "edition": null,
-    "rating": 78,
-    "role": "Duelist",
-    "agents": ["Phoenix", "Jett"],
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
-      "aim": 82,
-      "positioning": 74,
-      "ability": 76,
-      "mentality": 79,
-      "synergy": 72
+      "aim": 80,
+      "positioning": 93,
+      "ability": 87,
+      "mentality": 93,
+      "synergy": 93
     },
-    "power": {
-      "name": "Grind Season",
-      "description": "AIM +5 each consecutive round won (max +15)",
-      "effect": "aim_streak_bonus",
-      "value": 5,
-      "duration": -1
-    },
+    "power": null,
     "palette": "silver"
   },
   {
-    "id": "fnc-chronicle-gold-001",
-    "player": "Chronicle",
-    "org": "Fnatic",
-    "org_logo": "/assets/orgs/fnatic.png",
-    "region": "EMEA",
-    "nationality": "GB",
-    "tier": "gold",
+    "id": "t1-munchkin-silver-001",
+    "player": "Munchkin",
+    "org": "T1",
+    "org_logo": "/assets/orgs/t1.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "kayo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 84,
+      "ability": 85,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "edwardgaming-nobody-silver-001",
+    "player": "nobody",
+    "org": "EDward Gaming",
+    "org_logo": "/assets/orgs/edwardgaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 79,
+      "ability": 79,
+      "mentality": 79,
+      "synergy": 79
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "funplusphoenix-life-silver-001",
+    "player": "Life",
+    "org": "FunPlus Phoenix",
+    "org_logo": "/assets/orgs/funplusphoenix.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 96,
+      "positioning": 78,
+      "ability": 81,
+      "mentality": 78,
+      "synergy": 78
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "traceesports-luok1ng-silver-001",
+    "player": "LuoK1ng",
+    "org": "Trace Esports",
+    "org_logo": "/assets/orgs/traceesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 85,
+      "ability": 82,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "tyloo-sword9-silver-001",
+    "player": "sword9",
+    "org": "TYLOO",
+    "org_logo": "/assets/orgs/tyloo.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 68,
+    "role": "Flex",
+    "agents": [
+      "fade",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 69,
+      "positioning": 70,
+      "ability": 63,
+      "mentality": 70,
+      "synergy": 70
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "jdmalljdgesports-jkuro-silver-001",
+    "player": "jkuro",
+    "org": "JD Mall JDG Esports",
+    "org_logo": "/assets/orgs/jdmalljdgesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 82,
+      "ability": 80,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "edwardgaming-zmjjkk-silver-001",
+    "player": "ZmjjKK",
+    "org": "EDward Gaming",
+    "org_logo": "/assets/orgs/edwardgaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
     "edition": null,
     "rating": 88,
-    "role": "Sentinel",
-    "agents": ["Killjoy", "Chamber"],
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 99,
+      "positioning": 78,
+      "ability": 87,
+      "mentality": 78,
+      "synergy": 78
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "furia-koalanoob-silver-001",
+    "player": "koalanoob",
+    "org": "FURIA",
+    "org_logo": "/assets/orgs/furia.png",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "silver",
+    "edition": null,
+    "rating": 91,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 95,
+      "positioning": 90,
+      "ability": 82,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "dragonrangergaming-vo0kashu-silver-001",
+    "player": "vo0kashu",
+    "org": "Dragon Ranger Gaming",
+    "org_logo": "/assets/orgs/dragonrangergaming.png",
+    "region": "China",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 93,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 95,
+      "positioning": 90,
+      "ability": 87,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "100thieves-bang-silver-001",
+    "player": "bang",
+    "org": "100 Thieves",
+    "org_logo": "/assets/orgs/100thieves.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 92,
+      "ability": 82,
+      "mentality": 91,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "g2esports-valyn-silver-001",
+    "player": "valyn",
+    "org": "G2 Esports",
+    "org_logo": "/assets/orgs/g2esports.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 94,
+      "ability": 83,
+      "mentality": 94,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fullsense-crws-silver-001",
+    "player": "Crws",
+    "org": "FULL SENSE",
+    "org_logo": "/assets/orgs/fullsense.png",
+    "region": "Pacific",
+    "nationality": "TH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 75,
+      "positioning": 81,
+      "ability": 79,
+      "mentality": 81,
+      "synergy": 81
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "loud-virtyy-silver-001",
+    "player": "Virtyy",
+    "org": "LOUD",
+    "org_logo": "/assets/orgs/loud.png",
+    "region": "Americas",
+    "nationality": "DO",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 88,
+      "ability": 85,
+      "mentality": 88,
+      "synergy": 88
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "g2esports-jawgemo-silver-001",
+    "player": "jawgemo",
+    "org": "G2 Esports",
+    "org_logo": "/assets/orgs/g2esports.png",
+    "region": "Americas",
+    "nationality": "KH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 87,
+      "ability": 83,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "mibr-zekken-silver-001",
+    "player": "zekken",
+    "org": "MIBR",
+    "org_logo": "/assets/orgs/mibr.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 92,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 92,
+      "ability": 89,
+      "mentality": 92,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "100thieves-cryocells-silver-001",
+    "player": "Cryocells",
+    "org": "100 Thieves",
+    "org_logo": "/assets/orgs/100thieves.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 91,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 90,
+      "ability": 82,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "funplusphoenix-sscary-silver-001",
+    "player": "sScary",
+    "org": "FunPlus Phoenix",
+    "org_logo": "/assets/orgs/funplusphoenix.png",
+    "region": "China",
+    "nationality": "TH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 87,
+      "positioning": 94,
+      "ability": 92,
+      "mentality": 94,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "globalesports-udotan-silver-001",
+    "player": "UdoTan",
+    "org": "Global Esports",
+    "org_logo": "/assets/orgs/globalesports.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 77,
+      "ability": 79,
+      "mentality": 77,
+      "synergy": 77
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kiwoomdrx-mako-silver-001",
+    "player": "MaKo",
+    "org": "Kiwoom DRX",
+    "org_logo": "/assets/orgs/kiwoomdrx.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 88,
+      "ability": 89,
+      "mentality": 88,
+      "synergy": 88
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kiwoomdrx-beyn-silver-001",
+    "player": "BeYN",
+    "org": "Kiwoom DRX",
+    "org_logo": "/assets/orgs/kiwoomdrx.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 84,
+      "ability": 78,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "dragonrangergaming-flex1n-silver-001",
+    "player": "Flex1n",
+    "org": "Dragon Ranger Gaming",
+    "org_logo": "/assets/orgs/dragonrangergaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 89,
+      "ability": 87,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "novaesports-heybay-silver-001",
+    "player": "heybay",
+    "org": "Nova Esports",
+    "org_logo": "/assets/orgs/novaesports.png",
+    "region": "China",
+    "nationality": "HK",
+    "tier": "silver",
+    "edition": null,
+    "rating": 71,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 72,
+      "ability": 71,
+      "mentality": 72,
+      "synergy": 72
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wuxititanesportsclub-haodong-silver-001",
+    "player": "Haodong",
+    "org": "Wuxi Titan Esports Club",
+    "org_logo": "/assets/orgs/wuxititanesportsclub.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 75,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 74,
+      "positioning": 86,
+      "ability": 74,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "edwardgaming-smoggy-silver-001",
+    "player": "Smoggy",
+    "org": "EDward Gaming",
+    "org_logo": "/assets/orgs/edwardgaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 86,
+      "ability": 84,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "traceesports-fengf-silver-001",
+    "player": "FengF",
+    "org": "Trace Esports",
+    "org_logo": "/assets/orgs/traceesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 78,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 78,
+      "ability": 79,
+      "mentality": 78,
+      "synergy": 78
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "guangzhouhuadubilibiligaming-knight-silver-001",
+    "player": "Knight",
+    "org": "Guangzhou Huadu Bilibili Gaming",
+    "org_logo": "/assets/orgs/guangzhouhuadubilibiligaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 83,
+      "ability": 81,
+      "mentality": 82,
+      "synergy": 83
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "rexregumqeon-kushy-silver-001",
+    "player": "Kushy",
+    "org": "Rex Regum Qeon",
+    "org_logo": "/assets/orgs/rexregumqeon.png",
+    "region": "Pacific",
+    "nationality": "ID",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 86,
+      "ability": 85,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "rexregumqeon-xffero-silver-001",
+    "player": "xffero",
+    "org": "Rex Regum Qeon",
+    "org_logo": "/assets/orgs/rexregumqeon.png",
+    "region": "Pacific",
+    "nationality": "ID",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 85,
+      "ability": 82,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "guangzhouhuadubilibiligaming-whzy-silver-001",
+    "player": "whzy",
+    "org": "Guangzhou Huadu Bilibili Gaming",
+    "org_logo": "/assets/orgs/guangzhouhuadubilibiligaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 93,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 99,
+      "positioning": 84,
+      "ability": 94,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wuxititanesportsclub-abo-silver-001",
+    "player": "Abo",
+    "org": "Wuxi Titan Esports Club",
+    "org_logo": "/assets/orgs/wuxititanesportsclub.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 66,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 60,
+      "ability": 65,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamvitality-derke-silver-001",
+    "player": "Derke",
+    "org": "Team Vitality",
+    "org_logo": "/assets/orgs/teamvitality.png",
+    "region": "EMEA",
+    "nationality": "FI",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 85,
+      "ability": 87,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nrg-mada-silver-001",
+    "player": "mada",
+    "org": "NRG",
+    "org_logo": "/assets/orgs/nrg.png",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 89,
+      "ability": 84,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamvitality-profek-silver-001",
+    "player": "PROFEK",
+    "org": "Team Vitality",
+    "org_logo": "/assets/orgs/teamvitality.png",
+    "region": "EMEA",
+    "nationality": "PL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 91,
+      "ability": 86,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "bblesports-ros-silver-001",
+    "player": "Rosé",
+    "org": "BBL Esports",
+    "org_logo": "/assets/orgs/bblesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 75,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 71,
+      "positioning": 84,
+      "ability": 78,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "futesports-sociablee-silver-001",
+    "player": "sociablEE",
+    "org": "FUT Esports",
+    "org_logo": "/assets/orgs/futesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 90,
+      "ability": 89,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "globalesports-kr1stal-silver-001",
+    "player": "Kr1stal",
+    "org": "Global Esports",
+    "org_logo": "/assets/orgs/globalesports.png",
+    "region": "Pacific",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 84,
+      "ability": 82,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "furia-artzin-silver-001",
+    "player": "artzin",
+    "org": "FURIA",
+    "org_logo": "/assets/orgs/furia.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 81,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "kayo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 85,
+      "ability": 80,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wolvesesports-yosemite-silver-001",
+    "player": "yosemite",
+    "org": "Wolves Esports",
+    "org_logo": "/assets/orgs/wolvesesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "killjoy",
+      "viper"
+    ],
     "photo": "/assets/players/placeholder.png",
     "stats": {
       "aim": 85,
-      "positioning": 91,
-      "ability": 87,
+      "positioning": 77,
+      "ability": 79,
+      "mentality": 77,
+      "synergy": 77
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "loud-cauanzin-silver-001",
+    "player": "cauanzin",
+    "org": "LOUD",
+    "org_logo": "/assets/orgs/loud.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 90,
+      "ability": 83,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "detonationfocusme-meiy-silver-001",
+    "player": "Meiy",
+    "org": "DetonatioN FocusMe",
+    "org_logo": "/assets/orgs/detonationfocusme.png",
+    "region": "Pacific",
+    "nationality": "JP",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 84,
+      "ability": 82,
+      "mentality": 85,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "paperrex-jinggg-silver-001",
+    "player": "Jinggg",
+    "org": "Paper Rex",
+    "org_logo": "/assets/orgs/paperrex.png",
+    "region": "Pacific",
+    "nationality": "SG",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "reyna"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 86,
+      "ability": 88,
       "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "mibr-mazino-silver-001",
+    "player": "Mazino",
+    "org": "MIBR",
+    "org_logo": "/assets/orgs/mibr.png",
+    "region": "Americas",
+    "nationality": "CL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "sage",
+      "harbor"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 91,
+      "ability": 86,
+      "mentality": 90,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "globalesports-xavi8k-silver-001",
+    "player": "xavi8k",
+    "org": "Global Esports",
+    "org_logo": "/assets/orgs/globalesports.png",
+    "region": "Pacific",
+    "nationality": "PH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 87,
+      "ability": 90,
+      "mentality": 88,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wolvesesports-siufatbb-silver-001",
+    "player": "SiuFatBB",
+    "org": "Wolves Esports",
+    "org_logo": "/assets/orgs/wolvesesports.png",
+    "region": "China",
+    "nationality": "HK",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 79,
+      "ability": 73,
+      "mentality": 79,
+      "synergy": 79
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "funplusphoenix-berlin-silver-001",
+    "player": "BerLIN",
+    "org": "FunPlus Phoenix",
+    "org_logo": "/assets/orgs/funplusphoenix.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 75,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 77,
+      "ability": 83,
+      "mentality": 77,
+      "synergy": 78
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "g2esports-leaf-silver-001",
+    "player": "leaf",
+    "org": "G2 Esports",
+    "org_logo": "/assets/orgs/g2esports.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 88,
+      "ability": 85,
+      "mentality": 88,
       "synergy": 88
     },
-    "power": {
-      "name": "Lockdown",
-      "description": "POSITIONING +15 when defending a site",
-      "effect": "positioning_bonus_defense",
-      "value": 15,
-      "duration": 1
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "gentlemates-glyph-silver-001",
+    "player": "GLYPH",
+    "org": "Gentle Mates",
+    "org_logo": "/assets/orgs/gentlemates.png",
+    "region": "EMEA",
+    "nationality": "PH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 92,
+      "ability": 87,
+      "mentality": 92,
+      "synergy": 92
     },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "futesports-yetujey-silver-001",
+    "player": "yetujey",
+    "org": "FUT Esports",
+    "org_logo": "/assets/orgs/futesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 87,
+      "ability": 78,
+      "mentality": 88,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kresports-less-silver-001",
+    "player": "Less",
+    "org": "KRÜ Esports",
+    "org_logo": "/assets/orgs/kresports.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 89,
+      "ability": 80,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "mibr-aspas-gold-001",
+    "player": "aspas",
+    "org": "MIBR",
+    "org_logo": "/assets/orgs/mibr.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "gold",
+    "edition": null,
+    "rating": 94,
+    "role": "Duelist",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/gold-img-aspas.png",
+    "stats": {
+      "aim": 96,
+      "positioning": 92,
+      "ability": 84,
+      "mentality": 92,
+      "synergy": 92
+    },
+    "power": null,
     "palette": "gold"
+  },
+  {
+    "id": "rexregumqeon-monyet-silver-001",
+    "player": "Monyet",
+    "org": "Rex Regum Qeon",
+    "org_logo": "/assets/orgs/rexregumqeon.png",
+    "region": "Pacific",
+    "nationality": "ID",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 83,
+      "ability": 85,
+      "mentality": 83,
+      "synergy": 83
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "paperrex-invy-silver-001",
+    "player": "invy",
+    "org": "Paper Rex",
+    "org_logo": "/assets/orgs/paperrex.png",
+    "region": "Pacific",
+    "nationality": "PH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 87,
+      "ability": 90,
+      "mentality": 88,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "leviatn-kingg-silver-001",
+    "player": "kiNgg",
+    "org": "LEVIATÁN",
+    "org_logo": "/assets/orgs/leviatn.png",
+    "region": "Americas",
+    "nationality": "CL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 93,
+      "ability": 85,
+      "mentality": 93,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fnatic-kaajak-silver-001",
+    "player": "kaajak",
+    "org": "FNATIC",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "PL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 87,
+      "positioning": 85,
+      "ability": 84,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamvitality-jamppi-silver-001",
+    "player": "Jamppi",
+    "org": "Team Vitality",
+    "org_logo": "/assets/orgs/teamvitality.png",
+    "region": "EMEA",
+    "nationality": "FI",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 86,
+      "ability": 80,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "paperrex-f0rsaken-gold-001",
+    "player": "f0rsakeN",
+    "org": "Paper Rex",
+    "org_logo": "/assets/orgs/paperrex.png",
+    "region": "Pacific",
+    "nationality": "ID",
+    "tier": "gold",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "omen"
+    ],
+    "photo": "/assets/players/gold-img-f0rsakeN.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 86,
+      "ability": 90,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "gold"
+  },
+  {
+    "id": "paperrex-d4v41-silver-001",
+    "player": "d4v41",
+    "org": "Paper Rex",
+    "org_logo": "/assets/orgs/paperrex.png",
+    "region": "Pacific",
+    "nationality": "MY",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "skye",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 87,
+      "ability": 83,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fnatic-alfajer-silver-001",
+    "player": "Alfajer",
+    "org": "FNATIC",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "killjoy",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 89,
+      "ability": 85,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "eternalfire-izzy-silver-001",
+    "player": "Izzy",
+    "org": "Eternal Fire",
+    "org_logo": "/assets/orgs/eternalfire.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 87,
+      "ability": 82,
+      "mentality": 88,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "gentlemates-marteen-silver-001",
+    "player": "marteen",
+    "org": "Gentle Mates",
+    "org_logo": "/assets/orgs/gentlemates.png",
+    "region": "EMEA",
+    "nationality": "CZ",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 91,
+      "ability": 87,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "loud-darker-silver-001",
+    "player": "Darker",
+    "org": "LOUD",
+    "org_logo": "/assets/orgs/loud.png",
+    "region": "Americas",
+    "nationality": "CO",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 93,
+      "ability": 89,
+      "mentality": 93,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "guangzhouhuadubilibiligaming-nephh-silver-001",
+    "player": "nephh",
+    "org": "Guangzhou Huadu Bilibili Gaming",
+    "org_logo": "/assets/orgs/guangzhouhuadubilibiligaming.png",
+    "region": "China",
+    "nationality": "SG",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 91,
+      "ability": 93,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "traceesports-delb-silver-001",
+    "player": "deLb",
+    "org": "Trace Esports",
+    "org_logo": "/assets/orgs/traceesports.png",
+    "region": "China",
+    "nationality": "ID",
+    "tier": "silver",
+    "edition": null,
+    "rating": 73,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 68,
+      "ability": 71,
+      "mentality": 68,
+      "synergy": 68
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamheretics-riens-silver-001",
+    "player": "RieNs",
+    "org": "Team Heretics",
+    "org_logo": "/assets/orgs/teamheretics.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 91,
+      "ability": 85,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nrg-skuba-silver-001",
+    "player": "skuba",
+    "org": "NRG",
+    "org_logo": "/assets/orgs/nrg.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "astra",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 94,
+      "ability": 82,
+      "mentality": 94,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "jdmalljdgesports-yuicaw-silver-001",
+    "player": "Yuicaw",
+    "org": "JD Mall JDG Esports",
+    "org_logo": "/assets/orgs/jdmalljdgesports.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "chamber"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 76,
+      "ability": 79,
+      "mentality": 76,
+      "synergy": 76
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nrg-ethan-silver-001",
+    "player": "Ethan",
+    "org": "NRG",
+    "org_logo": "/assets/orgs/nrg.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "skye",
+      "kayo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 76,
+      "positioning": 92,
+      "ability": 84,
+      "mentality": 92,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nrg-keiko-silver-001",
+    "player": "keiko",
+    "org": "NRG",
+    "org_logo": "/assets/orgs/nrg.png",
+    "region": "Americas",
+    "nationality": "GB",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 89,
+      "ability": 81,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "dragonrangergaming-nicc-silver-001",
+    "player": "Nicc",
+    "org": "Dragon Ranger Gaming",
+    "org_logo": "/assets/orgs/dragonrangergaming.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 77,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 73,
+      "positioning": 87,
+      "ability": 87,
+      "mentality": 87,
+      "synergy": 88
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "xilaigaming-noman-silver-001",
+    "player": "NoMan",
+    "org": "Xi Lai Gaming",
+    "org_logo": "/assets/orgs/xilaigaming.png",
+    "region": "China",
+    "nationality": "HK",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "waylay"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 79,
+      "ability": 76,
+      "mentality": 79,
+      "synergy": 79
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kresports-silentzz-silver-001",
+    "player": "silentzz",
+    "org": "KRÜ Esports",
+    "org_logo": "/assets/orgs/kresports.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 87,
+      "ability": 82,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "jdmalljdgesports-coconut-silver-001",
+    "player": "coconut",
+    "org": "JD Mall JDG Esports",
+    "org_logo": "/assets/orgs/jdmalljdgesports.png",
+    "region": "China",
+    "nationality": "HK",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 85,
+      "ability": 82,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "eternalfire-nekky-silver-001",
+    "player": "nekky",
+    "org": "Eternal Fire",
+    "org_logo": "/assets/orgs/eternalfire.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 73,
+      "positioning": 87,
+      "ability": 83,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "futesports-xeus-silver-001",
+    "player": "xeus",
+    "org": "FUT Esports",
+    "org_logo": "/assets/orgs/futesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 87,
+      "positioning": 85,
+      "ability": 87,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "bblesports-crewen-silver-001",
+    "player": "Crewen",
+    "org": "BBL Esports",
+    "org_logo": "/assets/orgs/bblesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 86,
+      "ability": 79,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "detonationfocusme-akame-silver-001",
+    "player": "Akame",
+    "org": "DetonatioN FocusMe",
+    "org_logo": "/assets/orgs/detonationfocusme.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 84,
+      "ability": 84,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "t1-meteor-silver-001",
+    "player": "Meteor",
+    "org": "T1",
+    "org_logo": "/assets/orgs/t1.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 87,
+      "positioning": 81,
+      "ability": 81,
+      "mentality": 81,
+      "synergy": 81
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fnatic-cyvoph-silver-001",
+    "player": "CyvOph",
+    "org": "FNATIC",
+    "org_logo": "/assets/orgs/fnatic.png",
+    "region": "EMEA",
+    "nationality": "FR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 89,
+      "ability": 86,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "globalesports-patmen-silver-001",
+    "player": "PatMen",
+    "org": "Global Esports",
+    "org_logo": "/assets/orgs/globalesports.png",
+    "region": "Pacific",
+    "nationality": "PH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "fade",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 85,
+      "ability": 87,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fullsense-killua-silver-001",
+    "player": "Killua",
+    "org": "FULL SENSE",
+    "org_logo": "/assets/orgs/fullsense.png",
+    "region": "Pacific",
+    "nationality": "TH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 83,
+      "ability": 79,
+      "mentality": 84,
+      "synergy": 83
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fullsense-jitboys-silver-001",
+    "player": "JitBoyS",
+    "org": "FULL SENSE",
+    "org_logo": "/assets/orgs/fullsense.png",
+    "region": "Pacific",
+    "nationality": "TH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "killjoy",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 83,
+      "ability": 77,
+      "mentality": 83,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wolvesesports-spring-silver-001",
+    "player": "Spring",
+    "org": "Wolves Esports",
+    "org_logo": "/assets/orgs/wolvesesports.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 82,
+      "ability": 91,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamliquid-kamo-silver-001",
+    "player": "kamo",
+    "org": "Team Liquid",
+    "org_logo": "/assets/orgs/teamliquid.png",
+    "region": "EMEA",
+    "nationality": "PL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 84,
+      "ability": 85,
+      "mentality": 85,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "g2esports-trent-silver-001",
+    "player": "trent",
+    "org": "G2 Esports",
+    "org_logo": "/assets/orgs/g2esports.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 93,
+      "ability": 86,
+      "mentality": 92,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "edwardgaming-chichoo-silver-001",
+    "player": "CHICHOO",
+    "org": "EDward Gaming",
+    "org_logo": "/assets/orgs/edwardgaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 84,
+      "ability": 79,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "futesports-krostaly-silver-001",
+    "player": "KROSTALY",
+    "org": "FUT Esports",
+    "org_logo": "/assets/orgs/futesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 81,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "tejo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 77,
+      "positioning": 87,
+      "ability": 81,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "jdmalljdgesports-stew-silver-001",
+    "player": "stew",
+    "org": "JD Mall JDG Esports",
+    "org_logo": "/assets/orgs/jdmalljdgesports.png",
+    "region": "China",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 97,
+      "positioning": 84,
+      "ability": 84,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kiwoomdrx-hermes-silver-001",
+    "player": "Hermes",
+    "org": "Kiwoom DRX",
+    "org_logo": "/assets/orgs/kiwoomdrx.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 81,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 84,
+      "ability": 81,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "paperrex-something-silver-001",
+    "player": "something",
+    "org": "Paper Rex",
+    "org_logo": "/assets/orgs/paperrex.png",
+    "region": "Pacific",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 86,
+      "ability": 83,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamliquid-miniboo-silver-001",
+    "player": "MiniBoo",
+    "org": "Team Liquid",
+    "org_logo": "/assets/orgs/teamliquid.png",
+    "region": "EMEA",
+    "nationality": "LT",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 85,
+      "ability": 81,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "gentlemates-bipo-silver-001",
+    "player": "bipo",
+    "org": "Gentle Mates",
+    "org_logo": "/assets/orgs/gentlemates.png",
+    "region": "EMEA",
+    "nationality": "IT",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 87,
+      "ability": 83,
+      "mentality": 88,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wolvesesports-jowa-silver-001",
+    "player": "jowa",
+    "org": "Wolves Esports",
+    "org_logo": "/assets/orgs/wolvesesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "kayo",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 87,
+      "positioning": 92,
+      "ability": 93,
+      "mentality": 92,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "funplusphoenix-aaaay-silver-001",
+    "player": "AAAAY",
+    "org": "FunPlus Phoenix",
+    "org_logo": "/assets/orgs/funplusphoenix.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 77,
+    "role": "Flex",
+    "agents": [
+      "skye",
+      "gekko"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 71,
+      "ability": 74,
+      "mentality": 71,
+      "synergy": 71
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wuxititanesportsclub-lucas-silver-001",
+    "player": "lucas",
+    "org": "Wuxi Titan Esports Club",
+    "org_logo": "/assets/orgs/wuxititanesportsclub.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 86,
+      "ability": 86,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "100thieves-vora-silver-001",
+    "player": "vora",
+    "org": "100 Thieves",
+    "org_logo": "/assets/orgs/100thieves.png",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 95,
+      "ability": 84,
+      "mentality": 94,
+      "synergy": 95
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "allgamers-f4ngeer-silver-001",
+    "player": "f4ngeer",
+    "org": "All Gamers",
+    "org_logo": "/assets/orgs/allgamers.png",
+    "region": "China",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 99,
+      "positioning": 80,
+      "ability": 85,
+      "mentality": 80,
+      "synergy": 80
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "leviatn-blowz-silver-001",
+    "player": "blowz",
+    "org": "LEVIATÁN",
+    "org_logo": "/assets/orgs/leviatn.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 91,
+      "ability": 83,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamheretics-wo0t-silver-001",
+    "player": "Wo0t",
+    "org": "Team Heretics",
+    "org_logo": "/assets/orgs/teamheretics.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 91,
+      "ability": 87,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "detonationfocusme-ssees-silver-001",
+    "player": "SSeeS",
+    "org": "DetonatioN FocusMe",
+    "org_logo": "/assets/orgs/detonationfocusme.png",
+    "region": "Pacific",
+    "nationality": "JP",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 72,
+      "positioning": 82,
+      "ability": 75,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "leviatn-sato-silver-001",
+    "player": "Sato",
+    "org": "LEVIATÁN",
+    "org_logo": "/assets/orgs/leviatn.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 91,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 87,
+      "ability": 82,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "leviatn-spike-silver-001",
+    "player": "spike",
+    "org": "LEVIATÁN",
+    "org_logo": "/assets/orgs/leviatn.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "kayo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 90,
+      "ability": 87,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "mibr-verno-silver-001",
+    "player": "Verno",
+    "org": "MIBR",
+    "org_logo": "/assets/orgs/mibr.png",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "silver",
+    "edition": null,
+    "rating": 93,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 95,
+      "ability": 84,
+      "mentality": 95,
+      "synergy": 95
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "xilaigaming-rarga-silver-001",
+    "player": "Rarga",
+    "org": "Xi Lai Gaming",
+    "org_logo": "/assets/orgs/xilaigaming.png",
+    "region": "China",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 96,
+      "positioning": 76,
+      "ability": 80,
+      "mentality": 76,
+      "synergy": 76
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "gentlemates-minny-silver-001",
+    "player": "Minny",
+    "org": "Gentle Mates",
+    "org_logo": "/assets/orgs/gentlemates.png",
+    "region": "EMEA",
+    "nationality": "CZ",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "killjoy",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 88,
+      "ability": 83,
+      "mentality": 88,
+      "synergy": 88
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamheretics-koshmaras-silver-001",
+    "player": "koshmaras",
+    "org": "Team Heretics",
+    "org_logo": "/assets/orgs/teamheretics.png",
+    "region": "EMEA",
+    "nationality": "LT",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 86,
+      "ability": 86,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "xilaigaming-wsleo-silver-001",
+    "player": "WsLeo",
+    "org": "Xi Lai Gaming",
+    "org_logo": "/assets/orgs/xilaigaming.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 77,
+      "ability": 78,
+      "mentality": 77,
+      "synergy": 77
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "bblesports-loita-silver-001",
+    "player": "Loita",
+    "org": "BBL Esports",
+    "org_logo": "/assets/orgs/bblesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 92,
+      "ability": 90,
+      "mentality": 92,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamliquid-wayne-silver-001",
+    "player": "wayne",
+    "org": "Team Liquid",
+    "org_logo": "/assets/orgs/teamliquid.png",
+    "region": "EMEA",
+    "nationality": "SG",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "brimstone"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 94,
+      "ability": 90,
+      "mentality": 94,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "rexregumqeon-jemkin-silver-001",
+    "player": "Jemkin",
+    "org": "Rex Regum Qeon",
+    "org_logo": "/assets/orgs/rexregumqeon.png",
+    "region": "Pacific",
+    "nationality": "RU",
+    "tier": "silver",
+    "edition": null,
+    "rating": 91,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 84,
+      "ability": 83,
+      "mentality": 85,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fullsense-primmie-silver-001",
+    "player": "primmie",
+    "org": "FULL SENSE",
+    "org_logo": "/assets/orgs/fullsense.png",
+    "region": "Pacific",
+    "nationality": "TH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 85,
+      "ability": 84,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "allgamers-shr1mp-silver-001",
+    "player": "Shr1mp",
+    "org": "All Gamers",
+    "org_logo": "/assets/orgs/allgamers.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "skye",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 84,
+      "ability": 82,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "fullsense-leviathan-silver-001",
+    "player": "Leviathan",
+    "org": "FULL SENSE",
+    "org_logo": "/assets/orgs/fullsense.png",
+    "region": "Pacific",
+    "nationality": "TH",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 87,
+      "ability": 85,
+      "mentality": 87,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kiwoomdrx-hyunmin-silver-001",
+    "player": "HYUNMIN",
+    "org": "Kiwoom DRX",
+    "org_logo": "/assets/orgs/kiwoomdrx.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 83,
+      "ability": 84,
+      "mentality": 83,
+      "synergy": 83
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "loud-lukxo-silver-001",
+    "player": "lukxo",
+    "org": "LOUD",
+    "org_logo": "/assets/orgs/loud.png",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 86,
+      "ability": 83,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "loud-erde-silver-001",
+    "player": "erde",
+    "org": "LOUD",
+    "org_logo": "/assets/orgs/loud.png",
+    "region": "Americas",
+    "nationality": "CL",
+    "tier": "silver",
+    "edition": null,
+    "rating": 88,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 91,
+      "ability": 86,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "leviatn-neon-silver-001",
+    "player": "Neon",
+    "org": "LEVIATÁN",
+    "org_logo": "/assets/orgs/leviatn.png",
+    "region": "Americas",
+    "nationality": "AR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 93,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 95,
+      "positioning": 91,
+      "ability": 83,
+      "mentality": 91,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "detonationfocusme-caedye-silver-001",
+    "player": "Caedye",
+    "org": "DetonatioN FocusMe",
+    "org_logo": "/assets/orgs/detonationfocusme.png",
+    "region": "Pacific",
+    "nationality": "JP",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 82,
+      "ability": 82,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "detonationfocusme-yatsuka-silver-001",
+    "player": "yatsuka",
+    "org": "DetonatioN FocusMe",
+    "org_logo": "/assets/orgs/detonationfocusme.png",
+    "region": "Pacific",
+    "nationality": "JP",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 84,
+      "ability": 76,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamheretics-benjyfishy-silver-001",
+    "player": "benjyfishy",
+    "org": "Team Heretics",
+    "org_logo": "/assets/orgs/teamheretics.png",
+    "region": "EMEA",
+    "nationality": "GB",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 86,
+      "ability": 78,
+      "mentality": 87,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "100thieves-timotino-silver-001",
+    "player": "Timotino",
+    "org": "100 Thieves",
+    "org_logo": "/assets/orgs/100thieves.png",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "silver",
+    "edition": null,
+    "rating": 90,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 94,
+      "positioning": 89,
+      "ability": 88,
+      "mentality": 90,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "bblesports-lar0k-silver-001",
+    "player": "Lar0k",
+    "org": "BBL Esports",
+    "org_logo": "/assets/orgs/bblesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 86,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "kayo"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 92,
+      "ability": 88,
+      "mentality": 92,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "dragonrangergaming-spiritz1-silver-001",
+    "player": "SpiritZ1",
+    "org": "Dragon Ranger Gaming",
+    "org_logo": "/assets/orgs/dragonrangergaming.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 70,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "waylay"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 60,
+      "ability": 75,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nongshimredforce-dambi-silver-001",
+    "player": "Dambi",
+    "org": "Nongshim RedForce",
+    "org_logo": "/assets/orgs/nongshimredforce.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 83,
+      "ability": 84,
+      "mentality": 83,
+      "synergy": 83
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nongshimredforce-francis-silver-001",
+    "player": "Francis",
+    "org": "Nongshim RedForce",
+    "org_logo": "/assets/orgs/nongshimredforce.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 83,
+      "ability": 82,
+      "mentality": 83,
+      "synergy": 83
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nongshimredforce-ivy-silver-001",
+    "player": "Ivy",
+    "org": "Nongshim RedForce",
+    "org_logo": "/assets/orgs/nongshimredforce.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 85,
+      "ability": 79,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "teamvitality-sayonara-silver-001",
+    "player": "Sayonara",
+    "org": "Team Vitality",
+    "org_logo": "/assets/orgs/teamvitality.png",
+    "region": "EMEA",
+    "nationality": "MD",
+    "tier": "silver",
+    "edition": null,
+    "rating": 91,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 94,
+      "ability": 93,
+      "mentality": 94,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "novaesports-green-silver-001",
+    "player": "GREEN",
+    "org": "Nova Esports",
+    "org_logo": "/assets/orgs/novaesports.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 75,
+      "ability": 83,
+      "mentality": 75,
+      "synergy": 75
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "traceesports-viva-silver-001",
+    "player": "Viva",
+    "org": "Trace Esports",
+    "org_logo": "/assets/orgs/traceesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 68,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 75,
+      "positioning": 66,
+      "ability": 66,
+      "mentality": 66,
+      "synergy": 66
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "novaesports-obone-silver-001",
+    "player": "OBONE",
+    "org": "Nova Esports",
+    "org_logo": "/assets/orgs/novaesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 74,
+      "positioning": 82,
+      "ability": 78,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "tyloo-splash-silver-001",
+    "player": "splash",
+    "org": "TYLOO",
+    "org_logo": "/assets/orgs/tyloo.png",
+    "region": "China",
+    "nationality": "ID",
+    "tier": "silver",
+    "edition": null,
+    "rating": 93,
+    "role": "Flex",
+    "agents": [
+      "raze",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 99,
+      "positioning": 87,
+      "ability": 99,
+      "mentality": 88,
+      "synergy": 87
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "xilaigaming-lysoar-silver-001",
+    "player": "Lysoar",
+    "org": "Xi Lai Gaming",
+    "org_logo": "/assets/orgs/xilaigaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 79,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 84,
+      "ability": 77,
+      "mentality": 84,
+      "synergy": 84
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "traceesports-kai-silver-001",
+    "player": "Kai",
+    "org": "Trace Esports",
+    "org_logo": "/assets/orgs/traceesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 92,
+      "positioning": 74,
+      "ability": 75,
+      "mentality": 75,
+      "synergy": 74
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "xilaigaming-happywei-silver-001",
+    "player": "happywei",
+    "org": "Xi Lai Gaming",
+    "org_logo": "/assets/orgs/xilaigaming.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 82,
+      "ability": 86,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "futesports-s0pp-silver-001",
+    "player": "s0pp",
+    "org": "FUT Esports",
+    "org_logo": "/assets/orgs/futesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 81,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "jett"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 85,
+      "ability": 81,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "tyloo-scales-silver-001",
+    "player": "Scales",
+    "org": "TYLOO",
+    "org_logo": "/assets/orgs/tyloo.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 71,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 65,
+      "ability": 72,
+      "mentality": 65,
+      "synergy": 65
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "edwardgaming-cb-silver-001",
+    "player": "cb",
+    "org": "EDward Gaming",
+    "org_logo": "/assets/orgs/edwardgaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 65,
+    "role": "Flex",
+    "agents": [
+      "sova",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 60,
+      "ability": 69,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "eternalfire-audaz-silver-001",
+    "player": "audaz",
+    "org": "Eternal Fire",
+    "org_logo": "/assets/orgs/eternalfire.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 77,
+      "positioning": 90,
+      "ability": 84,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "bblesports-loversrock-silver-001",
+    "player": "lovers rock",
+    "org": "BBL Esports",
+    "org_logo": "/assets/orgs/bblesports.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 84,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 84,
+      "positioning": 85,
+      "ability": 80,
+      "mentality": 85,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "novaesports-guang-silver-001",
+    "player": "GuanG",
+    "org": "Nova Esports",
+    "org_logo": "/assets/orgs/novaesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 60,
+    "role": "Flex",
+    "agents": [
+      "killjoy",
+      "cypher"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 85,
+      "positioning": 60,
+      "ability": 60,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kresports-dantedeu5-silver-001",
+    "player": "Dantedeu5",
+    "org": "KRÜ Esports",
+    "org_logo": "/assets/orgs/kresports.png",
+    "region": "Americas",
+    "nationality": "AR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "jett",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 88,
+      "positioning": 88,
+      "ability": 84,
+      "mentality": 88,
+      "synergy": 88
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "eternalfire-favian-silver-001",
+    "player": "Favian",
+    "org": "Eternal Fire",
+    "org_logo": "/assets/orgs/eternalfire.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 83,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 85,
+      "ability": 84,
+      "mentality": 86,
+      "synergy": 85
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "tyloo-slowly-silver-001",
+    "player": "slowly",
+    "org": "TYLOO",
+    "org_logo": "/assets/orgs/tyloo.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "sova"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 89,
+      "positioning": 70,
+      "ability": 81,
+      "mentality": 70,
+      "synergy": 70
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wuxititanesportsclub-dynamite-silver-001",
+    "player": "Dynamite",
+    "org": "Wuxi Titan Esports Club",
+    "org_logo": "/assets/orgs/wuxititanesportsclub.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 72,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 67,
+      "ability": 70,
+      "mentality": 67,
+      "synergy": 67
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "nongshimredforce-xross-silver-001",
+    "player": "Xross",
+    "org": "Nongshim RedForce",
+    "org_logo": "/assets/orgs/nongshimredforce.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 87,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 90,
+      "ability": 84,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wolvesesports-qiutian-silver-001",
+    "player": "qiutiaN",
+    "org": "Wolves Esports",
+    "org_logo": "/assets/orgs/wolvesesports.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 67,
+    "role": "Flex",
+    "agents": [
+      "killjoy",
+      "omen"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 60,
+      "ability": 68,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "novaesports-ezeir-silver-001",
+    "player": "Ezeir",
+    "org": "Nova Esports",
+    "org_logo": "/assets/orgs/novaesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 78,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 80,
+      "positioning": 70,
+      "ability": 86,
+      "mentality": 70,
+      "synergy": 70
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "allgamers-k1ra-silver-001",
+    "player": "K1ra",
+    "org": "All Gamers",
+    "org_logo": "/assets/orgs/allgamers.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 75,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "raze"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 81,
+      "positioning": 76,
+      "ability": 73,
+      "mentality": 76,
+      "synergy": 76
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "wuxititanesportsclub-coco-silver-001",
+    "player": "Coco",
+    "org": "Wuxi Titan Esports Club",
+    "org_logo": "/assets/orgs/wuxititanesportsclub.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 76,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 76,
+      "positioning": 78,
+      "ability": 82,
+      "mentality": 78,
+      "synergy": 78
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "furia-alym-silver-001",
+    "player": "alym",
+    "org": "FURIA",
+    "org_logo": "/assets/orgs/furia.png",
+    "region": "Americas",
+    "nationality": "KG",
+    "tier": "silver",
+    "edition": null,
+    "rating": 89,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "yoru"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 94,
+      "positioning": 86,
+      "ability": 86,
+      "mentality": 86,
+      "synergy": 86
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "guangzhouhuadubilibiligaming-rushia-silver-001",
+    "player": "rushia",
+    "org": "Guangzhou Huadu Bilibili Gaming",
+    "org_logo": "/assets/orgs/guangzhouhuadubilibiligaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 82,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 78,
+      "positioning": 90,
+      "ability": 86,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "eternalfire-echo-silver-001",
+    "player": "echo",
+    "org": "Eternal Fire",
+    "org_logo": "/assets/orgs/eternalfire.png",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 80,
+    "role": "Flex",
+    "agents": [
+      "cypher",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 79,
+      "positioning": 82,
+      "ability": 81,
+      "mentality": 82,
+      "synergy": 82
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "jdmalljdgesports-zhe-silver-001",
+    "player": "zhe",
+    "org": "JD Mall JDG Esports",
+    "org_logo": "/assets/orgs/jdmalljdgesports.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 75,
+    "role": "Flex",
+    "agents": [
+      "yoru",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 76,
+      "ability": 73,
+      "mentality": 76,
+      "synergy": 76
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "funplusphoenix-setrod-silver-001",
+    "player": "Setrod",
+    "org": "FunPlus Phoenix",
+    "org_logo": "/assets/orgs/funplusphoenix.png",
+    "region": "China",
+    "nationality": "TW",
+    "tier": "silver",
+    "edition": null,
+    "rating": 70,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "viper"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 82,
+      "positioning": 66,
+      "ability": 69,
+      "mentality": 67,
+      "synergy": 66
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "kiwoomdrx-yong-silver-001",
+    "player": "yong",
+    "org": "Kiwoom DRX",
+    "org_logo": "/assets/orgs/kiwoomdrx.png",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "silver",
+    "edition": null,
+    "rating": 75,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "neon"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 77,
+      "positioning": 79,
+      "ability": 77,
+      "mentality": 79,
+      "synergy": 79
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "dragonrangergaming-akeman-silver-001",
+    "player": "Akeman",
+    "org": "Dragon Ranger Gaming",
+    "org_logo": "/assets/orgs/dragonrangergaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 68,
+    "role": "Flex",
+    "agents": [
+      "neon",
+      "clove"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 83,
+      "positioning": 66,
+      "ability": 74,
+      "mentality": 66,
+      "synergy": 66
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "allgamers-au1-silver-001",
+    "player": "Au1",
+    "org": "All Gamers",
+    "org_logo": "/assets/orgs/allgamers.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 63,
+    "role": "Flex",
+    "agents": [
+      "viper",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 74,
+      "positioning": 60,
+      "ability": 70,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "tyloo-erv-silver-001",
+    "player": "Erv",
+    "org": "TYLOO",
+    "org_logo": "/assets/orgs/tyloo.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 85,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "breach"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 86,
+      "positioning": 89,
+      "ability": 98,
+      "mentality": 89,
+      "synergy": 89
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "guangzhouhuadubilibiligaming-bud-silver-001",
+    "player": "bud",
+    "org": "Guangzhou Huadu Bilibili Gaming",
+    "org_logo": "/assets/orgs/guangzhouhuadubilibiligaming.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 60,
+    "role": "Flex",
+    "agents": [
+      "breach",
+      "killjoy"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 70,
+      "positioning": 60,
+      "ability": 60,
+      "mentality": 60,
+      "synergy": 60
+    },
+    "power": null,
+    "palette": "silver"
+  },
+  {
+    "id": "allgamers-iamgrq-silver-001",
+    "player": "iamgrq",
+    "org": "All Gamers",
+    "org_logo": "/assets/orgs/allgamers.png",
+    "region": "China",
+    "nationality": "CN",
+    "tier": "silver",
+    "edition": null,
+    "rating": 68,
+    "role": "Flex",
+    "agents": [
+      "omen",
+      "brimstone"
+    ],
+    "photo": "/assets/players/placeholder.png",
+    "stats": {
+      "aim": 74,
+      "positioning": 69,
+      "ability": 77,
+      "mentality": 69,
+      "synergy": 69
+    },
+    "power": null,
+    "palette": "silver"
   }
 ]
