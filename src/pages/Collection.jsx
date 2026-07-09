@@ -3,8 +3,8 @@ import PlayerCard from '../components/PlayerCard';
 import allCards from '../data/cards.json';
 import styles from './Collection.module.css';
 
-const TIERS = ['All', 'silver', 'gold', 'legendary', 'prestige', 'iconic'];
-const REGIONS = ['All', 'Americas', 'EMEA', 'Pacific'];
+const TIERS = ['All', 'bronze', 'silver', 'gold', 'legendary', 'prestige', 'iconic'];
+const REGIONS = ['All', 'Americas', 'EMEA', 'Pacific', 'China'];
 const ROLES = ['All', 'Duelist', 'Sentinel', 'Controller', 'Initiator', 'Flex'];
 
 export default function Collection() {

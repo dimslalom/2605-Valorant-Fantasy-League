@@ -1,31 +1,43 @@
 /**
- * One-time VCT 2026 player data injection.
+ * VCT 2026 player data injection.
  *
  * Strategy:
- *  1. Fetch /v2/event/{id} for each VCT 2026 event → player IDs + team info
- *  2. Fetch /v2/team?id= for each team → alias→role map
- *  3. Fetch /v2/player?id= for each player → stats + country + agents
+ *  1. Fetch /v2/event/{id} for each VCT 2026 event → player IDs + team IDs
+ *  2. Fetch /v2/team?id= for each discovered team → tag + logo (downloaded)
+ *  3. Fetch /v2/player?id= for each player → stats + country + avatar
  *  4. Normalise stats against regional baselines from /v2/stats
- *  5. Write src/data/cards.json
+ *  5. Download avatars, run scripts/process_avatars.py (rembg cutout → 400x412)
+ *  6. Write src/data/cards.json
  *
  * Usage:
  *   npm run sync-vlr
  *
- * If the public API is down, self-host:
- *   git clone https://github.com/axsddlr/vlrggapi && cd vlrggapi
- *   python main.py   (runs on :3001)
- *   then change BASE_URL below to 'http://127.0.0.1:3001'
+ * Requires a running vlrggapi instance (the public vercel one is dead):
+ *   git clone https://github.com/axsddlr/vlrggapi ../vlrggapi
+ *   cd ../vlrggapi && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+ *   .venv/bin/python main.py   (serves on :3001)
+ * Override the API location with VLR_API_BASE if hosted elsewhere.
+ *
+ * Tier rule: card rating > 80 → gold, 70–80 → silver, < 70 → bronze.
+ * Bronze card art doesn't exist yet, so bronze cards fall back to the
+ * silver palette until bronze-bg.png / bronze-stat-bg.png are added.
  */
 
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { EVENTS, TEAMS, PLAYER_OVERRIDES } from './vlr-players.config.js';
+import { EVENTS, PLAYER_OVERRIDES } from './vlr-players.config.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUTPUT    = resolve(__dirname, '../src/data/cards.json');
-const BASE_URL  = 'https://vlrggapi.vercel.app';
-const DELAY_MS  = 350;
+const __dirname   = dirname(fileURLToPath(import.meta.url));
+const OUTPUT      = resolve(__dirname, '../src/data/cards.json');
+const ORGS_DIR    = resolve(__dirname, '../public/assets/orgs');
+const PLAYERS_DIR = resolve(__dirname, '../public/assets/players');
+const CACHE_DIR   = resolve(__dirname, '.cache/avatars');
+const CARD_BG_DIR = resolve(__dirname, '../public/assets/card-bg');
+const BASE_URL    = process.env.VLR_API_BASE ?? 'http://127.0.0.1:3001';
+const DELAY_MS    = 350;
+const PLACEHOLDER = '/assets/players/placeholder.png';
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -33,7 +45,7 @@ async function get(path, retries = 2) {
   const url = `${BASE_URL}${path}`;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15_000);
+    const timer = setTimeout(() => controller.abort(), 30_000);
     try {
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);
@@ -49,6 +61,50 @@ async function get(path, retries = 2) {
       }
     }
   }
+}
+
+async function healthCheck() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5_000);
+    const res = await fetch(`${BASE_URL}/v2/health`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } catch (err) {
+    console.error(`
+✗ vlrggapi is not reachable at ${BASE_URL} (${err.message})
+
+  Start a local instance:
+    cd ../vlrggapi && .venv/bin/python main.py
+
+  Or point VLR_API_BASE at a running instance:
+    VLR_API_BASE=http://host:port npm run sync-vlr
+`);
+    process.exit(1);
+  }
+}
+
+// Download a binary file if the destination doesn't already exist.
+// Returns true when the file exists afterwards.
+async function download(url, dest) {
+  if (existsSync(dest)) return true;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+    return true;
+  } catch (err) {
+    console.warn(`    ⚠ download failed: ${url} (${err.message})`);
+    return false;
+  }
+}
+
+// vlr.gg serves this image when a player has no photo
+function isRealAvatar(url) {
+  return !!url && !url.includes('/base/ph/');
 }
 
 // Parse a stat value — strips "%" and converts to float
@@ -91,15 +147,43 @@ function slug(str) {
   return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function cap(str) {
-  if (!str) return 'Flex';
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+// vlr.gg team pages don't expose player roles, so derive the role from the
+// player's most-used agent instead.
+const AGENT_ROLES = {
+  jett:'Duelist', raze:'Duelist', reyna:'Duelist', phoenix:'Duelist',
+  yoru:'Duelist', neon:'Duelist', iso:'Duelist', waylay:'Duelist',
+  brimstone:'Controller', omen:'Controller', viper:'Controller',
+  astra:'Controller', harbor:'Controller', clove:'Controller',
+  sova:'Initiator', breach:'Initiator', skye:'Initiator', kayo:'Initiator',
+  fade:'Initiator', gekko:'Initiator', tejo:'Initiator',
+  killjoy:'Sentinel', cypher:'Sentinel', sage:'Sentinel',
+  chamber:'Sentinel', deadlock:'Sentinel', vyse:'Sentinel',
+};
+
+function roleFromAgents(topAgents) {
+  for (const agent of topAgents) {
+    const role = AGENT_ROLES[slug(agent)];
+    if (role) return role;
+  }
+  return 'Flex';
+}
+
+// Tier from card rating: >80 gold, 70–80 silver, <70 bronze
+function tierFromRating(rating) {
+  if (rating > 80) return 'gold';
+  if (rating >= 70) return 'silver';
+  return 'bronze';
+}
+
+// Bronze art doesn't exist yet — fall back to silver palette until it does
+function paletteForTier(tier) {
+  if (existsSync(resolve(CARD_BG_DIR, `${tier}-bg.png`))) return tier;
+  return 'silver';
 }
 
 // ── Stat derivation ──────────────────────────────────────────────────────────
 
 // Weighted average of agent_stats[].{key} by rounds played
-// agent_stats field names (from /v2/player): rating, acs, kd, adr, kast(%), kpr, apr, fkpr, fdpr
 function wavg(agentStats, key) {
   const total = agentStats.reduce((s, a) => s + p(a.rounds), 0);
   if (!total) return 0;
@@ -180,6 +264,10 @@ function deriveStats(agentStats, bl) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  console.log(`\nUsing vlrggapi at ${BASE_URL}`);
+  await healthCheck();
+  mkdirSync(CACHE_DIR, { recursive: true });
+
   // Step 1: fetch region baselines
   const uniqueRegions = [...new Set(EVENTS.map(e => e.apiRegion))];
   console.log(`\nFetching stat baselines: ${uniqueRegions.join(', ')}`);
@@ -191,28 +279,11 @@ async function main() {
     await sleep(DELAY_MS);
   }
 
-  // Step 2: build alias→role map from team endpoints
-  console.log(`\nFetching team rosters for role lookup...`);
-  const aliasRoleMap = {}; // alias.toLowerCase() → role
-  for (const teamCfg of TEAMS) {
-    try {
-      const res  = await get(`/v2/team?id=${teamCfg.id}`);
-      const roster = res?.data?.roster ?? [];
-      for (const p of roster) {
-        if (p.alias) aliasRoleMap[p.alias.toLowerCase()] = p.role ?? 'Flex';
-      }
-      process.stdout.write('.');
-    } catch (err) {
-      process.stdout.write('x');
-    }
-    await sleep(DELAY_MS);
-  }
-  console.log(` done (${Object.keys(aliasRoleMap).length} aliases mapped)`);
-
-  // Step 3: collect player IDs + team context from event endpoints
+  // Step 2: collect player IDs + team IDs from event endpoints
   console.log(`\nFetching event rosters for player IDs...`);
-  // Map: playerId → { name, flag, teamName, teamLogo, teamTag, region, apiRegion }
+  // Map: playerId → { name, flag, teamName, teamId, region, apiRegion }
   const playerMeta = {};
+  const teamIds = new Set();
 
   for (const eventCfg of EVENTS) {
     console.log(`  Event ${eventCfg.id} (${eventCfg.region})`);
@@ -229,23 +300,17 @@ async function main() {
 
     const teams = eventData?.teams ?? [];
     for (const team of teams) {
-      const teamName = team.name ?? '';
-      const teamLogo = team.logo ?? '';
-      const teamId   = String(team.id ?? '');
-      // Derive a short tag from the team name if no tag field
-      const teamTag  = team.tag ?? teamName;
-      const players  = team.players ?? [];
+      const teamId = String(team.id ?? '');
+      if (teamId) teamIds.add(teamId);
 
-      for (const player of players) {
+      for (const player of team.players ?? []) {
         const id = String(player.id ?? '');
         if (!id) continue;
         if (playerMeta[id]) continue; // already seen from another event
         playerMeta[id] = {
           name:       player.name ?? '',
           flag:       player.flag ?? '',
-          teamName,
-          teamLogo,
-          teamTag,
+          teamName:   team.name ?? '',
           teamId,
           region:     eventCfg.region,
           apiRegion:  eventCfg.apiRegion,
@@ -255,11 +320,35 @@ async function main() {
   }
 
   const playerIds = Object.keys(playerMeta);
-  console.log(`  Found ${playerIds.length} unique players across all events`);
+  console.log(`  Found ${playerIds.length} unique players across ${teamIds.size} teams`);
 
-  // Step 4: fetch each player's profile and build cards
+  // Step 3: fetch team profiles → tag + logo (downloaded to /assets/orgs/)
+  console.log(`\nFetching team profiles...`);
+  // Map: teamId → { tag, name, logoPath }
+  const teamInfo = {};
+  for (const teamId of teamIds) {
+    try {
+      const res  = await get(`/v2/team?id=${teamId}`);
+      const team = res?.data?.segments?.[0] ?? {};
+      const name = team.name ?? '';
+      const tag  = team.tag || name;
+      let logoPath = `/assets/orgs/${slug(tag)}.png`;
+      if (team.logo) {
+        const ok = await download(team.logo, resolve(ORGS_DIR, `${slug(tag)}.png`));
+        if (!ok) logoPath = '';
+      }
+      teamInfo[teamId] = { tag, name, logoPath };
+      process.stdout.write('.');
+    } catch (err) {
+      process.stdout.write('x');
+    }
+    await sleep(DELAY_MS);
+  }
+  console.log(` done (${Object.keys(teamInfo).length}/${teamIds.size} teams)`);
+
+  // Step 4: fetch each player's profile, download avatar
   console.log(`\nFetching player profiles...`);
-  const cards = [];
+  const players = [];
 
   for (const playerId of playerIds) {
     const meta = playerMeta[playerId];
@@ -280,7 +369,42 @@ async function main() {
       console.warn(`  ⚠ No agent_stats for ${meta.name} (${playerId}) — using fallback`);
     }
 
-    const playerName  = info.name ?? meta.name ?? 'Unknown';
+    const playerName = info.name ?? meta.name ?? 'Unknown';
+
+    // Download the raw avatar; the processed 400x412 cutout is produced
+    // by scripts/process_avatars.py after this loop.
+    let hasAvatar = false;
+    if (isRealAvatar(info.avatar)) {
+      hasAvatar = await download(info.avatar, resolve(CACHE_DIR, `${playerId}.png`));
+    }
+
+    players.push({ playerId, meta, info, agentStats, playerName, hasAvatar });
+    console.log(`  ✓  ${playerName.padEnd(20)} agents:${String(agentStats.length).padEnd(3)} avatar:${hasAvatar ? 'yes' : 'no '}`);
+  }
+
+  // Step 5: process avatars (background removal + 400x412 canvas)
+  const manifest = {};
+  for (const pl of players) {
+    if (pl.hasAvatar) manifest[pl.playerId] = `${slug(pl.playerName)}.png`;
+  }
+  writeFileSync(resolve(CACHE_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+  console.log(`\nProcessing ${Object.keys(manifest).length} avatars (rembg cutout → 400x412)...`);
+  const venvPython = resolve(__dirname, '.venv/bin/python');
+  const py = spawnSync(existsSync(venvPython) ? venvPython : 'python3', [resolve(__dirname, 'process_avatars.py')], {
+    stdio: 'inherit',
+    cwd: __dirname,
+  });
+  if (py.status !== 0) {
+    console.warn(`  ⚠ Avatar processing failed — cards whose cutout is missing keep the placeholder.`);
+    console.warn(`    Install deps with: pip3 install -r scripts/requirements.txt`);
+  }
+
+  // Step 6: build cards
+  console.log(`\nBuilding cards...`);
+  const cards = [];
+
+  for (const { playerId, meta, info, agentStats, playerName } of players) {
     const nationality = info.country
       ? toISO2(info.country)
       : parseFlag(meta.flag);
@@ -302,24 +426,30 @@ async function main() {
       ? deriveStats(agentStats, bl)
       : { aim: 70, positioning: 70, ability: 70, mentality: 70, synergy: 70 };
 
-    // Role: look up by alias in the team roster map
-    const role = aliasRoleMap[playerName.toLowerCase()] ?? 'Flex';
+    const role = roleFromAgents(topAgents);
+
+    // Photo: processed cutout if it exists, else placeholder
+    const cutout = `/assets/players/${slug(playerName)}.png`;
+    const photo  = existsSync(resolve(PLAYERS_DIR, `${slug(playerName)}.png`))
+      ? cutout
+      : PLACEHOLDER;
 
     // Manual overrides
     const ov      = PLAYER_OVERRIDES[playerId] ?? {};
-    const tier    = ov.tier    ?? 'silver';
-    const palette = ov.palette ?? tier;
+    const tier    = ov.tier    ?? tierFromRating(cardRating);
+    const palette = ov.palette ?? paletteForTier(tier);
     const power   = ov.power   ?? null;
     const edition = ov.edition ?? null;
 
-    const orgTag  = meta.teamTag;
+    const team    = teamInfo[meta.teamId] ?? {};
+    const orgTag  = team.tag || meta.teamName;
     const cardId  = `${slug(orgTag)}-${slug(playerName)}-${tier}-001`;
 
     cards.push({
       id:          cardId,
       player:      playerName,
       org:         orgTag,
-      org_logo:    meta.teamLogo || `/assets/orgs/${slug(orgTag)}.png`,
+      org_logo:    team.logoPath || `/assets/orgs/${slug(orgTag)}.png`,
       region:      meta.region,
       nationality,
       tier,
@@ -327,17 +457,20 @@ async function main() {
       rating:      cardRating,
       role,
       agents:      topAgents,
-      photo:       '/assets/players/placeholder.png',
+      photo:       ov.photo ?? photo,
       stats,
       power,
       palette,
     });
 
-    console.log(`  ✓  ${playerName.padEnd(20)} ${nationality.padEnd(4)} ${cap(role).padEnd(12)} rating:${cardRating}`);
+    console.log(`  ✓  ${playerName.padEnd(20)} ${nationality.padEnd(4)} ${role.padEnd(12)} rating:${String(cardRating).padEnd(4)} ${tier}`);
   }
 
   writeFileSync(OUTPUT, JSON.stringify(cards, null, 2));
-  console.log(`\n✓ Wrote ${cards.length} cards → ${OUTPUT}\n`);
+  const tiers = cards.reduce((acc, c) => { acc[c.tier] = (acc[c.tier] ?? 0) + 1; return acc; }, {});
+  const photos = cards.filter(c => c.photo !== PLACEHOLDER).length;
+  console.log(`\n✓ Wrote ${cards.length} cards → ${OUTPUT}`);
+  console.log(`  tiers: ${JSON.stringify(tiers)} | with photo: ${photos}/${cards.length}\n`);
 }
 
 main().catch(err => {

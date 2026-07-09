@@ -7,7 +7,9 @@ export const EVENTS = [
   { id: 2685, region: 'China',    apiRegion: 'cn' },
 ];
 
-// VCT 2026 team IDs — used to look up roles (team endpoint has alias+role, no player IDs)
+// VCT 2026 team IDs — kept for reference only. The sync script now discovers
+// teams from the event endpoints, and vlr.gg doesn't expose player roles on
+// team pages (roles are derived from each player's most-used agent instead).
 export const TEAMS = [
   // AMERICAS
   { id: 120,   region: 'Americas', apiRegion: 'na' },
@@ -60,7 +62,13 @@ export const TEAMS = [
 ];
 
 // Manual overrides keyed by vlr.gg player ID (string).
-// Populate after the first run to promote players to higher tiers, assign powers, etc.
+// Supported fields: tier, palette, power, edition, photo.
+// Tier is otherwise derived from the card rating (>80 gold, 70–80 silver, <70 bronze).
 // Example:
 // '9': { tier: 'gold', palette: 'gold', power: { name: '...', description: '...', effect: '...', value: 2, duration: 3 } }
-export const PLAYER_OVERRIDES = {};
+export const PLAYER_OVERRIDES = {
+  // Hand-made stylized card art — pinned so re-syncs never replace it
+  '8480': { photo: '/assets/players/gold-img-aspas.png' },     // aspas
+  '9801': { photo: '/assets/players/gold-img-f0rsakeN.png' },  // f0rsakeN
+  '4':    { photo: '/assets/players/silver-img-crashies.png' } // crashies
+};
