@@ -1,4 +1,4 @@
-import { roleAbbr, cardTextColor } from '../lib/utils';
+import { roleAbbr, cardTextColor, countryName, regionFullName } from '../lib/utils';
 import useCardTilt from '../lib/useCardTilt';
 import styles from './PlayerCard.module.css';
 
@@ -7,6 +7,9 @@ const CARD_H = 580;
 
 const STAT_KEYS   = ['aim', 'positioning', 'ability', 'mentality', 'synergy'];
 const STAT_LABELS = { aim: 'AIM', positioning: 'POS', ability: 'ABL', mentality: 'MNT', synergy: 'SYN' };
+const STAT_LABELS_FULL = {
+  aim: 'Aim', positioning: 'Positioning', ability: 'Ability', mentality: 'Mentality', synergy: 'Synergy',
+};
 
 // Parallax planes. Each layer sets `--z` (3D depth) and `--shift` (max lateral
 // drift in px, multiplied by the pointer fraction −0.5..0.5). Three planes:
@@ -155,16 +158,16 @@ export default function PlayerCard({
                       SCOUTING REPORT
                     </span>
                     <span style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.1 }}>{card.player}</span>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: mutedColor }}>
-                      {card.org} · {card.region} · {roleAbbr(card.role)}
+                    <span style={{ fontSize: 15, fontWeight: 600, color: mutedColor, textAlign: 'center' }}>
+                      {card.org_name ?? card.org} · {regionFullName(card.region)} · {card.role}
                     </span>
                   </div>
 
                   <div className={styles.backStats}>
                     {STAT_KEYS.map((key) => (
                       <div key={key} className={styles.backStatRow}>
-                        <span style={{ fontSize: 15, fontWeight: 600, width: 52, color: mutedColor }}>
-                          {STAT_LABELS[key]}
+                        <span style={{ fontSize: 15, fontWeight: 600, width: 104, color: mutedColor }}>
+                          {STAT_LABELS_FULL[key]}
                         </span>
                         <div className={styles.backStatTrack} style={{ background: textColor + '22' }}>
                           <div
@@ -180,10 +183,10 @@ export default function PlayerCard({
                   </div>
 
                   <div className={styles.backMeta}>
-                    <BackMetaItem label="RATING" value={card.rating} muted={mutedColor} />
-                    <BackMetaItem label="TIER" value={card.tier} muted={mutedColor} />
-                    <BackMetaItem label="NATION" value={card.nationality} muted={mutedColor} />
-                    <BackMetaItem label="AGENTS" value={(card.agents ?? []).join(', ') || '—'} muted={mutedColor} />
+                    <BackMetaItem label="Rating" value={card.rating} muted={mutedColor} />
+                    <BackMetaItem label="Tier" value={card.tier} muted={mutedColor} />
+                    <BackMetaItem label="Nationality" value={countryName(card.nationality)} muted={mutedColor} />
+                    <BackMetaItem label="Agents" value={(card.agents ?? []).map(capitalize).join(', ') || 'Unknown'} muted={mutedColor} />
                   </div>
 
                   <div className={styles.backPlaceholder} style={{ borderColor: textColor + '44', color: mutedColor }}>
@@ -206,8 +209,12 @@ export default function PlayerCard({
 function BackMetaItem({ label, value, muted }) {
   return (
     <div className={styles.backMetaItem}>
-      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', color: muted }}>{label}</span>
+      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', color: muted }}>{label}</span>
       <span style={{ fontSize: 16, fontWeight: 700, textTransform: 'capitalize' }}>{value}</span>
     </div>
   );
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

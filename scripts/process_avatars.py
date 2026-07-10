@@ -27,6 +27,29 @@ CACHE_DIR = SCRIPT_DIR / ".cache" / "avatars"
 OUT_DIR = SCRIPT_DIR.parent / "public" / "assets" / "players"
 
 
+def _looks_like_placeholder(cutout) -> bool:
+    """vlr.gg sometimes serves a generic grey silhouette as a player's
+    "photo" instead of a real one, under a normal-looking owcdn.net URL —
+    so it isn't caught by the /base/ph/ URL filter. A real photo has
+    meaningfully varied color across skin/hair/jersey; a flat silhouette
+    doesn't, so sample the opaque region and check the spread."""
+    px = cutout.load()
+    w, h = cutout.size
+    step = max(1, min(w, h) // 40)
+    samples = [
+        px[x, y][:3]
+        for y in range(0, h, step)
+        for x in range(0, w, step)
+        if px[x, y][3] > 128
+    ]
+    if len(samples) < 20:
+        return True
+    n = len(samples)
+    mean = [sum(s[c] for s in samples) / n for c in range(3)]
+    variance = sum(sum((s[c] - mean[c]) ** 2 for c in range(3)) for s in samples) / n
+    return variance ** 0.5 < 12
+
+
 def main() -> int:
     try:
         from PIL import Image
@@ -46,7 +69,7 @@ def main() -> int:
     # One shared session so the U2-Net model loads once for the whole batch
     session = new_session("u2net")
 
-    done = skipped = failed = 0
+    done = skipped = failed = placeholder = 0
     for player_id, out_name in manifest.items():
         raw = CACHE_DIR / f"{player_id}.png"
         out = OUT_DIR / out_name
@@ -60,7 +83,17 @@ def main() -> int:
 
         try:
             with Image.open(raw) as img:
-                cutout = remove(img.convert("RGBA"), session=session)
+                img = img.convert("RGBA")
+                # Some vlr.gg avatars already carry an alpha channel whose
+                # fully/partially-transparent pixels hold leftover chroma-key
+                # color (e.g. bright blue) instead of being zeroed out.
+                # rembg reads raw RGB regardless of input alpha, so that
+                # leftover color bleeds into the segmentation and produces a
+                # tinted cutout with holes. Flattening onto opaque white
+                # first removes the contamination before rembg ever sees it.
+                flat = Image.new("RGBA", img.size, (255, 255, 255, 255))
+                flat.alpha_composite(img)
+                cutout = remove(flat.convert("RGB"), session=session)
 
             bbox = cutout.getbbox()
             if not bbox:
@@ -68,6 +101,11 @@ def main() -> int:
                 failed += 1
                 continue
             cutout = cutout.crop(bbox)
+
+            if _looks_like_placeholder(cutout):
+                print(f"  ! {out_name}: source avatar looks like a generic silhouette placeholder, skipping")
+                placeholder += 1
+                continue
 
             scale = min(CANVAS_W / cutout.width, CANVAS_H / cutout.height)
             new_size = (round(cutout.width * scale), round(cutout.height * scale))
@@ -88,7 +126,7 @@ def main() -> int:
             print(f"  ! {out_name}: {err}")
             failed += 1
 
-    print(f"processed {done}, skipped {skipped} existing, failed {failed}")
+    print(f"processed {done}, skipped {skipped} existing, {placeholder} placeholder-like, failed {failed}")
     return 0
 
 

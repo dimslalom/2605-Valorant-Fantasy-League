@@ -209,7 +209,7 @@ async function fetchBaselines(apiRegion) {
 
   const fallback = { min: 0, max: 100 };
   if (!segments.length) {
-    return { aim: fallback, positioning: fallback, ability: fallback, mentality: fallback, synergy: fallback, rating: { min: 1.0, max: 1.5 } };
+    return { aim: fallback, positioning: fallback, ability: fallback, mentality: fallback, synergy: fallback };
   }
 
   // Compute raw composite scores using stats-endpoint field names
@@ -228,12 +228,11 @@ async function fetchBaselines(apiRegion) {
       ability:     apr * 60 + adr * 0.4,
       mentality:   kast * 40 + rtg * 40,
       synergy:     apr * 40 + kast * 60,
-      rating:      rtg,
     };
   });
 
   const result = {};
-  for (const k of ['aim','positioning','ability','mentality','synergy','rating']) {
+  for (const k of ['aim','positioning','ability','mentality','synergy']) {
     const vals = raws.map(r => r[k]).filter(v => v > 0);
     result[k] = vals.length ? { min: Math.min(...vals), max: Math.max(...vals) } : fallback;
   }
@@ -416,15 +415,19 @@ async function main() {
       .map(a => a.agent)
       .filter(Boolean);
 
-    // Card rating: normalised VLR rating
-    const bl         = baselines[meta.apiRegion];
-    const avgRating  = agentStats.length ? wavg(agentStats, 'rating') : 1.0;
-    const cardRating = norm(avgRating, bl.rating.min, bl.rating.max);
-
     // 5 derived stats
+    const bl    = baselines[meta.apiRegion];
     const stats = agentStats.length
       ? deriveStats(agentStats, bl)
       : { aim: 70, positioning: 70, ability: 70, mentality: 70, synergy: 70 };
+
+    // Card rating = average of the 5 displayed stats, so the headline number
+    // is always consistent with what's shown underneath (previously this was
+    // normalised against raw VLR rating on a separate scale, which could
+    // diverge sharply from the stat average — e.g. all stats 80+ but a 75
+    // overall — and drove tier off a number nothing on the card agreed with).
+    const statVals   = Object.values(stats);
+    const cardRating = Math.round(statVals.reduce((s, v) => s + v, 0) / statVals.length);
 
     const role = roleFromAgents(topAgents);
 
@@ -449,6 +452,7 @@ async function main() {
       id:          cardId,
       player:      playerName,
       org:         orgTag,
+      org_name:    team.name || orgTag,
       org_logo:    team.logoPath || `/assets/orgs/${slug(orgTag)}.png`,
       region:      meta.region,
       nationality,
