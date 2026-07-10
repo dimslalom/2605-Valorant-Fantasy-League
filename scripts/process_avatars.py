@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 
 CANVAS_W, CANVAS_H = 400, 412
+SUBJECT_DROP_PX = 100  # push the bottom-anchored cutout down, clipping at 412px
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CACHE_DIR = SCRIPT_DIR / ".cache" / "avatars"
@@ -72,8 +73,14 @@ def main() -> int:
             new_size = (round(cutout.width * scale), round(cutout.height * scale))
             cutout = cutout.resize(new_size, Image.LANCZOS)
 
+            # Bottom-anchor, then push down by SUBJECT_DROP_PX so the card
+            # frames the subject the same way the hand-made art does — the
+            # feet/torso that fall below the canvas are simply clipped by
+            # paste() rather than shrinking the whole cutout to fit.
             canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
-            canvas.paste(cutout, ((CANVAS_W - cutout.width) // 2, CANVAS_H - cutout.height))
+            x = (CANVAS_W - cutout.width) // 2
+            y = CANVAS_H - cutout.height + SUBJECT_DROP_PX
+            canvas.paste(cutout, (x, y))
             canvas.save(out)
             done += 1
             print(f"  + {out_name}")

@@ -1,0 +1,58 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(8, 8, 14, 0.82);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.18s ease-out;
+}
+
+.cardWrap {
+  /* shared-element target: the grid card morphs into this via the
+     View Transitions API (see Collection.jsx morphTo) */
+  view-transition-name: focused-card;
+}
+
+.close {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 224, 255, 0.25);
+  background: rgba(232, 224, 255, 0.08);
+  color: #e8e0ff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.close:hover {
+  background: rgba(232, 224, 255, 0.18);
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(232, 224, 255, 0.45);
+  text-transform: uppercase;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    animation: none;
+  }
+}

@@ -1,20 +1,69 @@
-.card {
+/* ── 3D stage: holds perspective + the displayScale transform ── */
+.stage {
+  perspective: 800px;
   position: relative;
-  display: inline-block;
-  flex-shrink: 0;
+}
+
+/* ── Tilt: pointer-driven rotation via CSS vars set by useCardTilt ── */
+.tilt {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: translateY(var(--lift, 0px))
+             rotateX(var(--rx, 0deg))
+             rotateY(var(--ry, 0deg));
+  transition: transform 0.15s ease-out;
 }
 
 .clickable {
   cursor: pointer;
-  transition: transform 0.15s ease;
 }
 
 .clickable:hover {
-  transform: scale(var(--ds, 1)) translateY(-6px);
+  --lift: -12px; /* design-space px; halves visually at 0.5 displayScale */
 }
 
 .clickable:active {
-  transform: scale(var(--ds, 1)) translateY(-2px);
+  --lift: -4px;
+}
+
+/* ── Flip: separate element so the flip transition (slower) is independent of tilt ── */
+.flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(var(--flip, 0deg));
+  transition: transform 0.5s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+/* ── Faces ── */
+.face {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+/*
+ * Generic parallax: EVERY direct child of the front face is pushed out by its
+ * own --z (3D depth) and drifts laterally by --shift × pointer fraction
+ * (--mx/--my set by useCardTilt, −0.5..0.5). New card types / extra layers get
+ * the 3D effect automatically by declaring --z / --shift — no CSS changes.
+ */
+.faceFront > * {
+  transform: translate3d(
+    calc(var(--mx, 0) * var(--shift, 0px)),
+    calc(var(--my, 0) * var(--shift, 0px)),
+    var(--z, 0px)
+  );
+  backface-visibility: hidden;
+  transition: transform 0.15s ease-out;
+}
+
+.faceBack {
+  transform: rotateY(180deg);
 }
 
 /* ── Layer 0: card background ── */
@@ -53,6 +102,35 @@
   inset: 0;
   z-index: 3;
   pointer-events: none;
+}
+
+/* ── Glare: follows the cursor via --gx/--gy; masked to the card silhouette ── */
+.glare {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: var(--glare, 0);
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(255, 255, 255, 0) 65%
+  );
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+/* ── Reduced motion: no tilt transitions, instant flip ── */
+@media (prefers-reduced-motion: reduce) {
+  .tilt,
+  .flip,
+  .glare,
+  .faceFront > * {
+    transition: none;
+  }
 }
 
 /* ── Top-left: rating, role abbr, flag — row, aligned to each other ── */
@@ -129,4 +207,71 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+/* ── Back face content ── */
+.backContent {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* generous bottom padding: the card PNG silhouette tapers at the bottom */
+  padding: 52px 48px 90px;
+  box-sizing: border-box;
+}
+
+.backHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  align-items: center;
+}
+
+.backStats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.backStatRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backStatTrack {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.backStatFill {
+  height: 100%;
+  border-radius: 5px;
+}
+
+.backMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+}
+
+.backMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.backPlaceholder {
+  border: 2px dashed;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
 }

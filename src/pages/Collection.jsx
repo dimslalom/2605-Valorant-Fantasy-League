@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import PlayerCard from '../components/PlayerCard';
+import CardFocusOverlay from '../components/CardFocusOverlay';
 import allCards from '../data/cards.json';
 import styles from './Collection.module.css';
 
@@ -11,6 +13,33 @@ export default function Collection() {
   const [tierFilter, setTierFilter] = useState('All');
   const [regionFilter, setRegionFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
+  const [focusedCard, setFocusedCard] = useState(null);
+
+  // Shared-element morph: the grid card itself flies to the center overlay
+  // (and back on close) via the View Transitions API. The grid slot is tagged
+  // `focused-card` on the side of the transition where the overlay is absent,
+  // the overlay carries the same name on the other side, and the browser
+  // interpolates between the two rects. Falls back to a plain state change.
+  const morphTo = (nextCard, slotId) => {
+    const slot = document.getElementById(slotId);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!document.startViewTransition || !slot || reduced) {
+      setFocusedCard(nextCard);
+      return;
+    }
+    const opening = nextCard !== null;
+    if (opening) slot.style.viewTransitionName = 'focused-card';
+    const transition = document.startViewTransition(() => {
+      flushSync(() => setFocusedCard(nextCard));
+      slot.style.viewTransitionName = opening ? '' : 'focused-card';
+    });
+    transition.finished.finally(() => {
+      slot.style.viewTransitionName = '';
+    });
+  };
+
+  const openCard = (card) => morphTo(card, `card-slot-${card.id}`);
+  const closeCard = () => focusedCard && morphTo(null, `card-slot-${focusedCard.id}`);
 
   const filtered = allCards.filter((card) => {
     if (tierFilter !== 'All' && card.tier !== tierFilter) return false;
@@ -35,14 +64,18 @@ export default function Collection() {
           <p className={styles.empty}>No cards match the selected filters.</p>
         ) : (
           filtered.map((card) => (
-            <PlayerCard
+            <div
               key={card.id}
-              card={card}
-              onClick={() => console.log('Card clicked:', card)}
-            />
+              id={`card-slot-${card.id}`}
+              style={{ visibility: focusedCard?.id === card.id ? 'hidden' : 'visible' }}
+            >
+              <PlayerCard card={card} onClick={() => openCard(card)} />
+            </div>
           ))
         )}
       </main>
+
+      <CardFocusOverlay card={focusedCard} onClose={closeCard} />
     </div>
   );
 }
