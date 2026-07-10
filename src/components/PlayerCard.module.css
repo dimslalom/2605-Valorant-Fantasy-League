@@ -1,6 +1,6 @@
 /* ── 3D stage: holds perspective + the displayScale transform ── */
 .stage {
-  perspective: 800px;
+  perspective: 1400px;
   position: relative;
 }
 

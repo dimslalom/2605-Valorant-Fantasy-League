@@ -10,7 +10,7 @@ function motionDisabled() {
   );
 }
 
-export default function useCardTilt({ maxTilt = 10, disabled = false } = {}) {
+export default function useCardTilt({ maxTilt = 3, disabled = false } = {}) {
   const tiltRef = useRef(null);
   const frame = useRef(0);
 

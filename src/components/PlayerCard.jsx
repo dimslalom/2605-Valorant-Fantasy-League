@@ -13,10 +13,10 @@ const STAT_LABELS = { aim: 'AIM', positioning: 'POS', ability: 'ABL', mentality:
 // background (static) → photo (mid) → everything else (top). Any layer added
 // by future card types joins the effect by declaring these two vars.
 const PLANE = {
-  bg:    { '--z': '0px',   '--shift': '0px'  },
-  photo: { '--z': '45px',  '--shift': '14px' },
-  top:   { '--z': '90px',  '--shift': '30px' }, // stat bg, text, logos
-  glare: { '--z': '110px', '--shift': '0px'  },
+  bg:    { '--z': '0px',   '--shift': '0px' },
+  photo: { '--z': '22px',  '--shift': '6px' },
+  top:   { '--z': '45px',  '--shift': '14px' }, // stat bg, text, logos
+  glare: { '--z': '55px',  '--shift': '0px' },
 };
 
 export default function PlayerCard({
