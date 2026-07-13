@@ -187,6 +187,7 @@ export default function PlayerCard({
                     <BackMetaItem label="Tier" value={card.tier} muted={mutedColor} />
                     <BackMetaItem label="Nationality" value={countryName(card.nationality)} muted={mutedColor} />
                     <BackMetaItem label="Agents" value={(card.agents ?? []).map(capitalize).join(', ') || 'Unknown'} muted={mutedColor} />
+                    <BackMetaItem label="League" value={card.league === 't2' ? 'Challengers' : 'VCT'} muted={mutedColor} />
                   </div>
 
                   <div className={styles.backPlaceholder} style={{ borderColor: textColor + '44', color: mutedColor }}>

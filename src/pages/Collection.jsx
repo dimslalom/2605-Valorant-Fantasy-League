@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
+import { Link } from 'react-router-dom';
 import PlayerCard from '../components/PlayerCard';
 import CardFocusOverlay from '../components/CardFocusOverlay';
 import allCards from '../data/cards.json';
@@ -8,11 +9,13 @@ import styles from './Collection.module.css';
 const TIERS = ['All', 'bronze', 'silver', 'gold', 'legendary', 'prestige', 'iconic'];
 const REGIONS = ['All', 'Americas', 'EMEA', 'Pacific', 'China'];
 const ROLES = ['All', 'Duelist', 'Sentinel', 'Controller', 'Initiator', 'Flex'];
+const LEAGUES = ['All', 'VCT', 'Challengers'];
 
 export default function Collection() {
   const [tierFilter, setTierFilter] = useState('All');
   const [regionFilter, setRegionFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
+  const [leagueFilter, setLeagueFilter] = useState('All');
   const [focusedCard, setFocusedCard] = useState(null);
 
   // Shared-element morph: the grid card itself flies to the center overlay
@@ -45,17 +48,40 @@ export default function Collection() {
     if (tierFilter !== 'All' && card.tier !== tierFilter) return false;
     if (regionFilter !== 'All' && card.region !== regionFilter) return false;
     if (roleFilter !== 'All' && card.role !== roleFilter) return false;
+    if (leagueFilter !== 'All') {
+      // cards synced before the league field existed count as VCT
+      const league = card.league ?? 'vct';
+      if (league !== (leagueFilter === 'VCT' ? 'vct' : 't2')) return false;
+    }
     return true;
   });
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>My Collection</h1>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <h1 className={styles.title}>My Collection</h1>
+          <Link
+            to="/run"
+            style={{
+              color: '#ff4655',
+              textDecoration: 'none',
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              borderBottom: '1px solid #ff4655',
+              paddingBottom: 2,
+            }}
+          >
+            Perfect Run
+          </Link>
+        </div>
         <div className={styles.filters}>
           <FilterGroup label="Tier" options={TIERS} value={tierFilter} onChange={setTierFilter} />
           <FilterGroup label="Region" options={REGIONS} value={regionFilter} onChange={setRegionFilter} />
           <FilterGroup label="Role" options={ROLES} value={roleFilter} onChange={setRoleFilter} />
+          <FilterGroup label="League" options={LEAGUES} value={leagueFilter} onChange={setLeagueFilter} />
         </div>
       </header>
 
