@@ -1,22 +1,40 @@
-import { useState } from 'react';
+import { useDeferredValue, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Link } from 'react-router-dom';
 import PlayerCard from '../components/PlayerCard';
 import CardFocusOverlay from '../components/CardFocusOverlay';
+import NavHeader from '../components/NavHeader';
 import allCards from '../data/cards.json';
+import { countryName } from '../lib/utils';
 import styles from './Collection.module.css';
 
-const TIERS = ['All', 'bronze', 'silver', 'gold', 'legendary', 'prestige', 'iconic'];
-const REGIONS = ['All', 'Americas', 'EMEA', 'Pacific', 'China'];
-const ROLES = ['All', 'Duelist', 'Sentinel', 'Controller', 'Initiator', 'Flex'];
+const TIER_ORDER = ['bronze', 'silver', 'gold', 'legendary', 'prestige', 'iconic'];
+
+// Filter options derived from the data so new tiers, regions, or roles show up
+// automatically after a re-sync.
+const TIERS = ['All', ...TIER_ORDER.filter(t => allCards.some(c => c.tier === t))];
+const REGIONS = ['All', ...new Set(allCards.map(c => c.region))];
+const ROLES = ['All', ...new Set(allCards.map(c => c.role))];
 const LEAGUES = ['All', 'VCT', 'Challengers'];
+
+// Accent-fold so "leviatan" finds LEVIATÁN and "kru" finds KRÜ
+const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+// Precomputed haystack per card: name, tag, full org name, country
+const SEARCH_TEXT = new Map(allCards.map(c => [
+  c.id,
+  fold(`${c.player} ${c.org} ${c.org_name ?? ''} ${countryName(c.nationality)}`),
+]));
 
 export default function Collection() {
   const [tierFilter, setTierFilter] = useState('All');
   const [regionFilter, setRegionFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
   const [leagueFilter, setLeagueFilter] = useState('All');
+  const [query, setQuery] = useState('');
   const [focusedCard, setFocusedCard] = useState(null);
+
+  // keep typing snappy while hundreds of cards re-render
+  const deferredQuery = fold(useDeferredValue(query).trim());
 
   // Shared-element morph: the grid card itself flies to the center overlay
   // (and back on close) via the View Transitions API. The grid slot is tagged
@@ -49,45 +67,35 @@ export default function Collection() {
     if (regionFilter !== 'All' && card.region !== regionFilter) return false;
     if (roleFilter !== 'All' && card.role !== roleFilter) return false;
     if (leagueFilter !== 'All') {
-      // cards synced before the league field existed count as VCT
       const league = card.league ?? 'vct';
       if (league !== (leagueFilter === 'VCT' ? 'vct' : 't2')) return false;
     }
+    if (deferredQuery && !SEARCH_TEXT.get(card.id).includes(deferredQuery)) return false;
     return true;
   });
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <h1 className={styles.title}>My Collection</h1>
-          <Link
-            to="/run"
-            style={{
-              color: '#ff4655',
-              textDecoration: 'none',
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              borderBottom: '1px solid #ff4655',
-              paddingBottom: 2,
-            }}
-          >
-            Perfect Run
-          </Link>
-        </div>
-        <div className={styles.filters}>
-          <FilterGroup label="Tier" options={TIERS} value={tierFilter} onChange={setTierFilter} />
-          <FilterGroup label="Region" options={REGIONS} value={regionFilter} onChange={setRegionFilter} />
-          <FilterGroup label="Role" options={ROLES} value={roleFilter} onChange={setRoleFilter} />
-          <FilterGroup label="League" options={LEAGUES} value={leagueFilter} onChange={setLeagueFilter} />
-        </div>
-      </header>
+      <NavHeader right={`${filtered.length} players`} />
+
+      <div className={styles.controls}>
+        <input
+          type="search"
+          className={styles.search}
+          placeholder="Search players, teams, countries"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search players"
+        />
+        <FilterGroup label="Tier" options={TIERS} value={tierFilter} onChange={setTierFilter} />
+        <FilterGroup label="Region" options={REGIONS} value={regionFilter} onChange={setRegionFilter} />
+        <FilterGroup label="Role" options={ROLES} value={roleFilter} onChange={setRoleFilter} />
+        <FilterGroup label="League" options={LEAGUES} value={leagueFilter} onChange={setLeagueFilter} />
+      </div>
 
       <main className={styles.grid}>
         {filtered.length === 0 ? (
-          <p className={styles.empty}>No cards match the selected filters.</p>
+          <p className={styles.empty}>No players match. Try a different search or filter.</p>
         ) : (
           filtered.map((card) => (
             <div
@@ -108,28 +116,14 @@ export default function Collection() {
 
 function FilterGroup({ label, options, value, onChange }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-        {label}
-      </span>
-      <div style={{ display: 'flex', gap: 4 }}>
+    <div className={styles.filterGroup}>
+      <span className={styles.filterLabel}>{label}</span>
+      <div className={styles.filterChips}>
         {options.map((opt) => (
           <button
             key={opt}
             onClick={() => onChange(opt)}
-            style={{
-              padding: '4px 10px',
-              borderRadius: 5,
-              border: '1px solid',
-              borderColor: value === opt ? 'rgba(232,224,255,0.6)' : 'rgba(232,224,255,0.15)',
-              background: value === opt ? 'rgba(232,224,255,0.12)' : 'transparent',
-              color: value === opt ? '#e8e0ff' : 'rgba(232,224,255,0.45)',
-              fontSize: 11,
-              fontWeight: 600,
-              cursor: 'pointer',
-              textTransform: opt === 'All' ? 'none' : 'capitalize',
-              transition: 'all 0.1s',
-            }}
+            className={[styles.chip, value === opt ? styles.chipActive : ''].join(' ')}
           >
             {opt}
           </button>

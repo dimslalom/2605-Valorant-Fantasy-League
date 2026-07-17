@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import NavHeader from '../components/NavHeader';
 import PlayerCard from '../components/PlayerCard';
 import allCards from '../data/cards.json';
 import { countryName } from '../lib/utils';
@@ -36,6 +36,7 @@ export default function PerfectRun() {
   const [nat, setNat] = useState(null);
   const [choices, setChoices] = useState([]);
   const [rerolls, setRerolls] = useState(3);
+  const [ripId, setRipId] = useState(0); // bumped per roll, keys the pack-rip
 
   // review
   const [iglId, setIglId] = useState(null);
@@ -87,7 +88,8 @@ export default function PerfectRun() {
   function rollSlot(ids) {
     const rolled = rollNationality(rng.current, allCards, ids);
     setNat(rolled);
-    setChoices(draftChoices(rng.current, allCards, rolled, ids));
+    setChoices(draftChoices(allCards, rolled, ids));
+    setRipId(id => id + 1);
   }
 
   function pickPlayer(card) {
@@ -258,7 +260,6 @@ export default function PerfectRun() {
 
   const saves = loadSaves();
   const todayBest = saves.dailyScores?.[dateKey()];
-  const compactHeader = phase === 'run' || phase === 'over';
 
   // Menu key art: the three highest-rated cards that have real photos
   const fanCards = useMemo(() =>
@@ -270,27 +271,7 @@ export default function PerfectRun() {
 
   return (
     <div className={styles.page}>
-      {phase === 'menu' ? (
-        <header className={styles.slimHeader}>
-          <Link to="/collection" className={styles.navLink}>Collection</Link>
-        </header>
-      ) : compactHeader ? (
-        <header className={styles.slimHeader}>
-          <Link to="/collection" className={styles.navLink}>Collection</Link>
-          <span className={styles.slimTitle}>Perfect Run</span>
-          {phase === 'run' && round && <span className={styles.slimStage}>{round.label}</span>}
-        </header>
-      ) : (
-        <header className={styles.header}>
-          <Link to="/collection" className={styles.navLink}>Collection</Link>
-          <span className={styles.eyebrow}>VCT Champions Simulator</span>
-          <h1 className={styles.title}>Perfect Run</h1>
-          <span className={styles.subtitle}>
-            Draft a five-man roster from random nations, then try to win the whole
-            event without dropping a single map.
-          </span>
-        </header>
-      )}
+      <NavHeader right={phase === 'run' && round ? round.label : undefined} />
 
       {phase === 'menu' && (
         <>
@@ -336,33 +317,19 @@ export default function PerfectRun() {
 
       {phase === 'draft' && (
         <section>
-          <div className={styles.draftBar}>
-            <div>
-              <span className={styles.draftSlot}>Pick {picks.length + 1} of {ROSTER_SIZE}</span>
-              <span className={styles.draftNat}>
-                <span className={`fi fi-${nat?.toLowerCase()}`} style={{ width: 34, height: 24 }} />
-                {countryName(nat)}
-              </span>
-            </div>
-            <button className={styles.rerollBtn} onClick={reroll} disabled={rerolls <= 0}>
-              Reroll nation ({rerolls} left)
-            </button>
-          </div>
-
-          <div className={styles.choices}>
-            {choices.map(card => (
-              <PlayerCard key={card.id} card={card} displayScale={0.45} onClick={() => pickPlayer(card)} />
-            ))}
-          </div>
-
-          {picks.length > 0 && (
-            <div className={styles.rosterStrip}>
-              <span className={styles.stripLabel}>Your squad</span>
-              {picks.map(card => (
-                <PlayerCard key={card.id} card={card} displayScale={0.28} />
-              ))}
-            </div>
-          )}
+          {/* One lane per player. Future multiplayer stacks read-only lanes
+              (interactive={false}) for the other drafters below this one. */}
+          <DraftLane
+            pickNumber={picks.length + 1}
+            nation={nat}
+            choices={choices}
+            picks={picks}
+            rerolls={rerolls}
+            ripId={ripId}
+            interactive
+            onPick={pickPlayer}
+            onReroll={reroll}
+          />
         </section>
       )}
 
@@ -662,6 +629,91 @@ function Bracket({ tour, round, isRevealed }) {
       <div className={styles.conn} style={{ gridColumn: 4, gridRow: '2 / 6' }} />
 
       {slot(5, 2, 6, cell(gf?.matches[0], 'gf'))}
+    </div>
+  );
+}
+
+// ── Draft lane: header + pack rip + horizontal choice strip + picks ─────────
+// One lane per drafting player. interactive={false} renders a watch-only lane
+// (no reroll button, cards not clickable) for future multiplayer spectating.
+
+const RIP_MS = 850;
+
+function DraftLane({ pickNumber, nation, choices, picks, rerolls, ripId, interactive, onPick, onReroll, label }) {
+  const [ripping, setRipping] = useState(false);
+  const stripRef = useRef(null);
+  const ripTimer = useRef(null);
+
+  useEffect(() => {
+    if (!ripId) return undefined;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setRipping(false);
+      return undefined;
+    }
+    setRipping(true);
+    if (stripRef.current) stripRef.current.scrollLeft = 0;
+    ripTimer.current = setTimeout(() => setRipping(false), RIP_MS);
+    return () => clearTimeout(ripTimer.current);
+  }, [ripId]);
+
+  // A regular mouse wheel scrolls the strip sideways
+  const onWheel = (e) => {
+    if (stripRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      stripRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  const face = (
+    <span className={styles.packFaceInner}>
+      <span className={`fi fi-${nation?.toLowerCase()}`} style={{ width: 46, height: 33 }} />
+      <span className={styles.packName}>{countryName(nation)}</span>
+      <span className={styles.packSlash}>//</span>
+    </span>
+  );
+
+  return (
+    <div className={styles.lane}>
+      <div className={styles.draftBar}>
+        <div>
+          {label && <span className={styles.laneLabel}>{label}</span>}
+          <span className={styles.draftSlot}>Pick {pickNumber} of {ROSTER_SIZE}</span>
+          <span className={styles.draftNat}>
+            <span className={`fi fi-${nation?.toLowerCase()}`} style={{ width: 34, height: 24 }} />
+            {countryName(nation)}
+            <small className={styles.draftCount}>{choices.length} available</small>
+          </span>
+        </div>
+        {interactive && (
+          <button className={styles.rerollBtn} onClick={onReroll} disabled={rerolls <= 0 || ripping}>
+            Reroll nation ({rerolls} left)
+          </button>
+        )}
+      </div>
+
+      <div className={styles.strip} ref={stripRef} onWheel={onWheel}>
+        {ripping && (
+          <div className={styles.pack} key={`p${ripId}`} aria-hidden="true">
+            <div className={`${styles.packFace} ${styles.packTop}`}>{face}</div>
+            <div className={`${styles.packFace} ${styles.packBottom}`}>{face}</div>
+          </div>
+        )}
+        <div key={`c${ripId}`} className={[styles.stripCards, ripping ? styles.stripHidden : styles.stripReveal].join(' ')}>
+          {choices.map((card, i) => (
+            <div key={card.id} className={styles.stripCard} style={{ '--i': Math.min(i, 10) }}>
+              <PlayerCard card={card} displayScale={0.45} onClick={interactive ? () => onPick(card) : undefined} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {picks.length > 0 && (
+        <div className={styles.rosterStrip}>
+          <span className={styles.stripLabel}>{interactive ? 'Your squad' : 'Squad'}</span>
+          {picks.map(card => (
+            <PlayerCard key={card.id} card={card} displayScale={0.28} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -65,10 +65,11 @@ export function rollNationality(rng, cards, pickedIds) {
   return entries[entries.length - 1][0];
 }
 
-// Up to 5 random players of that nationality, best rating first.
-export function draftChoices(rng, cards, nationality, pickedIds, n = 5) {
-  const pool = cards.filter(c => c.nationality === nationality && !pickedIds.has(c.id));
-  return pickN(rng, pool, n).sort((a, b) => b.rating - a.rating);
+// Every available player of that nationality, best rating first.
+export function draftChoices(cards, nationality, pickedIds) {
+  return cards
+    .filter(c => c.nationality === nationality && !pickedIds.has(c.id))
+    .sort((a, b) => b.rating - a.rating);
 }
 
 // ── Chemistry & team power ───────────────────────────────────────────────────

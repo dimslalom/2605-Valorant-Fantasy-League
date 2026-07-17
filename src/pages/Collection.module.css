@@ -1,27 +1,90 @@
+/* Player Library. Same design tokens as PerfectRun.module.css:
+   sharp corners, filled surfaces, one accent, uppercase micro labels,
+   separation by whitespace, no decorative hairlines. */
+
 .page {
+  --ink: #ece8e1;
+  --muted: #8a8f9e;
+  --faint: #4c5160;
+  --raise: #161b29;
+  --raise-hi: #1e2435;
+  --accent: #ff4655;
+
   min-height: 100%;
-  padding: 32px 40px 60px;
+  padding: 32px 48px 96px;
   background: #0d0f17;
+  color: var(--ink);
 }
 
-.header {
-  margin-bottom: 32px;
+/* ── Search + filters ── */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 30px;
 }
 
-.title {
-  font-size: 28px;
+.search {
+  width: 100%;
+  max-width: 420px;
+  padding: 12px 16px;
+  border: none;
+  background: var(--raise);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  outline: none;
+  transition: background 0.12s;
+}
+.search::placeholder {
+  color: var(--faint);
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.search:focus { background: var(--raise-hi); }
+.search::-webkit-search-cancel-button { filter: grayscale(1); }
+
+.filterGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.filterLabel {
+  width: 52px;
+  flex-shrink: 0;
+  font-size: 11px;
   font-weight: 700;
-  color: #e8e0ff;
-  letter-spacing: -0.5px;
-  margin-bottom: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
 }
 
-.filters {
+.filterChips {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 4px;
 }
 
+.chip {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+}
+.chip:hover { background: var(--raise); color: var(--ink); }
+.chipActive { background: var(--accent); color: #fff; }
+.chipActive:hover { background: var(--accent); color: #fff; }
+
+/* ── Card grid ── */
 .grid {
   display: flex;
   flex-wrap: wrap;
@@ -29,7 +92,13 @@
 }
 
 .empty {
-  color: rgba(232, 224, 255, 0.4);
+  color: var(--muted);
   font-size: 14px;
   padding: 40px 0;
+}
+
+@media (max-width: 680px) {
+  .page { padding: 20px 18px 72px; }
+  .filterGroup { flex-direction: column; gap: 6px; }
+  .filterLabel { width: auto; }
 }

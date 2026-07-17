@@ -1,0 +1,51 @@
+/* Site-wide slim header. Shared tokens with the page modules. */
+.header {
+  --ink: #ece8e1;
+  --muted: #8a8f9e;
+  --accent: #ff4655;
+
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.nav {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+}
+
+.link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.12s;
+}
+.link:hover { color: var(--ink); }
+
+/* current page: brighter, heavier, wider tracking */
+.active {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+.active:hover { color: var(--ink); }
+
+.right {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 680px) {
+  .header { flex-wrap: wrap; }
+}

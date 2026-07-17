@@ -18,7 +18,7 @@
  *   .venv/bin/python main.py   (serves on :3001)
  * Override the API location with VLR_API_BASE if hosted elsewhere.
  *
- * Tier rule: card rating > 80 → gold, 70 to 80 → silver, < 70 → bronze.
+ * Tier rule: card rating 80+ → gold, 70+ → silver, below 70 → bronze.
  * Bronze card art doesn't exist yet, so bronze cards fall back to the
  * silver palette until bronze-bg.png / bronze-stat-bg.png are added.
  */
@@ -31,6 +31,7 @@ import {
   EVENTS, PLAYER_OVERRIDES, IGL_NAMES,
   TIER2_QUERY, TIER2_TITLE_MUST, TIER2_TITLE_SKIP, TIER2_EVENTS,
   TIER2_REGION_KEYWORDS, TIER2_REGION_FALLBACK, TIER2_STAT_PENALTY,
+  VCT_STAT_BONUS,
 } from './vlr-players.config.js';
 
 const __dirname   = dirname(fileURLToPath(import.meta.url));
@@ -240,9 +241,9 @@ async function discoverTier2Events() {
   return events;
 }
 
-// Tier from card rating: >80 gold, 70-80 silver, <70 bronze
+// Tier from card rating, thresholds inclusive: 80+ gold, 70+ silver, else bronze
 function tierFromRating(rating) {
-  if (rating > 80) return 'gold';
+  if (rating >= 80) return 'gold';
   if (rating >= 70) return 'silver';
   return 'bronze';
 }
@@ -527,11 +528,12 @@ async function main() {
       ? deriveStats(agentStats, bl, vlrNorm, role)
       : { aim: 70, positioning: 70, ability: 70, mentality: 70, synergy: 70 };
 
-    // Tier-2 stats come from weaker competition: dampen across the board
-    if (meta.league === 't2') {
-      for (const key of Object.keys(stats)) {
-        stats[key] = Math.max(50, stats[key] - TIER2_STAT_PENALTY);
-      }
+    // League adjustment: tier-2 stats come from weaker competition so dampen
+    // them, and lift tier-1 so the franchised league reads as elite.
+    for (const key of Object.keys(stats)) {
+      stats[key] = meta.league === 't2'
+        ? Math.max(50, stats[key] - TIER2_STAT_PENALTY)
+        : Math.min(99, stats[key] + VCT_STAT_BONUS);
     }
 
     // Card rating = average of the 5 displayed stats, so the headline number

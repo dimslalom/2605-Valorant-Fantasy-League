@@ -24,6 +24,7 @@ export function regionFullName(region) {
 }
 
 export const TEXT_COLOR = {
+  bronze:    '#543504',
   silver:    '#1a1f2e',
   gold:      '#3F3418',
   legendary: '#f0d0ff',

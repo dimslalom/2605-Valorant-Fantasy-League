@@ -34,6 +34,10 @@ export const TIER2_REGION_FALLBACK = { region: 'Pacific', apiRegion: 'ap' };
 // normalized numbers). Subtracted from every stat, floored at 50.
 export const TIER2_STAT_PENALTY = 9;
 
+// Tier-1 players are the best ~180 in the world: lift them so the franchised
+// league reads as elite. Added to every VCT stat, capped at 99.
+export const VCT_STAT_BONUS = 3;
+
 // ── Real IGLs ────────────────────────────────────────────────────────────────
 // Lowercased aliases of players who actually call the game. Best-effort list,
 // review and extend freely; rosters shift and tier-2 IGLs are mostly unknown.
@@ -100,7 +104,7 @@ export const TEAMS = [
 
 // Manual overrides keyed by vlr.gg player ID (string).
 // Supported fields: tier, palette, power, edition, photo.
-// Tier is otherwise derived from the card rating (>80 gold, 70-80 silver, below 70 bronze).
+// Tier is otherwise derived from the card rating (80+ gold, 70+ silver, below 70 bronze).
 // Example:
 // '123': { tier: 'gold', palette: 'gold', power: { name: '...', description: '...', effect: '...', value: 2, duration: 3 } }
 export const PLAYER_OVERRIDES = {
