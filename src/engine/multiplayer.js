@@ -126,6 +126,10 @@ export function applyCommand(state, actorId, command, cards, now) {
     case 'skip_consolation':
       skipConsolation(state, actorId, cards, now, events);
       break;
+    case 'play_match':
+      requireHost(state, actorId);
+      playHumanMatch(state, cards, now, events);
+      break;
     case 'advance_early':
       requireHost(state, actorId);
       if (state.phase !== 'match_transition' || !state.pendingTransition) {
@@ -194,11 +198,16 @@ export function advanceDeadlines(state, cards, now) {
 }
 
 export function nextAlarmAt(state) {
+  const phaseDeadline = state.phase === 'draft' || state.phase === 'igl_select'
+    ? state.draft?.deadlineAt
+    : state.phase === 'match_transition'
+      ? state.pendingTransition?.deadlineAt
+      : state.phase === 'consolation'
+        ? state.consolation?.deadlineAt
+        : null;
   return [
     state.hostMigrationAt,
-    state.draft?.deadlineAt,
-    state.pendingTransition?.deadlineAt,
-    state.consolation?.deadlineAt,
+    phaseDeadline,
     state.lastActiveAt ? state.lastActiveAt + LOBBY_TTL_MS : null,
   ].filter(Number.isFinite).sort((a, b) => a - b)[0] ?? null;
 }
@@ -328,6 +337,7 @@ function chooseIgl(state, actorId, cardId, cards, now, events) {
 }
 
 function startSeason(state, cards, now, events) {
+  state.draft.deadlineAt = null;
   state.season = { cycle: 0, eventIndex: 0, events: makeEventCycle(state), standings: makeStandings(state) };
   startTournament(state, cards, now, events);
 }
@@ -352,16 +362,17 @@ function resolveUntilPresentation(state, cards, now, events) {
   const tournament = state.tournament;
   while (true) {
     const round = tournament.rounds[tournament.roundIdx];
-    const unresolvedHuman = round.matches.find(match => !match.winner && match.humanInvolved);
-    if (unresolvedHuman) {
-      simulateMatch(state, unresolvedHuman, cards);
-      tournament.currentHumanMatchId = unresolvedHuman.id;
-      state.phase = 'match_transition';
-      state.pendingTransition = { type: 'next_match', matchId: unresolvedHuman.id, deadlineAt: now + TRANSITION_DEADLINE_MS };
-      events.push({ type: 'deadline', serverNow: now, deadlineAt: state.pendingTransition.deadlineAt });
-      return;
+    const unresolved = round.matches.find(match => !match.winner);
+    if (unresolved) {
+      if (unresolved.humanInvolved) {
+        tournament.currentHumanMatchId = unresolved.id;
+        state.pendingTransition = null;
+        state.phase = 'match_ready';
+        return;
+      }
+      simulateMatch(state, unresolved, cards);
+      continue;
     }
-    for (const match of round.matches) if (!match.winner) simulateMatch(state, match, cards);
     if (round.key === 'final') {
       tournament.championId = round.matches[0].winner;
       finishTournament(state, cards, now, events);
@@ -383,6 +394,21 @@ function resolveUntilPresentation(state, cards, now, events) {
     state.animationEvent = { id: `${state.season.cycle}:${state.season.eventIndex}:${nextKey}`, moves };
     events.push({ type: 'round_advance', ...state.animationEvent });
   }
+}
+
+function playHumanMatch(state, cards, now, events) {
+  if (state.phase !== 'match_ready' || !state.tournament?.currentHumanMatchId) {
+    throw new GameError('invalid_phase', 'There is no human match ready to play.');
+  }
+  const round = state.tournament.rounds[state.tournament.roundIdx];
+  const match = round.matches.find(item => item.id === state.tournament.currentHumanMatchId);
+  if (!match || match.winner || !match.humanInvolved) {
+    throw new GameError('invalid_match', 'That human match is not available.');
+  }
+  simulateMatch(state, match, cards);
+  state.phase = 'match_transition';
+  state.pendingTransition = { type: 'next_match', matchId: match.id, deadlineAt: now + TRANSITION_DEADLINE_MS };
+  events.push({ type: 'deadline', serverNow: now, deadlineAt: state.pendingTransition.deadlineAt });
 }
 
 function advanceMatchTransition(state, cards, now, events) {

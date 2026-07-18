@@ -1,4 +1,4 @@
-.page { --accent:#ff4655; --ink:#ece8e1; --muted:#8a8f9e; --panel:#161b29; min-height:100vh; padding:32px 48px 120px; background:#0d0f17; color:var(--ink); }
+.page { --accent:#ff4655; --accent-soft:rgba(255,70,85,.13); --ink:#ece8e1; --muted:#8a8f9e; --faint:#4c5160; --line:#2b3145; --panel:#161b29; --raise:#161b29; --raise-hi:#1e2435; --win:#00c8a0; min-height:100vh; padding:32px 48px 120px; background:#0d0f17; color:var(--ink); }
 .hero { max-width:1080px; margin:48px auto; }
 .hero h1,.roomHeader h1,.standings h1 { margin:10px 0 32px; font-size:clamp(54px,9vw,100px); line-height:.88; text-transform:uppercase; }
 .hero h1 em { color:var(--accent); font-style:normal; }
@@ -32,6 +32,7 @@
 .rules p { color:var(--muted); line-height:1.6; }
 .draftStage { max-width:1180px; margin:40px auto; text-align:center; }
 .draftStage h2 { font-size:36px; text-transform:uppercase; }
+.multiplayerLane { text-align:left; }
 .nation { font-size:20px; color:var(--accent); text-transform:uppercase; }
 .cards { display:flex; justify-content:center; gap:14px; overflow-x:auto; padding:25px 10px; }
 .cards>div { animation:packReveal .32s cubic-bezier(.2,.8,.2,1) both; }
@@ -41,18 +42,11 @@
 .swap { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:15px; }
 .swap span { width:100%; color:var(--muted); }.swap button { padding:10px 14px; border:0; background:#23293a; color:white; }
 .eventTitle { max-width:1500px; margin:24px auto; display:flex; justify-content:space-between; text-transform:uppercase; }.eventTitle span { color:var(--accent); font-weight:800; }
-.bracketWrap { position:relative; max-width:1500px; margin:auto; overflow-x:auto; }
-.bracket { display:grid; grid-template-columns:repeat(4,minmax(235px,1fr)); gap:30px; min-width:1030px; align-items:stretch; }
-.round { display:flex; flex-direction:column; justify-content:space-around; gap:12px; }
-.round h3 { color:var(--muted); font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
-.match { padding:6px; background:var(--panel); }
-.match>div,.travelClone { display:grid; grid-template-columns:24px 24px 1fr 24px; align-items:center; min-height:34px; padding:0 8px; color:var(--muted); }
-.match img,.travelClone img { width:20px; height:20px; object-fit:contain; }.match b { color:var(--ink); }.match .winner { background:#243d39; color:#00c8a0; }
-.travelOverlay { position:absolute; inset:0; pointer-events:none; overflow:visible; }.travelClone { position:absolute; top:0; left:0; z-index:10; background:#243d39; color:#00c8a0; }
+.tournamentBoard { max-width:1500px; margin:0 auto; }
 .timerDock { position:fixed; z-index:50; left:0; right:0; bottom:0; padding:46px 24px 18px; background:linear-gradient(transparent,rgba(13,15,23,.96) 45%); }
 .timerDock button { position:relative; display:block; width:min(720px,100%); min-height:68px; margin:auto; overflow:hidden; border:2px solid var(--accent); background:#191d2a; color:white; font-size:17px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; transition:transform .15s,filter .15s; }
 .timerDock button::before { content:''; position:absolute; inset:0; background:var(--accent); transform:scaleX(var(--remaining)); transform-origin:left; transition:transform .1s linear; }.timerDock button span { position:relative; }.timerDock button:not(:disabled):hover { transform:translateY(-3px); filter:brightness(1.08); }.timerDock button:not(:disabled):active { transform:translateY(1px) scale(.99); }
 .endless { display:block; margin:24px auto; border:0; background:transparent; color:var(--muted); text-decoration:underline; }
 .standings { max-width:900px; margin:40px auto; }.standings>div { display:grid; grid-template-columns:40px 1fr 100px 100px 80px; padding:18px; background:var(--panel); margin:4px 0; }.standings strong { color:var(--accent); text-align:right; }
-@media(max-width:680px){.page{padding:20px 16px 120px}.paths,.lobbyGrid{grid-template-columns:1fr}.roomHeader{align-items:start;flex-direction:column}.meta{flex-wrap:wrap;margin-top:20px}.bracket{display:flex;min-width:0;flex-direction:column}.round{gap:8px}.travelOverlay{display:none}.cards{justify-content:flex-start}.standings>div{grid-template-columns:30px 1fr 70px}.standings>div span:nth-of-type(3),.standings>div span:nth-of-type(4){display:none}.timerDock{padding-inline:12px}}
+@media(max-width:680px){.page{padding:20px 16px 120px}.paths,.lobbyGrid{grid-template-columns:1fr}.roomHeader{align-items:start;flex-direction:column}.meta{flex-wrap:wrap;margin-top:20px}.cards{justify-content:flex-start}.standings>div{grid-template-columns:30px 1fr 70px}.standings>div span:nth-of-type(3),.standings>div span:nth-of-type(4){display:none}.timerDock{padding-inline:12px}}
 @media(prefers-reduced-motion:reduce){.timerDock button,.timerDock button::before{transition:none}.cards>div{animation:none}}

@@ -1,11 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NavHeader from '../components/NavHeader';
 import PlayerCard from '../components/PlayerCard';
 import cards from '../data/cards.json';
+import { ROSTER_SIZE } from '../engine/perfectRun';
 import { connectLobby, createLobby, joinLobby, loadSession, makeCommand } from '../lib/multiplayerClient';
-import { assetPath } from '../lib/utils';
+import { assetPath, countryName } from '../lib/utils';
 import styles from './Multiplayer.module.css';
+import soloStyles from './PerfectRun.module.css';
 
 const cardMap = new Map(cards.map(card => [card.id, card]));
 
@@ -22,6 +24,7 @@ export default function Multiplayer() {
   const [error, setError] = useState('');
   const [animationEvent, setAnimationEvent] = useState(null);
   const socketRef = useRef(null);
+  const clearAnimation = useCallback(() => setAnimationEvent(null), []);
 
   useEffect(() => {
     if (!routeCode || !session?.sessionToken) return;
@@ -119,7 +122,7 @@ export default function Multiplayer() {
     );
   }
 
-  return <LobbyRoom snapshot={snapshot} session={session} status={status} error={error} send={send} animationEvent={animationEvent} clearAnimation={() => setAnimationEvent(null)} />;
+  return <LobbyRoom snapshot={snapshot} session={session} status={status} error={error} send={send} animationEvent={animationEvent} clearAnimation={clearAnimation} />;
 }
 
 function LobbyRoom({ snapshot, session, status, error, send, animationEvent, clearAnimation }) {
@@ -151,8 +154,18 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
         <section className={styles.draftStage}>
           <span className={styles.kicker}>{snapshot.phase === 'draft' ? `Draft pick ${(snapshot.draft.turnIndex ?? 0) + 1}/${snapshot.draft.turns.length}` : 'Consolation unboxing'}</span>
           <h2>{active?.squadName} is opening</h2>
-          {(snapshot.draft?.nation || snapshot.consolation?.nation) && <p className={styles.nation}>{snapshot.draft?.nation ?? snapshot.consolation?.nation}</p>}
-          <div className={styles.cards}>{offers?.map(id => <PlayerCard key={id} card={cardMap.get(id)} displayScale={0.38} onClick={activeId === myId ? () => send('choose_card', { cardId: id }) : undefined} selected={snapshot.consolation?.selectedCardId === id} />)}</div>
+          <MultiplayerDraftLane
+            phase={snapshot.phase}
+            turnIndex={snapshot.draft?.turnIndex ?? snapshot.consolation?.turnIndex ?? 0}
+            totalTurns={snapshot.draft?.turns.length ?? snapshot.consolation?.order.length ?? 0}
+            nation={snapshot.draft?.nation ?? snapshot.consolation?.nation}
+            choices={(offers ?? []).map(id => cardMap.get(id)).filter(Boolean)}
+            picks={active?.rosterIds.map(id => cardMap.get(id)).filter(Boolean) ?? []}
+            selectedId={snapshot.consolation?.selectedCardId}
+            interactive={activeId === myId}
+            onPick={card => send('choose_card', { cardId: card.id })}
+            squadName={active?.squadName ?? 'Squad'}
+          />
           {snapshot.phase === 'consolation' && activeId === myId && snapshot.consolation.selectedCardId && <SwapStrip me={me} send={send} />}
           {snapshot.phase === 'consolation' && activeId === myId && <button className={styles.secondary} onClick={() => send('skip_consolation')}>Skip pack</button>}
           <Deadline deadlineAt={snapshot.draft?.deadlineAt ?? snapshot.consolation?.deadlineAt} serverNow={snapshot.serverNow} />
@@ -161,8 +174,8 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
 
       {snapshot.phase === 'igl_select' && <IglSelect me={me} selected={snapshot.draft.iglSelections[myId]} onChoose={id => send('choose_igl', { cardId: id })} deadlineAt={snapshot.draft.deadlineAt} serverNow={snapshot.serverNow} spectator={!me} />}
 
-      {(snapshot.phase === 'tournament' || snapshot.phase === 'match_transition') && snapshot.tournament && (
-        <section>
+      {(snapshot.phase === 'tournament' || snapshot.phase === 'match_ready' || snapshot.phase === 'match_transition') && snapshot.tournament && (
+        <section className={styles.tournamentBoard}>
           <div className={styles.eventTitle}><span>{snapshot.tournament.meta.label}</span><b>{snapshot.tournament.rounds[snapshot.tournament.roundIdx].label}</b></div>
           <MultiplayerBracket tournament={snapshot.tournament} animationEvent={animationEvent} onAnimationDone={clearAnimation} />
           {snapshot.settings.gameLength === 'endless' && isHost && <button className={styles.endless} onClick={() => send('end_endless')}>End Endless after this event</button>}
@@ -170,6 +183,7 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
       )}
 
       {snapshot.phase === 'season_over' && <Standings snapshot={snapshot} isHost={isHost} send={send} />}
+      {snapshot.phase === 'match_ready' && !animationEvent && <PlayMatchDock isHost={isHost} onPlay={() => send('play_match')} />}
       {snapshot.phase === 'match_transition' && <TimerBar pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
     </main>
   );
@@ -192,6 +206,84 @@ function Standings({ snapshot, isHost, send }) {
   return <section className={styles.standings}><span className={styles.kicker}>Season complete</span><h1>Final standings</h1>{rows.map((row, index) => <div key={row.competitorId}><span>{index + 1}</span><b>{row.squadName}</b><span>{row.titles} titles</span><span>{row.matchWins} wins</span><strong>{row.score}</strong></div>)}{isHost && <button className={styles.primary} onClick={() => send('return_to_lobby')}>Return everyone to lobby</button>}</section>;
 }
 
+const RIP_MS = 850;
+
+function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, picks, selectedId, interactive, onPick, squadName }) {
+  const [ripping, setRipping] = useState(false);
+  const stripRef = useRef(null);
+  const ripTimer = useRef(null);
+  const ripId = `${phase}:${turnIndex}:${choices.map(card => card.id).join(',')}`;
+
+  useEffect(() => {
+    if (!choices.length) return undefined;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const startTimer = setTimeout(() => {
+      setRipping(!reduced);
+      if (stripRef.current) stripRef.current.scrollLeft = 0;
+      if (!reduced) ripTimer.current = setTimeout(() => setRipping(false), RIP_MS);
+    }, 0);
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(ripTimer.current);
+    };
+  }, [ripId, choices.length]);
+
+  const onWheel = event => {
+    if (stripRef.current && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+      stripRef.current.scrollLeft += event.deltaY;
+    }
+  };
+  const packTitle = nation ? countryName(nation) : 'Multiplayer pack';
+  const face = (
+    <span className={soloStyles.packFaceInner}>
+      {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 46, height: 33 }} />}
+      <span className={soloStyles.packName}>{packTitle}</span>
+      <span className={soloStyles.packSlash}>//</span>
+    </span>
+  );
+
+  return (
+    <div className={`${soloStyles.lane} ${styles.multiplayerLane}`}>
+      <div className={soloStyles.draftBar}>
+        <div>
+          <span className={soloStyles.laneLabel}>{squadName}</span>
+          <span className={soloStyles.draftSlot}>
+            {phase === 'draft' ? `Pick ${Math.min(picks.length + 1, ROSTER_SIZE)} of ${ROSTER_SIZE}` : `Consolation ${turnIndex + 1} of ${totalTurns}`}
+          </span>
+          <span className={soloStyles.draftNat}>
+            {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 34, height: 24 }} />}
+            {nation ? countryName(nation) : 'Three card pack'}
+            <small className={soloStyles.draftCount}>{choices.length} available</small>
+          </span>
+        </div>
+      </div>
+
+      <div className={soloStyles.strip} ref={stripRef} onWheel={onWheel}>
+        {ripping && (
+          <div className={soloStyles.pack} key={`p${ripId}`} aria-hidden="true">
+            <div className={`${soloStyles.packFace} ${soloStyles.packTop}`}>{face}</div>
+            <div className={`${soloStyles.packFace} ${soloStyles.packBottom}`}>{face}</div>
+          </div>
+        )}
+        <div key={`c${ripId}`} className={[soloStyles.stripCards, ripping ? soloStyles.stripHidden : soloStyles.stripReveal].join(' ')}>
+          {choices.map((card, index) => (
+            <div key={card.id} className={soloStyles.stripCard} style={{ '--i': Math.min(index, 10) }}>
+              <PlayerCard card={card} displayScale={0.45} selected={selectedId === card.id} onClick={interactive ? () => onPick(card) : undefined} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {picks.length > 0 && (
+        <div className={soloStyles.rosterStrip}>
+          <span className={soloStyles.stripLabel}>{squadName}</span>
+          {picks.map(card => <PlayerCard key={card.id} card={card} displayScale={0.28} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
   const refs = useRef({});
   const overlayRef = useRef(null);
@@ -212,7 +304,7 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
       const a = source.getBoundingClientRect();
       const b = destination.getBoundingClientRect();
       const clone = source.cloneNode(true);
-      clone.classList.add(styles.travelClone);
+      clone.classList.add(soloStyles.travelClone);
       clone.style.width = `${a.width}px`;
       clone.style.height = `${a.height}px`;
       overlay.appendChild(clone);
@@ -232,7 +324,88 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
     return () => cleanups.forEach(fn => fn());
   }, [animationEvent, onAnimationDone]);
 
-  return <div className={styles.bracketWrap} ref={wrapRef}><div className={styles.bracket}>{tournament.rounds.map(round => <div className={styles.round} key={round.key}><h3>{round.label}</h3>{round.matches.map((match, index) => <div className={styles.match} key={match.id} ref={el => { refs.current[`${round.key}:${index}`] = el; }}>{[match.a, match.b].map(teamId => { const team = tournament.teams[teamId]; return <div key={teamId} data-team-id={teamId} className={match.winner === teamId ? styles.winner : ''}><span>{tournament.seeds.indexOf(teamId) + 1}</span>{team.logo && <img src={assetPath(team.logo)} alt="" />}<b>{team.tag}</b><strong>{match.maps ? (match.a === teamId ? match.scoreA : match.scoreB) : ''}</strong></div>; })}</div>)}</div>)}</div><div className={styles.travelOverlay} ref={overlayRef} /></div>;
+  const byKey = key => tournament.rounds.find(round => round.key === key);
+  const r16 = byKey('r16');
+  const quarter = byKey('quarter');
+  const semi = byKey('semi');
+  const final = byKey('final');
+  const cell = (round, index, key) => (
+    <MultiplayerBracketCell
+      tournament={tournament}
+      match={round?.matches[index]}
+      cellRef={element => { refs.current[`${key}:${index}`] = element; }}
+    />
+  );
+  const slot = (column, rowStart, rowEnd, child, key) => (
+    <div key={key} className={soloStyles.bracketSlot} style={{ gridColumn: column, gridRow: `${rowStart} / ${rowEnd}` }}>{child}</div>
+  );
+  const connector = (column, rowStart, rowEnd, key) => (
+    <div key={key} className={soloStyles.conn} style={{ gridColumn: column, gridRow: `${rowStart} / ${rowEnd}` }} />
+  );
+
+  return (
+    <div className={soloStyles.bracketWrap} ref={wrapRef}>
+      <div className={soloStyles.bracket}>
+        <span className={soloStyles.poolLabel} style={{ gridColumn: 1, gridRow: 1 }}>Round of 16</span>
+        <span className={soloStyles.poolLabel} style={{ gridColumn: 3, gridRow: 1 }}>Quarterfinals</span>
+        <span className={soloStyles.poolLabel} style={{ gridColumn: 5, gridRow: 1 }}>Semifinals</span>
+        <span className={soloStyles.poolLabel} style={{ gridColumn: 7, gridRow: 1 }}>Grand Final</span>
+        {[0, 1, 2, 3, 4, 5, 6, 7].map(index => slot(1, index + 2, index + 3, cell(r16, index, 'r16'), `r16-${index}`))}
+        {[0, 1, 2, 3].map(index => connector(2, 2 * index + 2, 2 * index + 4, `c2-${index}`))}
+        {[0, 1, 2, 3].map(index => slot(3, 2 * index + 2, 2 * index + 4, cell(quarter, index, 'quarter'), `qf-${index}`))}
+        {[0, 1].map(index => connector(4, 4 * index + 2, 4 * index + 6, `c4-${index}`))}
+        {[0, 1].map(index => slot(5, 4 * index + 2, 4 * index + 6, cell(semi, index, 'semi'), `sf-${index}`))}
+        {connector(6, 2, 10, 'c6')}
+        {slot(7, 2, 10, cell(final, 0, 'final'), 'gf')}
+      </div>
+      <div className={soloStyles.travelOverlay} ref={overlayRef} aria-hidden="true" />
+    </div>
+  );
+}
+
+function MultiplayerBracketCell({ tournament, match, cellRef }) {
+  if (!match) {
+    return (
+      <div className={soloStyles.bracketCell} ref={cellRef}>
+        <div className={soloStyles.bracketTeam}><span className={soloStyles.cellTag}>TBD</span></div>
+        <div className={soloStyles.bracketTeam}><span className={soloStyles.cellTag}>TBD</span></div>
+      </div>
+    );
+  }
+  const revealed = Boolean(match.winner);
+  const row = (teamId, score) => {
+    const team = tournament.teams[teamId];
+    const winner = revealed && match.winner === teamId;
+    return (
+      <div
+        key={teamId}
+        data-team-id={teamId}
+        className={[soloStyles.bracketTeam, winner ? soloStyles.cellWon : '', revealed && !winner ? soloStyles.cellLost : '', team.human ? soloStyles.bracketYou : ''].join(' ')}
+      >
+        {team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={soloStyles.youMark}>★</span>}
+        <span className={soloStyles.cellSeed}>{tournament.seeds.indexOf(teamId) + 1}</span>
+        <span className={soloStyles.cellTag}>{team.tag}</span>
+        <span className={soloStyles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
+      </div>
+    );
+  };
+  return (
+    <div className={[soloStyles.bracketCell, match.humanInvolved ? soloStyles.playerMatch : '', revealed ? soloStyles.revealed : ''].join(' ')} ref={cellRef}>
+      {row(match.a, match.scoreA)}
+      {row(match.b, match.scoreB)}
+    </div>
+  );
+}
+
+function PlayMatchDock({ isHost, onPlay }) {
+  return (
+    <div className={soloStyles.bracketCta}>
+      <button className={`${soloStyles.primary} ${soloStyles.playButton}`} onClick={isHost ? onPlay : undefined} disabled={!isHost}>
+        <span>{isHost ? 'Play match' : 'Waiting for host'}</span>
+        {isHost && <b aria-hidden="true">→</b>}
+      </button>
+    </div>
+  );
 }
 
 function TimerBar({ pending, serverNow, isHost, onAdvance }) {

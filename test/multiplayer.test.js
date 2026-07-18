@@ -9,6 +9,7 @@ import {
   buildMultiplayerBracket,
   createLobbyState,
   makeSnakeOrder,
+  nextAlarmAt,
   setConnection,
 } from '../src/engine/multiplayer.js';
 
@@ -106,6 +107,33 @@ test('host controls migrate to the earliest connected competitor after 30 second
   assert.equal(state.hostId, 'p2');
 });
 
+test('human matches wait for the host before revealing a score', () => {
+  const state = lobbyWithPlayers(2);
+  seedRosters(state);
+  state.draft = { seatOrder: state.competitors.map(player => player.id) };
+  state.season = {
+    cycle: 0,
+    eventIndex: 0,
+    events: [{ kind: 'masters', city: 'London', label: 'Masters London' }],
+    standings: Object.fromEntries(state.competitors.map(player => [player.id, {
+      competitorId: player.id, squadName: player.squadName,
+      titles: 0, matchWins: 0, mapsWon: 0, mapsLost: 0, score: 0,
+    }])),
+  };
+  state.tournament = { ...buildMultiplayerBracket(state, cards, 'masters'), meta: state.season.events[0], championId: null };
+  const firstHuman = state.tournament.rounds[0].matches.find(match => match.humanInvolved);
+  state.tournament.currentHumanMatchId = firstHuman.id;
+  state.phase = 'match_ready';
+
+  assert.equal(firstHuman.winner, null);
+  run(state, 'play_match', 'p1', {}, cards, 100);
+  assert.ok(firstHuman.winner);
+  assert.ok(firstHuman.maps?.length);
+  assert.equal(state.phase, 'match_transition');
+  assert.equal(state.pendingTransition.matchId, firstHuman.id);
+  assert.equal(nextAlarmAt(state), state.pendingTransition.deadlineAt);
+});
+
 test('Year reaches standings and skips final Champions consolation', () => {
   const state = lobbyWithPlayers(2);
   run(state, 'start_game', 'p1', {}, cards, 100);
@@ -121,6 +149,9 @@ test('Year reaches standings and skips final Champions consolation', () => {
     } else if (state.phase === 'match_transition') {
       now = state.pendingTransition.deadlineAt;
       advanceDeadlines(state, cards, now);
+    } else if (state.phase === 'match_ready') {
+      now += 1;
+      run(state, 'play_match', 'p1', {}, cards, now);
     } else if (state.phase === 'consolation') {
       now = state.consolation.deadlineAt;
       advanceDeadlines(state, cards, now);
@@ -152,6 +183,9 @@ test('Endless end request finishes the current event and its consolation first',
       }
       now = state.pendingTransition.deadlineAt;
       advanceDeadlines(state, cards, now);
+    } else if (state.phase === 'match_ready') {
+      now += 1;
+      run(state, 'play_match', 'p1', {}, cards, now);
     } else if (state.phase === 'consolation') {
       sawConsolation = true;
       now = state.consolation.deadlineAt;
