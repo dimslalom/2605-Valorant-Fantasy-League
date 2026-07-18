@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NavHeader from '../components/NavHeader';
 import PlayerCard from '../components/PlayerCard';
 import allCards from '../data/cards.json';
-import { countryName } from '../lib/utils';
+import { assetPath, countryName } from '../lib/utils';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
   rollNationality, draftChoices, teamPower,
@@ -35,6 +36,7 @@ function isMobile() {
 const TRAVEL_MS = 900;
 
 export default function PerfectRun() {
+  const navigate = useNavigate();
   // menu | name | draft | review | intro | run | result | locked | pack | over
   const [phase, setPhase] = useState('menu');
   const [mode, setMode] = useState('solo');
@@ -279,16 +281,19 @@ export default function PerfectRun() {
     travelThenNextRound();
   }
 
-  // Generate the next round (hidden), then fly the squad's cell along the
-  // bracket connectors into its new slot before revealing it.
+  // Generate stable destination rows, then fly every winner forward while
+  // keeping the completed source round mounted.
   function travelThenNextRound() {
     const prevRound = currentRound(tour);
-    const fromIdx = prevRound.matches.findIndex(m => m.isPlayerMatch);
-    const fromKey = `${prevRound.key}:${fromIdx}`;
     nextBracketRound(tour);
     const newRound = currentRound(tour);
-    const toIdx = newRound.matches.findIndex(m => m.isPlayerMatch);
-    travelInfo.current = { fromKey, toKey: `${newRound.key}:${toIdx}` };
+    travelInfo.current = {
+      moves: prevRound.matches.map((match, index) => ({
+        teamId: match.winner,
+        fromKey: `${prevRound.key}:${index}`,
+        toKey: `${newRound.key}:${Math.floor(index / 2)}`,
+      })),
+    };
     setTour({ ...tour });
     setBoardState('travel');
   }
@@ -298,58 +303,58 @@ export default function PerfectRun() {
     if (boardState !== 'travel') return;
     const finish = () => setBoardState('pairings');
     const info = travelInfo.current;
-    const fromEl = info && cellRefs.current[info.fromKey];
-    const toEl = info && cellRefs.current[info.toKey];
     const overlay = overlayRef.current;
     const container = bracketRef.current;
 
-    if (reduceMotion() || isMobile() || !fromEl || !toEl || !overlay || !container) {
+    if (reduceMotion() || isMobile() || !info?.moves?.length || !overlay || !container) {
       finish();
       return;
     }
 
     const cRect = container.getBoundingClientRect();
-    const fromRow = fromEl.querySelector('[data-team-id="player"]');
-    const toRow = toEl.querySelector('[data-team-id="player"]');
-    if (!fromRow || !toRow) {
-      finish();
-      return;
-    }
-    const a = fromRow.getBoundingClientRect();
-    const b = toRow.getBoundingClientRect();
-    const x0 = a.left - cRect.left, y0 = a.top - cRect.top;
-    const x1 = b.left - cRect.left, y1 = b.top - cRect.top;
-
-    const clone = fromRow.cloneNode(true);
-    clone.classList.add(styles.travelClone);
-    clone.classList.remove(styles.cellWon, styles.cellLost);
-    const cloneScore = clone.querySelector('[data-bracket-score]');
-    if (cloneScore) cloneScore.textContent = '';
-    clone.style.width = `${a.width}px`;
-    clone.style.height = `${a.height}px`;
-    overlay.appendChild(clone);
-
-    fromRow.style.visibility = 'hidden';
-    toRow.style.visibility = 'hidden';
-    // Follow the bracket connector: right, vertical, then right into the slot.
-    const bridgeX = x0 + (x1 - x0) * 0.5;
-    const anim = clone.animate([
-      { transform: `translate(${x0}px, ${y0}px)` },
-      { transform: `translate(${bridgeX}px, ${y0}px)`, offset: 0.35 },
-      { transform: `translate(${bridgeX}px, ${y1}px)`, offset: 0.65 },
-      { transform: `translate(${x1}px, ${y1}px)` },
-    ], { duration: TRAVEL_MS, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' });
+    const cleanups = [];
+    const animations = info.moves.map(move => {
+      const fromEl = cellRefs.current[move.fromKey];
+      const toEl = cellRefs.current[move.toKey];
+      const fromRow = [...(fromEl?.querySelectorAll('[data-team-id]') ?? [])].find(row => row.dataset.teamId === move.teamId);
+      const toRow = [...(toEl?.querySelectorAll('[data-team-id]') ?? [])].find(row => row.dataset.teamId === move.teamId);
+      if (!fromRow || !toRow) return Promise.resolve();
+      const a = fromRow.getBoundingClientRect();
+      const b = toRow.getBoundingClientRect();
+      const x0 = a.left - cRect.left, y0 = a.top - cRect.top;
+      const x1 = b.left - cRect.left, y1 = b.top - cRect.top;
+      const clone = fromRow.cloneNode(true);
+      clone.classList.add(styles.travelClone);
+      clone.classList.remove(styles.cellWon, styles.cellLost);
+      const cloneScore = clone.querySelector('[data-bracket-score]');
+      if (cloneScore) cloneScore.textContent = '';
+      clone.style.width = `${a.width}px`;
+      clone.style.height = `${a.height}px`;
+      overlay.appendChild(clone);
+      fromRow.style.visibility = 'hidden';
+      toRow.style.visibility = 'hidden';
+      cleanups.push(() => {
+        clone.remove();
+        fromRow.style.visibility = '';
+        toRow.style.visibility = '';
+      });
+      const bridgeX = x0 + (x1 - x0) * 0.5;
+      return clone.animate([
+        { transform: `translate(${x0}px, ${y0}px)` },
+        { transform: `translate(${bridgeX}px, ${y0}px)`, offset: 0.35 },
+        { transform: `translate(${bridgeX}px, ${y1}px)`, offset: 0.65 },
+        { transform: `translate(${x1}px, ${y1}px)` },
+      ], { duration: TRAVEL_MS, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
+    });
 
     let done = false;
     const cleanup = () => {
       if (done) return;
       done = true;
-      clone.remove();
-      if (fromRow) fromRow.style.visibility = '';
-      if (toRow) toRow.style.visibility = '';
+      cleanups.forEach(fn => fn());
       finish();
     };
-    anim.onfinish = cleanup;
+    Promise.all(animations).then(cleanup);
     const guard = setTimeout(cleanup, TRAVEL_MS + 400);
     return () => { clearTimeout(guard); cleanup(); };
   }, [boardState]);
@@ -465,6 +470,10 @@ export default function PerfectRun() {
                   <span className={styles.modeBtnSub}>
                     {todayBest != null ? `best today ${todayBest}` : 'shared draft, 1 reroll'}
                   </span>
+                </button>
+                <button className={styles.modeBtn} onClick={() => navigate('/multiplayer')}>
+                  <span className={styles.modeBtnName}>Multiplayer</span>
+                  <span className={styles.modeBtnSub}>2–16 squads · lobby code</span>
                 </button>
               </div>
 
@@ -590,7 +599,7 @@ export default function PerfectRun() {
             <span className={styles.bigScore}>{mapsWon}–{mapsLost}</span>
             <span className={styles.teamB}>
               {opp.name}
-              {opp.logo && <img src={opp.logo} alt="" />}
+              {opp.logo && <img src={assetPath(opp.logo)} alt="" />}
             </span>
           </div>
 
@@ -721,7 +730,7 @@ function Board({ tour, round, boardState, revealCount, outcome, onPlay, register
           registerCell={registerCell}
           bracketRef={bracketRef}
           overlayRef={overlayRef}
-          hideCurrentPlayer={boardState === 'travel'}
+          hideCurrentPlayer={false}
       />
 
       {boardState === 'pairings' && (
@@ -808,7 +817,7 @@ function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
       className={[styles.bracketTeam, isWinner ? styles.cellWon : '', isLoser ? styles.cellLost : '', team.isPlayer ? styles.bracketYou : '', hidePlayer && team.isPlayer ? styles.roundHidden : ''].join(' ')}
       data-team-id={team.id}
     >
-      {team.logo ? <img src={team.logo} alt="" /> : <span className={styles.youMark}>★</span>}
+      {team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
       <span className={styles.cellSeed}>{seedOf(tour, team.id)}</span>
       <span className={styles.cellTag}>{team.isPlayer ? 'YOU' : team.tag}</span>
       <span className={styles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>

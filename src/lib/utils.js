@@ -37,3 +37,7 @@ export function cardTextColor(palette) {
   if (palette.startsWith('iconic'))   return TEXT_COLOR.iconic;
   return TEXT_COLOR[palette] ?? '#ffffff';
 }
+export function assetPath(path) {
+  if (!path || !path.startsWith('/assets/')) return path;
+  return `${import.meta.env.BASE_URL.replace(/\/$/, '')}${path}`;
+}

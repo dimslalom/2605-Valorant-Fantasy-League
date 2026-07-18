@@ -1,4 +1,4 @@
-import { roleAbbr, cardTextColor, countryName, regionFullName } from '../lib/utils';
+import { roleAbbr, cardTextColor, countryName, regionFullName, assetPath } from '../lib/utils';
 import useCardTilt from '../lib/useCardTilt';
 import styles from './PlayerCard.module.css';
 
@@ -34,8 +34,8 @@ export default function PlayerCard({
   const textColor  = cardTextColor(card.palette);
   const mutedColor = textColor + 'aa';
   const showEditionTop = card.tier === 'prestige' || card.tier === 'iconic';
-  const regionLogo = `/assets/regions/${card.region.toLowerCase()}.png`;
-  const bgSrc = `/assets/card-bg/${card.palette}-bg.png`;
+  const regionLogo = assetPath(`/assets/regions/${card.region.toLowerCase()}.png`);
+  const bgSrc = assetPath(`/assets/card-bg/${card.palette}-bg.png`);
 
   const { tiltRef, onPointerMove, onPointerLeave } = useCardTilt({ disabled: !tilt });
 
@@ -80,11 +80,11 @@ export default function PlayerCard({
 
               {/* plane 2 — player photo (hidden when no real photo yet) */}
               {card.photo !== '/assets/players/placeholder.png' && (
-                <img className={styles.layerPhoto} style={PLANE.photo} src={card.photo} alt={card.player} />
+                <img className={styles.layerPhoto} style={PLANE.photo} src={assetPath(card.photo)} alt={card.player} />
               )}
 
               {/* plane 3 — stat panel bg (full 400×580 PNG, transparent at top) */}
-              <img className={styles.layerStatBg} style={PLANE.top} src={`/assets/stat-bg/${card.palette}-stat-bg.png`} alt="" aria-hidden="true" />
+              <img className={styles.layerStatBg} style={PLANE.top} src={assetPath(`/assets/stat-bg/${card.palette}-stat-bg.png`)} alt="" aria-hidden="true" />
 
               {/* plane 3 — text overlay */}
               <div className={styles.layerText} style={PLANE.top}>
@@ -134,7 +134,7 @@ export default function PlayerCard({
 
                   <div className={styles.logoRow}>
                     {card.org_logo && (
-                      <img src={card.org_logo} alt={card.org} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                      <img src={assetPath(card.org_logo)} alt={card.org} style={{ width: 32, height: 32, objectFit: 'contain' }} />
                     )}
                     <img src={regionLogo} alt={card.region} style={{ width: 32, height: 32, objectFit: 'contain' }} />
                   </div>

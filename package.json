@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "sync-cards": "node scripts/sheet-to-json.js",
     "sync-vlr": "node scripts/vlr-to-json.js",
-    "sync-icons": "node scripts/vlr-to-json.js --icons-only"
+    "sync-icons": "node scripts/vlr-to-json.js --icons-only",
+    "test:multiplayer": "node --test test/multiplayer.test.js",
+    "lint:multiplayer": "eslint src/engine/multiplayer.js src/pages/Multiplayer.jsx src/lib/multiplayerClient.js worker/index.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
@@ -29,6 +31,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "wrangler": "^4.57.0"
   }
 }

@@ -7,6 +7,7 @@ import styles from './NavHeader.module.css';
 const NAV = [
   { to: '/collection', label: 'Player Library' },
   { to: '/run',        label: 'Perfect Run' },
+  { to: '/multiplayer', label: 'Multiplayer' },
 ];
 
 export default function NavHeader({ right }) {
