@@ -448,10 +448,14 @@ export default function PerfectRun() {
   const runningScore = evaluateSeason(tourResults);
 
   return (
-    <div className={styles.page}>
-      <NavHeader right={phase === 'run' && round && def
-        ? `${def.label} · ${round.label} (Bo${round.bestOf})`
-        : undefined} />
+    <div className={styles.shell}>
+      <div className={styles.pageHeader}>
+        <NavHeader right={phase === 'run' && round && def
+          ? `${def.label} · ${round.label} (Bo${round.bestOf})`
+          : undefined} />
+      </div>
+
+      <main className={styles.page}>
 
       {phase === 'menu' && (
         <>
@@ -691,6 +695,7 @@ export default function PerfectRun() {
           onMenu={() => setPhase('menu')}
         />
       )}
+      </main>
     </div>
   );
 }

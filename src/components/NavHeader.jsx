@@ -1,13 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import styles from './NavHeader.module.css';
 
-// The one site-wide header. Same links in the same order on every page; the
-// current page is highlighted, the others are muted links. `right` fills the
-// accent-colored slot on the far right (player count, match stage, etc).
+// The one site-wide header. The current page is highlighted and `right` fills
+// the accent-colored slot on the far right (player count, match stage, etc).
 const NAV = [
   { to: '/collection', label: 'Player Library' },
   { to: '/run',        label: 'Perfect Run' },
-  { to: '/multiplayer', label: 'Multiplayer' },
 ];
 
 export default function NavHeader({ right }) {
