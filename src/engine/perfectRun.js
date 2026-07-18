@@ -1,11 +1,12 @@
 // Perfect Run game engine.
-// Draft-by-nationality rolls, team chemistry, and a seeded tournament
-// simulator: a 24-team VCT Champions field where every match is simulated,
-// not just the player's. Ratings come from cards.json (approximations for
-// game balance, not official stats).
+// Draft-by-nationality rolls, team chemistry, and a seeded SEASON of three
+// single-elimination tournaments (two Masters, then Champions), each a 16-team
+// bracket named after a random world city. Every match is simulated, not just
+// the player's. Ratings come from cards.json (approximations for game balance,
+// not official stats).
 //
-// The tournament object is plain data (teams, rounds, matches, records) so a
-// future multiplayer mode can assign any match to a human instead of the sim.
+// Tournament objects are plain data (teams, rounds, matches) so a future
+// multiplayer mode can assign any match to a human instead of the sim.
 
 // ── Seeded RNG ───────────────────────────────────────────────────────────────
 
@@ -226,185 +227,115 @@ export function simNpcMatch(rng, teamA, teamB, bestOf) {
   return { maps: played, scoreA, scoreB, winner: scoreA > scoreB ? teamA.id : teamB.id };
 }
 
-// ── Tournament ───────────────────────────────────────────────────────────────
+// ── Season & tournaments ─────────────────────────────────────────────────────
 //
-// 24 teams. Bottom 16 seeds (player included) enter the Play-In; 8 winners
-// join the top 8 seeds in a 3-round Swiss group stage (record pairing, two
-// losses eliminates, teams already on two wins play round 3 for seeding).
-// The 8 qualified teams play a single-elimination bracket: QF, SF, GF Bo5.
+// A season is three single-elimination tournaments: two Masters, then
+// Champions. Each is a 16-team bracket (Round of 16 -> QF -> SF -> Grand Final)
+// named after a random world city. The player's squad persists all season.
 
-export const STAGE_KEYS = ['playin', 'swiss1', 'swiss2', 'swiss3', 'quarter', 'semi', 'final'];
+export const CITIES = [
+  'London', 'Melbourne', 'Tokyo', 'Berlin', 'Paris', 'Madrid', 'Seoul',
+  'Shanghai', 'Toronto', 'Chicago', 'Los Angeles', 'Sydney', 'Copenhagen',
+  'Reykjavik', 'Istanbul', 'Bangkok', 'Singapore', 'Sao Paulo', 'Mexico City',
+  'Rio de Janeiro', 'Amsterdam', 'Stockholm', 'Barcelona', 'Milan', 'Vienna',
+  'Dubai', 'Mumbai', 'Osaka', 'Vancouver', 'Montreal',
+];
 
-export const STAGE_META = {
-  playin:  { label: 'Play-In',       bestOf: 3, swiss: false },
-  swiss1:  { label: 'Group Round 1', bestOf: 3, swiss: true },
-  swiss2:  { label: 'Group Round 2', bestOf: 3, swiss: true },
-  swiss3:  { label: 'Group Round 3', bestOf: 3, swiss: true },
-  quarter: { label: 'Quarterfinals', bestOf: 3, swiss: false },
-  semi:    { label: 'Semifinals',    bestOf: 3, swiss: false },
-  final:   { label: 'Grand Final',   bestOf: 5, swiss: false },
+// Draw three distinct cities: Masters, Masters, Champions.
+export function makeSeason(rng) {
+  const cities = pickN(rng, CITIES, 3);
+  return [
+    { kind: 'masters',   city: cities[0], label: `Masters ${cities[0]}` },
+    { kind: 'masters',   city: cities[1], label: `Masters ${cities[1]}` },
+    { kind: 'champions', city: cities[2], label: `Champions ${cities[2]}` },
+  ];
+}
+
+export const ROUND_KEYS = ['r16', 'quarter', 'semi', 'final'];
+
+export const ROUND_META = {
+  r16:     { label: 'Round of 16',   bestOf: 3 },
+  quarter: { label: 'Quarterfinals', bestOf: 3 },
+  semi:    { label: 'Semifinals',    bestOf: 3 },
+  final:   { label: 'Grand Final',   bestOf: 5 },
 };
 
-export function buildField(rng, cards, pickedIds, playerTeam) {
+// Standard 16-seed bracket order (0-based seed indices) so higher seeds cannot
+// meet early and each winner feeds the adjacent match in the next round.
+const SEED_ORDER = [
+  [0, 15], [7, 8], [3, 12], [4, 11], [1, 14], [6, 9], [2, 13], [5, 10],
+];
+
+// Every org with a full five-man roster and nobody already drafted; its best
+// five by rating, strongest orgs first.
+function eligibleOrgs(cards, pickedIds) {
   const byOrg = {};
   for (const c of cards) {
     if (!c.org) continue; // icons are org-less and never form an opponent team
     (byOrg[c.org] ??= []).push(c);
   }
-
-  const eligible = Object.entries(byOrg)
+  return Object.entries(byOrg)
     .filter(([, list]) => list.length >= 5 && list.every(p => !pickedIds.has(p.id)))
     .map(([org, list]) => {
       const roster = [...list].sort((a, b) => b.rating - a.rating).slice(0, 5);
       return {
-        id: org,
-        tag: org,
-        name: roster[0].org_name ?? org,
-        logo: roster[0].org_logo,
-        roster,
+        id: org, tag: org, name: roster[0].org_name ?? org,
+        logo: roster[0].org_logo, roster,
         power: roster.reduce((s, p) => s + p.rating, 0) / 5,
         isPlayer: false,
       };
-    });
-
-  // With tier-2 orgs in the pool, a fully random field would be too easy.
-  // Draw the 23 opponents from the strongest 32 orgs so the field stays
-  // Champions-caliber with the occasional tier-2 giant-killer.
-  const contenders = eligible.sort((a, b) => b.power - a.power).slice(0, 32);
-  const npcs = pickN(rng, contenders, 23).sort((a, b) => b.power - a.power);
-  const teams = { [playerTeam.id]: playerTeam };
-  for (const t of npcs) teams[t.id] = t;
-
-  return {
-    teams,
-    seedIds: npcs.slice(0, 8).map(t => t.id),                 // straight to groups
-    playInIds: [...npcs.slice(8).map(t => t.id), playerTeam.id], // 16 incl. player
-    rounds: [],
-    records: {},   // swiss only: { teamId: { w, l } }
-    stageIdx: -1,
-  };
+    })
+    .sort((a, b) => b.power - a.power);
 }
 
-function makeMatch(aId, bId, bestOf, pool) {
-  // Player always sits on side A of their own match, simpler for the UI.
-  const [a, b] = bId === 'player' ? [bId, aId] : [aId, bId];
+function makeMatch(aId, bId, bestOf) {
   return {
-    a, b, bestOf, pool,
+    a: aId, b: bId, bestOf,
     maps: null, scoreA: 0, scoreB: 0, winner: null,
-    isPlayerMatch: a === 'player' || b === 'player',
+    isPlayerMatch: aId === 'player' || bId === 'player',
   };
 }
 
-function priorOpponents(t, teamId) {
-  const opps = new Set();
-  for (const round of t.rounds) {
-    if (!STAGE_META[round.key].swiss) continue;
-    for (const m of round.matches) {
-      if (m.a === teamId) opps.add(m.b);
-      if (m.b === teamId) opps.add(m.a);
-    }
-  }
-  return opps;
+// Build a fresh 16-team bracket. Masters draws 15 opponents from the top 30 by
+// power (so a tier-2 giant-killer can sneak in); Champions takes exactly the
+// top 15, the strongest possible field. The player is seeded by power with the
+// rest, so a strong squad earns a kinder opening seed.
+export function buildBracket(rng, cards, pickedIds, playerTeam, kind) {
+  const pool = eligibleOrgs(cards, pickedIds);
+  const npcs = kind === 'champions'
+    ? pool.slice(0, 15)
+    : pickN(rng, pool.slice(0, 30), 15);
+
+  const all = [playerTeam, ...npcs].sort((a, b) => b.power - a.power);
+  const teams = {};
+  for (const team of all) teams[team.id] = team;
+
+  const matches = SEED_ORDER.map(([i, j]) =>
+    makeMatch(all[i].id, all[j].id, ROUND_META.r16.bestOf));
+
+  return {
+    kind, teams,
+    seeds: all.map(team => team.id), // index = seed - 1
+    rounds: [{ key: 'r16', label: ROUND_META.r16.label, bestOf: ROUND_META.r16.bestOf, matches }],
+    roundIdx: 0,
+  };
 }
 
-// Pair a pool of team ids, reshuffling a few times to avoid Swiss rematches.
-function pairPool(t, rng, ids, bestOf, poolLabel) {
-  for (let attempt = 0; attempt < 24; attempt++) {
-    const order = pickN(rng, ids, ids.length);
-    let ok = true;
-    for (let i = 0; i < order.length; i += 2) {
-      if (priorOpponents(t, order[i]).has(order[i + 1])) { ok = false; break; }
-    }
-    if (ok || attempt === 23) {
-      const matches = [];
-      for (let i = 0; i < order.length; i += 2) {
-        matches.push(makeMatch(order[i], order[i + 1], bestOf, poolLabel));
-      }
-      return matches;
-    }
-  }
-  return [];
-}
-
-function roundByKey(t, key) {
-  return t.rounds.find(r => r.key === key);
-}
-
-// Total round differential across all played maps, used for playoff seeding.
-function roundDiffOf(t, teamId) {
-  let diff = 0;
-  for (const round of t.rounds) {
-    for (const m of round.matches) {
-      if (!m.maps) continue;
-      for (const mp of m.maps) {
-        if (m.a === teamId) diff += mp.a - mp.b;
-        if (m.b === teamId) diff += mp.b - mp.a;
-      }
-    }
-  }
-  return diff;
-}
-
-// Generate pairings for the next stage and append the round (matches pending).
-export function generateNextRound(t, rng) {
-  const idx = t.stageIdx + 1;
-  const key = STAGE_KEYS[idx];
+// Pair the winners of the current round into the next. Bracket order means the
+// winners of matches 2i and 2i+1 meet.
+export function nextBracketRound(t) {
+  const idx = t.roundIdx + 1;
+  const key = ROUND_KEYS[idx];
   if (!key) return null;
-  const meta = STAGE_META[key];
-  let matches = [];
-
-  if (key === 'playin') {
-    matches = pairPool(t, rng, t.playInIds, meta.bestOf, 'Play-In');
-  } else if (key === 'swiss1') {
-    const winners = roundByKey(t, 'playin').matches.map(m => m.winner);
-    for (const id of [...t.seedIds, ...winners]) t.records[id] = { w: 0, l: 0 };
-    // Seeded round 1: group seeds face play-in winners
-    const shuffled = pickN(rng, winners, winners.length);
-    matches = t.seedIds.map((s, i) => makeMatch(s, shuffled[i], meta.bestOf, '0-0'));
-  } else if (key === 'swiss2' || key === 'swiss3') {
-    // Everyone below two losses plays; teams on two wins play round 3 for seeding.
-    const pools = {};
-    for (const [id, r] of Object.entries(t.records)) {
-      if (r.l >= 2) continue;
-      (pools[`${r.w}-${r.l}`] ??= []).push(id);
-    }
-    const poolOrder = Object.keys(pools).sort((x, y) => Number(y[0]) - Number(x[0]));
-    for (const label of poolOrder) {
-      matches.push(...pairPool(t, rng, pools[label], meta.bestOf, label));
-    }
-  } else if (key === 'quarter') {
-    const qualified = Object.entries(t.records)
-      .filter(([, r]) => r.w >= 2)
-      .map(([id]) => id)
-      .sort((x, y) => {
-        const rx = t.records[x], ry = t.records[y];
-        if (ry.w !== rx.w) return ry.w - rx.w;
-        return roundDiffOf(t, y) - roundDiffOf(t, x);
-      });
-    // Bracket order: SF1 comes from QF1/QF2, SF2 from QF3/QF4
-    const s = qualified;
-    matches = [
-      makeMatch(s[0], s[7], meta.bestOf, 'Playoffs'),
-      makeMatch(s[3], s[4], meta.bestOf, 'Playoffs'),
-      makeMatch(s[1], s[6], meta.bestOf, 'Playoffs'),
-      makeMatch(s[2], s[5], meta.bestOf, 'Playoffs'),
-    ];
-  } else if (key === 'semi') {
-    const qf = roundByKey(t, 'quarter').matches;
-    matches = [
-      makeMatch(qf[0].winner, qf[1].winner, meta.bestOf, 'Playoffs'),
-      makeMatch(qf[2].winner, qf[3].winner, meta.bestOf, 'Playoffs'),
-    ];
-  } else if (key === 'final') {
-    const sf = roundByKey(t, 'semi').matches;
-    matches = [makeMatch(sf[0].winner, sf[1].winner, meta.bestOf, 'Playoffs')];
+  const meta = ROUND_META[key];
+  const prev = t.rounds[t.roundIdx].matches;
+  const matches = [];
+  for (let i = 0; i < prev.length; i += 2) {
+    matches.push(makeMatch(prev[i].winner, prev[i + 1].winner, meta.bestOf));
   }
-
-  // Player match first so the board leads with it
-  matches.sort((a, b) => Number(b.isPlayerMatch) - Number(a.isPlayerMatch));
   t.rounds.push({ key, label: meta.label, bestOf: meta.bestOf, matches });
-  t.stageIdx = idx;
-  return t.rounds[t.rounds.length - 1];
+  t.roundIdx = idx;
+  return t.rounds[t.roundIdx];
 }
 
 export function currentRound(t) {
@@ -415,14 +346,29 @@ export function playerMatch(t) {
   return currentRound(t)?.matches.find(m => m.isPlayerMatch) ?? null;
 }
 
-// Write the player's finished series into their pending match.
+// Seed number (1-based) of a team, for display.
+export function seedOf(t, teamId) {
+  const i = t.seeds.indexOf(teamId);
+  return i < 0 ? null : i + 1;
+}
+
+// Write the player's finished series into their pending match. The sim always
+// treats the player as side A, so maps/scores are remapped onto whichever
+// bracket side the player actually occupies.
 export function setPlayerResult(t, playedMaps, playerWon) {
   const m = playerMatch(t);
   if (!m) return;
-  m.maps = playedMaps.map(r => ({ map: r.map, a: r.a, b: r.b }));
-  m.scoreA = playedMaps.filter(r => r.winA).length;
-  m.scoreB = playedMaps.length - m.scoreA;
-  m.winner = playerWon ? m.a : m.b;
+  const playerMapsWon = playedMaps.filter(r => r.winA).length;
+  const oppMapsWon = playedMaps.length - playerMapsWon;
+  const playerIsA = m.a === 'player';
+  m.maps = playedMaps.map(r => ({
+    map: r.map,
+    a: playerIsA ? r.a : r.b,
+    b: playerIsA ? r.b : r.a,
+  }));
+  m.scoreA = playerIsA ? playerMapsWon : oppMapsWon;
+  m.scoreB = playerIsA ? oppMapsWon : playerMapsWon;
+  m.winner = playerWon ? 'player' : (playerIsA ? m.b : m.a);
 }
 
 // Sim every unresolved NPC match in the current round.
@@ -438,38 +384,47 @@ export function resolveNpcMatches(t, rng) {
   }
 }
 
-// After a full swiss round, update win/loss records.
-export function applySwissRecords(t) {
-  const round = currentRound(t);
-  if (!STAGE_META[round.key].swiss) return;
-  for (const m of round.matches) {
-    const loser = m.winner === m.a ? m.b : m.a;
-    t.records[m.winner].w += 1;
-    t.records[loser].l += 1;
-  }
-}
-
 // ── Badges & scoring ─────────────────────────────────────────────────────────
 
-export function evaluateRun(seriesResults, champion) {
+// Per-tournament badges. `series` are the player's series summaries for this
+// event ({ mapsWon, mapsLost, roundDiff, won }).
+export function evaluateTournament(series, champion) {
   const badges = [];
-  const seriesWon = seriesResults.filter(s => s.won).length;
-  const mapsLost = seriesResults.reduce((s, r) => s + r.mapsLost, 0);
-  const mapsWon = seriesResults.reduce((s, r) => s + r.mapsWon, 0);
-  const roundDiff = seriesResults.reduce((s, r) => s + r.roundDiff, 0);
+  const mapsLost = series.reduce((s, r) => s + r.mapsLost, 0);
+  if (champion) badges.push({ key: 'champion', label: 'CHAMPION', desc: 'Won the tournament' });
+  if (champion && mapsLost === 0) {
+    badges.push({ key: 'flawless', label: 'FLAWLESS', desc: 'No maps dropped' });
+  }
+  return { badges, mapsLost };
+}
 
-  if (champion) badges.push({ key: 'champion', label: 'CHAMPION', desc: 'Won VCT Champions' });
-  if (champion && seriesWon === 7) badges.push({ key: 'sweep', label: '7-0', desc: 'Won every series' });
-  if (champion && seriesWon === 7 && mapsLost === 0) {
-    badges.push({ key: 'perfect', label: 'PERFECT RUN', desc: 'Never dropped a single map' });
+// Season summary across all three tournaments. `results` are per-tournament
+// objects ({ champion, series }).
+export function evaluateSeason(results) {
+  const badges = [];
+  const titles = results.filter(r => r.champion).length;
+  const allSeries = results.flatMap(r => r.series);
+  const seriesWon = allSeries.filter(s => s.won).length;
+  const mapsWon = allSeries.reduce((s, r) => s + r.mapsWon, 0);
+  const mapsLost = allSeries.reduce((s, r) => s + r.mapsLost, 0);
+  const roundDiff = allSeries.reduce((s, r) => s + r.roundDiff, 0);
+
+  const grandSlam = titles === 3;
+  const perfectSeason = titles === 3 && mapsLost === 0;
+  if (grandSlam) {
+    badges.push({ key: 'grand_slam', label: 'GRAND SLAM', desc: 'Won all three tournaments' });
+  }
+  if (perfectSeason) {
+    badges.push({ key: 'perfect_season', label: 'PERFECT SEASON', desc: 'Three titles, zero maps dropped' });
   }
 
   const score =
     seriesWon * 100 +
     mapsWon * 20 +
     roundDiff +
-    (champion ? 150 : 0) +
-    (badges.some(b => b.key === 'perfect') ? 500 : 0);
+    titles * 150 +
+    (grandSlam ? 300 : 0) +
+    (perfectSeason ? 500 : 0);
 
-  return { badges, score, seriesWon, mapsWon, mapsLost, roundDiff };
+  return { badges, score, titles, seriesWon, mapsWon, mapsLost, roundDiff, grandSlam, perfectSeason };
 }

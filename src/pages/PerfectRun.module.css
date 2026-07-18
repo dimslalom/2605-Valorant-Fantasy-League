@@ -590,13 +590,67 @@
   align-items: center;
 }
 
-/* ── Playoff bracket: cells in columns 1/3/5, connectors in 2/4.
-      These lines are structural: they show who feeds which match. ── */
+.boardScreen { padding-bottom: 112px; }
+
+.bracketCta {
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 150px;
+  padding: 48px 24px 24px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0%, rgba(13, 15, 23, 0.92) 48%, #0d0f17 76%);
+}
+
+.playButton {
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  min-width: min(420px, calc(100vw - 36px));
+  padding: 19px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  font-size: 15px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.34);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.14s, box-shadow 0.18s;
+}
+.playButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateX(-105%) skewX(-18deg);
+  transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.playButton > * { position: relative; }
+.playButton b {
+  font-size: 21px;
+  line-height: 0;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.playButton:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.42); }
+.playButton:hover::before { transform: translateX(105%) skewX(-18deg); }
+.playButton:hover b { transform: translateX(5px); }
+.playButton:active { transform: translateY(1px) scale(0.985); }
+.playButton:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+/* ── Playoff bracket: four rounds in columns 1/3/5/7, connectors in 2/4/6.
+      These lines are structural: they show who feeds which match. Feeders
+      always sit at 25%/75% of a parent slot's span, so one connector shape
+      serves R16, QF and SF alike. ── */
+.bracketWrap { position: relative; }
+
 .bracket {
   display: grid;
-  grid-template-columns: 1fr 30px 1fr 30px 1fr;
-  grid-template-rows: auto repeat(4, 92px);
-  row-gap: 10px;
+  grid-template-columns: 1fr 22px 1fr 22px 1fr 22px 1fr;
+  grid-template-rows: auto repeat(8, 92px);
   margin-bottom: 26px;
 }
 
@@ -619,8 +673,8 @@
 .conn::before {
   content: '';
   position: absolute;
-  top: 24%;
-  bottom: 24%;
+  top: 25%;
+  bottom: 25%;
   left: 0;
   width: 50%;
   border-top: 1px solid var(--line);
@@ -640,15 +694,42 @@
 .bracketTeam {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  font-size: 13px;
+  gap: 7px;
+  padding: 8px 11px;
+  font-size: 12.5px;
   font-weight: 700;
   background: var(--raise);
 }
 .bracketCell.playerMatch .bracketTeam { background: var(--accent-soft); }
-.bracketTeam img { width: 18px; height: 18px; object-fit: contain; }
+.bracketTeam img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 .bracketYou { color: var(--accent); }
+
+.cellSeed {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  min-width: 13px;
+  text-align: right;
+}
+
+/* Traveling squad card: an absolutely-positioned clone flies from the cell
+   just won into its next-round slot along the connector path. */
+.travelOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.travelClone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0 !important;
+  box-shadow: 0 0 0 2px var(--accent);
+  z-index: 6;
+}
+.roundHidden { visibility: hidden; }
 
 .bracketScore {
   margin-left: auto;
@@ -824,11 +905,164 @@
 
 .overButtons { display: flex; gap: 12px; }
 
+/* ── Tournament intro splash ── */
+.nameStep {
+  min-height: 56vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+}
+.nameTitle {
+  font-size: clamp(46px, 7vw, 78px);
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+}
+.nameTitle em { color: var(--accent); font-style: normal; }
+.nameForm {
+  width: min(620px, 100%);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 14px;
+  margin-top: 12px;
+}
+.nameForm label {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nameForm input {
+  min-width: 0;
+  padding: 17px 18px;
+  border: 1px solid var(--raise-hi);
+  background: var(--raise);
+  color: var(--ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.14s, background 0.14s;
+}
+.nameForm input:focus { border-color: var(--accent); background: var(--raise-hi); }
+.nameForm input::placeholder { color: var(--faint); }
+.nameCount {
+  grid-column: 1;
+  font-size: 10px;
+  color: var(--faint);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.nameForm button { grid-column: 2; grid-row: 2 / 4; }
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 44vh;
+  justify-content: center;
+}
+.introMarker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.introTitle {
+  font-size: clamp(48px, 8vw, 92px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  animation: riseIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.introTitle em { font-style: normal; color: var(--accent); }
+.introTag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Result interstitial + between-tournament screens ── */
+.result, .between {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+}
+.betweenTitle {
+  font-size: clamp(32px, 5vw, 54px);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+.nextTeaser {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.nextTeaser b { color: var(--ink); margin-left: 6px; }
+
+/* ── Consolation pack swap ── */
+.swapArea {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 22px 24px;
+  background: var(--raise);
+}
+.swapIncoming { display: flex; flex-direction: column; gap: 10px; }
+.swapRoster { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.swapChoice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.swapDelta {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 6px;
+}
+.swapDelta small { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── Squad strip with IGL tag ── */
+.squadStripCard { position: relative; }
+.squadIgl {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 2px 7px;
+}
+
+.badge_flawless { background: var(--win); color: #032019; }
+.badge_grand_slam { background: #d8b34c; color: #211b06; }
+.badge_perfect_season { background: var(--accent); color: #fff; }
+.badge_perfect_season span { opacity: 0.9; }
+
 @media (prefers-reduced-motion: reduce) {
+  .introTitle { animation: none; }
   .revealed { animation: none; }
   .menuMain > *, .menuFan { animation: none; }
   .modeBtn::before, .modeBtn > *, .fanCard { transition: none; }
   .stripReveal .stripCard, .packTop, .packBottom { animation: none; }
+  .playButton, .playButton::before, .playButton b { transition: none; }
 }
 
 /* ── Mobile ── */
@@ -844,12 +1078,20 @@
   .rosterCol.right { text-align: left; }
   .draftBar { align-items: flex-start; }
   .rerollBtn { margin-left: 0; }
+  .nameForm { grid-template-columns: 1fr; }
+  .nameForm button { grid-column: 1; grid-row: auto; }
+  .nameCount { grid-column: 1; }
+  .bracketCta { padding: 42px 18px 18px; min-height: 132px; }
+  .playButton { width: 100%; min-width: 0; }
   .bracket {
     grid-template-columns: 1fr;
     grid-template-rows: none;
     grid-auto-rows: min-content;
+    row-gap: 6px;
   }
   .bracket > * { grid-column: 1 !important; grid-row: auto !important; }
+  .bracket > span { display: none; } /* column labels don't help when stacked */
   .conn { display: none; }
-  .boardMatch { grid-template-columns: 1fr auto 1fr; padding: 10px 10px; gap: 8px; }
+  .travelOverlay { display: none; }
+  .swapArea { gap: 24px; }
 }
