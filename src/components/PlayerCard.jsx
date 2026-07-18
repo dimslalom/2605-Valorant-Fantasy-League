@@ -133,7 +133,9 @@ export default function PlayerCard({
                   </div>
 
                   <div className={styles.logoRow}>
-                    <img src={card.org_logo} alt={card.org} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                    {card.org_logo && (
+                      <img src={card.org_logo} alt={card.org} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                    )}
                     <img src={regionLogo} alt={card.region} style={{ width: 32, height: 32, objectFit: 'contain' }} />
                   </div>
                 </div>
@@ -187,7 +189,11 @@ export default function PlayerCard({
                     <BackMetaItem label="Tier" value={card.tier} muted={mutedColor} />
                     <BackMetaItem label="Nationality" value={countryName(card.nationality)} muted={mutedColor} />
                     <BackMetaItem label="Agents" value={(card.agents ?? []).map(capitalize).join(', ') || 'Unknown'} muted={mutedColor} />
-                    <BackMetaItem label="League" value={card.league === 't2' ? 'Challengers' : 'VCT'} muted={mutedColor} />
+                    <BackMetaItem
+                      label="League"
+                      value={card.league === 't2' ? 'Challengers' : card.league === 'icon' ? 'Icons' : 'VCT'}
+                      muted={mutedColor}
+                    />
                   </div>
 
                   <div className={styles.backPlaceholder} style={{ borderColor: textColor + '44', color: mutedColor }}>

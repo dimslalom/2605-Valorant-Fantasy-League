@@ -27,6 +27,7 @@ export const TEXT_COLOR = {
   bronze:    '#543504',
   silver:    '#1a1f2e',
   gold:      '#3F3418',
+  icon:      '#C7B94F',
   legendary: '#f0d0ff',
   iconic:    '#e8e0ff',
 };

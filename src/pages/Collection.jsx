@@ -7,14 +7,15 @@ import allCards from '../data/cards.json';
 import { countryName } from '../lib/utils';
 import styles from './Collection.module.css';
 
-const TIER_ORDER = ['bronze', 'silver', 'gold', 'legendary', 'prestige', 'iconic'];
+const TIER_ORDER = ['bronze', 'silver', 'gold', 'icon', 'legendary', 'prestige', 'iconic'];
 
 // Filter options derived from the data so new tiers, regions, or roles show up
 // automatically after a re-sync.
 const TIERS = ['All', ...TIER_ORDER.filter(t => allCards.some(c => c.tier === t))];
 const REGIONS = ['All', ...new Set(allCards.map(c => c.region))];
 const ROLES = ['All', ...new Set(allCards.map(c => c.role))];
-const LEAGUES = ['All', 'VCT', 'Challengers'];
+const LEAGUES = ['All', 'VCT', 'Challengers', 'Icons'];
+const LEAGUE_KEY = { VCT: 'vct', Challengers: 't2', Icons: 'icon' };
 
 // Accent-fold so "leviatan" finds LEVIATÁN and "kru" finds KRÜ
 const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -68,7 +69,7 @@ export default function Collection() {
     if (roleFilter !== 'All' && card.role !== roleFilter) return false;
     if (leagueFilter !== 'All') {
       const league = card.league ?? 'vct';
-      if (league !== (leagueFilter === 'VCT' ? 'vct' : 't2')) return false;
+      if (league !== LEAGUE_KEY[leagueFilter]) return false;
     }
     if (deferredQuery && !SEARCH_TEXT.get(card.id).includes(deferredQuery)) return false;
     return true;

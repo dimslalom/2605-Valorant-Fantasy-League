@@ -23,12 +23,12 @@
  * silver palette until bronze-bg.png / bronze-stat-bg.png are added.
  */
 
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import {
-  EVENTS, PLAYER_OVERRIDES, IGL_NAMES,
+  EVENTS, PLAYER_OVERRIDES, IGL_NAMES, ICONS,
   TIER2_QUERY, TIER2_TITLE_MUST, TIER2_TITLE_SKIP, TIER2_EVENTS,
   TIER2_REGION_KEYWORDS, TIER2_REGION_FALLBACK, TIER2_STAT_PENALTY,
   VCT_STAT_BONUS,
@@ -248,9 +248,13 @@ function tierFromRating(rating) {
   return 'bronze';
 }
 
-// Bronze art doesn't exist yet: fall back to silver palette until it does
+// Fall back through nicer palettes until the art exists on disk
+// (icon art may not be drawn yet; same pattern bronze used before its art landed)
 function paletteForTier(tier) {
-  if (existsSync(resolve(CARD_BG_DIR, `${tier}-bg.png`))) return tier;
+  const chain = tier === 'icon' ? ['icon', 'gold', 'silver'] : [tier, 'silver'];
+  for (const p of chain) {
+    if (existsSync(resolve(CARD_BG_DIR, `${p}-bg.png`))) return p;
+  }
   return 'silver';
 }
 
@@ -353,6 +357,77 @@ function deriveStats(agentStats, bl, vlrNorm, role) {
     blended[key] = Math.round(value * (1 - w) + vlrNorm * w);
   }
   return blended;
+}
+
+// ── Icon tier: retired legends ───────────────────────────────────────────────
+// Stats are hand-authored in the ICONS config; only the portrait and past
+// teams (for the played-together chemistry) come from vlr.gg.
+
+// Resolve a legend's vlr.gg player id via exact alias match on /v2/search
+async function resolveIconId(icon) {
+  if (icon.vlrId) return String(icon.vlrId);
+  const res = await get(`/v2/search?q=${encodeURIComponent(icon.name)}`);
+  const players = res?.data?.segments?.results?.players ?? [];
+  const hit = players.find(p => (p.name ?? '').toLowerCase() === icon.name.toLowerCase()) ?? players[0];
+  return hit ? String(hit.id) : null;
+}
+
+// Fetch avatar + past teams for every ICONS entry. Adds {file, style: 'icon'}
+// manifest entries so the avatar batch applies the golden monochrome.
+async function fetchIcons(manifest) {
+  console.log(`\nFetching ${ICONS.length} icon profiles...`);
+  const out = [];
+  for (const icon of ICONS) {
+    try {
+      const playerId = await resolveIconId(icon);
+      if (!playerId) { console.warn(`  ✗ ${icon.name}: no vlr.gg profile found`); continue; }
+      await sleep(DELAY_MS);
+      const res = await get(`/v2/player?id=${playerId}&timespan=all`);
+      const info = res?.data?.segments?.[0] ?? {};
+      let hasAvatar = false;
+      if (isRealAvatar(info.avatar)) {
+        hasAvatar = await download(info.avatar, resolve(CACHE_DIR, `${playerId}.png`));
+      }
+      if (hasAvatar) manifest[playerId] = { file: `icon-${slug(icon.name)}.png`, style: 'icon' };
+      out.push({ icon, playerId, info });
+      console.log(`  ✓  ${icon.name.padEnd(14)} id:${String(playerId).padEnd(7)} avatar:${hasAvatar ? 'yes' : 'no '}`);
+      await sleep(DELAY_MS);
+    } catch (err) {
+      console.warn(`  ✗ ${icon.name}: ${err.message}`);
+    }
+  }
+  return out;
+}
+
+// Pure build step; photo existence is checked after the avatar batch has run
+function buildIconCards(iconData) {
+  return iconData.map(({ icon, info }) => {
+    const statVals = Object.values(icon.stats);
+    const rating = Math.round(statVals.reduce((s, v) => s + v, 0) / statVals.length);
+    const file = `icon-${slug(icon.name)}.png`;
+    const photo = existsSync(resolve(PLAYERS_DIR, file)) ? `/assets/players/${file}` : PLACEHOLDER;
+    return {
+      id:          `icon-${slug(icon.name)}`,
+      player:      icon.name,
+      org:         '',
+      org_name:    'Retired',
+      org_logo:    '',
+      region:      icon.region,
+      nationality: icon.nationality,
+      tier:        'icon',
+      edition:     null,
+      rating,
+      role:        icon.role,
+      agents:      icon.agents,
+      photo,
+      stats:       { ...icon.stats },
+      power:       null,
+      palette:     paletteForTier('icon'),
+      league:      'icon',
+      igl:         !!icon.igl,
+      stints:      parseStints(info),
+    };
+  });
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -489,6 +564,9 @@ async function main() {
   for (const pl of players) {
     if (pl.hasAvatar) manifest[pl.playerId] = `${slug(pl.playerName)}.png`;
   }
+  // Icons ride along in the same avatar batch
+  const iconData = await fetchIcons(manifest);
+
   writeFileSync(resolve(CACHE_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
   console.log(`\nProcessing ${Object.keys(manifest).length} avatars (rembg cutout → 400x412)...`);
@@ -584,6 +662,8 @@ async function main() {
     console.log(`  ✓  ${playerName.padEnd(20)} ${nationality.padEnd(4)} ${role.padEnd(12)} rating:${String(cardRating).padEnd(4)} ${tier} ${meta.league}`);
   }
 
+  cards.push(...buildIconCards(iconData));
+
   writeFileSync(OUTPUT, JSON.stringify(cards, null, 2));
   const tiers = cards.reduce((acc, c) => { acc[c.tier] = (acc[c.tier] ?? 0) + 1; return acc; }, {});
   const photos = cards.filter(c => c.photo !== PLACEHOLDER).length;
@@ -591,7 +671,36 @@ async function main() {
   console.log(`  tiers: ${JSON.stringify(tiers)} | with photo: ${photos}/${cards.length}\n`);
 }
 
-main().catch(err => {
+// Rebuild only the icon cards and patch them into the existing cards.json,
+// so tweaking the legends does not cost a full 40-minute sync.
+async function iconsOnly() {
+  console.log(`\nUsing vlrggapi at ${BASE_URL} (icons only)`);
+  await healthCheck();
+  mkdirSync(CACHE_DIR, { recursive: true });
+
+  const manifest = {};
+  const iconData = await fetchIcons(manifest);
+  writeFileSync(resolve(CACHE_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
+
+  console.log(`\nProcessing ${Object.keys(manifest).length} icon avatars (rembg + golden monochrome)...`);
+  const venvPython = resolve(__dirname, '.venv/bin/python');
+  const py = spawnSync(existsSync(venvPython) ? venvPython : 'python3', [resolve(__dirname, 'process_avatars.py')], {
+    stdio: 'inherit',
+    cwd: __dirname,
+  });
+  if (py.status !== 0) {
+    console.warn(`  ⚠ Avatar processing failed: icons whose cutout is missing keep the placeholder.`);
+  }
+
+  const iconCards = buildIconCards(iconData);
+  const existing = JSON.parse(readFileSync(OUTPUT, 'utf8')).filter(c => !String(c.id).startsWith('icon-'));
+  const all = [...existing, ...iconCards];
+  writeFileSync(OUTPUT, JSON.stringify(all, null, 2));
+  console.log(`\n✓ Patched ${iconCards.length} icon cards into ${OUTPUT} (${all.length} total)\n`);
+}
+
+const run = process.argv.includes('--icons-only') ? iconsOnly : main;
+run().catch(err => {
   console.error('\n✗ Fatal:', err.message);
   process.exit(1);
 });

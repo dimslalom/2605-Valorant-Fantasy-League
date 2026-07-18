@@ -41529,5 +41529,1473 @@
         "to": null
       }
     ]
+  },
+  {
+    "id": "icon-tenz",
+    "player": "TenZ",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Duelist",
+    "agents": [
+      "jett",
+      "chamber"
+    ],
+    "photo": "/assets/players/icon-tenz.png",
+    "stats": {
+      "aim": 99,
+      "positioning": 93,
+      "ability": 92,
+      "mentality": 91,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Team TenZ",
+        "from": null,
+        "to": null
+      },
+      {
+        "org": "Sentinels",
+        "from": 24255,
+        "to": 24297
+      },
+      {
+        "org": "Cloud9",
+        "from": 24244,
+        "to": 24253
+      }
+    ]
+  },
+  {
+    "id": "icon-scream",
+    "player": "ScreaM",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "BE",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Duelist",
+    "agents": [
+      "reyna",
+      "jett"
+    ],
+    "photo": "/assets/players/icon-scream.png",
+    "stats": {
+      "aim": 98,
+      "positioning": 92,
+      "ability": 90,
+      "mentality": 93,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "1TAPS",
+        "from": null,
+        "to": null
+      },
+      {
+        "org": "Karmine Corp",
+        "from": 24275,
+        "to": 24288
+      },
+      {
+        "org": "Team Liquid",
+        "from": 24248,
+        "to": 24275
+      },
+      {
+        "org": "fish123",
+        "from": 24246,
+        "to": 24248
+      }
+    ]
+  },
+  {
+    "id": "icon-yay",
+    "player": "yay",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Duelist",
+    "agents": [
+      "chamber",
+      "jett"
+    ],
+    "photo": "/assets/players/icon-yay.png",
+    "stats": {
+      "aim": 98,
+      "positioning": 94,
+      "ability": 91,
+      "mentality": 90,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "BLEEDSeptember 2023 \u2013 October 2024",
+        "from": 24293,
+        "to": null
+      },
+      {
+        "org": "Evil Geniuses",
+        "from": 24300,
+        "to": 24310
+      },
+      {
+        "org": "Disguised",
+        "from": 24280,
+        "to": 24282
+      },
+      {
+        "org": "Cloud9",
+        "from": 24274,
+        "to": 24279
+      },
+      {
+        "org": "OpTic Gaming",
+        "from": 24266,
+        "to": 24274
+      },
+      {
+        "org": "ENVY",
+        "from": 24260,
+        "to": 24266
+      },
+      {
+        "org": "Andbox",
+        "from": 24249,
+        "to": 24260
+      }
+    ]
+  },
+  {
+    "id": "icon-cned",
+    "player": "cNed",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "TR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 92,
+    "role": "Duelist",
+    "agents": [
+      "jett",
+      "chamber"
+    ],
+    "photo": "/assets/players/icon-cned.png",
+    "stats": {
+      "aim": 97,
+      "positioning": 92,
+      "ability": 91,
+      "mentality": 91,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Team T\u00fcrkiye",
+        "from": null,
+        "to": null
+      },
+      {
+        "org": "PCIFIC Esports",
+        "from": 24313,
+        "to": 24319
+      },
+      {
+        "org": "Team Valiant",
+        "from": 24305,
+        "to": 24305
+      },
+      {
+        "org": "FUT Esports",
+        "from": 24286,
+        "to": 24310
+      },
+      {
+        "org": "Natus Vincere",
+        "from": 24275,
+        "to": 24286
+      },
+      {
+        "org": "Acend",
+        "from": 24255,
+        "to": 24275
+      },
+      {
+        "org": "Raise Your Edge",
+        "from": 24253,
+        "to": 24255
+      },
+      {
+        "org": "nolpenki",
+        "from": 24250,
+        "to": 24252
+      }
+    ]
+  },
+  {
+    "id": "icon-wardell",
+    "player": "Wardell",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 92,
+    "role": "Duelist",
+    "agents": [
+      "jett",
+      "chamber"
+    ],
+    "photo": "/assets/players/icon-wardell.png",
+    "stats": {
+      "aim": 96,
+      "positioning": 91,
+      "ability": 90,
+      "mentality": 90,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "mouseSpaz",
+        "from": 24245,
+        "to": null
+      },
+      {
+        "org": "The Nation",
+        "from": 24277,
+        "to": 24277
+      },
+      {
+        "org": "Version1",
+        "from": 24268,
+        "to": 24269
+      },
+      {
+        "org": "TSM",
+        "from": 24245,
+        "to": 24267
+      }
+    ]
+  },
+  {
+    "id": "icon-mixwell",
+    "player": "Mixwell",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "ES",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Duelist",
+    "agents": [
+      "jett",
+      "omen"
+    ],
+    "photo": "/assets/players/icon-mixwell.png",
+    "stats": {
+      "aim": 94,
+      "positioning": 92,
+      "ability": 91,
+      "mentality": 93,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Team Spain",
+        "from": 24286,
+        "to": null
+      },
+      {
+        "org": "Team Heretics",
+        "from": 24274,
+        "to": 24286
+      },
+      {
+        "org": "G2 Esports",
+        "from": 24246,
+        "to": 24274
+      }
+    ]
+  },
+  {
+    "id": "icon-victor",
+    "player": "Victor",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Duelist",
+    "agents": [
+      "raze",
+      "phoenix"
+    ],
+    "photo": "/assets/players/icon-victor.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 92,
+      "ability": 94,
+      "mentality": 92,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Sentinels",
+        "from": 24316,
+        "to": 24316
+      },
+      {
+        "org": "Chet's Pets",
+        "from": 24305,
+        "to": 24306
+      },
+      {
+        "org": "M80",
+        "from": 24304,
+        "to": 24305
+      },
+      {
+        "org": "NRG",
+        "from": 24275,
+        "to": 24295
+      },
+      {
+        "org": "OpTic Gaming",
+        "from": 24266,
+        "to": 24273
+      },
+      {
+        "org": "ENVY",
+        "from": 24249,
+        "to": 24266
+      },
+      {
+        "org": "T1",
+        "from": 24246,
+        "to": 24249
+      }
+    ]
+  },
+  {
+    "id": "icon-sayaplayer",
+    "player": "Sayaplayer",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 91,
+    "role": "Duelist",
+    "agents": [
+      "jett",
+      "raze"
+    ],
+    "photo": "/assets/players/icon-sayaplayer.png",
+    "stats": {
+      "aim": 96,
+      "positioning": 90,
+      "ability": 90,
+      "mentality": 90,
+      "synergy": 91
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "T1October 2022 \u2013 October 2024",
+        "from": 24295,
+        "to": null
+      },
+      {
+        "org": "REJECT",
+        "from": 24301,
+        "to": 24309
+      },
+      {
+        "org": "The Guard",
+        "from": 24264,
+        "to": 24274
+      },
+      {
+        "org": "T1",
+        "from": 24250,
+        "to": 24264
+      }
+    ]
+  },
+  {
+    "id": "icon-nukkye",
+    "player": "nukkye",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "LT",
+    "tier": "icon",
+    "edition": null,
+    "rating": 92,
+    "role": "Duelist",
+    "agents": [
+      "raze",
+      "jett"
+    ],
+    "photo": "/assets/players/icon-nukkye.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 92,
+      "ability": 91,
+      "mentality": 91,
+      "synergy": 92
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "GIANTX",
+        "from": 24288,
+        "to": 24291
+      },
+      {
+        "org": "Giants Gaming",
+        "from": 24275,
+        "to": 24288
+      },
+      {
+        "org": "G2 Esports",
+        "from": 24258,
+        "to": 24274
+      },
+      {
+        "org": "Team Heretics",
+        "from": 24250,
+        "to": 24258
+      }
+    ]
+  },
+  {
+    "id": "icon-hiko",
+    "player": "Hiko",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Initiator",
+    "agents": [
+      "sova",
+      "breach"
+    ],
+    "photo": "/assets/players/icon-hiko.png",
+    "stats": {
+      "aim": 92,
+      "positioning": 97,
+      "ability": 93,
+      "mentality": 96,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "100 Thieves",
+        "from": 24246,
+        "to": 24268
+      }
+    ]
+  },
+  {
+    "id": "icon-sacy",
+    "player": "Sacy",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Initiator",
+    "agents": [
+      "sova",
+      "fade"
+    ],
+    "photo": "/assets/players/icon-sacy.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 94,
+      "ability": 96,
+      "mentality": 94,
+      "synergy": 97
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Brazil",
+        "from": 24318,
+        "to": null
+      },
+      {
+        "org": "Sentinels",
+        "from": 24274,
+        "to": 24297
+      },
+      {
+        "org": "LOUD",
+        "from": 24266,
+        "to": 24274
+      },
+      {
+        "org": "Team Vikings",
+        "from": 24252,
+        "to": 24270
+      }
+    ]
+  },
+  {
+    "id": "icon-shahzam",
+    "player": "shahzaM",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Initiator",
+    "agents": [
+      "sova",
+      "skye"
+    ],
+    "photo": "/assets/players/icon-shahzam.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 93,
+      "ability": 94,
+      "mentality": 96,
+      "synergy": 97
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "SentinelsApril 2020 \u2013 October 2022",
+        "from": 24274,
+        "to": null
+      },
+      {
+        "org": "MIBR",
+        "from": 24294,
+        "to": 24294
+      },
+      {
+        "org": "G2 Esports",
+        "from": 24276,
+        "to": 24283
+      }
+    ]
+  },
+  {
+    "id": "icon-subroza",
+    "player": "Subroza",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 92,
+    "role": "Initiator",
+    "agents": [
+      "skye",
+      "reyna"
+    ],
+    "photo": "/assets/players/icon-subroza.png",
+    "stats": {
+      "aim": 92,
+      "positioning": 91,
+      "ability": 93,
+      "mentality": 91,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Morocco",
+        "from": 24318,
+        "to": null
+      },
+      {
+        "org": "TSM",
+        "from": 24245,
+        "to": 24283
+      }
+    ]
+  },
+  {
+    "id": "icon-zest",
+    "player": "Zest",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Initiator",
+    "agents": [
+      "fade",
+      "chamber"
+    ],
+    "photo": "/assets/players/icon-zest.png",
+    "stats": {
+      "aim": 92,
+      "positioning": 93,
+      "ability": 95,
+      "mentality": 94,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "BLEEDMarch 2024 \u2013 August 2024",
+        "from": 24296,
+        "to": null
+      },
+      {
+        "org": "KIWOOM DRX",
+        "from": 24265,
+        "to": 24289
+      },
+      {
+        "org": "Vision Strikers",
+        "from": 24246,
+        "to": 24265
+      }
+    ]
+  },
+  {
+    "id": "icon-lakia",
+    "player": "Lakia",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Initiator",
+    "agents": [
+      "fade",
+      "kayo"
+    ],
+    "photo": "/assets/players/icon-lakia.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 94,
+      "ability": 95,
+      "mentality": 92,
+      "synergy": 93
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "DAMWON Gaming",
+        "from": 24271,
+        "to": null
+      },
+      {
+        "org": "Gen.G",
+        "from": 24312,
+        "to": 24319
+      },
+      {
+        "org": "Gen.G",
+        "from": 24308,
+        "to": 24310
+      },
+      {
+        "org": "Gen.G",
+        "from": 24286,
+        "to": 24298
+      },
+      {
+        "org": "Dplus Esports",
+        "from": 24271,
+        "to": 24284
+      },
+      {
+        "org": "IGZIST",
+        "from": 24265,
+        "to": 24275
+      },
+      {
+        "org": "KIWOOM DRX",
+        "from": 24265,
+        "to": 24265
+      },
+      {
+        "org": "Vision Strikers",
+        "from": 24259,
+        "to": 24265
+      },
+      {
+        "org": "Vision Strikers",
+        "from": 24246,
+        "to": 24250
+      }
+    ]
+  },
+  {
+    "id": "icon-soulcas",
+    "player": "soulcas",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "GB",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Initiator",
+    "agents": [
+      "skye",
+      "raze"
+    ],
+    "photo": "/assets/players/icon-soulcas.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 93,
+      "ability": 94,
+      "mentality": 92,
+      "synergy": 95
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "KOINovember 2024 \u2013 September 2025",
+        "from": 24305,
+        "to": null
+      },
+      {
+        "org": "Apeks",
+        "from": 24288,
+        "to": 24298
+      },
+      {
+        "org": "Team Liquid",
+        "from": 24248,
+        "to": 24285
+      },
+      {
+        "org": "fish123",
+        "from": 24244,
+        "to": 24248
+      }
+    ]
+  },
+  {
+    "id": "icon-fns",
+    "player": "FNS",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 95,
+    "role": "Initiator",
+    "agents": [
+      "fade",
+      "sova"
+    ],
+    "photo": "/assets/players/icon-fns.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 96,
+      "ability": 94,
+      "mentality": 99,
+      "synergy": 98
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "NRGNovember 2022 \u2013 September 2023",
+        "from": 24284,
+        "to": null
+      },
+      {
+        "org": "NRG",
+        "from": 24293,
+        "to": 24310
+      },
+      {
+        "org": "OpTic Gaming",
+        "from": 24266,
+        "to": 24275
+      },
+      {
+        "org": "ENVY",
+        "from": 24247,
+        "to": 24266
+      },
+      {
+        "org": "together we are terrific",
+        "from": 24245,
+        "to": 24247
+      }
+    ]
+  },
+  {
+    "id": "icon-nitr0",
+    "player": "nitr0",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Controller",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/icon-nitr0.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 95,
+      "ability": 94,
+      "mentality": 96,
+      "synergy": 95
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "M80January 2024 \u2013 July 2024",
+        "from": 24294,
+        "to": null
+      },
+      {
+        "org": "100 Thieves",
+        "from": 24248,
+        "to": 24264
+      }
+    ]
+  },
+  {
+    "id": "icon-marved",
+    "player": "Marved",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Controller",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/icon-marved.png",
+    "stats": {
+      "aim": 93,
+      "positioning": 94,
+      "ability": 97,
+      "mentality": 93,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Sentinels",
+        "from": 24318,
+        "to": null
+      },
+      {
+        "org": "Chet's Pets",
+        "from": 24305,
+        "to": 24306
+      },
+      {
+        "org": "NRG",
+        "from": 24288,
+        "to": 24293
+      },
+      {
+        "org": "Sentinels",
+        "from": 24279,
+        "to": 24288
+      },
+      {
+        "org": "OpTic Gaming",
+        "from": 24266,
+        "to": 24275
+      },
+      {
+        "org": "ENVY",
+        "from": 24259,
+        "to": 24266
+      },
+      {
+        "org": "FaZe Clan",
+        "from": 24247,
+        "to": 24265
+      },
+      {
+        "org": "Jacked Gamers",
+        "from": 24245,
+        "to": 24245
+      }
+    ]
+  },
+  {
+    "id": "icon-pancada",
+    "player": "pANcada",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "BR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Controller",
+    "agents": [
+      "astra",
+      "omen"
+    ],
+    "photo": "/assets/players/icon-pancada.png",
+    "stats": {
+      "aim": 92,
+      "positioning": 95,
+      "ability": 96,
+      "mentality": 94,
+      "synergy": 95
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "LOUDJune 2024 \u2013 May 2026",
+        "from": 24316,
+        "to": null
+      },
+      {
+        "org": "Sentinels",
+        "from": 24274,
+        "to": 24294
+      },
+      {
+        "org": "LOUD",
+        "from": 24266,
+        "to": 24274
+      },
+      {
+        "org": "Stars Horizon",
+        "from": 24259,
+        "to": 24264
+      },
+      {
+        "org": "B4 Esports",
+        "from": 24253,
+        "to": 24256
+      }
+    ]
+  },
+  {
+    "id": "icon-ange1",
+    "player": "ANGE1",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "UA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 95,
+    "role": "Controller",
+    "agents": [
+      "astra",
+      "kayo"
+    ],
+    "photo": "/assets/players/icon-ange1.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 94,
+      "ability": 95,
+      "mentality": 98,
+      "synergy": 96
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "Natus Vincere",
+        "from": 24312,
+        "to": null
+      },
+      {
+        "org": "Natus Vincere",
+        "from": 24275,
+        "to": 24309
+      },
+      {
+        "org": "FunPlus Phoenix",
+        "from": 24248,
+        "to": 24275
+      },
+      {
+        "org": "PartyParrots",
+        "from": 24245,
+        "to": 24247
+      }
+    ]
+  },
+  {
+    "id": "icon-vanity",
+    "player": "Vanity",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Controller",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/icon-vanity.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 94,
+      "ability": 94,
+      "mentality": 97,
+      "synergy": 96
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "Cloud9September 2023 \u2013 October 2024",
+        "from": 24296,
+        "to": null
+      },
+      {
+        "org": "Shopify Rebellion Black",
+        "from": 24279,
+        "to": 24282
+      },
+      {
+        "org": "Cloud9",
+        "from": 24260,
+        "to": 24279
+      },
+      {
+        "org": "Version1",
+        "from": 24254,
+        "to": 24260
+      }
+    ]
+  },
+  {
+    "id": "icon-klaus",
+    "player": "Klaus",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "AR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Controller",
+    "agents": [
+      "omen",
+      "astra"
+    ],
+    "photo": "/assets/players/icon-klaus.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 93,
+      "ability": 94,
+      "mentality": 96,
+      "synergy": 96
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "OXEN",
+        "from": null,
+        "to": null
+      },
+      {
+        "org": "9z Globant",
+        "from": 24313,
+        "to": 24316
+      },
+      {
+        "org": "9z Globant",
+        "from": 24307,
+        "to": 24311
+      },
+      {
+        "org": "KR\u00dc Esports",
+        "from": 24253,
+        "to": 24296
+      }
+    ]
+  },
+  {
+    "id": "icon-xeta",
+    "player": "xeta",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Pacific",
+    "nationality": "KR",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Controller",
+    "agents": [
+      "astra",
+      "viper"
+    ],
+    "photo": "/assets/players/icon-xeta.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 94,
+      "ability": 95,
+      "mentality": 93,
+      "synergy": 94
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "FA",
+        "from": 24250,
+        "to": null
+      },
+      {
+        "org": "T1",
+        "from": 24269,
+        "to": 24290
+      },
+      {
+        "org": "Cloud9",
+        "from": 24253,
+        "to": 24269
+      },
+      {
+        "org": "Cloud9 Korea",
+        "from": 24250,
+        "to": 24252
+      }
+    ]
+  },
+  {
+    "id": "icon-dapr",
+    "player": "dapr",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "US",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Sentinel",
+    "agents": [
+      "killjoy",
+      "cypher"
+    ],
+    "photo": "/assets/players/icon-dapr.png",
+    "stats": {
+      "aim": 91,
+      "positioning": 97,
+      "ability": 94,
+      "mentality": 93,
+      "synergy": 95
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Division One",
+        "from": null,
+        "to": null
+      },
+      {
+        "org": "Cubert Academy",
+        "from": 24301,
+        "to": 24305
+      },
+      {
+        "org": "Oxygen Esports",
+        "from": 24285,
+        "to": 24296
+      },
+      {
+        "org": "G2 Esports",
+        "from": 24276,
+        "to": 24283
+      },
+      {
+        "org": "Sentinels",
+        "from": 24246,
+        "to": 24276
+      },
+      {
+        "org": "together we are terrific",
+        "from": 24245,
+        "to": 24246
+      }
+    ]
+  },
+  {
+    "id": "icon-steel",
+    "player": "steel",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 95,
+    "role": "Sentinel",
+    "agents": [
+      "killjoy",
+      "cypher"
+    ],
+    "photo": "/assets/players/icon-steel.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 96,
+      "ability": 93,
+      "mentality": 98,
+      "synergy": 96
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "T1December 2021 \u2013 December 2022",
+        "from": 24273,
+        "to": null
+      },
+      {
+        "org": "Disguised",
+        "from": 24276,
+        "to": 24282
+      },
+      {
+        "org": "100 Thieves",
+        "from": 24249,
+        "to": 24264
+      }
+    ]
+  },
+  {
+    "id": "icon-bonecold",
+    "player": "BONECOLD",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "EMEA",
+    "nationality": "FI",
+    "tier": "icon",
+    "edition": null,
+    "rating": 94,
+    "role": "Sentinel",
+    "agents": [
+      "killjoy",
+      "sage"
+    ],
+    "photo": "/assets/players/icon-bonecold.png",
+    "stats": {
+      "aim": 90,
+      "positioning": 95,
+      "ability": 93,
+      "mentality": 97,
+      "synergy": 96
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": true,
+    "stints": [
+      {
+        "org": "Team VitalityMay 2022 \u2013 January 2024",
+        "from": 24283,
+        "to": null
+      },
+      {
+        "org": "Acend",
+        "from": 24255,
+        "to": 24268
+      },
+      {
+        "org": "Raise Your Edge",
+        "from": 24241,
+        "to": 24255
+      }
+    ]
+  },
+  {
+    "id": "icon-shroud",
+    "player": "shroud",
+    "org": "",
+    "org_name": "Retired",
+    "org_logo": "",
+    "region": "Americas",
+    "nationality": "CA",
+    "tier": "icon",
+    "edition": null,
+    "rating": 93,
+    "role": "Sentinel",
+    "agents": [
+      "chamber",
+      "sage"
+    ],
+    "photo": "/assets/players/icon-shroud.png",
+    "stats": {
+      "aim": 96,
+      "positioning": 95,
+      "ability": 91,
+      "mentality": 92,
+      "synergy": 90
+    },
+    "power": null,
+    "palette": "icon",
+    "league": "icon",
+    "igl": false,
+    "stints": [
+      {
+        "org": "Team Mogul Moves",
+        "from": null,
+        "to": null
+      },
+      {
+        "org": "Sentinels",
+        "from": 24271,
+        "to": 24272
+      }
+    ]
   }
 ]

@@ -102,6 +102,46 @@ export const TEAMS = [
   { id: 13581, region: 'China', apiRegion: 'cn' },
 ];
 
+// ── Icon tier: retired legends ───────────────────────────────────────────────
+// Hand-authored cards. Stats are set here (90-99, sparing with 99s), never
+// derived from the API; only the portrait and past teams come from vlr.gg.
+// vlrId is optional: when omitted the sync resolves it via /v2/search using an
+// exact alias match. region is the player's era region for the card badge.
+export const ICONS = [
+  // Duelists
+  { name: 'TenZ',       vlrId: '9', nationality: 'CA', region: 'Americas', role: 'Duelist',    igl: false, agents: ['jett', 'chamber'],   stats: { aim: 99, positioning: 93, ability: 92, mentality: 91, synergy: 92 } },
+  { name: 'ScreaM',     nationality: 'BE', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['reyna', 'jett'],     stats: { aim: 98, positioning: 92, ability: 90, mentality: 93, synergy: 91 } },
+  { name: 'yay',        nationality: 'US', region: 'Americas', role: 'Duelist',    igl: false, agents: ['chamber', 'jett'],   stats: { aim: 98, positioning: 94, ability: 91, mentality: 90, synergy: 90 } },
+  { name: 'cNed',       nationality: 'TR', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['jett', 'chamber'],   stats: { aim: 97, positioning: 92, ability: 91, mentality: 91, synergy: 90 } },
+  { name: 'Wardell',    nationality: 'CA', region: 'Americas', role: 'Duelist',    igl: false, agents: ['jett', 'chamber'],   stats: { aim: 96, positioning: 91, ability: 90, mentality: 90, synergy: 91 } },
+  { name: 'Mixwell',    nationality: 'ES', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['jett', 'omen'],      stats: { aim: 94, positioning: 92, ability: 91, mentality: 93, synergy: 94 } },
+  { name: 'Victor',     nationality: 'US', region: 'Americas', role: 'Duelist',    igl: false, agents: ['raze', 'phoenix'],   stats: { aim: 93, positioning: 92, ability: 94, mentality: 92, synergy: 94 } },
+  { name: 'Sayaplayer', nationality: 'KR', region: 'Pacific',  role: 'Duelist',    igl: false, agents: ['jett', 'raze'],      stats: { aim: 96, positioning: 90, ability: 90, mentality: 90, synergy: 91 } },
+  { name: 'nukkye',     nationality: 'LT', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['raze', 'jett'],      stats: { aim: 93, positioning: 92, ability: 91, mentality: 91, synergy: 92 } },
+  // Initiators
+  { name: 'Hiko',       nationality: 'US', region: 'Americas', role: 'Initiator',  igl: false, agents: ['sova', 'breach'],    stats: { aim: 92, positioning: 97, ability: 93, mentality: 96, synergy: 94 } },
+  { name: 'Sacy',       nationality: 'BR', region: 'Americas', role: 'Initiator',  igl: false, agents: ['sova', 'fade'],      stats: { aim: 91, positioning: 94, ability: 96, mentality: 94, synergy: 97 } },
+  { name: 'shahzaM',    nationality: 'US', region: 'Americas', role: 'Initiator',  igl: true,  agents: ['sova', 'skye'],      stats: { aim: 91, positioning: 93, ability: 94, mentality: 96, synergy: 97 } },
+  { name: 'Subroza',    nationality: 'CA', region: 'Americas', role: 'Initiator',  igl: false, agents: ['skye', 'reyna'],     stats: { aim: 92, positioning: 91, ability: 93, mentality: 91, synergy: 93 } },
+  { name: 'Zest',       nationality: 'KR', region: 'Pacific',  role: 'Initiator',  igl: false, agents: ['fade', 'chamber'],   stats: { aim: 92, positioning: 93, ability: 95, mentality: 94, synergy: 93 } },
+  { name: 'Lakia',      nationality: 'KR', region: 'Pacific',  role: 'Initiator',  igl: false, agents: ['fade', 'kayo'],      stats: { aim: 91, positioning: 94, ability: 95, mentality: 92, synergy: 93 } },
+  { name: 'soulcas',    nationality: 'GB', region: 'EMEA',     role: 'Initiator',  igl: false, agents: ['skye', 'raze'],      stats: { aim: 90, positioning: 93, ability: 94, mentality: 92, synergy: 95 } },
+  { name: 'FNS',        nationality: 'CA', region: 'Americas', role: 'Initiator',  igl: true,  agents: ['fade', 'sova'],      stats: { aim: 90, positioning: 96, ability: 94, mentality: 99, synergy: 98 } },
+  // Controllers
+  { name: 'nitr0',      nationality: 'US', region: 'Americas', role: 'Controller', igl: false, agents: ['omen', 'astra'],     stats: { aim: 91, positioning: 95, ability: 94, mentality: 96, synergy: 95 } },
+  { name: 'Marved',     nationality: 'CA', region: 'Americas', role: 'Controller', igl: false, agents: ['omen', 'astra'],     stats: { aim: 93, positioning: 94, ability: 97, mentality: 93, synergy: 94 } },
+  { name: 'pANcada',    nationality: 'BR', region: 'Americas', role: 'Controller', igl: false, agents: ['astra', 'omen'],     stats: { aim: 92, positioning: 95, ability: 96, mentality: 94, synergy: 95 } },
+  { name: 'ANGE1',      nationality: 'UA', region: 'EMEA',     role: 'Controller', igl: true,  agents: ['astra', 'kayo'],     stats: { aim: 90, positioning: 94, ability: 95, mentality: 98, synergy: 96 } },
+  { name: 'Vanity',     nationality: 'US', region: 'Americas', role: 'Controller', igl: true,  agents: ['omen', 'astra'],     stats: { aim: 90, positioning: 94, ability: 94, mentality: 97, synergy: 96 } },
+  { name: 'Klaus',      nationality: 'AR', region: 'Americas', role: 'Controller', igl: true,  agents: ['omen', 'astra'],     stats: { aim: 90, positioning: 93, ability: 94, mentality: 96, synergy: 96 } },
+  { name: 'xeta',       nationality: 'KR', region: 'Pacific',  role: 'Controller', igl: false, agents: ['astra', 'viper'],    stats: { aim: 91, positioning: 94, ability: 95, mentality: 93, synergy: 94 } },
+  // Sentinels
+  { name: 'dapr',       nationality: 'US', region: 'Americas', role: 'Sentinel',   igl: false, agents: ['killjoy', 'cypher'], stats: { aim: 91, positioning: 97, ability: 94, mentality: 93, synergy: 95 } },
+  { name: 'steel',      nationality: 'CA', region: 'Americas', role: 'Sentinel',   igl: true,  agents: ['killjoy', 'cypher'], stats: { aim: 90, positioning: 96, ability: 93, mentality: 98, synergy: 96 } },
+  { name: 'BONECOLD',   nationality: 'FI', region: 'EMEA',     role: 'Sentinel',   igl: true,  agents: ['killjoy', 'sage'],   stats: { aim: 90, positioning: 95, ability: 93, mentality: 97, synergy: 96 } },
+  { name: 'shroud',     nationality: 'CA', region: 'Americas', role: 'Sentinel',   igl: false, agents: ['chamber', 'sage'],   stats: { aim: 96, positioning: 95, ability: 91, mentality: 92, synergy: 90 } },
+];
+
 // Manual overrides keyed by vlr.gg player ID (string).
 // Supported fields: tier, palette, power, edition, photo.
 // Tier is otherwise derived from the card rating (80+ gold, 70+ silver, below 70 bronze).

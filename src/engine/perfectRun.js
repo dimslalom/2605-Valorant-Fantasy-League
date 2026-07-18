@@ -112,11 +112,11 @@ export function teamChemistry(roster, iglId) {
     lines.push({ label: `${natPairs} countryman pair${natPairs > 1 ? 's' : ''}`, value: +bonus });
   }
 
-  // Real-life teammate pairs (same org)
+  // Real-life teammate pairs (same org; icons are org-less and never count)
   let orgPairs = 0;
   for (let i = 0; i < roster.length; i++) {
     for (let j = i + 1; j < roster.length; j++) {
-      if (roster[i].org === roster[j].org) orgPairs++;
+      if (roster[i].org && roster[i].org === roster[j].org) orgPairs++;
     }
   }
   if (orgPairs) {
@@ -130,7 +130,7 @@ export function teamChemistry(roster, iglId) {
   let pastPairs = 0;
   for (let i = 0; i < roster.length; i++) {
     for (let j = i + 1; j < roster.length; j++) {
-      if (roster[i].org === roster[j].org) continue;
+      if (roster[i].org && roster[i].org === roster[j].org) continue;
       if (stintsOverlap(roster[i].stints, roster[j].stints)) pastPairs++;
     }
   }
@@ -247,7 +247,10 @@ export const STAGE_META = {
 
 export function buildField(rng, cards, pickedIds, playerTeam) {
   const byOrg = {};
-  for (const c of cards) (byOrg[c.org] ??= []).push(c);
+  for (const c of cards) {
+    if (!c.org) continue; // icons are org-less and never form an opponent team
+    (byOrg[c.org] ??= []).push(c);
+  }
 
   const eligible = Object.entries(byOrg)
     .filter(([, list]) => list.length >= 5 && list.every(p => !pickedIds.has(p.id)))

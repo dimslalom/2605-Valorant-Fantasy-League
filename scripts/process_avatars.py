@@ -50,6 +50,23 @@ def _looks_like_placeholder(cutout) -> bool:
     return variance ** 0.5 < 12
 
 
+def golden_duotone(cutout):
+    """Icon-tier portrait treatment: grayscale mapped onto a gold ramp
+    (near-black shadows, warm golden highlights), alpha preserved."""
+    from PIL import ImageOps
+    alpha = cutout.getchannel("A")
+    gray = ImageOps.autocontrast(cutout.convert("L"), cutoff=1)
+    duo = ImageOps.colorize(
+        gray,
+        black=(20, 16, 10),
+        mid=(122, 96, 52),
+        white=(232, 202, 124),
+    )
+    duo = duo.convert("RGBA")
+    duo.putalpha(alpha)
+    return duo
+
+
 def main() -> int:
     try:
         from PIL import Image
@@ -63,14 +80,19 @@ def main() -> int:
         print(f"no manifest at {manifest_path} — run `npm run sync-vlr` first")
         return 1
 
-    manifest: dict[str, str] = json.loads(manifest_path.read_text())
+    # values are either "file.png" or {"file": "...", "style": "icon"}
+    manifest: dict = json.loads(manifest_path.read_text())
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # One shared session so the U2-Net model loads once for the whole batch
     session = new_session("u2net")
 
     done = skipped = failed = placeholder = 0
-    for player_id, out_name in manifest.items():
+    for player_id, entry in manifest.items():
+        if isinstance(entry, str):
+            out_name, style = entry, None
+        else:
+            out_name, style = entry["file"], entry.get("style")
         raw = CACHE_DIR / f"{player_id}.png"
         out = OUT_DIR / out_name
         if out.exists():
@@ -106,6 +128,9 @@ def main() -> int:
                 print(f"  ! {out_name}: source avatar looks like a generic silhouette placeholder, skipping")
                 placeholder += 1
                 continue
+
+            if style == "icon":
+                cutout = golden_duotone(cutout)
 
             scale = min(CANVAS_W / cutout.width, CANVAS_H / cutout.height)
             new_size = (round(cutout.width * scale), round(cutout.height * scale))
