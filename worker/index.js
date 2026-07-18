@@ -12,7 +12,7 @@ import {
   setConnection,
 } from '../src/engine/multiplayer.js';
 
-const APP_PREFIX = '/vct-lock-in';
+const APP_PREFIX = '';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 export default {
@@ -32,13 +32,13 @@ export default {
       return json({ error: 'code_generation_failed', message: 'Could not allocate a lobby code.' }, 503);
     }
 
-    const joinMatch = url.pathname.match(/^\/vct-lock-in\/api\/lobbies\/([A-Z2-9]{6})\/join$/);
+    const joinMatch = url.pathname.match(/^\/api\/lobbies\/([A-Z2-9]{6})\/join$/);
     if (joinMatch && request.method === 'POST') {
       const stub = env.LOBBIES.get(env.LOBBIES.idFromName(joinMatch[1]));
       return stub.fetch('https://lobby.internal/join', { method: 'POST', body: JSON.stringify(await readJson(request)) });
     }
 
-    const wsMatch = url.pathname.match(/^\/vct-lock-in\/ws\/([A-Z2-9]{6})$/);
+    const wsMatch = url.pathname.match(/^\/ws\/([A-Z2-9]{6})$/);
     if (wsMatch) {
       if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return json({ error: 'upgrade_required' }, 426);
       const stub = env.LOBBIES.get(env.LOBBIES.idFromName(wsMatch[1]));

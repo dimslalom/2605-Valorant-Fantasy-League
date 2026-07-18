@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/',
   build: {
-    outDir: 'dist/vct-lock-in',
+    outDir: 'dist',
     emptyOutDir: true,
   },
 })

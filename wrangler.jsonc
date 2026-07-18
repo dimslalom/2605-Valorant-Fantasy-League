@@ -4,15 +4,21 @@
   "main": "worker/index.js",
   "compatibility_date": "2026-07-18",
   "workers_dev": true,
+
   "routes": [
-  { "pattern": "vctfantasy.dimas.works", "custom_domain": true }
+    {
+      "pattern": "vctfantasy.dimas.works",
+      "custom_domain": true
+    }
   ],
+
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "run_worker_first": true,
     "not_found_handling": "none"
   },
+
   "durable_objects": {
     "bindings": [
       {
@@ -21,6 +27,7 @@
       }
     ]
   },
+
   "migrations": [
     {
       "tag": "v1",
