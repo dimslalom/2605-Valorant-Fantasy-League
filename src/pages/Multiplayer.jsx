@@ -164,9 +164,10 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
             selectedId={snapshot.consolation?.selectedCardId}
             interactive={activeId === myId}
             onPick={card => send('choose_card', { cardId: card.id })}
+            canSwap={snapshot.phase === 'consolation' && activeId === myId && Boolean(snapshot.consolation.selectedCardId)}
+            onSwap={card => send('choose_swap', { replaceCardId: card.id })}
             squadName={active?.squadName ?? 'Squad'}
           />
-          {snapshot.phase === 'consolation' && activeId === myId && snapshot.consolation.selectedCardId && <SwapStrip me={me} send={send} />}
           {snapshot.phase === 'consolation' && activeId === myId && <button className={styles.secondary} onClick={() => send('skip_consolation')}>Skip pack</button>}
           <Deadline deadlineAt={snapshot.draft?.deadlineAt ?? snapshot.consolation?.deadlineAt} serverNow={snapshot.serverNow} />
         </section>
@@ -183,8 +184,8 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
       )}
 
       {snapshot.phase === 'season_over' && <Standings snapshot={snapshot} isHost={isHost} send={send} />}
-      {snapshot.phase === 'match_ready' && !animationEvent && <PlayMatchDock isHost={isHost} onPlay={() => send('play_match')} />}
-      {snapshot.phase === 'match_transition' && <TimerBar pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
+      {snapshot.phase === 'match_ready' && !animationEvent && snapshot.pendingTransition && <TimerBar label="Play match" waitingLabel="Match starts" pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
+      {snapshot.phase === 'match_transition' && <TimerBar label="Play next match" waitingLabel="Next match" pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
     </main>
   );
 }
@@ -197,10 +198,6 @@ function IglSelect({ me, selected, onChoose, deadlineAt, serverNow, spectator })
   return <section className={styles.draftStage}><span className={styles.kicker}>Concurrent selection</span><h2>Choose your IGL</h2>{spectator ? <p>Competitors are choosing their callers.</p> : <div className={styles.cards}>{me.rosterIds.map(id => <PlayerCard key={id} card={cardMap.get(id)} displayScale={0.34} selected={selected === id} onClick={() => onChoose(id)} />)}</div>}<Deadline deadlineAt={deadlineAt} serverNow={serverNow} /></section>;
 }
 
-function SwapStrip({ me, send }) {
-  return <div className={styles.swap}><span>Choose who leaves</span>{me.rosterIds.map(id => <button key={id} onClick={() => send('choose_swap', { replaceCardId: id })}>{cardMap.get(id)?.player}</button>)}</div>;
-}
-
 function Standings({ snapshot, isHost, send }) {
   const rows = Object.values(snapshot.season.standings).sort((a, b) => b.score - a.score || b.titles - a.titles);
   return <section className={styles.standings}><span className={styles.kicker}>Season complete</span><h1>Final standings</h1>{rows.map((row, index) => <div key={row.competitorId}><span>{index + 1}</span><b>{row.squadName}</b><span>{row.titles} titles</span><span>{row.matchWins} wins</span><strong>{row.score}</strong></div>)}{isHost && <button className={styles.primary} onClick={() => send('return_to_lobby')}>Return everyone to lobby</button>}</section>;
@@ -208,7 +205,7 @@ function Standings({ snapshot, isHost, send }) {
 
 const RIP_MS = 850;
 
-function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, picks, selectedId, interactive, onPick, squadName }) {
+function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, picks, selectedId, interactive, onPick, canSwap, onSwap, squadName }) {
   const [ripping, setRipping] = useState(false);
   const stripRef = useRef(null);
   const ripTimer = useRef(null);
@@ -276,8 +273,13 @@ function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, p
 
       {picks.length > 0 && (
         <div className={soloStyles.rosterStrip}>
-          <span className={soloStyles.stripLabel}>{squadName}</span>
-          {picks.map(card => <PlayerCard key={card.id} card={card} displayScale={0.28} />)}
+          <span className={canSwap ? styles.swapPrompt : soloStyles.stripLabel}>{canSwap ? 'Choose who leaves' : squadName}</span>
+          {picks.map(card => (
+            <div key={card.id} className={canSwap ? styles.swapTarget : undefined}>
+              <PlayerCard card={card} displayScale={0.28} onClick={canSwap ? () => onSwap(card) : undefined} />
+              {canSwap && <span className={styles.swapTargetLabel}>Swap out</span>}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -397,18 +399,7 @@ function MultiplayerBracketCell({ tournament, match, cellRef }) {
   );
 }
 
-function PlayMatchDock({ isHost, onPlay }) {
-  return (
-    <div className={soloStyles.bracketCta}>
-      <button className={`${soloStyles.primary} ${soloStyles.playButton}`} onClick={isHost ? onPlay : undefined} disabled={!isHost}>
-        <span>{isHost ? 'Play match' : 'Waiting for host'}</span>
-        {isHost && <b aria-hidden="true">→</b>}
-      </button>
-    </div>
-  );
-}
-
-function TimerBar({ pending, serverNow, isHost, onAdvance }) {
+function TimerBar({ label, waitingLabel, pending, serverNow, isHost, onAdvance }) {
   const [remaining, setRemaining] = useState(10_000);
   useEffect(() => {
     const skew = Date.now() - serverNow;
@@ -418,7 +409,7 @@ function TimerBar({ pending, serverNow, isHost, onAdvance }) {
     return () => clearInterval(id);
   }, [pending.deadlineAt, serverNow]);
   const progress = remaining / 10_000;
-  return <div className={styles.timerDock}><button onClick={isHost ? onAdvance : undefined} disabled={!isHost} style={{ '--remaining': progress }}><span>{isHost ? 'Play next match' : 'Next match'} · {Math.ceil(remaining / 1000)}s</span></button></div>;
+  return <div className={styles.timerDock}><button onClick={isHost ? onAdvance : undefined} disabled={!isHost} style={{ '--remaining': progress }}><span>{isHost ? label : waitingLabel} · {Math.ceil(remaining / 1000)}s</span></button></div>;
 }
 
 function Deadline({ deadlineAt, serverNow }) {

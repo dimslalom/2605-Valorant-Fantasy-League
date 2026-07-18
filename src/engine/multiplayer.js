@@ -132,10 +132,13 @@ export function applyCommand(state, actorId, command, cards, now) {
       break;
     case 'advance_early':
       requireHost(state, actorId);
-      if (state.phase !== 'match_transition' || !state.pendingTransition) {
+      if (state.phase === 'match_ready' && state.pendingTransition?.type === 'play_match') {
+        playHumanMatch(state, cards, now, events);
+      } else if (state.phase === 'match_transition' && state.pendingTransition) {
+        advanceMatchTransition(state, cards, now, events);
+      } else {
         throw new GameError('invalid_phase', 'There is no transition to advance.');
       }
-      advanceMatchTransition(state, cards, now, events);
       break;
     case 'end_endless':
       requireHost(state, actorId);
@@ -186,6 +189,9 @@ export function advanceDeadlines(state, cards, now) {
     }
     startSeason(state, cards, now, events);
     changed = true;
+  } else if (state.phase === 'match_ready' && state.pendingTransition?.deadlineAt <= now) {
+    playHumanMatch(state, cards, now, events);
+    changed = true;
   } else if (state.phase === 'match_transition' && state.pendingTransition?.deadlineAt <= now) {
     advanceMatchTransition(state, cards, now, events);
     changed = true;
@@ -200,7 +206,7 @@ export function advanceDeadlines(state, cards, now) {
 export function nextAlarmAt(state) {
   const phaseDeadline = state.phase === 'draft' || state.phase === 'igl_select'
     ? state.draft?.deadlineAt
-    : state.phase === 'match_transition'
+    : state.phase === 'match_ready' || state.phase === 'match_transition'
       ? state.pendingTransition?.deadlineAt
       : state.phase === 'consolation'
         ? state.consolation?.deadlineAt
@@ -366,8 +372,13 @@ function resolveUntilPresentation(state, cards, now, events) {
     if (unresolved) {
       if (unresolved.humanInvolved) {
         tournament.currentHumanMatchId = unresolved.id;
-        state.pendingTransition = null;
+        state.pendingTransition = {
+          type: 'play_match',
+          matchId: unresolved.id,
+          deadlineAt: now + TRANSITION_DEADLINE_MS,
+        };
         state.phase = 'match_ready';
+        events.push({ type: 'deadline', serverNow: now, deadlineAt: state.pendingTransition.deadlineAt });
         return;
       }
       simulateMatch(state, unresolved, cards);
