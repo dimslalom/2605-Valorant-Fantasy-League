@@ -47,6 +47,55 @@ export default {
       return stub.fetch(new Request(internal, request));
     }
 
+    // ── Daily-challenge leaderboard (D1) ────────────────────────────────────
+
+    if (url.pathname === `${APP_PREFIX}/api/daily-scores` && request.method === 'POST') {
+      const body = await readJson(request).catch(() => null);
+      if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return json({ error: 'invalid_submission' }, 400);
+      }
+      const date = String(body.date ?? '');
+      const clientId = String(body.clientId ?? '');
+      const squadName = String(body.squadName ?? '').trim().replace(/\s+/g, ' ');
+      const score = body.score;
+      if (!isValidDateKey(date)
+          || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientId)
+          || !squadName || squadName.length > 28
+          || !Number.isInteger(score) || score < 0 || score > 5000) {
+        return json({ error: 'invalid_submission' }, 400);
+      }
+      // UNIQUE(date, client_id) + OR IGNORE = atomic once-per-day gate.
+      const result = await env.DB.prepare(
+        `INSERT OR IGNORE INTO daily_scores (date, client_id, squad_name, score, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).bind(date, clientId, squadName, score, Date.now()).run();
+      return json({ accepted: result.meta.changes > 0 });
+    }
+
+    if (url.pathname === `${APP_PREFIX}/api/leaderboard/daily` && request.method === 'GET') {
+      const date = url.searchParams.get('date') ?? '';
+      if (!isValidDateKey(date)) return json({ error: 'invalid_date' }, 400);
+      const { results } = await env.DB.prepare(
+        `SELECT client_id, squad_name, score FROM daily_scores
+         WHERE date = ? ORDER BY score DESC, created_at ASC LIMIT 50`,
+      ).bind(date).all();
+      return json({
+        rows: results.map(r => ({ clientId: r.client_id, squadName: r.squad_name, score: r.score })),
+      });
+    }
+
+    if (url.pathname === `${APP_PREFIX}/api/leaderboard/overall` && request.method === 'GET') {
+      // Best single day per client; SQLite's bare-column rule pulls
+      // squad_name from the same row as MAX(score).
+      const { results } = await env.DB.prepare(
+        `SELECT client_id, squad_name, MAX(score) AS best, COUNT(*) AS days
+         FROM daily_scores GROUP BY client_id ORDER BY best DESC LIMIT 50`,
+      ).all();
+      return json({
+        rows: results.map(r => ({ clientId: r.client_id, squadName: r.squad_name, best: r.best, days: r.days })),
+      });
+    }
+
     if (!url.pathname.startsWith(`${APP_PREFIX}/`) && url.pathname !== APP_PREFIX) return new Response('Not found', { status: 404 });
     if (request.method === 'GET' && request.headers.get('Accept')?.includes('text/html') && url.pathname !== `${APP_PREFIX}/index.html`) {
       const fallback = new URL(`${APP_PREFIX}/`, url.origin);
@@ -263,6 +312,16 @@ async function readJson(request) {
 function errorResponse(error) {
   const status = error.code === 'unauthorized' ? 403 : error.code?.includes('not_found') ? 404 : 400;
   return json({ error: error.code ?? 'internal_error', message: error.message }, status);
+}
+
+function isValidDateKey(value) {
+  const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < 2020 || year > 2100 || month < 1 || month > 12 || day < 1) return false;
+  return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 function json(body, status = 200) {

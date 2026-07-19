@@ -28,6 +28,15 @@
     ]
   },
 
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "vfl-daily-scores",
+      "database_id": "8bfc8861-0417-46d8-8bd5-e18ef206503b",
+      "migrations_dir": "migrations"
+    }
+  ],
+
   "migrations": [
     {
       "tag": "v1",

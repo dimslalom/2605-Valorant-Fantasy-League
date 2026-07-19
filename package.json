@@ -11,7 +11,9 @@
     "sync-cards": "node scripts/sheet-to-json.js",
     "sync-vlr": "node scripts/vlr-to-json.js",
     "sync-icons": "node scripts/vlr-to-json.js --icons-only",
+    "test:perfect-run": "node --test test/perfectRunModes.test.js",
     "test:multiplayer": "node --test test/multiplayer.test.js",
+    "lint:app": "eslint src/engine/perfectRun.js src/engine/multiplayer.js src/pages/PerfectRun.jsx src/pages/Multiplayer.jsx src/lib/leaderboardClient.js src/lib/multiplayerClient.js worker/index.js test/perfectRunModes.test.js test/multiplayer.test.js",
     "lint:multiplayer": "eslint src/engine/multiplayer.js src/pages/Multiplayer.jsx src/lib/multiplayerClient.js worker/index.js"
   },
   "dependencies": {

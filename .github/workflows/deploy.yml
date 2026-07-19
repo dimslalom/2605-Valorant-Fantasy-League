@@ -18,8 +18,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run test:perfect-run
       - run: npm run test:multiplayer
-      - run: npm run lint:multiplayer
+      - run: npm run lint:app
       - run: npm run build
       - run: npx wrangler deploy
         env:

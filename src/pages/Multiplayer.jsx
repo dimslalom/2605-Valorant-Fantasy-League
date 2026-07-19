@@ -249,7 +249,7 @@ function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, p
           </span>
           <span className={soloStyles.draftNat}>
             {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 34, height: 24 }} />}
-            {nation ? countryName(nation) : 'Three card pack'}
+            {nation ? countryName(nation) : 'Five card pack'}
             <small className={soloStyles.draftCount}>{choices.length} available</small>
           </span>
         </div>

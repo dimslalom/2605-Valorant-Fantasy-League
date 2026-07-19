@@ -1,5 +1,6 @@
 import {
   CITIES,
+  PACK_SIZE,
   ROUND_KEYS,
   ROUND_META,
   hashSeed,
@@ -294,7 +295,7 @@ function dealDraftOffer(state, cards, now) {
   if (!available.length) throw new GameError('cards_exhausted', 'No cards remain.');
   if (state.settings.unboxing === 'normal') {
     state.draft.nation = null;
-    state.draft.offers = sample(state, available, Math.min(3, available.length)).map(c => c.id);
+    state.draft.offers = sample(state, available, Math.min(PACK_SIZE, available.length)).map(c => c.id);
   } else {
     const pools = Object.groupBy
       ? Object.groupBy(available, card => card.nationality)
@@ -479,7 +480,7 @@ function dealConsolationOffer(state, cards, now) {
   const available = cards.filter(card => !state.draftedCardIds.includes(card.id));
   if (state.settings.unboxing === 'normal') {
     state.consolation.nation = null;
-    state.consolation.offers = sample(state, available, Math.min(3, available.length)).map(c => c.id);
+    state.consolation.offers = sample(state, available, Math.min(PACK_SIZE, available.length)).map(c => c.id);
   } else {
     const grouped = available.reduce((out, card) => ((out[card.nationality] ??= []).push(card), out), {});
     const nations = Object.keys(grouped).sort();

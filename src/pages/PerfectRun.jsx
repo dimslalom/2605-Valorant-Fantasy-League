@@ -6,11 +6,14 @@ import allCards from '../data/cards.json';
 import { assetPath, countryName } from '../lib/utils';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
-  rollNationality, draftChoices, teamPower,
+  rollNationality, draftChoices, teamPower, samplePack, nextEndlessEvent,
   makeSeason, buildBracket, nextBracketRound, currentRound, playerMatch,
   setPlayerResult, resolveNpcMatches, seedOf,
   pickMaps, simMap, evaluateTournament, evaluateSeason,
 } from '../engine/perfectRun';
+import {
+  getClientId, submitDailyScore, fetchDailyLeaderboard, fetchOverallLeaderboard,
+} from '../lib/leaderboardClient';
 import styles from './PerfectRun.module.css';
 
 const STORAGE_KEY = 'vfl-perfectrun';
@@ -39,9 +42,15 @@ export default function PerfectRun() {
   const navigate = useNavigate();
   // menu | name | draft | review | intro | run | result | locked | pack | over
   const [phase, setPhase] = useState('menu');
-  const [mode, setMode] = useState('solo');
+  const [mode, setMode] = useState('solo');           // solo | daily | enc
+  const [runLength, setRunLength] = useState('season'); // season | endless
   const [squadName, setSquadName] = useState('');
   const rng = useRef(null);
+
+  // leaderboard panel (menu)
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [boardTab, setBoardTab] = useState('today');
+  const [boardData, setBoardData] = useState({}); // {today, overall}: undefined=unfetched, null=offline
 
   // draft
   const [picks, setPicks] = useState([]);
@@ -85,6 +94,7 @@ export default function PerfectRun() {
   const overlayRef = useRef(null);
   const travelInfo = useRef(null);
   const historyRef = useRef([]);
+  const usedCitiesRef = useRef([]); // endless: recent host cities, no repeats
 
   useEffect(() => () => {
     clearInterval(animTimer.current);
@@ -97,14 +107,17 @@ export default function PerfectRun() {
 
   // ── Draft flow ────────────────────────────────────────────────────────────
 
-  function startRun(selectedMode) {
+  function startRun(selectedMode, length = 'season') {
     const seed = selectedMode === 'daily' ? todaySeed() : (Date.now() & 0xffffffff);
     rng.current = mulberry32(seed);
     setMode(selectedMode);
+    setRunLength(length);
     setSquadName('');
     setPicks([]); setIglId(null);
     setRerolls(selectedMode === 'daily' ? 1 : 3);
-    setSeason(makeSeason(rng.current));
+    const openingSeason = makeSeason(rng.current);
+    setSeason(openingSeason);
+    usedCitiesRef.current = openingSeason.map(t => t.city);
     setTourIndex(0); setTourResults([]); setCurrentResult(null); setSeasonResult(null);
     setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
     setMaps([]); setMapResults([]); setLive(null);
@@ -114,7 +127,8 @@ export default function PerfectRun() {
     clearInterval(revealTimer.current);
     clearTimeout(advanceTimer.current);
     seriesActive.current = false;
-    rollSlot(new Set());
+    setPanelOpen(false);
+    rollSlot(new Set(), selectedMode); // state hasn't committed yet, pass mode
     setPhase('name');
   }
 
@@ -126,10 +140,16 @@ export default function PerfectRun() {
     setPhase('draft');
   }
 
-  function rollSlot(ids) {
-    const rolled = rollNationality(rng.current, allCards, ids);
-    setNat(rolled);
-    setChoices(draftChoices(allCards, rolled, ids));
+  // ENC drafts by nation roll; everyone else rips a pack of 5 random cards.
+  function rollSlot(ids, m = mode) {
+    if (m === 'enc') {
+      const rolled = rollNationality(rng.current, allCards, ids);
+      setNat(rolled);
+      setChoices(draftChoices(allCards, rolled, ids));
+    } else {
+      setNat(null);
+      setChoices(samplePack(rng.current, allCards, ids));
+    }
     setRipId(id => id + 1);
   }
 
@@ -372,8 +392,10 @@ export default function PerfectRun() {
     setPhase('result');
   }
 
+  const endless = runLength === 'endless';
+
   function continueFromResult() {
-    const isLast = tourIndex >= season.length - 1;
+    const isLast = !endless && tourIndex >= season.length - 1;
     if (isLast) { finishSeason(); return; }
     if (currentResult.champion) {
       setPhase('locked');
@@ -384,11 +406,14 @@ export default function PerfectRun() {
   }
 
   function finishSeason() {
-    const result = evaluateSeason(tourResults);
+    const result = evaluateSeason(tourResults, { endless });
     setSeasonResult(result);
 
     const saves = loadSaves();
-    saves.bestScore = Math.max(saves.bestScore ?? 0, result.score);
+    // Endless scores grow without bound, so they get their own best and
+    // never mix with the fixed-season record.
+    if (endless) saves.bestEndless = Math.max(saves.bestEndless ?? 0, result.score);
+    else saves.bestScore = Math.max(saves.bestScore ?? 0, result.score);
     saves.badges ??= {};
     for (const tr of tourResults) {
       if (!tr.champion) continue;
@@ -401,13 +426,24 @@ export default function PerfectRun() {
       saves.dailyScores ??= {};
       const k = dateKey();
       saves.dailyScores[k] = Math.max(saves.dailyScores[k] ?? 0, result.score);
+      // Shared board entry; the server's UNIQUE(date, client) is the real
+      // once-per-day gate. Fire-and-forget: offline just means no submit.
+      void submitDailyScore({ date: k, squadName, score: result.score });
     }
     saveSaves(saves);
     setPhase('over');
   }
 
+  // Endless grows the season lazily: one more event whenever the player
+  // steps past the end of the list.
   function nextTournament() {
-    setTourIndex(i => i + 1);
+    const next = tourIndex + 1;
+    if (endless && next >= season.length) {
+      const ev = nextEndlessEvent(rng.current, next, usedCitiesRef.current);
+      usedCitiesRef.current = [...usedCitiesRef.current, ev.city].slice(-10);
+      setSeason(s => [...s, ev]);
+    }
+    setTourIndex(next);
     setPhase('intro');
   }
 
@@ -415,9 +451,14 @@ export default function PerfectRun() {
 
   function rollPack() {
     const ids = new Set(picks.map(p => p.id));
-    const rolled = rollNationality(rng.current, allCards, ids);
-    setPackNat(rolled);
-    setPackChoices(draftChoices(allCards, rolled, ids));
+    if (mode === 'enc') {
+      const rolled = rollNationality(rng.current, allCards, ids);
+      setPackNat(rolled);
+      setPackChoices(draftChoices(allCards, rolled, ids));
+    } else {
+      setPackNat(null);
+      setPackChoices(samplePack(rng.current, allCards, ids));
+    }
     setPackPick(null);
     setRipId(id => id + 1);
   }
@@ -436,7 +477,19 @@ export default function PerfectRun() {
 
   const saves = loadSaves();
   const todayBest = saves.dailyScores?.[dateKey()];
+  const dailyPlayed = todayBest != null;
   const titleCount = (saves.badges?.masters ?? 0) + (saves.badges?.champions ?? 0);
+
+  // Open the leaderboard panel and lazy-fetch the tab once per menu visit.
+  function openBoard(tab) {
+    setPanelOpen(true);
+    setBoardTab(tab);
+    if (boardData[tab] !== undefined) return;
+    const fetcher = tab === 'today'
+      ? fetchDailyLeaderboard(dateKey())
+      : fetchOverallLeaderboard();
+    fetcher.then(rows => setBoardData(d => ({ ...d, [tab]: rows })));
+  }
 
   const fanCards = useMemo(() =>
     allCards
@@ -445,10 +498,14 @@ export default function PerfectRun() {
       .slice(0, 3),
   []);
 
-  const runningScore = evaluateSeason(tourResults);
+  // Memoized: endless runs make this O(events) and it renders often.
+  const runningScore = useMemo(
+    () => evaluateSeason(tourResults, { endless }),
+    [tourResults, endless],
+  );
 
   return (
-    <div className={styles.shell}>
+    <div className={[styles.shell, mode === 'enc' && phase !== 'menu' ? styles.encTheme : ''].join(' ')}>
       <div className={styles.pageHeader}>
         <NavHeader right={phase === 'run' && round && def
           ? `${def.label} · ${round.label} (Bo${round.bestOf})`
@@ -462,18 +519,39 @@ export default function PerfectRun() {
           <section className={styles.menu}>
             <div className={styles.menuMain}>
               <h1 className={styles.menuTitle}>Perfect<br />Run<em>//</em></h1>
-              <p className={styles.menuTag}>Three cities. One season. Zero maps dropped.</p>
+              <p className={styles.menuTag}>Pick your run. Zero maps dropped.</p>
 
               <div className={styles.menuModes}>
-                <button className={styles.modeBtn} onClick={() => startRun('solo')}>
-                  <span className={styles.modeBtnName}>Solo Season</span>
-                  <span className={styles.modeBtnSub}>3 rerolls</span>
-                </button>
-                <button className={styles.modeBtn} onClick={() => startRun('daily')}>
-                  <span className={styles.modeBtnName}>Daily Challenge</span>
-                  <span className={styles.modeBtnSub}>
-                    {todayBest != null ? `best today ${todayBest}` : 'shared draft, 1 reroll'}
+                <div className={`${styles.modeBtn} ${styles.modeSplit}`}>
+                  <span className={styles.modeBtnName}>Solo Run</span>
+                  <span className={styles.modeSplitActions}>
+                    <button className={styles.modeSplitAction} onClick={() => startRun('solo', 'season')}>
+                      One Season
+                      <small>3 cities</small>
+                    </button>
+                    <button className={styles.modeSplitAction} onClick={() => startRun('solo', 'endless')}>
+                      Endless
+                      <small>no finish line</small>
+                    </button>
                   </span>
+                </div>
+                {dailyPlayed ? (
+                  <button className={styles.modeBtn} onClick={() => openBoard('today')}>
+                    <span className={styles.modeBtnName}>Daily Challenge</span>
+                    <span className={styles.modeBtnSub}>played today · view leaderboard</span>
+                  </button>
+                ) : (
+                  <button className={styles.modeBtn} onClick={() => startRun('daily')}>
+                    <span className={styles.modeBtnName}>Daily Challenge</span>
+                    <span className={styles.modeBtnSub}>shared packs, 1 reroll, once a day</span>
+                  </button>
+                )}
+                <button className={`${styles.modeBtn} ${styles.encTile}`} onClick={() => startRun('enc')}>
+                  <span className={styles.modeBtnName}>
+                    <span className={styles.encMark} aria-hidden="true">ENC</span>
+                    Esports Nations Cup
+                  </span>
+                  <span className={styles.modeBtnSub}>national packs · gold event</span>
                 </button>
                 <button className={styles.modeBtn} onClick={() => navigate('/multiplayer')}>
                   <span className={styles.modeBtnName}>Multiplayer</span>
@@ -483,10 +561,23 @@ export default function PerfectRun() {
 
               <div className={styles.recordStrip}>
                 <span>Best <b><CountUp value={saves.bestScore ?? 0} /></b></span>
+                <span>Endless <b><CountUp value={saves.bestEndless ?? 0} /></b></span>
                 <span>Titles <b><CountUp value={titleCount} /></b></span>
                 <span>Slams <b><CountUp value={saves.badges?.grand_slam ?? 0} /></b></span>
                 <span>Perfect <b><CountUp value={saves.badges?.perfect_season ?? 0} /></b></span>
+                <button className={styles.boardToggle} onClick={() => (panelOpen ? setPanelOpen(false) : openBoard('today'))}>
+                  {panelOpen ? 'Hide leaderboard' : 'Leaderboard'}
+                </button>
               </div>
+
+              {panelOpen && (
+                <LeaderboardPanel
+                  tab={boardTab}
+                  onTab={openBoard}
+                  data={boardData}
+                  todayBest={todayBest}
+                />
+              )}
             </div>
 
             <div className={styles.menuFan} aria-hidden="true">
@@ -507,7 +598,13 @@ export default function PerfectRun() {
         <section className={styles.nameStep}>
           <span className={styles.introMarker}>Build your season</span>
           <h2 className={styles.nameTitle}>Name your squad<em>//</em></h2>
-          <p className={styles.groupNote}>This name stays with your roster through all three cities.</p>
+          <p className={styles.groupNote}>
+            {runLength === 'endless'
+              ? 'This name stays with your roster for as long as you keep the run going.'
+              : mode === 'daily'
+                ? 'This name goes on the daily leaderboard with your score.'
+                : 'This name stays with your roster through all three cities.'}
+          </p>
           <form className={styles.nameForm} onSubmit={confirmSquadName}>
             <label htmlFor="squad-name">Squad name</label>
             <input
@@ -571,7 +668,9 @@ export default function PerfectRun() {
 
       {phase === 'intro' && def && (
         <section className={styles.intro}>
-          <span className={styles.introMarker}>Tournament {tourIndex + 1} / {season.length}</span>
+          <span className={styles.introMarker}>
+            {endless ? `Tournament ${tourIndex + 1}` : `Tournament ${tourIndex + 1} / ${season.length}`}
+          </span>
           <h1 className={styles.introTitle}>{def.label}<em>//</em></h1>
           <p className={styles.introTag}>16 teams. Single elimination.</p>
         </section>
@@ -650,7 +749,8 @@ export default function PerfectRun() {
           result={currentResult}
           runningScore={runningScore.score}
           onContinue={continueFromResult}
-          isLast={tourIndex >= season.length - 1}
+          isLast={!endless && tourIndex >= season.length - 1}
+          onEndRun={endless ? finishSeason : undefined}
         />
       )}
 
@@ -663,11 +763,20 @@ export default function PerfectRun() {
           </p>
           <SquadStrip picks={picks} iglId={iglId} squadName={squadName} />
           <div className={styles.nextTeaser}>
-            Next up <b>{season[tourIndex + 1]?.label}</b>
+            {endless
+              ? <>Next up <b>tournament {tourIndex + 2}</b></>
+              : <>Next up <b>{season[tourIndex + 1]?.label}</b></>}
           </div>
-          <button className={styles.primary} onClick={nextTournament}>
-            On to {season[tourIndex + 1]?.city}
-          </button>
+          <div className={styles.overButtons}>
+            <button className={styles.primary} onClick={nextTournament}>
+              {endless ? 'Keep it rolling' : `On to ${season[tourIndex + 1]?.city}`}
+            </button>
+            {endless && (
+              <button className={styles.secondary} onClick={finishSeason}>
+                End run · final results
+              </button>
+            )}
+          </div>
         </section>
       )}
 
@@ -682,7 +791,8 @@ export default function PerfectRun() {
           onPickNew={setPackPick}
           onSwap={swapInto}
           onSkip={nextTournament}
-          nextLabel={season[tourIndex + 1]?.label}
+          nextLabel={endless ? `tournament ${tourIndex + 2}` : season[tourIndex + 1]?.label}
+          onEndRun={endless ? finishSeason : undefined}
         />
       )}
 
@@ -691,7 +801,8 @@ export default function PerfectRun() {
           result={seasonResult}
           tourResults={tourResults}
           season={season}
-          onReplay={() => startRun(mode)}
+          endless={endless}
+          onReplay={() => startRun(mode, runLength)}
           onMenu={() => setPhase('menu')}
         />
       )}
@@ -838,7 +949,7 @@ function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
 
 // ── Tournament result interstitial ───────────────────────────────────────────
 
-function TournamentResult({ result, runningScore, onContinue, isLast }) {
+function TournamentResult({ result, runningScore, onContinue, isLast, onEndRun }) {
   return (
     <section className={styles.result}>
       <span className={styles.introMarker}>{result.label}</span>
@@ -868,18 +979,25 @@ function TournamentResult({ result, runningScore, onContinue, isLast }) {
         ))}
       </div>
 
-      <div className={styles.scoreLine}>Season score<b>{runningScore}</b></div>
+      <div className={styles.scoreLine}>{onEndRun ? 'Run score' : 'Season score'}<b>{runningScore}</b></div>
 
-      <button className={styles.primary} onClick={onContinue}>
-        {isLast ? 'Season results' : 'Continue'}
-      </button>
+      <div className={styles.overButtons}>
+        <button className={styles.primary} onClick={onContinue}>
+          {isLast ? 'Season results' : 'Continue'}
+        </button>
+        {onEndRun && (
+          <button className={styles.secondary} onClick={onEndRun}>
+            End run · final results
+          </button>
+        )}
+      </div>
     </section>
   );
 }
 
 // ── Consolation pack: pick one, swap one ─────────────────────────────────────
 
-function PackPhase({ nat, choices, picks, iglId, ripId, pick, onPickNew, onSwap, onSkip, nextLabel }) {
+function PackPhase({ nat, choices, picks, iglId, ripId, pick, onPickNew, onSwap, onSkip, nextLabel, onEndRun }) {
   return (
     <section>
       <div className={styles.boardHead}>
@@ -903,7 +1021,7 @@ function PackPhase({ nat, choices, picks, iglId, ripId, pick, onPickNew, onSwap,
           onPick={onPickNew}
           onReroll={() => {}}
           hideReroll
-          label="One roll"
+          label={nat ? 'One roll' : 'Five cards, one roll'}
         />
       )}
 
@@ -931,6 +1049,11 @@ function PackPhase({ nat, choices, picks, iglId, ripId, pick, onPickNew, onSwap,
         <button className={styles.secondary} onClick={onSkip}>
           Keep squad{nextLabel ? ` · on to ${nextLabel}` : ''}
         </button>
+        {onEndRun && (
+          <button className={styles.secondary} onClick={onEndRun}>
+            End run · final results
+          </button>
+        )}
       </div>
     </section>
   );
@@ -956,11 +1079,18 @@ function SwapDelta({ picks, iglId, oldCard, newCard }) {
 
 // ── Season over ──────────────────────────────────────────────────────────────
 
-function SeasonOver({ result, tourResults, season, onReplay, onMenu }) {
-  const headline = result.perfectSeason ? 'Perfect Season'
+const OVER_HISTORY_CAP = 12;
+
+function SeasonOver({ result, tourResults, season, endless, onReplay, onMenu }) {
+  const headline = endless
+    ? 'Run Complete'
+    : result.perfectSeason ? 'Perfect Season'
     : result.grandSlam ? 'Grand Slam'
     : result.titles > 0 ? 'Season Complete'
     : 'Season Over';
+  // Endless runs can span dozens of events; show only the tail.
+  const skipped = Math.max(0, tourResults.length - OVER_HISTORY_CAP);
+  const shown = tourResults.slice(skipped);
   return (
     <section className={styles.overScreen}>
       <h2 className={result.titles > 0 ? styles.overWin : styles.overFail}>{headline}</h2>
@@ -977,9 +1107,15 @@ function SeasonOver({ result, tourResults, season, onReplay, onMenu }) {
       )}
 
       <div className={styles.historyList}>
-        {tourResults.map((tr, i) => (
-          <div key={i} className={[styles.historyRow, tr.champion ? styles.mapWin : styles.mapLoss].join(' ')}>
-            <span className={styles.historyStage}>{season[i]?.kind === 'champions' ? 'Champions' : 'Masters'}</span>
+        {skipped > 0 && (
+          <div className={styles.historyRow}>
+            <span className={styles.historyStage}>Earlier</span>
+            <span className={styles.historyOpp}>{skipped} more tournament{skipped > 1 ? 's' : ''}</span>
+          </div>
+        )}
+        {shown.map((tr, i) => (
+          <div key={skipped + i} className={[styles.historyRow, tr.champion ? styles.mapWin : styles.mapLoss].join(' ')}>
+            <span className={styles.historyStage}>{season[skipped + i]?.kind === 'champions' ? 'Champions' : 'Masters'}</span>
             <span className={styles.historyOpp}>{tr.city}</span>
             <span className={styles.historyScore}>{tr.champion ? 'Champion' : `Out · ${tr.finishRound}`}</span>
             <span className={styles.historyMaps}>
@@ -991,7 +1127,8 @@ function SeasonOver({ result, tourResults, season, onReplay, onMenu }) {
 
       <div className={styles.scoreLine}>
         Score<b>{result.score}</b>
-        {result.titles} {result.titles === 1 ? 'title' : 'titles'}, {result.seriesWon} series won,
+        {endless ? ` ${result.events} ${result.events === 1 ? 'tournament' : 'tournaments'},` : ''}
+        {' '}{result.titles} {result.titles === 1 ? 'title' : 'titles'}, {result.seriesWon} series won,
         {' '}{result.mapsWon} maps, {result.roundDiff >= 0 ? '+' : ''}{result.roundDiff} round differential
       </div>
 
@@ -1000,6 +1137,57 @@ function SeasonOver({ result, tourResults, season, onReplay, onMenu }) {
         <button className={styles.secondary} onClick={onMenu}>Menu</button>
       </div>
     </section>
+  );
+}
+
+// ── Leaderboard panel (menu): Today / Overall tabs ───────────────────────────
+
+function LeaderboardPanel({ tab, onTab, data, todayBest }) {
+  const rows = data[tab]; // undefined loading, null offline, [] empty
+  const me = getClientId();
+  return (
+    <div className={styles.boardPanel}>
+      <div className={styles.boardTabs}>
+        <button
+          className={[styles.boardTab, tab === 'today' ? styles.boardTabOn : ''].join(' ')}
+          onClick={() => onTab('today')}
+        >
+          Today
+        </button>
+        <button
+          className={[styles.boardTab, tab === 'overall' ? styles.boardTabOn : ''].join(' ')}
+          onClick={() => onTab('overall')}
+        >
+          All time
+        </button>
+        {todayBest != null && <span className={styles.boardMine}>your score {todayBest}</span>}
+      </div>
+
+      {rows === undefined && <p className={styles.boardNote}>Loading…</p>}
+      {rows === null && <p className={styles.boardNote}>Leaderboard offline.</p>}
+      {Array.isArray(rows) && rows.length === 0 && (
+        <p className={styles.boardNote}>
+          {tab === 'today' ? 'No scores yet today. Set the pace.' : 'No scores yet.'}
+        </p>
+      )}
+      {Array.isArray(rows) && rows.length > 0 && (
+        <ol className={styles.boardList}>
+          {rows.map((r, i) => (
+            <li
+              key={r.clientId ?? i}
+              className={[styles.boardRow, r.clientId === me ? styles.boardMe : ''].join(' ')}
+            >
+              <span className={styles.boardRank}>{i + 1}</span>
+              <span className={styles.boardName}>{r.squadName}</span>
+              {tab === 'overall' && r.days != null && (
+                <span className={styles.boardDays}>{r.days} day{r.days > 1 ? 's' : ''}</span>
+              )}
+              <span className={styles.boardScore}>{tab === 'today' ? r.score : r.best}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   );
 }
 
@@ -1070,10 +1258,11 @@ function DraftLane({ pickNumber, nation, choices, picks, rerolls, ripId, interac
     }
   };
 
+  // nation === null means a "normal" unboxing pack of random cards
   const face = (
     <span className={styles.packFaceInner}>
-      <span className={`fi fi-${nation?.toLowerCase()}`} style={{ width: 46, height: 33 }} />
-      <span className={styles.packName}>{countryName(nation)}</span>
+      {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 46, height: 33 }} />}
+      <span className={styles.packName}>{nation ? countryName(nation) : 'Five card pack'}</span>
       <span className={styles.packSlash}>//</span>
     </span>
   );
@@ -1085,14 +1274,16 @@ function DraftLane({ pickNumber, nation, choices, picks, rerolls, ripId, interac
           {label && <span className={styles.laneLabel}>{label}</span>}
           <span className={styles.draftSlot}>Pick {pickNumber} of {ROSTER_SIZE}</span>
           <span className={styles.draftNat}>
-            <span className={`fi fi-${nation?.toLowerCase()}`} style={{ width: 34, height: 24 }} />
-            {countryName(nation)}
-            <small className={styles.draftCount}>{choices.length} available</small>
+            {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 34, height: 24 }} />}
+            {nation ? countryName(nation) : 'Five card pack'}
+            <small className={styles.draftCount}>
+              {nation ? `${choices.length} available` : 'keep one'}
+            </small>
           </span>
         </div>
         {interactive && !hideReroll && (
           <button className={styles.rerollBtn} onClick={onReroll} disabled={rerolls <= 0 || ripping}>
-            Reroll nation ({rerolls} left)
+            {nation ? 'Reroll nation' : 'Reroll pack'} ({rerolls} left)
           </button>
         )}
       </div>

@@ -51,7 +51,7 @@ test('normal snake draft is globally exclusive and times out to the best offer',
   const state = lobbyWithPlayers(2);
   run(state, 'start_game', 'p1', {}, cards, 100);
   assert.equal(state.phase, 'draft');
-  assert.equal(state.draft.offers.length, 3);
+  assert.equal(state.draft.offers.length, 5);
   const offerCards = state.draft.offers.map(id => cards.find(card => card.id === id));
   const expected = [...offerCards].sort((a, b) => b.rating - a.rating || a.id.localeCompare(b.id))[0].id;
   advanceDeadlines(state, cards, state.draft.deadlineAt);
@@ -63,7 +63,7 @@ test('ENC offers every available card from one nation', () => {
   const state = lobbyWithPlayers(2, { unboxing: 'enc' });
   run(state, 'start_game', 'p1', {}, cards, 100);
   assert.ok(state.draft.nation);
-  assert.ok(state.draft.offers.length > 3);
+  assert.ok(state.draft.offers.length > 5);
   assert.ok(state.draft.offers.every(id => cards.find(card => card.id === id).nationality === state.draft.nation));
 });
 

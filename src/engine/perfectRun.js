@@ -73,6 +73,17 @@ export function draftChoices(cards, nationality, pickedIds) {
     .sort((a, b) => b.rating - a.rating);
 }
 
+// "Normal" unboxing: a pack of PACK_SIZE uniformly-random cards, pick one.
+// Sampling consumes exactly n rng calls (pickN) so the stream stays stable
+// for the shared daily seed; the display sort never touches the rng.
+export const PACK_SIZE = 5;
+
+export function samplePack(rng, cards, pickedIds, n = PACK_SIZE) {
+  const available = cards.filter(c => !pickedIds.has(c.id));
+  return pickN(rng, available, Math.min(n, available.length))
+    .sort((a, b) => b.rating - a.rating);
+}
+
 // ── Chemistry & team power ───────────────────────────────────────────────────
 
 const ROLE_CLASSES = ['Duelist', 'Initiator', 'Controller', 'Sentinel'];
@@ -251,6 +262,18 @@ export function makeSeason(rng) {
   ];
 }
 
+// Endless mode: one more event, forever. The first cycle mirrors a season
+// (Masters, Masters, then Champions); from the third event on every field is
+// Champions-caliber (buildBracket's 'champions' kind = exactly the top 15
+// orgs), which is the difficulty ramp. `usedCities` is a sliding window of
+// recent hosts so cities do not repeat back-to-back.
+export function nextEndlessEvent(rng, index, usedCities = []) {
+  const pool = CITIES.filter(c => !usedCities.includes(c));
+  const city = pickN(rng, pool.length ? pool : CITIES, 1)[0];
+  const kind = index < 2 ? 'masters' : 'champions';
+  return { kind, city, label: `${kind === 'champions' ? 'Champions' : 'Masters'} ${city}` };
+}
+
 export const ROUND_KEYS = ['r16', 'quarter', 'semi', 'final'];
 
 export const ROUND_META = {
@@ -398,9 +421,10 @@ export function evaluateTournament(series, champion) {
   return { badges, mapsLost };
 }
 
-// Season summary across all three tournaments. `results` are per-tournament
-// objects ({ champion, series }).
-export function evaluateSeason(results) {
+// Season summary across all tournaments. `results` are per-tournament
+// objects ({ champion, series }). Endless runs can be any length, so the
+// three-title slam/perfect badges only apply to fixed seasons.
+export function evaluateSeason(results, { endless = false } = {}) {
   const badges = [];
   const titles = results.filter(r => r.champion).length;
   const allSeries = results.flatMap(r => r.series);
@@ -409,8 +433,8 @@ export function evaluateSeason(results) {
   const mapsLost = allSeries.reduce((s, r) => s + r.mapsLost, 0);
   const roundDiff = allSeries.reduce((s, r) => s + r.roundDiff, 0);
 
-  const grandSlam = titles === 3;
-  const perfectSeason = titles === 3 && mapsLost === 0;
+  const grandSlam = !endless && titles === 3;
+  const perfectSeason = !endless && titles === 3 && mapsLost === 0;
   if (grandSlam) {
     badges.push({ key: 'grand_slam', label: 'GRAND SLAM', desc: 'Won all three tournaments' });
   }
@@ -418,13 +442,17 @@ export function evaluateSeason(results) {
     badges.push({ key: 'perfect_season', label: 'PERFECT SEASON', desc: 'Three titles, zero maps dropped' });
   }
 
-  const score =
+  const score = Math.max(0,
     seriesWon * 100 +
     mapsWon * 20 +
     roundDiff +
     titles * 150 +
     (grandSlam ? 300 : 0) +
-    (perfectSeason ? 500 : 0);
+    (perfectSeason ? 500 : 0),
+  );
 
-  return { badges, score, titles, seriesWon, mapsWon, mapsLost, roundDiff, grandSlam, perfectSeason };
+  return {
+    badges, score, titles, seriesWon, mapsWon, mapsLost, roundDiff,
+    grandSlam, perfectSeason, events: results.length,
+  };
 }

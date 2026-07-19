@@ -24,6 +24,9 @@
   --accent: #ff4655;
   --accent-soft: rgba(255, 70, 85, 0.13);
   --win: #00c8a0;
+  --gold: #d8b34c;          /* ENC event chrome, same hue as the champion badge */
+  --gold-dim: #8a7330;
+  --gold-soft: rgba(216, 179, 76, 0.14);
 
   padding: 0 48px 96px;
   max-width: 1080px;
@@ -161,6 +164,57 @@
   white-space: nowrap;
 }
 .modeBtn:hover .modeBtnSub { color: #ffd7db; }
+
+/* ── Solo Run split tile: one surface, two start actions ── */
+/* A div (not a button) so the red sweep pseudo-element stays off; the two
+   inner actions carry their own hover fill instead. */
+.modeSplit { cursor: default; align-items: center; }
+.modeSplit::before { content: none; }
+
+.modeSplitActions { display: flex; gap: 4px; }
+
+.modeSplitAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 14px;
+  border: none;
+  background: var(--raise-hi);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+}
+.modeSplitAction small {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.modeSplitAction:hover { background: var(--accent); color: #fff; }
+.modeSplitAction:hover small { color: #ffd7db; }
+
+/* ── ENC event tile: gold-framed national-teams event ── */
+.encTile { border: 1px solid var(--gold-dim); }
+.encTile::before { background: var(--gold); }
+.encTile .modeBtnName { display: flex; align-items: center; gap: 12px; }
+.encTile:hover .modeBtnName { color: #211b06; }
+.encTile:hover .modeBtnSub { color: #4a3d14; }
+
+/* Placeholder event mark: swap this block for the real ENC logo img later */
+.encMark {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #211b06;
+  background: var(--gold);
+  padding: 3px 9px;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+.encTile:hover .encMark { background: #211b06; color: var(--gold); }
 
 .recordStrip {
   display: flex;
@@ -1063,6 +1117,125 @@
 .badge_perfect_season { background: var(--accent); color: #fff; }
 .badge_perfect_season span { opacity: 0.9; }
 
+/* ── ENC theme: gold event accents while playing the mode.
+      Scoped to specific accent roles; --accent itself stays red because it
+      also colors losses. ── */
+.encTheme .introMarker,
+.encTheme .laneLabel,
+.encTheme .stageLabel,
+.encTheme .packSlash,
+.encTheme .introTitle em,
+.encTheme .nameTitle em { color: var(--gold); }
+
+.encTheme .intro {
+  border-top: 2px solid var(--gold);
+  border-bottom: 2px solid var(--gold-dim);
+}
+
+.encTheme .packFace {
+  background: #241f10;
+  border: 1px solid var(--gold-dim);
+}
+
+.encTheme .rerollBtn { color: var(--gold); }
+.encTheme .rerollBtn:hover:not(:disabled) { background: var(--gold); color: #211b06; }
+
+/* ── Leaderboard panel (menu) ── */
+.boardToggle {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  cursor: pointer;
+}
+.boardToggle:hover { color: #ffd7db; }
+
+.boardPanel {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 18px;
+  background: var(--raise);
+  padding: 16px 18px 18px;
+}
+
+.boardTabs {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.boardTab {
+  border: none;
+  background: var(--raise-hi);
+  color: var(--muted);
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+}
+.boardTab:hover { color: var(--ink); }
+.boardTabOn { background: var(--accent); color: #fff; }
+.boardTabOn:hover { color: #fff; }
+
+.boardMine {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.boardNote { font-size: 12.5px; color: var(--muted); }
+
+.boardList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+}
+
+.boardRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--raise-hi);
+  font-size: 13px;
+}
+.boardRow.boardMe { background: var(--accent-soft); }
+
+.boardRank {
+  width: 22px;
+  font-weight: 700;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.boardRow:nth-child(1) .boardRank { color: var(--gold); }
+
+.boardName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boardDays { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+.boardScore { font-weight: 700; font-variant-numeric: tabular-nums; }
+
 @media (prefers-reduced-motion: reduce) {
   .introTitle { animation: none; }
   .revealed { animation: none; }
@@ -1077,8 +1250,9 @@
   .pageHeader { padding: 20px 18px 0; }
   .page { padding: 0 18px 72px; }
   .menu { flex-direction: column-reverse; gap: 28px; align-items: stretch; }
-  .menuFan { width: 100%; height: 300px; align-self: center; max-width: 340px; }
+  .menuFan { width: 100%; height: 300px; align-self: center; max-width: 340px; overflow: hidden; }
   .menuModes { max-width: none; }
+  .modeBtn { flex-direction: column; align-items: flex-start; gap: 8px; }
   .scoreMain { grid-template-columns: 1fr; gap: 8px; text-align: left; }
   .teamB { justify-content: flex-start; text-align: left; }
   .bigScore { order: -1; }
@@ -1102,4 +1276,8 @@
   .conn { display: none; }
   .travelOverlay { display: none; }
   .swapArea { gap: 24px; }
+  .modeSplit { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .modeSplitActions { width: 100%; }
+  .modeSplitAction { flex: 1; }
+  .boardPanel { max-width: none; }
 }
