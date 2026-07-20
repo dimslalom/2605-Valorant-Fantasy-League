@@ -37,6 +37,12 @@ function reduceMotion() {
 function isMobile() {
   return window.matchMedia('(max-width: 680px)').matches;
 }
+function newRunSeed(mode) {
+  return mode === 'daily' ? todaySeed() : (Date.now() & 0xffffffff);
+}
+function animationTime() {
+  return performance.now();
+}
 
 const TRAVEL_MS = 900;
 
@@ -124,7 +130,7 @@ export default function PerfectRun() {
   // ── Draft flow ────────────────────────────────────────────────────────────
 
   function startRun(selectedMode, length = 'season') {
-    const seed = selectedMode === 'daily' ? todaySeed() : (Date.now() & 0xffffffff);
+    const seed = newRunSeed(selectedMode);
     rng.current = mulberry32(seed);
     setMode(selectedMode);
     setRunLength(length);
@@ -207,14 +213,6 @@ export default function PerfectRun() {
 
   // ── Tournament flow ───────────────────────────────────────────────────────
 
-  // Intro splash auto-advances into the bracket draw.
-  useEffect(() => {
-    if (phase !== 'intro') return undefined;
-    const timer = setTimeout(beginBracket, reduceMotion() ? 250 : 1900);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, tourIndex]);
-
   function beginBracket() {
     const def = season[tourIndex];
     const playerTeam = {
@@ -241,6 +239,14 @@ export default function PerfectRun() {
     seriesActive.current = false;
     setPhase('run');
   }
+
+  // Intro splash auto-advances into the bracket draw.
+  useEffect(() => {
+    if (phase !== 'intro') return undefined;
+    const timer = setTimeout(beginBracket, reduceMotion() ? 250 : 1900);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, tourIndex]);
 
   const round = tour ? currentRound(tour) : null;
   const pMatch = tour ? playerMatch(tour) : null;
@@ -272,10 +278,10 @@ export default function PerfectRun() {
     const result = simMap(rng.current, power.power, opp.power, picks, opp.roster);
     const mapName = seriesMaps[resultsSoFar.length];
 
-    const startedAt = performance.now();
+    const startedAt = animationTime();
     setLive({ a: 0, b: 0 });
     animTimer.current = setInterval(() => {
-      const i = Math.min(result.rounds.length, Math.floor((performance.now() - startedAt) / 55) + 1);
+      const i = Math.min(result.rounds.length, Math.floor((animationTime() - startedAt) / 55) + 1);
       const seq = result.rounds.slice(0, i);
       setLive({
         a: seq.filter(r => r === 'A').length,
