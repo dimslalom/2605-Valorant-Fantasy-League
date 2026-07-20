@@ -46,6 +46,7 @@ function pickN(rng, arr, n) {
 // ── Draft ────────────────────────────────────────────────────────────────────
 
 export const ROSTER_SIZE = 5;
+export const MIN_NATIONAL_POOL = 7;
 
 // Roll a nationality, weighted by sqrt of its remaining player pool so big
 // regions are more common without drowning out everyone else.
@@ -82,6 +83,23 @@ export function samplePack(rng, cards, pickedIds, n = PACK_SIZE) {
   const available = cards.filter(c => !pickedIds.has(c.id));
   return pickN(rng, available, Math.min(n, available.length))
     .sort((a, b) => b.rating - a.rating);
+}
+
+// Countries available in the Esports Nations Cup. UN is a data fallback, not
+// a playable nation. Sorting here keeps the country picker deterministic.
+export function eligibleNationalPools(cards, minimum = MIN_NATIONAL_POOL) {
+  const pools = {};
+  for (const card of cards) {
+    if (!card.nationality || card.nationality === 'UN') continue;
+    (pools[card.nationality] ??= []).push(card);
+  }
+  return Object.entries(pools)
+    .filter(([, pool]) => pool.length >= minimum)
+    .map(([nationality, pool]) => ({
+      nationality,
+      cards: [...pool].sort((a, b) => b.rating - a.rating || a.player.localeCompare(b.player)),
+    }))
+    .sort((a, b) => a.nationality.localeCompare(b.nationality));
 }
 
 // ── Chemistry & team power ───────────────────────────────────────────────────
@@ -187,6 +205,45 @@ export function teamPower(roster, iglId) {
   return { base, chem: chem.total, power: base + chem.total * 0.6, lines: chem.lines };
 }
 
+// Build a readable, balanced CPU roster: take the best card in every role the
+// country can field, then fill open slots by rating. The best IGL assignment is
+// selected using the same power calculation available to the player.
+export function buildCpuNationalTeam(nationality, cards) {
+  const sorted = [...cards].sort((a, b) => b.rating - a.rating || a.player.localeCompare(b.player));
+  const roster = [];
+  for (const role of ROLE_CLASSES) {
+    const card = sorted.find(item => item.role === role);
+    if (card && !roster.includes(card)) roster.push(card);
+  }
+  for (const card of sorted) {
+    if (roster.length >= ROSTER_SIZE) break;
+    if (!roster.includes(card)) roster.push(card);
+  }
+  if (roster.length < ROSTER_SIZE) return null;
+
+  const igl = roster
+    .map(card => ({ card, result: teamPower(roster, card.id) }))
+    .sort((a, b) => b.result.power - a.result.power || b.card.rating - a.card.rating)[0];
+
+  return {
+    id: `nation:${nationality}`,
+    tag: nationality,
+    name: nationality,
+    nationality,
+    logo: null,
+    roster,
+    iglId: igl.card.id,
+    power: igl.result.power,
+    isPlayer: false,
+  };
+}
+
+export function nationalChallengeTier(seed) {
+  if (seed <= 8) return 'Contender';
+  if (seed <= 24) return 'Challenger';
+  return 'Underdog';
+}
+
 // ── Maps & match sim ─────────────────────────────────────────────────────────
 
 export const MAP_POOL = ['Ascent', 'Bind', 'Haven', 'Lotus', 'Split', 'Sunset', 'Icebox'];
@@ -277,6 +334,9 @@ export function nextEndlessEvent(rng, index, usedCities = []) {
 export const ROUND_KEYS = ['r16', 'quarter', 'semi', 'final'];
 
 export const ROUND_META = {
+  preliminary: { label: 'Preliminary Round', bestOf: 3 },
+  r64:     { label: 'Round of 64',   bestOf: 3 },
+  r32:     { label: 'Round of 32',   bestOf: 3 },
   r16:     { label: 'Round of 16',   bestOf: 3 },
   quarter: { label: 'Quarterfinals', bestOf: 3 },
   semi:    { label: 'Semifinals',    bestOf: 3 },
@@ -319,6 +379,96 @@ function makeMatch(aId, bId, bestOf) {
   };
 }
 
+function powerOfTwoAtMost(n) {
+  let value = 1;
+  while (value * 2 <= n) value *= 2;
+  return value;
+}
+
+function roundKeyForSize(size) {
+  if (size === 2) return 'final';
+  if (size === 4) return 'semi';
+  if (size === 8) return 'quarter';
+  if (size === 16) return 'r16';
+  if (size === 32) return 'r32';
+  if (size === 64) return 'r64';
+  return `r${size}`;
+}
+
+function mainRoundKeys(size) {
+  const keys = [];
+  for (let current = size; current >= 2; current /= 2) keys.push(roundKeyForSize(current));
+  return keys;
+}
+
+// Standard seed layout generated for any power-of-two bracket size.
+function seedOrder(size) {
+  let order = [1, 2];
+  for (let current = 4; current <= size; current *= 2) {
+    order = order.flatMap(seed => [seed, current + 1 - seed]);
+  }
+  return order;
+}
+
+function addNationalMainRound(t) {
+  const ids = t.mainSeedSlots.map(slot => {
+    if (!slot.startsWith('prelim:')) return slot;
+    const match = t.rounds[0].matches[Number(slot.split(':')[1])];
+    return match.winner;
+  });
+  const key = t.roundKeys[0];
+  const meta = ROUND_META[key] ?? { label: `Round of ${t.mainSize}`, bestOf: 3 };
+  const order = seedOrder(t.mainSize);
+  const matches = [];
+  for (let i = 0; i < order.length; i += 2) {
+    matches.push(makeMatch(ids[order[i] - 1], ids[order[i + 1] - 1], meta.bestOf));
+  }
+  t.rounds.push({ key, label: meta.label, bestOf: meta.bestOf, matches });
+  t.roundIdx = t.rounds.length - 1;
+  return t.rounds[t.roundIdx];
+}
+
+// Build the ENC field. Any entrants above the next-lower power of two play a
+// seeded preliminary round; its winners occupy the final main-bracket seeds.
+export function buildNationalBracket(cards, playerNationality, playerRoster, playerIglId) {
+  const entrants = eligibleNationalPools(cards).map(({ nationality, cards: pool }) => {
+    if (nationality !== playerNationality) return buildCpuNationalTeam(nationality, pool);
+    return {
+      id: 'player', tag: nationality, name: nationality, nationality, logo: null,
+      roster: playerRoster, iglId: playerIglId,
+      power: teamPower(playerRoster, playerIglId).power,
+      isPlayer: true,
+    };
+  }).filter(Boolean).sort((a, b) => b.power - a.power || a.nationality.localeCompare(b.nationality));
+
+  const mainSize = powerOfTwoAtMost(entrants.length);
+  const preliminaryCount = entrants.length - mainSize;
+  const byeCount = mainSize - preliminaryCount;
+  const teams = Object.fromEntries(entrants.map(team => [team.id, team]));
+  const rounds = [];
+  const mainSeedSlots = entrants.slice(0, byeCount).map(team => team.id);
+
+  if (preliminaryCount) {
+    const matches = [];
+    for (let i = 0; i < preliminaryCount; i++) {
+      const high = entrants[byeCount + i];
+      const low = entrants[entrants.length - 1 - i];
+      matches.push(makeMatch(high.id, low.id, ROUND_META.preliminary.bestOf));
+      mainSeedSlots.push(`prelim:${i}`);
+    }
+    rounds.push({ ...ROUND_META.preliminary, key: 'preliminary', matches });
+  } else {
+    mainSeedSlots.push(...entrants.slice(byeCount).map(team => team.id));
+  }
+
+  const tournament = {
+    kind: 'enc', teams, seeds: entrants.map(team => team.id), rounds,
+    roundIdx: 0, mainSize, mainSeedSlots, roundKeys: mainRoundKeys(mainSize),
+  };
+  if (!preliminaryCount) addNationalMainRound(tournament);
+  return tournament;
+}
+
 // Build a fresh 16-team bracket. Masters draws 15 opponents from the top 30 by
 // power (so a tier-2 giant-killer can sneak in); Champions takes exactly the
 // top 15, the strongest possible field. The player is seeded by power with the
@@ -347,8 +497,11 @@ export function buildBracket(rng, cards, pickedIds, playerTeam, kind) {
 // Pair the winners of the current round into the next. Bracket order means the
 // winners of matches 2i and 2i+1 meet.
 export function nextBracketRound(t) {
+  if (currentRound(t)?.key === 'preliminary') return addNationalMainRound(t);
   const idx = t.roundIdx + 1;
-  const key = ROUND_KEYS[idx];
+  const activeKeys = t.roundKeys ?? ROUND_KEYS;
+  const currentKeyIndex = activeKeys.indexOf(currentRound(t)?.key);
+  const key = activeKeys[currentKeyIndex + 1] ?? activeKeys[idx];
   if (!key) return null;
   const meta = ROUND_META[key];
   const prev = t.rounds[t.roundIdx].matches;
@@ -407,6 +560,17 @@ export function resolveNpcMatches(t, rng) {
   }
 }
 
+// Complete all remaining NPC-only rounds, used by ENC after the player's
+// elimination so the Nations Cup always crowns and displays a champion.
+export function resolveTournamentToChampion(t, rng) {
+  while (true) {
+    resolveNpcMatches(t, rng);
+    const round = currentRound(t);
+    if (round.key === 'final') return round.matches[0].winner;
+    nextBracketRound(t);
+  }
+}
+
 // ── Badges & scoring ─────────────────────────────────────────────────────────
 
 // Per-tournament badges. `series` are the player's series summaries for this
@@ -419,6 +583,18 @@ export function evaluateTournament(series, champion) {
     badges.push({ key: 'flawless', label: 'FLAWLESS', desc: 'No maps dropped' });
   }
   return { badges, mapsLost };
+}
+
+export function updateEncRecords(records = {}, { series, champion, mapsLost, finishRound }) {
+  const wins = series.filter(result => result.won).length;
+  const previousBest = records.bestWins ?? 0;
+  return {
+    ...records,
+    bestWins: Math.max(previousBest, wins),
+    bestFinish: wins >= previousBest ? (champion ? 'Champion' : finishRound) : records.bestFinish,
+    titles: (records.titles ?? 0) + (champion ? 1 : 0),
+    flawless: (records.flawless ?? 0) + (champion && mapsLost === 0 ? 1 : 0),
+  };
 }
 
 // Season summary across all tournaments. `results` are per-tournament

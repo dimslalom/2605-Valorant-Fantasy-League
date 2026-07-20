@@ -10,6 +10,8 @@ import {
   makeSeason, buildBracket, nextBracketRound, currentRound, playerMatch,
   setPlayerResult, resolveNpcMatches, seedOf,
   pickMaps, simMap, evaluateTournament, evaluateSeason,
+  eligibleNationalPools, buildCpuNationalTeam, nationalChallengeTier,
+  buildNationalBracket, resolveTournamentToChampion, updateEncRecords,
 } from '../engine/perfectRun';
 import {
   getClientId, submitDailyScore, fetchDailyLeaderboard, fetchOverallLeaderboard,
@@ -40,7 +42,7 @@ const TRAVEL_MS = 900;
 
 export default function PerfectRun() {
   const navigate = useNavigate();
-  // menu | name | draft | review | intro | run | result | locked | pack | over
+  // menu | country | name | draft | review | intro | run | result | enc_result | locked | pack | over
   const [phase, setPhase] = useState('menu');
   const [mode, setMode] = useState('solo');           // solo | daily | enc
   const [runLength, setRunLength] = useState('season'); // season | endless
@@ -54,6 +56,7 @@ export default function PerfectRun() {
 
   // draft
   const [picks, setPicks] = useState([]);
+  const [selectedNation, setSelectedNation] = useState(null);
   const [nat, setNat] = useState(null);
   const [choices, setChoices] = useState([]);
   const [rerolls, setRerolls] = useState(3);
@@ -104,6 +107,19 @@ export default function PerfectRun() {
 
   const pickedIds = new Set(picks.map(p => p.id));
   const power = picks.length === ROSTER_SIZE ? teamPower(picks, iglId) : null;
+  const nationalPools = useMemo(() => eligibleNationalPools(allCards), []);
+  const nationalOptions = useMemo(() => {
+    const teams = nationalPools
+      .map(pool => ({ pool, team: buildCpuNationalTeam(pool.nationality, pool.cards) }))
+      .filter(item => item.team)
+      .sort((a, b) => b.team.power - a.team.power || a.pool.nationality.localeCompare(b.pool.nationality));
+    return teams.map((item, index) => ({
+      ...item.pool,
+      projectedPower: item.team.power,
+      projectedSeed: index + 1,
+      tier: nationalChallengeTier(index + 1),
+    }));
+  }, [nationalPools]);
 
   // ── Draft flow ────────────────────────────────────────────────────────────
 
@@ -113,7 +129,7 @@ export default function PerfectRun() {
     setMode(selectedMode);
     setRunLength(length);
     setSquadName('');
-    setPicks([]); setIglId(null);
+    setPicks([]); setIglId(null); setSelectedNation(null); setRipId(0);
     setRerolls(selectedMode === 'daily' ? 1 : 3);
     const openingSeason = makeSeason(rng.current);
     setSeason(openingSeason);
@@ -128,8 +144,24 @@ export default function PerfectRun() {
     clearTimeout(advanceTimer.current);
     seriesActive.current = false;
     setPanelOpen(false);
-    rollSlot(new Set(), selectedMode); // state hasn't committed yet, pass mode
-    setPhase('name');
+    if (selectedMode === 'enc') {
+      setNat(null); setChoices([]);
+      setSeason([{ kind: 'enc', city: '', label: 'Esports Nations Cup' }]);
+      setPhase('country');
+    } else {
+      rollSlot(new Set(), selectedMode); // state hasn't committed yet, pass mode
+      setPhase('name');
+    }
+  }
+
+  function chooseNation(nationality) {
+    const pool = nationalPools.find(item => item.nationality === nationality);
+    if (!pool) return;
+    setSelectedNation(nationality);
+    setSquadName(countryName(nationality));
+    setPicks([]); setIglId(null); setNat(nationality);
+    setChoices(pool.cards);
+    setPhase('draft');
   }
 
   function confirmSquadName(event) {
@@ -157,7 +189,11 @@ export default function PerfectRun() {
     const next = [...picks, card];
     setPicks(next);
     if (next.length < ROSTER_SIZE) {
-      rollSlot(new Set(next.map(p => p.id)));
+      if (mode === 'enc') {
+        setChoices(draftChoices(allCards, selectedNation, new Set(next.map(p => p.id))));
+      } else {
+        rollSlot(new Set(next.map(p => p.id)));
+      }
     } else {
       setPhase('review');
     }
@@ -185,7 +221,18 @@ export default function PerfectRun() {
       id: 'player', tag: 'YOU', name: squadName, logo: null,
       roster: picks, power: power.power, isPlayer: true,
     };
-    const t = buildBracket(rng.current, allCards, pickedIds, playerTeam, def.kind);
+    const t = mode === 'enc'
+      ? buildNationalBracket(allCards, selectedNation, picks, iglId)
+      : buildBracket(rng.current, allCards, pickedIds, playerTeam, def.kind);
+    if (mode === 'enc') {
+      for (const team of Object.values(t.teams)) team.name = countryName(team.nationality);
+      // A top-30 seed receives a preliminary bye. Resolve those two matches
+      // before presenting the player's Round of 32 pairing.
+      if (currentRound(t).key === 'preliminary' && !playerMatch(t)) {
+        resolveNpcMatches(t, rng.current);
+        nextBracketRound(t);
+      }
+    }
     historyRef.current = [];
     setTour({ ...t });
     setView('board');
@@ -297,7 +344,17 @@ export default function PerfectRun() {
     seriesActive.current = false;
     const outcome = playerOutcome();
     if (outcome === 'champion') { endTournament(true); return; }
-    if (outcome === 'out') { endTournament(false); return; }
+    if (outcome === 'out') {
+      if (mode === 'enc') {
+        const finishRound = round.label;
+        const championId = resolveTournamentToChampion(tour, rng.current);
+        setTour({ ...tour });
+        endTournament(false, finishRound, championId);
+      } else {
+        endTournament(false);
+      }
+      return;
+    }
     travelThenNextRound();
   }
 
@@ -311,7 +368,7 @@ export default function PerfectRun() {
       moves: prevRound.matches.map((match, index) => ({
         teamId: match.winner,
         fromKey: `${prevRound.key}:${index}`,
-        toKey: `${newRound.key}:${Math.floor(index / 2)}`,
+        toKey: `${newRound.key}:${newRound.matches.findIndex(next => next.a === match.winner || next.b === match.winner)}`,
       })),
     };
     setTour({ ...tour });
@@ -379,17 +436,28 @@ export default function PerfectRun() {
     return () => { clearTimeout(guard); cleanup(); };
   }, [boardState]);
 
-  function endTournament(champion) {
+  function endTournament(champion, finishRound = round.label, championId = champion ? 'player' : null) {
     const finishedSeries = historyRef.current;
     const evalT = evaluateTournament(finishedSeries, champion);
     const result = {
       kind: def.kind, label: def.label, city: def.city,
       champion, series: finishedSeries, badges: evalT.badges,
-      finishRound: round.label,
+      finishRound,
+      championId,
+      championNation: championId ? tour.teams[championId]?.nationality : null,
     };
     setTourResults(rs => [...rs, result]);
     setCurrentResult(result);
-    setPhase('result');
+    if (mode === 'enc') {
+      const saves = loadSaves();
+      saves.enc = updateEncRecords(saves.enc, {
+        series: finishedSeries, champion, mapsLost: evalT.mapsLost, finishRound,
+      });
+      saveSaves(saves);
+      setPhase('enc_result');
+    } else {
+      setPhase('result');
+    }
   }
 
   const endless = runLength === 'endless';
@@ -551,7 +619,7 @@ export default function PerfectRun() {
                     <span className={styles.encMark} aria-hidden="true">ENC</span>
                     Esports Nations Cup
                   </span>
-                  <span className={styles.modeBtnSub}>national packs · gold event</span>
+                  <span className={styles.modeBtnSub}>choose a nation · 32-team cup</span>
                 </button>
                 <button className={styles.modeBtn} onClick={() => navigate('/multiplayer')}>
                   <span className={styles.modeBtnName}>Multiplayer</span>
@@ -624,6 +692,10 @@ export default function PerfectRun() {
         </section>
       )}
 
+      {phase === 'country' && (
+        <CountryPicker options={nationalOptions} onChoose={chooseNation} />
+      )}
+
       {phase === 'draft' && (
         <section>
           <DraftLane
@@ -637,6 +709,8 @@ export default function PerfectRun() {
             onPick={pickPlayer}
             onReroll={reroll}
             squadName={squadName}
+            hideReroll={mode === 'enc'}
+            label={mode === 'enc' ? `Build the ${countryName(selectedNation)} roster` : undefined}
           />
         </section>
       )}
@@ -644,6 +718,9 @@ export default function PerfectRun() {
       {phase === 'review' && (
         <section>
           <h2 className={styles.sectionTitle}>Choose an IGL for {squadName}. Click a player.</h2>
+          {mode === 'enc' && power?.lines.some(line => String(line.label).startsWith('Missing:')) && (
+            <p className={styles.roleWarning}>This lineup is missing role coverage. You can still enter, but chemistry will reduce its power.</p>
+          )}
           <div className={styles.reviewRoster}>
             {picks.map(card => (
               <div key={card.id} className={styles.reviewCard}>
@@ -672,7 +749,9 @@ export default function PerfectRun() {
             {endless ? `Tournament ${tourIndex + 1}` : `Tournament ${tourIndex + 1} / ${season.length}`}
           </span>
           <h1 className={styles.introTitle}>{def.label}<em>//</em></h1>
-          <p className={styles.introTag}>16 teams. Single elimination.</p>
+          <p className={styles.introTag}>
+            {mode === 'enc' ? `${nationalOptions.length} nations. One world champion.` : '16 teams. Single elimination.'}
+          </p>
         </section>
       )}
 
@@ -754,6 +833,16 @@ export default function PerfectRun() {
         />
       )}
 
+      {phase === 'enc_result' && currentResult && tour && (
+        <EncResult
+          result={currentResult}
+          tour={tour}
+          saves={saves.enc}
+          onReplay={() => startRun('enc')}
+          onMenu={() => setPhase('menu')}
+        />
+      )}
+
       {phase === 'locked' && def && (
         <section className={styles.between}>
           <span className={styles.introMarker}>Squad locked in</span>
@@ -811,6 +900,34 @@ export default function PerfectRun() {
   );
 }
 
+function CountryPicker({ options, onChoose }) {
+  return (
+    <section className={styles.countryStep}>
+      <span className={styles.introMarker}>Esports Nations Cup</span>
+      <h1 className={styles.countryTitle}>Choose your nation<em>//</em></h1>
+      <p className={styles.groupNote}>Every country with at least seven available players enters the cup. Projected seed reflects its automatic balanced roster.</p>
+      <div className={styles.tierLegend}>
+        <span><b>Contender</b> seeds 1–8</span>
+        <span><b>Challenger</b> seeds 9–24</span>
+        <span><b>Underdog</b> seeds 25+</span>
+      </div>
+      <div className={styles.countryGrid}>
+        {options.map(option => (
+          <button key={option.nationality} className={styles.countryCard} onClick={() => onChoose(option.nationality)}>
+            <span className={`fi fi-${option.nationality.toLowerCase()} ${styles.countryFlag}`} aria-hidden="true" />
+            <span className={styles.countryIdentity}>
+              <b>{countryName(option.nationality)}</b>
+              <small>{option.cards.length} players</small>
+            </span>
+            <span className={`${styles.countryTier} ${styles['tier' + option.tier]}`}>{option.tier}</span>
+            <span className={styles.countryProjection}>#{option.projectedSeed} · {option.projectedPower.toFixed(1)}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── Board: the current stage as a live bracket ───────────────────────────────
 
 function Board({ tour, round, boardState, revealCount, outcome, onPlay, registerCell, bracketRef, overlayRef }) {
@@ -861,12 +978,11 @@ function Board({ tour, round, boardState, revealCount, outcome, onPlay, register
   );
 }
 
-// Four-column single-elimination bracket. Cells in columns 1/3/5/7, connectors
-// in 2/4/6. Row 1 is labels; rows 2-9 are eight 92px slots. Feeders always sit
-// at 25%/75% of a parent's span, so one connector shape serves every round.
 function Bracket({ tour, currentRoundKey, isRevealed, registerCell, bracketRef, overlayRef, hideCurrentPlayer }) {
-  const byKey = k => tour.rounds.find(r => r.key === k);
-  const r16 = byKey('r16'), qf = byKey('quarter'), sf = byKey('semi'), gf = byKey('final');
+  const preliminary = tour.rounds.find(round => round.key === 'preliminary');
+  const keys = tour.roundKeys ?? ['r16', 'quarter', 'semi', 'final'];
+  const baseMatches = (tour.mainSize ?? 16) / 2;
+  const rounds = keys.map(key => tour.rounds.find(round => round.key === key));
 
   const cell = (roundObj, i, colKey) => {
     const m = roundObj?.matches[i];
@@ -895,22 +1011,49 @@ function Bracket({ tour, currentRoundKey, isRevealed, registerCell, bracketRef, 
 
   return (
     <div className={styles.bracketWrap}>
-      <div className={styles.bracket} ref={bracketRef}>
-        <span className={styles.poolLabel} style={{ gridColumn: 1, gridRow: 1 }}>Round of 16</span>
-        <span className={styles.poolLabel} style={{ gridColumn: 3, gridRow: 1 }}>Quarterfinals</span>
-        <span className={styles.poolLabel} style={{ gridColumn: 5, gridRow: 1 }}>Semifinals</span>
-        <span className={styles.poolLabel} style={{ gridColumn: 7, gridRow: 1 }}>Grand Final</span>
-
-        {[0, 1, 2, 3, 4, 5, 6, 7].map(i => slot(1, i + 2, i + 3, cell(r16, i, 'r16'), `r16-${i}`))}
-        {[0, 1, 2, 3].map(i => conn(2, 2 * i + 2, 2 * i + 4, `c2-${i}`))}
-
-        {[0, 1, 2, 3].map(i => slot(3, 2 * i + 2, 2 * i + 4, cell(qf, i, 'quarter'), `qf-${i}`))}
-        {[0, 1].map(i => conn(4, 4 * i + 2, 4 * i + 6, `c4-${i}`))}
-
-        {[0, 1].map(i => slot(5, 4 * i + 2, 4 * i + 6, cell(sf, i, 'semi'), `sf-${i}`))}
-        {conn(6, 2, 10, 'c6')}
-
-        {slot(7, 2, 10, cell(gf, 0, 'final'), 'gf')}
+      {preliminary && (
+        <div className={styles.preliminaryBlock}>
+          <span className={styles.poolLabel}>Preliminary Round</span>
+          <div className={styles.preliminaryMatches}>
+            {preliminary.matches.map((match, index) => (
+              <BracketCell
+                key={`preliminary-${index}`}
+                tour={tour}
+                match={match}
+                revealed={preliminary.key === currentRoundKey ? isRevealed(match) : !!match.winner}
+                hidePlayer={false}
+                cellRef={el => registerCell(`preliminary:${index}`, el)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      <div
+        className={styles.bracket}
+        ref={bracketRef}
+        style={{
+          gridTemplateColumns: keys.map((_, index) => index === keys.length - 1 ? 'minmax(190px, 1fr)' : 'minmax(190px, 1fr) 22px').join(' '),
+          gridTemplateRows: `auto repeat(${baseMatches}, 92px)`,
+          minWidth: `${keys.length * 220}px`,
+        }}
+      >
+        {keys.map((key, roundIndex) => {
+          const roundObj = rounds[roundIndex];
+          const matchCount = baseMatches / (2 ** roundIndex);
+          const span = 2 ** roundIndex;
+          const column = roundIndex * 2 + 1;
+          return [
+            <span key={`${key}-label`} className={styles.poolLabel} style={{ gridColumn: column, gridRow: 1 }}>
+              {roundObj?.label ?? ({ r32: 'Round of 32', r16: 'Round of 16', quarter: 'Quarterfinals', semi: 'Semifinals', final: 'Grand Final' }[key] ?? key)}
+            </span>,
+            ...Array.from({ length: matchCount }, (_, index) =>
+              slot(column, index * span + 2, index * span + span + 2, cell(roundObj, index, key), `${key}-${index}`)),
+            ...(roundIndex < keys.length - 1
+              ? Array.from({ length: matchCount / 2 }, (_, index) =>
+                conn(column + 1, index * span * 2 + 2, index * span * 2 + span * 2 + 2, `${key}-conn-${index}`))
+              : []),
+          ];
+        })}
       </div>
       <div className={styles.travelOverlay} ref={overlayRef} aria-hidden="true" />
     </div>
@@ -933,9 +1076,11 @@ function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
       className={[styles.bracketTeam, isWinner ? styles.cellWon : '', isLoser ? styles.cellLost : '', team.isPlayer ? styles.bracketYou : '', hidePlayer && team.isPlayer ? styles.roundHidden : ''].join(' ')}
       data-team-id={team.id}
     >
-      {team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
+      {team.nationality
+        ? <span className={`fi fi-${team.nationality.toLowerCase()}`} aria-hidden="true" />
+        : team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
       <span className={styles.cellSeed}>{seedOf(tour, team.id)}</span>
-      <span className={styles.cellTag}>{team.isPlayer ? 'YOU' : team.tag}</span>
+      <span className={styles.cellTag}>{team.isPlayer ? (team.nationality ? `YOU · ${team.tag}` : 'YOU') : team.tag}</span>
       <span className={styles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
     </div>
   );
@@ -945,6 +1090,43 @@ function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
       {row(b, match.scoreB, revealed && match.winner === b.id, revealed && match.winner === a.id)}
     </div>
   );
+}
+
+function EncResult({ result, tour, saves, onReplay, onMenu }) {
+  const champion = tour.teams[result.championId];
+  return (
+    <section className={styles.encResult}>
+      <span className={styles.introMarker}>Esports Nations Cup complete</span>
+      <h1 className={result.champion ? styles.overWin : styles.overFail}>
+        {result.champion ? `${countryName(champion.nationality)} are world champions` : `${countryName(champion.nationality)} win the cup`}
+      </h1>
+      <p className={styles.groupNote}>
+        {result.champion ? 'You completed the national run.' : `${countryName(selectedNationFromTour(tour))} finished in the ${result.finishRound}.`}
+      </p>
+      <div className={styles.encRecordStrip}>
+        <span>Best finish <b>{saves?.bestFinish ?? '—'}</b></span>
+        <span>Titles <b>{saves?.titles ?? 0}</b></span>
+        <span>Flawless <b>{saves?.flawless ?? 0}</b></span>
+      </div>
+      <Bracket
+        tour={tour}
+        currentRoundKey="complete"
+        isRevealed={() => true}
+        registerCell={() => {}}
+        bracketRef={null}
+        overlayRef={null}
+        hideCurrentPlayer={false}
+      />
+      <div className={styles.overButtons}>
+        <button className={styles.primary} onClick={onReplay}>Choose another nation</button>
+        <button className={styles.secondary} onClick={onMenu}>Back to menu</button>
+      </div>
+    </section>
+  );
+}
+
+function selectedNationFromTour(tour) {
+  return tour.teams.player?.nationality;
 }
 
 // ── Tournament result interstitial ───────────────────────────────────────────
