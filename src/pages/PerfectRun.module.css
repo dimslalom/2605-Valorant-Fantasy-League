@@ -6,15 +6,8 @@
    draw lines are the playoff bracket connectors, where the line IS the data. */
 
 .shell {
-  min-height: 100%;
-  background: #0d0f17;
-}
-
-.pageHeader {
-  padding: 32px 48px 0;
-}
-
-.page {
+  /* Design tokens live here so the fixed action bar / squad drawer (siblings
+     of .page, not descendants) inherit them too. */
   --ink: #ece8e1;
   --muted: #8a8f9e;
   --faint: #4c5160;
@@ -28,11 +21,71 @@
   --gold-dim: #8a7330;
   --gold-soft: rgba(216, 179, 76, 0.14);
 
-  padding: 0 48px 96px;
+  min-height: 100%;
+  background: #0d0f17;
+  color: var(--ink);
+  overflow-x: clip;
+}
+
+.frame {
+  margin-left: calc(var(--rail-size) + var(--safe-l));
+  margin-right: var(--safe-r);
+  /* dvh, not vh — see AppFrame. */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.statusStrip {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  background: #0b0d14;
+  border-bottom: 1px solid #1c2233;
+}
+
+.crumb {
+  color: var(--muted);
+  font: 700 11px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.count {
+  margin-left: auto;
+  color: var(--ink);
+  font: 700 11px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+.page {
+  padding: 24px 48px 96px;
   max-width: 1080px;
   margin: 0 auto;
-  color: var(--ink);
+  width: 100%;
 }
+
+/* The landing page follows the same frame as Multiplayer Lock-In: page-level
+   gutters, then a centered 1080px hero with a deliberate 48px top margin. */
+.menuPage {
+  max-width: none;
+  padding: 32px 48px 96px;
+}
+
+/* ── Shared "Card Table" primitives (from VFL Wireframes t3 unified system).
+      .cut bevels the top-right + bottom-left corners; .shadowchunk is the hard
+      offset shadow that gives hero surfaces their tactile, stacked feel. ── */
+.cut {
+  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+}
+.shadowchunk { box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.45); }
 
 .sectionTitle {
   font-size: 13px;
@@ -53,7 +106,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
   transition: background 0.12s;
 }
 .primary:hover:not(:disabled) { background: #d93a48; }
@@ -78,7 +131,16 @@
   display: flex;
   gap: 48px;
   align-items: center;
-  padding-top: 16px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 48px auto 0;
+}
+
+.menuPage > .disclaimer {
+  width: 100%;
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .menuMain {
@@ -89,16 +151,65 @@
   align-items: flex-start;
 }
 
-.menuTitle {
-  font-size: clamp(64px, 10vw, 104px);
-  font-weight: 700;
-  line-height: 0.92;
-  letter-spacing: -0.015em;
-  text-transform: uppercase;
+.menuBrand {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 450px);
+  margin: 0 0 clamp(50px, 5vw, 66px);
+  line-height: 0;
 }
-.menuTitle em {
-  font-style: normal;
-  color: var(--accent);
+
+.menuLogotype {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.vctStamp {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% - 8px);
+  right: -3%;
+  width: 47%;
+  height: auto;
+  transform: rotate(-2deg);
+  transform-origin: 55% 48%;
+  filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, 0.48));
+}
+
+.vctStampAnimate {
+  animation: vctStampIn 760ms 260ms cubic-bezier(0.16, 0.88, 0.25, 1.18) both;
+}
+
+.menuBrandStamping .menuLogotype {
+  animation: logotypeImpact 760ms 260ms linear both;
+}
+
+@keyframes vctStampIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(34px, -94px, 0) rotate(8deg) scale(2.1);
+    filter: drop-shadow(18px 24px 0 rgba(0, 0, 0, 0));
+  }
+  52% {
+    opacity: 1;
+    transform: translate3d(-2px, 5px, 0) rotate(-4deg) scale(0.91);
+    filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.7));
+  }
+  68% { transform: translate3d(1px, -2px, 0) rotate(-1deg) scale(1.05); }
+  82% { transform: translate3d(0, 1px, 0) rotate(-2.5deg) scale(0.98); }
+  100% {
+    opacity: 1;
+    transform: rotate(-2deg) scale(1);
+    filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, 0.48));
+  }
+}
+
+@keyframes logotypeImpact {
+  0%, 49% { transform: translate3d(0, 0, 0); }
+  52% { transform: translate3d(-1px, 3px, 0) scaleY(0.985); }
+  58% { transform: translate3d(1px, -1px, 0); }
+  66%, 100% { transform: translate3d(0, 0, 0); }
 }
 
 .menuTag {
@@ -132,6 +243,8 @@
   border: none;
   color: var(--ink);
   text-align: left;
+  /* Card Table hard shadow (no clip-path here — it would clip the offset). */
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.4);
 }
 /* red fill sweep on hover, playvalorant style */
 .modeBtn::before {
@@ -207,7 +320,7 @@
 /* Placeholder event mark: swap this block for the real ENC logo img later */
 .encMark {
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.14em;
   color: #211b06;
   background: var(--gold);
@@ -351,18 +464,22 @@
 }
 
 /* Every player of the rolled nation in ONE horizontal row (Korea tops 70+).
-   The pack-rip animation plays inside this same box. */
+   The pack-rip animation plays inside this same box. Full-bleed to the
+   viewport so a 5-card pack fits centered without clipping. */
 .strip {
   position: relative; /* anchors the absolutely-positioned pack */
+  /* Bleeds to the frame, not the viewport — the frame is inset by the rail. */
+  width: calc(100vw - var(--frame-inset));
+  margin-left: calc(50% - (100vw - var(--frame-inset)) / 2);
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  height: 296px;
+  height: 336px;
   margin-bottom: 26px;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
-  padding: 6px 4px 10px;
+  padding: 6px 24px 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--raise-hi) transparent;
 }
@@ -371,10 +488,15 @@
 .strip::-webkit-scrollbar-thumb { background: var(--raise-hi); }
 .strip::-webkit-scrollbar-thumb:hover { background: var(--faint); }
 
+/* Full-width row centered as a group when it fits; `safe center` falls back
+   to start alignment when a big ENC nation roster overflows, so the first
+   cards never get clipped out of scroll reach. */
 .stripCards {
   display: flex;
   flex-wrap: nowrap;
-  gap: 18px;
+  justify-content: safe center;
+  gap: 20px;
+  width: 100%;
 }
 .stripCard { flex-shrink: 0; }
 
@@ -392,9 +514,10 @@
       jagged tear line; shake, then the halves fly apart ── */
 .pack {
   position: absolute;
-  width: 208px;
-  height: 268px;
-  margin-left: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 290px;
   flex-shrink: 0;
 }
 
@@ -471,27 +594,12 @@
   margin-right: 10px;
 }
 
-/* ── Review ── */
-.reviewRoster {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-bottom: 30px;
-}
-
-.reviewCard { position: relative; }
-
-.iglTag {
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  padding: 3px 10px;
+/* ── Review: the cards themselves live in the bottom drawer now, so this
+      screen is just the CTA context — no second copy of the roster. ── */
+.reviewHint {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--muted);
 }
 
 .chemPanel {
@@ -548,6 +656,25 @@
   margin-bottom: 18px;
   flex-wrap: wrap;
 }
+
+.boardStatus { display: flex; align-items: center; gap: 12px; }
+.formBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.formHot { color: var(--win); }
+.formSteady { color: var(--muted); }
+.formCold { color: var(--accent); }
+.boardStatus .formBadge { margin-left: 0; }
 
 .stageLabel {
   font-size: 12px;
@@ -1013,10 +1140,9 @@
   font: inherit;
   font-size: 20px;
   font-weight: 700;
-  outline: none;
   transition: border-color 0.14s, background 0.14s;
 }
-.nameForm input:focus { border-color: var(--accent); background: var(--raise-hi); }
+.nameForm input:focus-visible { border-color: var(--accent); background: var(--raise-hi); }
 .nameForm input::placeholder { color: var(--faint); }
 .nameCount {
   grid-column: 1;
@@ -1071,7 +1197,7 @@
 .countryIdentity { display: flex; flex-direction: column; min-width: 0; }
 .countryIdentity b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
 .countryIdentity small { color: var(--muted); font-size: 10px; }
-.countryTier { font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.countryTier { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .tierContender { color: var(--gold); }
 .tierChallenger { color: var(--ink); }
 .tierUnderdog { color: var(--accent); }
@@ -1142,25 +1268,15 @@
 /* ── Consolation pack swap ── */
 .swapArea {
   display: flex;
-  gap: 40px;
+  align-items: center;
+  gap: 28px;
   flex-wrap: wrap;
   margin-bottom: 24px;
   padding: 22px 24px;
   background: var(--raise);
 }
 .swapIncoming { display: flex; flex-direction: column; gap: 10px; }
-.swapRoster { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
-.swapChoice { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.swapDelta {
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 2px 6px;
-}
-.swapDelta small { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.swapHint { font-size: 13px; color: var(--muted); max-width: 220px; }
 
 /* ── Squad strip with IGL tag ── */
 .squadStripCard { position: relative; }
@@ -1175,6 +1291,227 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   padding: 2px 7px;
+}
+
+/* ── Squad hero (review): overlapping cut-out photos, dealt in one at a time.
+      Full-bleed band, faces overlap with the center one on top, bottom fades
+      into the page so it reads as a broadcast intro plate. ── */
+.squadHero {
+  position: relative;
+  /* Bleeds to the frame, not the viewport — see --frame-inset. */
+  width: calc(100vw - var(--frame-inset));
+  margin-left: calc(50% - (100vw - var(--frame-inset)) / 2);
+  height: 300px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 10px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+.heroFace {
+  position: relative;
+  width: 260px;
+  margin: 0 -34px;
+  flex-shrink: 0;
+  animation: heroIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+.heroFace > img,
+.heroFace > div {
+  display: block;
+  width: 100%;
+  height: auto;  /* see .castFace — the width/height attributes must not pin height */
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.6));
+}
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(42px) scale(0.86); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Broadcast match view: two overlapping cut-out photo bands flanking a
+      full-width score plate, rosters on the flanks, map results centered. ── */
+.broadcast { display: flex; flex-direction: column; }
+
+.castHeroes {
+  position: relative;
+  /* Bleeds to exactly the score plate's edges (which run -30px past the text
+     column), so the two bands sit over the plate.
+
+     This was `width: 100vw; margin-left: calc(50% - 50vw)`. Two problems: the
+     bleed was measured from a parent that is itself offset by the mode rail,
+     so the band hung off the right edge; and each band centred inside half of
+     the *viewport* rather than half of the plate, which splayed the two
+     clusters out to the screen edges as the window got wider. */
+  margin: 0 -30px;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: flex-end;
+  overflow: hidden;
+  /* Fades only into the strip the plate already covers. At 74% the fade sat
+     entirely behind the plate and did nothing; pushed any higher it would
+     dissolve the shoulders before the plate reaches them. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 92%, transparent);
+  mask-image: linear-gradient(to bottom, #000 92%, transparent);
+}
+
+.castBand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* Sized as a share of the band rather than in pixels, so five faces always
+   fill their half of the plate exactly and can never spill past it.
+
+   The painted cluster is wider than the flex line, because the outermost
+   faces' negative margins hang past both ends: painted = 5w - 8m, not
+   5w - 10m. Solving 5w - 8m = 100% at a 15% overlap (m = 0.15w) gives
+   w = 26.3%, m = 3.95%. */
+.castFace {
+  position: relative;
+  width: 26.3%;
+  margin: 0 -3.95%;
+  flex-shrink: 0;
+  animation: heroIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 80ms);
+}
+.castBandRight .castFace { animation-delay: calc((4 - var(--i)) * 80ms); }
+/* Shadow goes on the face wrapper, not on each image. A composited portrait is
+   several stacked layers, and shadowing them individually makes the head cast
+   a shadow onto its own jersey. */
+.castFace > img,
+.castFace > div {
+  display: block;
+  width: 100%;
+  /* Required: the portrait <img> carries width/height attributes (they give
+     lazy-loaded images an intrinsic ratio so they can't collapse to zero).
+     Without height:auto the attribute wins and every photographed player
+     renders a fixed 412px tall — five times its neighbours. */
+  height: auto;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.6));
+}
+
+/* Score plate runs wider than the text column, overlapping the photo bands.
+   The pull-up tracks the face size (which is now fluid) so the heads always
+   tuck behind the plate by roughly the same fraction of their height. */
+.castScore {
+  position: relative;
+  z-index: 2;
+  /* Overlap the faces by only ~10% of their height. At the old -4vw the plate
+     ate the bottom 30% — which is exactly where the shoulders are — so the
+     players read as disembodied heads floating above the score. Enough
+     overlap to tuck them behind the plate, not enough to behead them. */
+  margin: clamp(-24px, -1.5vw, -9px) -30px 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 26px 36px;
+  background: var(--raise);
+}
+.castTeamA, .castTeamB {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 26px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.castTeamB { justify-content: flex-end; text-align: right; }
+.castTeamB img { width: 42px; height: 42px; object-fit: contain; }
+.castBig {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.castBody {
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 1.1fr) 1fr;
+  gap: 28px;
+  align-items: start;
+  padding: 30px 4px 10px;
+}
+.castSide { display: flex; flex-direction: column; gap: 8px; }
+.castSideRight { text-align: right; }
+.castPower {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.castSideRight .castPower { justify-content: flex-end; }
+.castPlayer { font-size: 17px; color: var(--muted); }
+
+.castMaps { display: flex; flex-direction: column; gap: 3px; }
+.castMapRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--raise);
+}
+.castMapName {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.castMapScore {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.castMapScore i {
+  font-style: normal;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.castMapRow.mapWin .castMapScore { color: var(--win); }
+.castMapRow.mapLoss .castMapScore { color: var(--accent); }
+.castMapLive { box-shadow: inset 2px 0 0 var(--accent); }
+.castMapMvp {
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: right;
+}
+.castMapMvp b { color: var(--ink); }
+
+/* Fan-scoped IGL tag + selection ring: these sit inside the 3.2x-scaled
+   fanCardScale, so they use tiny source values that read as ~11px / 3px
+   once the card is risen, instead of PlayerCard's blown-up defaults. */
+.fanIgl {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  background: var(--accent);
+  color: #fff;
+  font-size: 3.4px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 0.6px 2.4px;
+}
+.fanSelected {
+  box-shadow: 0 0 0 1px #fff, 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
 .badge_flawless { background: var(--win); color: #032019; }
@@ -1318,20 +1655,289 @@
 
 .boardScore { font-weight: 700; font-variant-numeric: tabular-nums; }
 
+.bossIntro { border: 2px solid var(--gold); padding: 42px; }
+.bossBadge, .nextBoss { display: inline-flex; padding: 9px 14px; background: var(--gold); color: #111; font-weight: 700; letter-spacing: .08em; }
+.modifierBanner { margin: 22px auto 0; max-width: 560px; padding: 16px 20px; background: var(--raise); border-left: 4px solid var(--accent); display: flex; flex-direction: column; gap: 4px; }
+.nextBoss { margin: 18px 0; }
+.shop { padding: 28px 0 72px; }
+.shopHead { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.shopHead h2 { font-size: clamp(38px, 6vw, 76px); margin: 4px 0; }
+.shopHead h2 em { color: var(--accent); }
+.shopWallet { font-weight: 700; }
+.shopWallet b { font-size: 30px; color: var(--gold); }
+.shopWallet span { color: var(--accent); letter-spacing: 3px; }
+.shopGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 28px; }
+.shopItem { min-height: 150px; padding: 18px; border: 1px solid var(--line); background: var(--raise); color: var(--text); text-align: left; display: grid; grid-template-columns: 42px 1fr auto; gap: 7px 10px; align-items: center; }
+.shopItem > span { grid-row: 1 / 4; width: 40px; height: 40px; display: grid; place-items: center; border: 2px solid var(--gold); color: var(--gold); font-weight: 700; }
+.shopItem small { grid-column: 2 / 4; color: var(--muted); }
+.shopItem strong { color: var(--gold); }
+.shopItem:disabled { opacity: .42; }
+.shopSelected { outline: 3px solid var(--accent); }
+.shopSquad { display: flex; gap: 14px; overflow-x: auto; padding: 18px 12px 28px; }
+
+/* ── Bottom action bar: the one place the player acts.
+      A filled surface pinned to the viewport bottom; lives, credits, draft
+      slot dots, the squad drawer toggle, and the phase's actions. ── */
+.withBar .page { padding-bottom: 170px; }
+
+.actionBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-dock);
+  background: var(--surface-flyout);
+  /* Clears the iOS home indicator — this bar previously sat under it. */
+  padding-bottom: var(--safe-b);
+}
+
+/* Grid, not flex-flow order: the middle column is the bar's true center
+   regardless of how wide the left (lives/credits) or right (actions)
+   content is, so the fan never drifts off-center. */
+.actionBarInner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 48px;
+  height: 68px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 22px;
+  color: var(--ink);
+}
+
+.barLeft {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  justify-self: start;
+}
+
+.barLives {
+  font-size: 17px;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.barLives em { font-style: normal; color: var(--faint); }
+
+.barCredits {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Squad fan: the drafted cards ARE the squad view. Folded into a tight
+      hand at rest; the SAME elements rise and scale up in place when
+      opened — no second copy of the roster appears anywhere else.
+      Two nested wrappers per card: the outer handles fan position/rotation
+      (percentages stay stable since they resolve against its own small
+      untransformed box), the inner handles the size-up, both pivoting from
+      their own bottom-center so growth reads as "rising" for free. ── */
+.fanArea {
+  position: relative;
+  height: 100%;
+  padding: 0 10px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.fanStack {
+  position: relative;
+  width: 86px;
+  height: 60px;
+}
+
+.fanCardWrap {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform-origin: bottom center;
+  transform: translateX(-50%) translateX(calc(var(--off) * 4px)) rotate(calc(var(--off) * 6deg));
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Strictly increasing left→right so every card overlaps the RIGHT edge of
+     its neighbour — the left edge (role + specialty icons) always stays
+     visible. (*2 keeps it an integer for even roster sizes, where --off
+     lands on halves.) */
+  z-index: calc(10 + var(--off) * 2);
+}
+.fanOpen .fanCardWrap {
+  /* leading translateY is the OUTERMOST op (applied last, in plain screen
+     px) so the lift stays vertical regardless of the rotation composed
+     after it — otherwise a rotated card's far corner swings below the
+     viewport, since rotating a tall rect around its own bottom-center
+     naturally dips one corner past that line. */
+  transform:
+    translateY(-34px)
+    translateX(-50%) translateX(calc(var(--off) * 74px))
+    rotate(calc(var(--off) * 17deg));
+}
+
+.fanCardScale {
+  display: block;
+  transform-origin: bottom center;
+  transform: scale(1);
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55));
+}
+.fanOpen .fanCardScale {
+  transform: scale(3.2);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55));
+}
+
+.fanEmpty {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 49px;
+  border: 1px dashed var(--faint);
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0 6px, transparent 6px 12px);
+}
+
+.fanBadge {
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  background: var(--accent);
+  color: #fff;
+  font: 700 9px/16px ui-monospace, Menlo, monospace;
+  text-align: center;
+}
+
+.barActions {
+  justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.barActions .primary { padding: 11px 24px; }
+.barActions .secondary { padding: 11px 16px; }
+
+/* Stats float to the left of the risen cards; fade/slide in with them. */
+/* Stats float ABOVE the fan as a centered chip — the one zone the spreading,
+   scaled-up cards never reach. Solid background + high z-index so the text
+   always reads, even if a card corner drifts near. */
+.fanStats {
+  position: absolute;
+  left: 50%;
+  bottom: 300px; /* clears the tallest risen card top (~269px above the bar) */
+  transform: translateX(-50%) translateY(6px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 9px 18px;
+  background: rgba(12, 15, 23, 0.94);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.fanOpen .fanStats {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.fanStatsName {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  text-transform: uppercase;
+  padding-right: 18px;
+  border-right: 1px solid var(--raise-hi);
+}
+.fanStatsName small {
+  font-size: 14px;
+  color: var(--ink);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Squad stats: just the numbers that move — power, chemistry, and the
+      missing-role nudge, in one compact horizontal row. ── */
+.squadStats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.squadStat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font: 700 9.5px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.squadStat b {
+  font-size: 16px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.squadStat b.statPower { color: var(--gold); }
+.squadStat b.pos { color: var(--win); }
+.squadStat b.neg { color: var(--accent); }
+.squadNeed {
+  white-space: nowrap;
+  color: var(--accent);
+  font: 700 10px/1.2 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.04em;
+}
+
+/* pack face for random packs: just the mark */
+.packSlashBig {
+  font-size: 54px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .introTitle { animation: none; }
   .revealed { animation: none; }
   .menuMain > *, .menuFan { animation: none; }
   .modeBtn::before, .modeBtn > *, .fanCard { transition: none; }
-  .stripReveal .stripCard, .packTop, .packBottom { animation: none; }
+  .fanCardWrap, .fanCardScale, .fanStats { transition: none; }
+  .stripReveal .stripCard, .packTop, .packBottom, .heroFace { animation: none; }
   .playButton, .playButton::before, .playButton b { transition: none; }
+  .vctStampAnimate, .menuBrandStamping .menuLogotype { animation: none; }
 }
 
 /* ── Mobile ── */
 @media (max-width: 680px) {
   .pageHeader { padding: 20px 18px 0; }
   .page { padding: 0 18px 72px; }
+  .squadHero { height: 190px; }
+  .heroFace { width: 150px; margin: 0 -22px; }
+  /* Face size is fluid now (--face on .castBand), so no width override here —
+     only the plate's own layout changes on a phone. */
+  .castScore { padding: 14px 16px; grid-template-columns: 1fr; gap: 8px; text-align: center; }
+  .castTeamA, .castTeamB { justify-content: center; text-align: center; font-size: 18px; }
+  .castBig { order: -1; font-size: 40px; }
+  .castBody { grid-template-columns: 1fr; gap: 18px; padding: 18px 0 8px; }
+  .castSideRight, .castSideRight .castPower { text-align: left; justify-content: flex-start; }
+  .castMapRow { padding: 12px 14px; gap: 10px; }
   .menu { flex-direction: column-reverse; gap: 28px; align-items: stretch; }
+  .menuBrand { width: min(100%, 390px); margin-bottom: 58px; }
+  .vctStamp { right: 0; width: 49%; }
   .menuFan { width: 100%; height: 300px; align-self: center; max-width: 340px; overflow: hidden; }
   .menuModes { max-width: none; }
   .modeBtn { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -1358,6 +1964,8 @@
   .conn { display: none; }
   .travelOverlay { display: none; }
   .preliminaryBlock { min-width: 0; }
+  .frame { margin-left: 0; margin-top: 48px; }
+  .statusStrip { top: 48px; }
   .preliminaryMatches { grid-template-columns: 1fr; }
   .countryGrid { grid-template-columns: 1fr; }
   .swapArea { gap: 24px; }
@@ -1365,4 +1973,36 @@
   .modeSplitActions { width: 100%; }
   .modeSplitAction { flex: 1; }
   .boardPanel { max-width: none; }
+  .shopGrid { grid-template-columns: 1fr; }
+  .shopHead { align-items: flex-start; flex-direction: column; }
+  .withBar .page { padding-bottom: 200px; }
+  .actionBarInner {
+    padding: 10px 14px;
+    height: auto;
+    min-height: 56px;
+    gap: 8px;
+  }
+  .barActions .primary, .barActions .secondary { padding: 10px 14px; font-size: 11px; }
+
+  /* Narrower viewport: fan tighter and less tall; the stats chip wraps and
+     stays within the screen, still centered above the hand. */
+  .fanOpen .fanCardWrap { transform: translateY(-26px) translateX(-50%) translateX(calc(var(--off) * 46px)) rotate(calc(var(--off) * 17deg)); }
+  .fanOpen .fanCardScale { transform: scale(2.3); }
+  .fanStats {
+    left: 50%;
+    bottom: 232px; /* clears the shorter (scale 2.3) mobile cards */
+    transform: translateX(-50%) translateY(8px);
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+    max-width: calc(100vw - 24px);
+  }
+  .fanOpen .fanStats { transform: translateX(-50%) translateY(0); }
+  .fanStatsName {
+    width: 100%;
+    justify-content: center;
+    padding-right: 0;
+    border-right: none;
+  }
+  .squadStats { flex-wrap: wrap; justify-content: center; }
 }

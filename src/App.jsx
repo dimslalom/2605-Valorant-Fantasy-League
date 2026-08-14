@@ -1,24 +1,32 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Collection from './pages/Collection';
-import PreMatch from './pages/PreMatch';
-import Match from './pages/Match';
-import PackOpening from './pages/PackOpening';
-import PerfectRun from './pages/PerfectRun';
-import Multiplayer from './pages/Multiplayer';
+import RouteErrorBoundary, { NotFound } from './components/RouteError';
+
+const Collection = lazy(() => import('./pages/Collection'));
+const PreMatch = lazy(() => import('./pages/PreMatch'));
+const Match = lazy(() => import('./pages/Match'));
+const PackOpening = lazy(() => import('./pages/PackOpening'));
+const PerfectRun = lazy(() => import('./pages/PerfectRun'));
+const Multiplayer = lazy(() => import('./pages/Multiplayer'));
 
 export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/collection" replace />} />
-        <Route path="/collection" element={<Collection />} />
-        <Route path="/prematch" element={<PreMatch />} />
-        <Route path="/match" element={<Match />} />
-        <Route path="/pack" element={<PackOpening />} />
-        <Route path="/run" element={<PerfectRun />} />
-        <Route path="/multiplayer" element={<Multiplayer />} />
-        <Route path="/lobby/:code" element={<Multiplayer />} />
-      </Routes>
+      <RouteErrorBoundary>
+        <Suspense fallback={<div className="route-loading" role="status">Loading game…</div>}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/collection" replace />} />
+            <Route path="/collection" element={<Collection />} />
+            <Route path="/prematch" element={<PreMatch />} />
+            <Route path="/match" element={<Match />} />
+            <Route path="/pack" element={<PackOpening />} />
+            <Route path="/run" element={<PerfectRun />} />
+            <Route path="/multiplayer" element={<Multiplayer />} />
+            <Route path="/lobby/:code" element={<Multiplayer />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </RouteErrorBoundary>
     </BrowserRouter>
   );
 }

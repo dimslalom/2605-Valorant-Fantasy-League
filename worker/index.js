@@ -1,3 +1,4 @@
+import { DurableObject } from 'cloudflare:workers';
 import cards from '../src/data/cards.json';
 import {
   GameError,
@@ -7,6 +8,7 @@ import {
   advanceDeadlines,
   applyCommand,
   createLobbyState,
+  migrateLobbyState,
   nextAlarmAt,
   publicSnapshot,
   setConnection,
@@ -14,9 +16,25 @@ import {
 
 const APP_PREFIX = '';
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const MAX_JSON_BODY_BYTES = 32 * 1024;
+const MAX_WEBSOCKET_MESSAGE_BYTES = 16 * 1024;
 
 export default {
   async fetch(request, env) {
+    try {
+      return await handleRequest(request, env);
+    } catch (error) {
+      console.error(JSON.stringify({
+        message: 'request failed',
+        path: new URL(request.url).pathname,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return errorResponse(error);
+    }
+  },
+};
+
+async function handleRequest(request, env) {
     const url = new URL(request.url);
     if (url.pathname === `${APP_PREFIX}/api/lobbies` && request.method === 'POST') {
       const body = await readJson(request);
@@ -58,7 +76,7 @@ export default {
       const clientId = String(body.clientId ?? '');
       const squadName = String(body.squadName ?? '').trim().replace(/\s+/g, ' ');
       const score = body.score;
-      if (!isValidDateKey(date)
+      if (!isSubmissionDate(date)
           || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientId)
           || !squadName || squadName.length > 28
           || !Number.isInteger(score) || score < 0 || score > 5000) {
@@ -99,25 +117,27 @@ export default {
     if (!url.pathname.startsWith(`${APP_PREFIX}/`) && url.pathname !== APP_PREFIX) return new Response('Not found', { status: 404 });
     if (request.method === 'GET' && request.headers.get('Accept')?.includes('text/html') && url.pathname !== `${APP_PREFIX}/index.html`) {
       const fallback = new URL(`${APP_PREFIX}/`, url.origin);
-      return env.ASSETS.fetch(new Request(fallback, request));
+      return withSecurityHeaders(await env.ASSETS.fetch(new Request(fallback, request)));
     }
     const assetResponse = await env.ASSETS.fetch(request);
-    if (assetResponse.status !== 404) return assetResponse;
-    if (request.method !== 'GET' || !request.headers.get('Accept')?.includes('text/html')) return assetResponse;
+    if (assetResponse.status !== 404) return withSecurityHeaders(assetResponse);
+    if (request.method !== 'GET' || !request.headers.get('Accept')?.includes('text/html')) {
+      return withSecurityHeaders(assetResponse);
+    }
     const fallback = new URL(`${APP_PREFIX}/`, url.origin);
-    return env.ASSETS.fetch(new Request(fallback, request));
-  },
-};
+    return withSecurityHeaders(await env.ASSETS.fetch(new Request(fallback, request)));
+}
 
-export class Lobby {
+export class Lobby extends DurableObject {
   constructor(ctx, env) {
+    super(ctx, env);
     this.ctx = ctx;
     this.env = env;
     this.game = null;
     this.auth = null;
     this.ready = ctx.blockConcurrencyWhile(async () => {
       const stored = await ctx.storage.get(['game', 'auth']);
-      this.game = stored.get('game') ?? null;
+      this.game = migrateLobbyState(stored.get('game') ?? null);
       this.auth = stored.get('auth') ?? { competitors: {}, spectators: {} };
     });
   }
@@ -194,6 +214,12 @@ export class Lobby {
     await this.ready;
     const identity = ws.deserializeAttachment();
     try {
+      const size = typeof message === 'string'
+        ? new TextEncoder().encode(message).byteLength
+        : message.byteLength;
+      if (size > MAX_WEBSOCKET_MESSAGE_BYTES) {
+        throw new GameError('invalid_command', 'Command is too large.');
+      }
       const command = JSON.parse(typeof message === 'string' ? message : new TextDecoder().decode(message));
       const result = applyCommand(this.game, identity.participantId, command, cards, Date.now());
       if (!result.duplicate && command.type === 'kick_player') {
@@ -210,10 +236,16 @@ export class Lobby {
         events: result.events,
       });
     } catch (error) {
+      if (!(error instanceof GameError)) {
+        console.error(JSON.stringify({
+          message: 'websocket command failed',
+          error: error instanceof Error ? error.message : String(error),
+        }));
+      }
       ws.send(JSON.stringify({
         type: 'command_rejected',
         code: error.code ?? 'invalid_command',
-        message: error.message,
+        message: error instanceof GameError ? error.message : 'Invalid command.',
         snapshot: publicSnapshot(this.game),
       }));
     }
@@ -258,10 +290,10 @@ export class Lobby {
     if (!token) return null;
     const hash = await hashToken(token);
     for (const [participantId, stored] of Object.entries(this.auth.competitors)) {
-      if (stored === hash) return { participantId, role: 'competitor' };
+      if (await timingSafeHashEqual(stored, hash)) return { participantId, role: 'competitor' };
     }
     for (const [participantId, stored] of Object.entries(this.auth.spectators)) {
-      if (stored === hash) return { participantId, role: 'spectator' };
+      if (await timingSafeHashEqual(stored, hash)) return { participantId, role: 'spectator' };
     }
     return null;
   }
@@ -305,13 +337,56 @@ async function hashToken(token) {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+async function timingSafeHashEqual(left, right) {
+  const encoder = new TextEncoder();
+  const [leftDigest, rightDigest] = await Promise.all([
+    crypto.subtle.digest('SHA-256', encoder.encode(String(left))),
+    crypto.subtle.digest('SHA-256', encoder.encode(String(right))),
+  ]);
+  return crypto.subtle.timingSafeEqual(leftDigest, rightDigest);
+}
+
 async function readJson(request) {
-  try { return await request.json(); } catch { throw new GameError('invalid_json', 'Expected a JSON request body.'); }
+  const declaredLength = Number(request.headers.get('Content-Length'));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
+    throw new GameError('payload_too_large', 'Request body is too large.');
+  }
+  if (!request.body) throw new GameError('invalid_json', 'Expected a JSON request body.');
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_JSON_BODY_BYTES) {
+        await reader.cancel();
+        throw new GameError('payload_too_large', 'Request body is too large.');
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return JSON.parse(text);
+  } catch (error) {
+    if (error instanceof GameError) throw error;
+    throw new GameError('invalid_json', 'Expected a JSON request body.');
+  }
 }
 
 function errorResponse(error) {
-  const status = error.code === 'unauthorized' ? 403 : error.code?.includes('not_found') ? 404 : 400;
-  return json({ error: error.code ?? 'internal_error', message: error.message }, status);
+  const isGameError = error instanceof GameError;
+  const status = error?.code === 'payload_too_large' ? 413
+    : error?.code === 'unauthorized' ? 403
+    : error?.code?.includes('not_found') ? 404
+    : isGameError ? 400
+    : 500;
+  return json({
+    error: isGameError ? error.code : 'internal_error',
+    message: isGameError ? error.message : 'Internal server error.',
+  }, status);
 }
 
 function isValidDateKey(value) {
@@ -324,6 +399,48 @@ function isValidDateKey(value) {
   return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
+function isSubmissionDate(value, now = Date.now()) {
+  if (!isValidDateKey(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const submitted = Date.UTC(year, month - 1, day);
+  const current = new Date(now);
+  const utcToday = Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), current.getUTCDate());
+  // The client uses its local calendar day. A one-day UTC allowance covers
+  // every timezone without permitting arbitrary historical/future entries.
+  return Math.abs(submitted - utcToday) <= 24 * 60 * 60 * 1000;
+}
+
 function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  const headers = new Headers({
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store',
+  });
+  applySecurityHeaders(headers);
+  return new Response(JSON.stringify(body), { status, headers });
+}
+
+function withSecurityHeaders(response) {
+  const secured = new Response(response.body, response);
+  applySecurityHeaders(secured.headers);
+  return secured;
+}
+
+function applySecurityHeaders(headers) {
+  headers.set('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    "connect-src 'self' ws: wss:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+  ].join('; '));
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
 }

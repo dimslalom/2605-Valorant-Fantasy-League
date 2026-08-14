@@ -1,8 +1,8 @@
 # Valorant Fantasy League
 
-A VCT fantasy card game. React + Vite SPA with a match engine, card collection,
-and pack opening. Supabase stores user accounts and card ownership; card
-definitions themselves are static data in `src/data/cards.json`.
+A VCT fantasy card game built as a React + Vite SPA on Cloudflare Workers.
+Solo and multiplayer tournament state is driven by deterministic game engines;
+multiplayer lobbies use Durable Objects and daily leaderboards use D1.
 
 ## Getting started
 
@@ -11,7 +11,27 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Copy `.env.example` to `.env.local` and fill in the Supabase URL + anon key.
+The Vite server is enough for solo UI work. To exercise the Worker APIs,
+WebSockets, Durable Objects, and D1 together, build once and run Wrangler:
+
+```sh
+npm run build
+npx wrangler dev
+```
+
+## Production checks and deployment
+
+Run the same release gate used by CI:
+
+```sh
+npm run check
+```
+
+This runs the full ESLint configuration, every Node test, the optimized Vite
+build, and a Wrangler deployment dry-run. Production deploys are handled by
+`.github/workflows/deploy.yml`; the workflow applies pending D1 migrations
+before deploying the Worker. It requires `CLOUDFLARE_ACCOUNT_ID` and
+`CLOUDFLARE_API_TOKEN` as GitHub environment secrets for `production`.
 
 ## Data sync (cards from vlr.gg)
 
@@ -63,9 +83,10 @@ and re-run. Per-player manual tweaks (tier, palette, power, photo) go in
 
 ## Project layout
 
-- `src/pages/` — Collection, PreMatch, Match, PackOpening
-- `src/engine/` — match simulator, duel resolver, map renderer
+- `src/pages/` — collection, solo run, multiplayer, and match screens
+- `src/engine/` — deterministic solo and multiplayer game engines
 - `src/data/cards.json` — generated card definitions (do not hand-edit; use overrides)
 - `scripts/` — data sync + image pipeline
-- `supabase/schema.sql` — profiles / collection / packs tables
+- `worker/index.js` — Worker routing, D1 leaderboard API, and lobby Durable Object
+- `migrations/` — D1 schema migrations
 - `VCT_GAME_KNOWLEDGE_BASE.md` — game design doc

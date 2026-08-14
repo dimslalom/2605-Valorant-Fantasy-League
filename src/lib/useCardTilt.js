@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { prefersReducedMotion } from './useReducedMotion';
 
 // Pointer-driven 3D tilt. Writes CSS vars (--rx, --ry, --gx, --gy, --glare)
 // straight onto the target node inside a rAF — no React re-render per move.
 // The consuming CSS decides what the vars mean, so any card layout works.
 function motionDisabled() {
-  return (
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-    window.matchMedia('(hover: none)').matches
-  );
+  // Tilt is pointer-only by nature, so the coarse-pointer check stays local;
+  // the reduced-motion half is the shared one.
+  return prefersReducedMotion() || window.matchMedia('(hover: none)').matches;
 }
 
 export default function useCardTilt({ maxTilt = 3, disabled = false } = {}) {

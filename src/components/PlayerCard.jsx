@@ -1,5 +1,8 @@
 import { roleAbbr, cardTextColor, countryName, regionFullName, assetPath } from '../lib/utils';
 import useCardTilt from '../lib/useCardTilt';
+import { getCardSpecialties } from '../data/specialties';
+import SpecialtyIcon from './SpecialtyIcon';
+import PlayerPortrait from './PlayerPortrait';
 import styles from './PlayerCard.module.css';
 
 const CARD_W = 400;
@@ -11,15 +14,20 @@ const STAT_LABELS_FULL = {
   aim: 'Aim', positioning: 'Positioning', ability: 'Ability', mentality: 'Mentality', synergy: 'Synergy',
 };
 
-// Parallax planes. Each layer sets `--z` (3D depth) and `--shift` (max lateral
-// drift in px, multiplied by the pointer fraction −0.5..0.5). Three planes:
-// background (static) → photo (mid) → everything else (top). Any layer added
-// by future card types joins the effect by declaring these two vars.
 const PLANE = {
   bg:    { '--z': '0px',   '--shift': '0px' },
   photo: { '--z': '22px',  '--shift': '6px' },
   top:   { '--z': '45px',  '--shift': '14px' }, // stat bg, text, logos
   glare: { '--z': '55px',  '--shift': '0px' },
+  spec:  { '--z': '64px',  '--shift': '18px' }, // specialty rail, pops forward
+};
+
+// Specialty chip frame color tracks the card's tier metal.
+const SPEC_COLOR = {
+  bronze: '#c8843f',
+  silver: '#c3cad6',
+  gold:   '#d8b34c',
+  icon:   '#e6d27a',
 };
 
 export default function PlayerCard({
@@ -30,12 +38,16 @@ export default function PlayerCard({
   tilt = true,
   flippable = false,
   flipped = false,
+  boosterIcons = [],
+  kit,
 }) {
   const textColor  = cardTextColor(card.palette);
   const mutedColor = textColor + 'aa';
   const showEditionTop = card.tier === 'prestige' || card.tier === 'iconic';
   const regionLogo = assetPath(`/assets/regions/${card.region.toLowerCase()}.png`);
   const bgSrc = assetPath(`/assets/card-bg/${card.palette}-bg.png`);
+  const specialties = getCardSpecialties(card);
+  const specColor = SPEC_COLOR[card.palette] ?? SPEC_COLOR.gold;
 
   const { tiltRef, onPointerMove, onPointerLeave } = useCardTilt({ disabled: !tilt });
 
@@ -49,7 +61,6 @@ export default function PlayerCard({
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
     >
-      {/* 3D stage: perspective + downscale live together so the whole scene scales uniformly */}
       <div
         className={styles.stage}
         style={{
@@ -59,37 +70,33 @@ export default function PlayerCard({
           transformOrigin: 'top left',
         }}
       >
-        {/* Pointer-driven tilt (CSS vars set by useCardTilt) */}
         <div
           ref={tiltRef}
           className={[styles.tilt, onClick ? styles.clickable : ''].join(' ')}
           style={{
             fontFamily: "'Familjen Grotesk', sans-serif",
+            '--spec': specColor,
             boxShadow: selected
               ? `0 0 0 ${Math.round(3 / displayScale)}px #ffffff, 0 0 0 ${Math.round(6 / displayScale)}px rgba(255,255,255,0.4)`
               : undefined,
           }}
         >
-          {/* Flip rotation (separate element so flip and tilt can have different transitions) */}
           <div className={styles.flip} style={{ '--flip': flipped ? '180deg' : '0deg' }}>
 
             {/* ── FRONT FACE ── */}
             <div className={`${styles.face} ${styles.faceFront}`}>
-              {/* plane 1 — card background (static) */}
               <img className={styles.layerBg} style={PLANE.bg} src={bgSrc} alt="" aria-hidden="true" />
 
-              {/* plane 2 — player photo (hidden when no real photo yet) */}
-              {card.photo !== '/assets/players/placeholder.png' && (
-                <img className={styles.layerPhoto} style={PLANE.photo} src={assetPath(card.photo)} alt={card.player} />
-              )}
+              <PlayerPortrait
+                card={card}
+                kit={kit}
+                className={styles.layerPhoto}
+                style={PLANE.photo}
+              />
 
-              {/* plane 3 — stat panel bg (full 400×580 PNG, transparent at top) */}
               <img className={styles.layerStatBg} style={PLANE.top} src={assetPath(`/assets/stat-bg/${card.palette}-stat-bg.png`)} alt="" aria-hidden="true" />
 
-              {/* plane 3 — text overlay */}
               <div className={styles.layerText} style={PLANE.top}>
-
-                {/* Top-left: rating, role abbr, flag */}
                 <div className={styles.topLeft}>
                   <span style={{ fontSize: 68, fontWeight: 700, color: textColor, lineHeight: 1 }}>
                     {card.rating}
@@ -103,7 +110,6 @@ export default function PlayerCard({
                   />
                 </div>
 
-                {/* Top-right: edition text only for prestige/iconic */}
                 {showEditionTop && (
                   <div className={styles.topRight}>
                     <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textAlign: 'right', maxWidth: 70, color: textColor, lineHeight: 1.3 }}>
@@ -112,12 +118,28 @@ export default function PlayerCard({
                   </div>
                 )}
 
-                {/* Player name */}
+                {/* Specialties rail — cut-corner icon frames down the left
+                    edge, spilling half off the card, floated forward in 3D. */}
+                {specialties.length > 0 && (
+                  <div className={styles.specialtiesRail} style={{ ...PLANE.spec, '--spec': specColor }} aria-label="Player specialties">
+                    {specialties.map(spec => (
+                      <div key={spec.key} className={styles.specSlot}>
+                        <div className={styles.specCutChip}>
+                          <SpecialtyIcon spec={spec.key} />
+                        </div>
+                        <div className={styles.specTooltip}>
+                          <b>{spec.name}</b>
+                          <span>{spec.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className={styles.playerName} style={{ color: textColor }}>
                   {card.player}
                 </div>
 
-                {/* Stat panel: stats + logos */}
                 <div className={styles.statContent}>
                   <div className={styles.statRow}>
                     {STAT_KEYS.map((key) => (
@@ -139,10 +161,21 @@ export default function PlayerCard({
                     <img src={regionLogo} alt={card.region} style={{ width: 32, height: 32, objectFit: 'contain' }} />
                   </div>
                 </div>
-
               </div>
 
-              {/* Glare — masked by the card-bg PNG so it never spills outside the card silhouette */}
+              {boosterIcons.length > 0 && (
+                <div className={styles.boosterRail} style={{ '--z': '50px', '--shift': '10px' }} aria-label="Player effects">
+                  {boosterIcons.map((icon, index) => (
+                    <div className={styles.boosterSlot} key={`${icon.key}-${index}`}>
+                      <button className={`${styles.boosterChip} ${icon.tone === 'fatigue' ? styles.fatigueChip : styles.boostChip}`} type="button" aria-label={`${icon.label}: ${icon.desc}`}>
+                        {icon.glyph}
+                      </button>
+                      <span className={styles.boosterTooltip}><b>{icon.label}</b>{icon.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div
                 className={styles.glare}
                 style={{ ...PLANE.glare, WebkitMaskImage: `url(${bgSrc})`, maskImage: `url(${bgSrc})` }}
@@ -150,7 +183,7 @@ export default function PlayerCard({
               />
             </div>
 
-            {/* ── BACK FACE (only rendered when flippable — grid cards stay lean) ── */}
+            {/* ── BACK FACE ── */}
             {flippable && (
               <div className={`${styles.face} ${styles.faceBack}`}>
                 <img className={styles.layerBg} src={bgSrc} alt="" aria-hidden="true" />
@@ -196,12 +229,22 @@ export default function PlayerCard({
                     />
                   </div>
 
-                  <div className={styles.backPlaceholder} style={{ borderColor: textColor + '44', color: mutedColor }}>
-                    RECENT FORM · COMING SOON
-                  </div>
-                  <div className={styles.backPlaceholder} style={{ borderColor: textColor + '44', color: mutedColor }}>
-                    POWERS & ABILITIES · COMING SOON
-                  </div>
+                  {/* Specialties list on the back face */}
+                  {specialties.length > 0 && (
+                    <div className={styles.backSpecialties}>
+                      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: mutedColor }}>SPECIALTIES</span>
+                      <div className={styles.specListBack}>
+                        {specialties.map(s => (
+                          <div key={s.key} className={styles.backSpecRow}>
+                            <span className={styles.backSpecIcon}><SpecialtyIcon spec={s.key} size="66%" /></span>
+                            <div>
+                              <b>{s.name}</b>: {s.short}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import liveCards from '../src/data/cards.json' with { type: 'json' };
 import {
   CITIES,
   PACK_SIZE,
@@ -8,6 +9,7 @@ import {
   nextEndlessEvent,
   samplePack,
   buildCpuNationalTeam,
+  buildVariedCpuNationalTeam,
   buildNationalBracket,
   currentRound,
   eligibleNationalPools,
@@ -117,10 +119,24 @@ test('CPU national rosters are unique, role-balanced, and use their strongest IG
   assert.equal(team.power, bestPower);
 });
 
+test('varied CPU national rosters are seeded, national, unique, and role-aware', () => {
+  const pool = nationalCards(1, 12);
+  const first = buildVariedCpuNationalTeam(mulberry32(44), 'N00', pool);
+  const replay = buildVariedCpuNationalTeam(mulberry32(44), 'N00', pool);
+  const lineups = new Set(Array.from({ length: 20 }, (_, seed) =>
+    buildVariedCpuNationalTeam(mulberry32(seed + 1), 'N00', pool).roster.map(card => card.id).join(',')));
+
+  assert.deepEqual(first.roster.map(card => card.id), replay.roster.map(card => card.id));
+  assert.equal(new Set(first.roster.map(card => card.id)).size, 5);
+  assert.ok(first.roster.every(card => card.nationality === 'N00'));
+  assert.ok(roles.every(role => first.roster.some(card => card.role === role)));
+  assert.ok(lineups.size > 1);
+});
+
 test('34 ENC nations produce two preliminaries and a 32-team main bracket', () => {
   const cards = nationalCards();
   const playerPool = cards.filter(card => card.nationality === 'N00');
-  const tournament = buildNationalBracket(cards, 'N00', playerPool.slice(0, 5), playerPool[1].id);
+  const tournament = buildNationalBracket(mulberry32(1), cards, 'N00', playerPool.slice(0, 5), playerPool[1].id);
 
   assert.equal(Object.keys(tournament.teams).length, 34);
   assert.equal(new Set(tournament.seeds).size, 34);
@@ -133,10 +149,30 @@ test('34 ENC nations produce two preliminaries and a 32-team main bracket', () =
   assert.equal(currentRound(tournament).matches.length, 16);
 });
 
+test('ENC form and pot draws are seeded, bounded, and keep teams in their projected pot', () => {
+  const cards = nationalCards();
+  const playerPool = cards.filter(card => card.nationality === 'N00');
+  const first = buildNationalBracket(mulberry32(55), cards, 'N00', playerPool.slice(0, 5), playerPool[1].id);
+  const replay = buildNationalBracket(mulberry32(55), cards, 'N00', playerPool.slice(0, 5), playerPool[1].id);
+
+  assert.deepEqual(
+    Object.values(first.teams).map(team => [team.id, team.form, team.simulationPower]),
+    Object.values(replay.teams).map(team => [team.id, team.form, team.simulationPower]),
+  );
+  assert.ok(Object.values(first.teams).every(team => team.form >= -8 && team.form <= 8));
+  assert.ok(Object.values(first.teams).every(team => Number.isFinite(team.simulationPower)));
+  first.mainSeedSlots.forEach((slot, drawIndex) => {
+    const originalSeed = slot.startsWith('prelim:')
+      ? first.mainSize - (first.seeds.length - first.mainSize) + Number(slot.split(':')[1]) + 1
+      : first.seeds.indexOf(slot) + 1;
+    assert.equal(Math.floor((originalSeed - 1) / 8), Math.floor(drawIndex / 8));
+  });
+});
+
 test('ENC preliminary generation adapts to a different eligible field size', () => {
   const cards = nationalCards(20);
   const playerPool = cards.filter(card => card.nationality === 'N19');
-  const tournament = buildNationalBracket(cards, 'N19', playerPool.slice(2, 7), playerPool[2].id);
+  const tournament = buildNationalBracket(mulberry32(2), cards, 'N19', playerPool.slice(2, 7), playerPool[2].id);
 
   assert.equal(tournament.mainSize, 16);
   assert.equal(currentRound(tournament).matches.length, 4);
@@ -146,7 +182,7 @@ test('the selected player roster controls its seed and eliminated runs still cro
   const cards = nationalCards();
   const playerPool = cards.filter(card => card.nationality === 'N00');
   const boosted = playerPool.slice(0, 5).map(card => ({ ...card, rating: 99 }));
-  const tournament = buildNationalBracket(cards, 'N00', boosted, boosted[1].id);
+  const tournament = buildNationalBracket(mulberry32(3), cards, 'N00', boosted, boosted[1].id);
 
   assert.equal(tournament.seeds[0], 'player');
   resolveNpcMatches(tournament, mulberry32(20));
@@ -175,4 +211,37 @@ test('ENC records update independently and preserve the strongest finish', () =>
   assert.equal(laterLoss.bestFinish, 'Champion');
   assert.equal(laterLoss.titles, 1);
   assert.equal(laterLoss.flawless, 1);
+});
+
+test('ENC tournament variance prevents a fixed Canada-USA final', () => {
+  const canadaPool = eligibleNationalPools(liveCards).find(pool => pool.nationality === 'CA');
+  const canada = buildCpuNationalTeam('CA', canadaPool.cards);
+  const champions = {};
+  let canadaUsFinals = 0;
+  const runs = 2000;
+
+  for (let seed = 1; seed <= runs; seed++) {
+    const rng = mulberry32(seed);
+    const tournament = buildNationalBracket(rng, liveCards, 'CA', canada.roster, canada.iglId);
+    while (true) {
+      resolveNpcMatches(tournament, rng);
+      const round = currentRound(tournament);
+      if (round.key === 'final') {
+        const match = round.matches[0];
+        const finalists = [tournament.teams[match.a].nationality, tournament.teams[match.b].nationality].sort();
+        if (finalists[0] === 'CA' && finalists[1] === 'US') canadaUsFinals++;
+        const champion = tournament.teams[match.winner].nationality;
+        champions[champion] = (champions[champion] ?? 0) + 1;
+        break;
+      }
+      nextBracketRound(tournament);
+    }
+  }
+
+  const ordered = Object.entries(champions).sort((a, b) => b[1] - a[1]);
+  assert.ok(canadaUsFinals / runs < 0.5);
+  assert.ok(ordered.length >= 6);
+  assert.ok(ordered.slice(0, 6).every(([, wins]) => wins / runs >= 0.01));
+  assert.equal(ordered[0][0], 'CA');
+  assert.ok(ordered[0][1] / runs < 0.55);
 });

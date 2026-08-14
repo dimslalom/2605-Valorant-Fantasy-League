@@ -143,13 +143,22 @@ export const ICONS = [
 ];
 
 // Manual overrides keyed by vlr.gg player ID (string).
-// Supported fields: tier, palette, power, edition, photo.
+// Supported fields: tier, palette, power, edition, photo, noKitSwap.
+// noKitSwap preserves the resolved photo as-is and excludes it from the
+// head/jersey compositor. Use it for hand-made art and unusual portraits.
 // Tier is otherwise derived from the card rating (80+ gold, 70+ silver, below 70 bronze).
 // Example:
 // '123': { tier: 'gold', palette: 'gold', power: { name: '...', description: '...', effect: '...', value: 2, duration: 3 } }
 export const PLAYER_OVERRIDES = {
   // Hand-made stylized card art: pinned so re-syncs never replace it
-  '8480': { photo: '/assets/players/gold-img-aspas.png' },     // aspas
-  '9801': { photo: '/assets/players/gold-img-f0rsakeN.png' },  // f0rsakeN
-  '4':    { photo: '/assets/players/silver-img-crashies.png' } // crashies
+  '8480': { photo: '/assets/players/gold-img-aspas.png', noKitSwap: true },     // aspas
+  '9801': { photo: '/assets/players/gold-img-f0rsakeN.png', noKitSwap: true },  // f0rsakeN
+  '4':    { photo: '/assets/players/silver-img-crashies.png', noKitSwap: true } // crashies
+};
+
+// Force the real-photo donor for an org's jersey plate. Values may be a vlr.gg
+// player id or a case-insensitive player alias.
+export const PLATE_OVERRIDES = {
+  FNC: 'boaster',
+  MIR: 'redgar',
 };

@@ -8,6 +8,8 @@
 // Tournament objects are plain data (teams, rounds, matches) so a future
 // multiplayer mode can assign any match to a human instead of the sim.
 
+import { getCardSpecialties } from '../data/specialties.js';
+
 // ── Seeded RNG ───────────────────────────────────────────────────────────────
 
 export function mulberry32(seed) {
@@ -39,6 +41,26 @@ function pickN(rng, arr, n) {
   const out = [];
   while (out.length < n && pool.length) {
     out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
+  }
+  return out;
+}
+
+function weightedPick(rng, items, weights) {
+  const usable = items.slice(0, weights.length);
+  const total = weights.slice(0, usable.length).reduce((sum, weight) => sum + weight, 0);
+  let roll = rng() * total;
+  for (let i = 0; i < usable.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return usable[i];
+  }
+  return usable[usable.length - 1];
+}
+
+function shuffle(rng, items) {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
 }
@@ -106,26 +128,87 @@ export function eligibleNationalPools(cards, minimum = MIN_NATIONAL_POOL) {
 
 const ROLE_CLASSES = ['Duelist', 'Initiator', 'Controller', 'Sentinel'];
 
+// Specialties are looked up from the shared catalog so every mode (solo,
+// daily, ENC, multiplayer) reads the same traits off the same cards.
+export function hasSpecialty(card, key) {
+  return getCardSpecialties(card).some(s => s.key === key);
+}
+
+// Duel-side specialty swing, in power points, for side A against side B.
+// Flick pays when the opponent out-positions you; Aura drags the other side's
+// mentality down; Mastermind is a random mid-round read from a leading IGL.
+// Returns a power delta to add to side A.
+export function specialtyDuelBonus(rng, rosterA, rosterB, iglAId = null) {
+  if (!rosterA?.length || !rosterB?.length) return 0;
+  const avg = (roster, key) => roster.reduce((s, p) => s + (p.stats?.[key] ?? 0), 0) / roster.length;
+  let delta = 0;
+
+  // Flick: bonus aim against a better-positioned opponent.
+  const outPositioned = avg(rosterB, 'positioning') > avg(rosterA, 'positioning');
+  if (outPositioned) {
+    delta += rosterA.filter(p => hasSpecialty(p, 'flick')).length * 1.2;
+  }
+
+  // Aura: presence drags the opposing squad's mentality down.
+  delta += rosterA.filter(p => hasSpecialty(p, 'aura')).length * 1.0;
+
+  // Mastermind: a leading IGL spikes positioning + mentality by 2..10, which
+  // is 2 stats on 1 of 5 players => (roll * 2) / 5 players / 5 stats of rating.
+  const igl = iglAId ? rosterA.find(p => p.id === iglAId) : null;
+  if (igl && hasSpecialty(igl, 'mastermind')) {
+    const roll = 2 + Math.floor(rng() * 9); // 2..10
+    delta += (roll * 2) / 25;
+  }
+  return delta;
+}
+
 export function teamChemistry(roster, iglId) {
   const lines = [];
   let chem = 0;
 
-  // Role coverage: reward all 4 classes, punish stacking
+  // Role coverage: reward all 4 classes, punish stacking. Flex players each
+  // plug one otherwise-missing class, and their own role stops counting
+  // toward a stack penalty.
   const roleCount = {};
   for (const p of roster) roleCount[p.role] = (roleCount[p.role] ?? 0) + 1;
-  const covered = ROLE_CLASSES.filter(r => roleCount[r]);
-  if (covered.length === 4) {
+
+  const flexPlayers = roster.filter(p => hasSpecialty(p, 'flex'));
+  const missingRaw = ROLE_CLASSES.filter(r => !roleCount[r]);
+  const flexFilled = missingRaw.slice(0, flexPlayers.length);
+  const missing = missingRaw.slice(flexFilled.length);
+
+  if (missing.length === 0) {
     chem += 6;
     lines.push({ label: 'Full role coverage', value: +6 });
   } else {
-    const missing = ROLE_CLASSES.filter(r => !roleCount[r]);
     chem -= missing.length * 4;
     lines.push({ label: `Missing: ${missing.join(', ')}`, value: -missing.length * 4 });
   }
+  if (flexFilled.length) {
+    lines.push({ label: `Flex covers ${flexFilled.join(', ')}`, value: '+0' });
+  }
   for (const [role, n] of Object.entries(roleCount)) {
-    if (n > 2) {
-      chem -= (n - 2) * 3;
-      lines.push({ label: `${n}x ${role} stack`, value: -(n - 2) * 3 });
+    // A flexed player slides off their stacked class.
+    const stackRelief = flexPlayers.filter(p => p.role === role).length
+      ? Math.min(flexFilled.length, flexPlayers.filter(p => p.role === role).length)
+      : 0;
+    const effective = n - stackRelief;
+    if (effective > 2) {
+      chem -= (effective - 2) * 3;
+      lines.push({ label: `${effective}x ${role} stack`, value: -(effective - 2) * 3 });
+    }
+  }
+
+  // One Trick: mastered a single agent — pays off only when nobody else on
+  // the squad plays that agent.
+  for (const p of roster) {
+    if (!hasSpecialty(p, 'one_trick')) continue;
+    const mine = new Set(p.agents ?? []);
+    if (!mine.size) continue;
+    const shared = roster.some(o => o.id !== p.id && (o.agents ?? []).some(a => mine.has(a)));
+    if (!shared) {
+      chem += 5;
+      lines.push({ label: `${p.player} one-tricks solo`, value: +5 });
     }
   }
 
@@ -205,6 +288,28 @@ export function teamPower(roster, iglId) {
   return { base, chem: chem.total, power: base + chem.total * 0.6, lines: chem.lines };
 }
 
+function strongestIgl(roster) {
+  return roster
+    .map(card => ({ card, result: teamPower(roster, card.id) }))
+    .sort((a, b) => b.result.power - a.result.power || b.card.rating - a.card.rating)[0];
+}
+
+function nationalTeam(nationality, roster) {
+  if (roster.length < ROSTER_SIZE) return null;
+  const igl = strongestIgl(roster);
+  return {
+    id: `nation:${nationality}`,
+    tag: nationality,
+    name: nationality,
+    nationality,
+    logo: null,
+    roster,
+    iglId: igl.card.id,
+    power: igl.result.power,
+    isPlayer: false,
+  };
+}
+
 // Build a readable, balanced CPU roster: take the best card in every role the
 // country can field, then fill open slots by rating. The best IGL assignment is
 // selected using the same power calculation available to the player.
@@ -219,29 +324,44 @@ export function buildCpuNationalTeam(nationality, cards) {
     if (roster.length >= ROSTER_SIZE) break;
     if (!roster.includes(card)) roster.push(card);
   }
-  if (roster.length < ROSTER_SIZE) return null;
+  return nationalTeam(nationality, roster);
+}
 
-  const igl = roster
-    .map(card => ({ card, result: teamPower(roster, card.id) }))
-    .sort((a, b) => b.result.power - a.result.power || b.card.rating - a.card.rating)[0];
+const ROLE_PICK_WEIGHTS = [55, 30, 15];
+const FLEX_PICK_WEIGHTS = [40, 25, 17, 11, 7];
 
-  return {
-    id: `nation:${nationality}`,
-    tag: nationality,
-    name: nationality,
-    nationality,
-    logo: null,
-    roster,
-    iglId: igl.card.id,
-    power: igl.result.power,
-    isPlayer: false,
-  };
+// The roster a CPU nation actually brings to this ENC run. It stays strong and
+// role-aware, but a seeded weighted draw stops every tournament using the same
+// five names.
+export function buildVariedCpuNationalTeam(rng, nationality, cards) {
+  const sorted = [...cards].sort((a, b) => b.rating - a.rating || a.player.localeCompare(b.player));
+  const roster = [];
+  for (const role of ROLE_CLASSES) {
+    const candidates = sorted.filter(card => card.role === role && !roster.includes(card)).slice(0, 3);
+    if (candidates.length) roster.push(weightedPick(rng, candidates, ROLE_PICK_WEIGHTS));
+  }
+  while (roster.length < ROSTER_SIZE) {
+    const candidates = sorted.filter(card => !roster.includes(card)).slice(0, 5);
+    if (!candidates.length) break;
+    roster.push(weightedPick(rng, candidates, FLEX_PICK_WEIGHTS));
+  }
+  return nationalTeam(nationality, roster);
 }
 
 export function nationalChallengeTier(seed) {
   if (seed <= 8) return 'Contender';
   if (seed <= 24) return 'Challenger';
   return 'Underdog';
+}
+
+export function encFormLabel(form) {
+  if (form >= 3) return 'Hot';
+  if (form <= -3) return 'Cold';
+  return 'Steady';
+}
+
+export function teamSimulationPower(team) {
+  return team.simulationPower ?? team.power;
 }
 
 // ── Maps & match sim ─────────────────────────────────────────────────────────
@@ -254,8 +374,11 @@ export function pickMaps(rng, n) {
 
 // Simulate one map round-by-round. Returns the full round sequence so the UI
 // can animate it, plus the final score and a map MVP from the winning side.
-export function simMap(rng, powerA, powerB, rosterA, rosterB) {
-  const p = 1 / (1 + Math.pow(10, (powerB - powerA) / 25));
+export function simMap(rng, powerA, powerB, rosterA, rosterB, bias = 0, iglA = null, iglB = null) {
+  // Specialty swings are rolled once per map, before the round loop.
+  const specA = specialtyDuelBonus(rng, rosterA, rosterB, iglA);
+  const specB = specialtyDuelBonus(rng, rosterB, rosterA, iglB);
+  const p = 1 / (1 + Math.pow(10, ((powerB + specB) - (powerA + specA) - bias) / 25));
   const rounds = []; // 'A' | 'B'
   let a = 0, b = 0;
   while (true) {
@@ -281,14 +404,14 @@ export function simMap(rng, powerA, powerB, rosterA, rosterB) {
 }
 
 // Simulate a whole NPC series in one call (no animation data needed).
-export function simNpcMatch(rng, teamA, teamB, bestOf) {
+export function simNpcMatch(rng, teamA, teamB, bestOf, bias = 0) {
   const needed = Math.ceil(bestOf / 2);
   const maps = pickMaps(rng, bestOf);
   const played = [];
   let scoreA = 0, scoreB = 0;
   for (const map of maps) {
     if (scoreA >= needed || scoreB >= needed) break;
-    const r = simMap(rng, teamA.power, teamB.power, teamA.roster, teamB.roster);
+    const r = simMap(rng, teamSimulationPower(teamA), teamSimulationPower(teamB), teamA.roster, teamB.roster, bias, teamA.iglId ?? null, teamB.iglId ?? null);
     played.push({ map, a: r.a, b: r.b });
     if (r.winA) scoreA++; else scoreB++;
   }
@@ -327,8 +450,177 @@ export function makeSeason(rng) {
 export function nextEndlessEvent(rng, index, usedCities = []) {
   const pool = CITIES.filter(c => !usedCities.includes(c));
   const city = pickN(rng, pool.length ? pool : CITIES, 1)[0];
-  const kind = index < 2 ? 'masters' : 'champions';
-  return { kind, city, label: `${kind === 'champions' ? 'Champions' : 'Masters'} ${city}` };
+  const kind = index % 3 < 2 ? 'masters' : 'champions';
+  const cycle = endlessCycle(index);
+  const modifier = drawEventModifier(rng, kind, cycle);
+  return { kind, city, label: `${kind === 'champions' ? 'Champions' : 'Masters'} ${city}`, modifier, cycle };
+}
+
+// ── Endless roguelike ───────────────────────────────────────────────────────
+
+export const ENDLESS_LIVES = 3;
+export const FATIGUE_PENALTY_CAP = 5;
+export const BOOST_RATING_CAP = 3;
+export const ENDLESS_REGIONS = ['Americas', 'EMEA', 'Pacific', 'China'];
+
+export function endlessCycle(eventIndex) {
+  return Math.floor(eventIndex / 3);
+}
+
+export function endlessDifficulty(cycle) {
+  const safeCycle = Math.max(0, cycle);
+  const formBoost = safeCycle <= 3 ? safeCycle * 3 : 9 + (safeCycle - 3) * 1.5;
+  return {
+    formBoost,
+    superTeamCount: Math.min(4, Math.max(0, safeCycle - 1)),
+    superTeamBoost: formBoost / 2,
+    mastersModifierChance: safeCycle === 0 ? 0 : Math.min(0.6, 0.25 + 0.1 * safeCycle),
+  };
+}
+
+export const MODIFIERS = {
+  hostile_crowd: { key: 'hostile_crowd', label: 'Hostile Crowd', desc: 'Your squad loses 4 power.', pool: 'boss' },
+  giant_killers: { key: 'giant_killers', label: 'Giant Killers', desc: 'Every opponent gains 3 power.', pool: 'both' },
+  duelist_slump: { key: 'duelist_slump', label: 'Duelist Slump', desc: 'Your Duelists lose 3 rating.', pool: 'both' },
+  igl_silenced: { key: 'igl_silenced', label: 'IGL Silenced', desc: 'Your IGL chemistry bonus is disabled.', pool: 'boss' },
+  cold_streak: { key: 'cold_streak', label: 'Cold Streak', desc: 'Chemistry contributes at half strength.', pool: 'boss' },
+  bo1_r16: { key: 'bo1_r16', label: 'Sudden Death', desc: 'The round of 16 is best-of-one.', pool: 'both', roundOverrides: { r16: { bestOf: 1 } } },
+  grueling_schedule: { key: 'grueling_schedule', label: 'Grueling Schedule', desc: 'This event adds double fatigue.', pool: 'both' },
+  away_maps: { key: 'away_maps', label: 'Away Maps', desc: 'The map odds lean 2 power toward your opponent.', pool: 'boss', bias: -2 },
+};
+
+export function drawEventModifier(rng, kind, cycle) {
+  const difficulty = endlessDifficulty(cycle);
+  if (kind === 'masters' && rng() >= difficulty.mastersModifierChance) return null;
+  const allowed = Object.values(MODIFIERS).filter(modifier =>
+    modifier.pool === 'both' || (kind === 'champions' ? modifier.pool === 'boss' : modifier.pool === 'masters'));
+  return allowed[Math.floor(rng() * allowed.length)] ?? null;
+}
+
+export function nextEndlessCycle(rng, cycleIndex, usedCities = []) {
+  const available = CITIES.filter(city => !usedCities.includes(city));
+  const cities = pickN(rng, available.length >= 3 ? available : CITIES, 3);
+  return ['masters', 'masters', 'champions'].map((kind, index) => ({
+    kind,
+    city: cities[index],
+    label: `${kind === 'champions' ? 'Champions' : 'Masters'} ${cities[index]}`,
+    cycle: cycleIndex,
+    modifier: drawEventModifier(rng, kind, cycleIndex),
+  }));
+}
+
+export function npcTeamPower(roster) {
+  if (!roster.length) return { power: 0, iglId: null };
+  return roster.map(card => ({ iglId: card.id, result: teamPower(roster, card.id) }))
+    .sort((a, b) => b.result.power - a.result.power || String(a.iglId).localeCompare(String(b.iglId)))[0];
+}
+
+export function buildSuperTeam(region, cards, pickedIds = new Set()) {
+  const pool = cards.filter(card => card.region === region && !pickedIds.has(card.id));
+  const roster = [];
+  for (const role of ROLE_CLASSES) {
+    const best = pool.filter(card => card.role === role).sort((a, b) => b.rating - a.rating || String(a.id).localeCompare(String(b.id)))[0];
+    if (best) roster.push(best);
+  }
+  for (const card of [...pool].sort((a, b) => b.rating - a.rating || String(a.id).localeCompare(String(b.id)))) {
+    if (roster.length >= ROSTER_SIZE) break;
+    if (!roster.includes(card)) roster.push(card);
+  }
+  if (roster.length < ROSTER_SIZE) return null;
+  const best = npcTeamPower(roster);
+  return { id: `allstar:${region}`, tag: region.slice(0, 3).toUpperCase(), name: `${region} All-Stars`, region, logo: null,
+    roster, iglId: best.iglId, power: best.result.power, isPlayer: false };
+}
+
+export function buildEndlessBracket(rng, cards, pickedIds, playerTeam, kind, cycle, modifier = null) {
+  const difficulty = endlessDifficulty(cycle);
+  const pool = eligibleOrgs(cards, pickedIds).map(team => {
+    const best = npcTeamPower(team.roster);
+    return { ...team, iglId: best.iglId, power: best.result.power + difficulty.formBoost };
+  });
+  const neededAllStars = kind === 'champions' ? difficulty.superTeamCount : cycle >= 4 ? 1 : 0;
+  const allStars = ENDLESS_REGIONS.slice(0, neededAllStars)
+    .map(region => buildSuperTeam(region, cards, pickedIds)).filter(Boolean)
+    .map(team => ({ ...team, power: team.power + difficulty.superTeamBoost }));
+  const npcCount = 15 - allStars.length;
+  const orgs = kind === 'champions' ? pool.slice(0, npcCount) : pickN(rng, pool.slice(0, 30), npcCount);
+  const opponentBoost = modifier?.key === 'giant_killers' ? 3 : 0;
+  const all = [playerTeam, ...orgs, ...allStars]
+    .map(team => team.isPlayer ? team : { ...team, power: team.power + opponentBoost })
+    .sort((a, b) => b.power - a.power || String(a.id).localeCompare(String(b.id)));
+  const teams = Object.fromEntries(all.map(team => [team.id, team]));
+  const bestOf = modifier?.roundOverrides?.r16?.bestOf ?? ROUND_META.r16.bestOf;
+  return { kind, teams, seeds: all.map(team => team.id), roundOverrides: modifier?.roundOverrides ?? {}, modifier,
+    rounds: [{ key: 'r16', label: ROUND_META.r16.label, bestOf, matches: SEED_ORDER.map(([i, j]) => makeMatch(all[i].id, all[j].id, bestOf)) }], roundIdx: 0 };
+}
+
+export function fatiguePenalty(value) {
+  return Math.min(FATIGUE_PENALTY_CAP, Math.max(0, Number(value) || 0));
+}
+
+export function addEventFatigue(runState, roster, multiplier = 1) {
+  const next = { ...runState, fatigue: { ...(runState.fatigue ?? {}) } };
+  for (const card of roster) next.fatigue[card.id] = (next.fatigue[card.id] ?? 0) + multiplier;
+  return next;
+}
+
+export function applyRunEffects(roster, runState = {}) {
+  const fatigue = runState.fatigue ?? {};
+  const boosts = runState.boosts ?? {};
+  if (!Object.keys(fatigue).length && !Object.keys(boosts).length) return roster;
+  return roster.map(card => {
+    const penalty = fatiguePenalty(fatigue[card.id]);
+    const cardBoosts = boosts[card.id] ?? [];
+    if (!penalty && !cardBoosts.length) return card;
+    const ratingBoost = Math.min(BOOST_RATING_CAP, cardBoosts.reduce((sum, boost) => sum + (boost.rating ?? 0), 0));
+    const stats = { ...card.stats };
+    for (const boost of cardBoosts) if (boost.stat) stats[boost.stat] = Math.min(99, (stats[boost.stat] ?? 0) + (boost.value ?? 0));
+    const runFx = cardBoosts.map(boost => ({ key: boost.key, glyph: boost.glyph, label: boost.label, desc: boost.desc, tone: 'boost' }));
+    if (penalty) runFx.push({ key: 'fatigue', glyph: `${penalty}`, label: `Fatigue ${penalty}`, desc: `-${penalty} rating`, tone: 'fatigue' });
+    return { ...card, rating: card.rating + ratingBoost - penalty, stats, runFx };
+  });
+}
+
+export function effectiveTeamPower(roster, iglId, runState = {}, modifierKey = null) {
+  let adjusted = applyRunEffects(roster, runState);
+  if (modifierKey === 'duelist_slump') adjusted = adjusted.map(card => card.role === 'Duelist' ? { ...card, rating: card.rating - 3 } : card);
+  const result = teamPower(adjusted, modifierKey === 'igl_silenced' ? null : iglId);
+  const chemFactor = modifierKey === 'cold_streak' ? 0.3 : 0.6;
+  const teamChemBonus = Math.min(6, Math.max(0, runState.teamChemBonus ?? 0));
+  return { ...result, roster: adjusted,
+    power: result.base + result.chem * chemFactor + teamChemBonus * 0.6 - (modifierKey === 'hostile_crowd' ? 4 : 0) };
+}
+
+export function eventCredits({ mapsWon = 0, seriesWon = 0, champion = false, cycle = 0 }) {
+  return mapsWon * 20 + seriesWon * 40 + (champion ? 150 : 30) + cycle * 10;
+}
+
+export const SHOP_ITEMS = [
+  { key: 'scout_pack', label: 'Scout Pack', cost: 100, desc: 'Open a five-card swap pack.', glyph: 'P' },
+  { key: 'aim_coach', label: 'Aim Coach', cost: 60, desc: '+1 rating and +2 aim for one player.', glyph: 'A', targeted: true },
+  { key: 'mental_coach', label: 'Mental Coach', cost: 60, desc: '+1 rating and +2 mentality for one player.', glyph: 'M', targeted: true },
+  { key: 'energy_drink', label: 'Energy Drink', cost: 40, desc: 'Clear one player’s fatigue.', glyph: 'E', targeted: true },
+  { key: 'team_retreat', label: 'Team Retreat', cost: 90, desc: 'Reduce team fatigue by 2.', glyph: 'R' },
+  { key: 'synergy_camp', label: 'Synergy Camp', cost: 120, desc: '+2 team chemistry (three stacks max).', glyph: 'S' },
+];
+
+export function applyPurchase(runState, itemKey, targetCardId = null) {
+  const item = SHOP_ITEMS.find(entry => entry.key === itemKey);
+  if (!item) throw new Error('Unknown shop item.');
+  if (item.targeted && !targetCardId) throw new Error('Choose a player for this item.');
+  const next = { fatigue: { ...(runState.fatigue ?? {}) }, boosts: Object.fromEntries(Object.entries(runState.boosts ?? {}).map(([id, list]) => [id, [...list]])), teamChemBonus: runState.teamChemBonus ?? 0 };
+  if (itemKey === 'aim_coach' || itemKey === 'mental_coach') {
+    const stat = itemKey === 'aim_coach' ? 'aim' : 'mentality';
+    next.boosts[targetCardId] ??= [];
+    next.boosts[targetCardId].push({ key: itemKey, glyph: item.glyph, label: item.label, desc: item.desc, rating: 1, stat, value: 2 });
+  } else if (itemKey === 'energy_drink') {
+    delete next.fatigue[targetCardId];
+  } else if (itemKey === 'team_retreat') {
+    for (const id of Object.keys(next.fatigue)) next.fatigue[id] = Math.max(0, next.fatigue[id] - 2);
+  } else if (itemKey === 'synergy_camp') {
+    next.teamChemBonus = Math.min(6, next.teamChemBonus + 2);
+  }
+  return next;
 }
 
 export const ROUND_KEYS = ['r16', 'quarter', 'semi', 'final'];
@@ -410,6 +702,21 @@ function seedOrder(size) {
   return order;
 }
 
+function shuffleSeedPots(rng, slots, potSize = 8) {
+  const out = [];
+  for (let start = 0; start < slots.length; start += potSize) {
+    out.push(...shuffle(rng, slots.slice(start, start + potSize)));
+  }
+  return out;
+}
+
+function tournamentForm(rng) {
+  const u1 = Math.max(rng(), Number.EPSILON);
+  const u2 = rng();
+  const normal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return Math.max(-8, Math.min(8, normal * 5));
+}
+
 function addNationalMainRound(t) {
   const ids = t.mainSeedSlots.map(slot => {
     if (!slot.startsWith('prelim:')) return slot;
@@ -430,23 +737,42 @@ function addNationalMainRound(t) {
 
 // Build the ENC field. Any entrants above the next-lower power of two play a
 // seeded preliminary round; its winners occupy the final main-bracket seeds.
-export function buildNationalBracket(cards, playerNationality, playerRoster, playerIglId) {
+export function buildNationalBracket(rng, cards, playerNationality, playerRoster, playerIglId) {
+  if (Array.isArray(rng)) {
+    playerIglId = playerRoster;
+    playerRoster = playerNationality;
+    playerNationality = cards;
+    cards = rng;
+    rng = mulberry32(0x454e43);
+  }
   const entrants = eligibleNationalPools(cards).map(({ nationality, cards: pool }) => {
-    if (nationality !== playerNationality) return buildCpuNationalTeam(nationality, pool);
+    if (nationality !== playerNationality) {
+      const projected = buildCpuNationalTeam(nationality, pool);
+      const actual = buildVariedCpuNationalTeam(rng, nationality, pool);
+      return { ...actual, projectedPower: projected.power };
+    }
+    const playerPower = teamPower(playerRoster, playerIglId).power;
     return {
       id: 'player', tag: nationality, name: nationality, nationality, logo: null,
       roster: playerRoster, iglId: playerIglId,
-      power: teamPower(playerRoster, playerIglId).power,
+      power: playerPower, projectedPower: playerPower,
       isPlayer: true,
     };
-  }).filter(Boolean).sort((a, b) => b.power - a.power || a.nationality.localeCompare(b.nationality));
+  }).filter(Boolean).sort((a, b) => b.projectedPower - a.projectedPower || a.nationality.localeCompare(b.nationality));
+
+  const fieldAverage = entrants.reduce((sum, team) => sum + team.power, 0) / entrants.length;
+  for (const team of entrants) {
+    team.form = tournamentForm(rng);
+    team.formLabel = encFormLabel(team.form);
+    team.simulationPower = fieldAverage + (team.power - fieldAverage) * 0.25 + team.form;
+  }
 
   const mainSize = powerOfTwoAtMost(entrants.length);
   const preliminaryCount = entrants.length - mainSize;
   const byeCount = mainSize - preliminaryCount;
   const teams = Object.fromEntries(entrants.map(team => [team.id, team]));
   const rounds = [];
-  const mainSeedSlots = entrants.slice(0, byeCount).map(team => team.id);
+  const seededMainSlots = entrants.slice(0, byeCount).map(team => team.id);
 
   if (preliminaryCount) {
     const matches = [];
@@ -454,16 +780,18 @@ export function buildNationalBracket(cards, playerNationality, playerRoster, pla
       const high = entrants[byeCount + i];
       const low = entrants[entrants.length - 1 - i];
       matches.push(makeMatch(high.id, low.id, ROUND_META.preliminary.bestOf));
-      mainSeedSlots.push(`prelim:${i}`);
+      seededMainSlots.push(`prelim:${i}`);
     }
     rounds.push({ ...ROUND_META.preliminary, key: 'preliminary', matches });
   } else {
-    mainSeedSlots.push(...entrants.slice(byeCount).map(team => team.id));
+    seededMainSlots.push(...entrants.slice(byeCount).map(team => team.id));
   }
+
+  const mainSeedSlots = shuffleSeedPots(rng, seededMainSlots);
 
   const tournament = {
     kind: 'enc', teams, seeds: entrants.map(team => team.id), rounds,
-    roundIdx: 0, mainSize, mainSeedSlots, roundKeys: mainRoundKeys(mainSize),
+    roundIdx: 0, mainSize, mainSeedSlots, roundKeys: mainRoundKeys(mainSize), fieldAverage,
   };
   if (!preliminaryCount) addNationalMainRound(tournament);
   return tournament;
@@ -618,17 +946,22 @@ export function evaluateSeason(results, { endless = false } = {}) {
     badges.push({ key: 'perfect_season', label: 'PERFECT SEASON', desc: 'Three titles, zero maps dropped' });
   }
 
-  const score = Math.max(0,
-    seriesWon * 100 +
-    mapsWon * 20 +
-    roundDiff +
-    titles * 150 +
-    (grandSlam ? 300 : 0) +
-    (perfectSeason ? 500 : 0),
-  );
+  const fixedScore = seriesWon * 100 + mapsWon * 20 + roundDiff + titles * 150 +
+    (grandSlam ? 300 : 0) + (perfectSeason ? 500 : 0);
+  const endlessScore = results.reduce((total, result, index) => {
+    const cycle = result.cycle ?? endlessCycle(index);
+    const eventSeries = result.series ?? [];
+    const base = eventSeries.filter(series => series.won).length * 100 +
+      eventSeries.reduce((sum, series) => sum + (series.mapsWon ?? 0) * 20 + (series.roundDiff ?? 0), 0) +
+      (result.champion ? 150 : 0);
+    return total + base * (1 + 0.25 * cycle);
+  }, 0);
+  const clearedCycles = endless ? results.filter((result, index) => (result.champion && index % 3 === 2)).length : 0;
+  const score = Math.max(0, Math.round(endless ? endlessScore + clearedCycles * 200 : fixedScore));
+  const bestCycle = endless ? results.reduce((best, result, index) => Math.max(best, result.cycle ?? endlessCycle(index)), 0) : undefined;
 
   return {
     badges, score, titles, seriesWon, mapsWon, mapsLost, roundDiff,
-    grandSlam, perfectSeason, events: results.length,
+    grandSlam, perfectSeason, events: results.length, bestCycle,
   };
 }

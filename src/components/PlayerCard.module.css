@@ -46,12 +46,6 @@
   backface-visibility: hidden;
 }
 
-/*
- * Generic parallax: EVERY direct child of the front face is pushed out by its
- * own --z (3D depth) and drifts laterally by --shift × pointer fraction
- * (--mx/--my set by useCardTilt, −0.5..0.5). New card types / extra layers get
- * the 3D effect automatically by declaring --z / --shift — no CSS changes.
- */
 .faceFront > * {
   transform: translate3d(
     calc(var(--mx, 0) * var(--shift, 0px)),
@@ -104,7 +98,7 @@
   pointer-events: none;
 }
 
-/* ── Glare: follows the cursor via --gx/--gy; masked to the card silhouette ── */
+/* ── Glare ── */
 .glare {
   position: absolute;
   inset: 0;
@@ -123,17 +117,127 @@
   mask-size: 100% 100%;
 }
 
-/* ── Reduced motion: no tilt transitions, instant flip ── */
-@media (prefers-reduced-motion: reduce) {
-  .tilt,
-  .flip,
-  .glare,
-  .faceFront > * {
-    transition: none;
-  }
+.boosterRail {
+  position: absolute;
+  z-index: 4;
+  right: -16px;
+  top: 148px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  pointer-events: none;
 }
 
-/* ── Top-left: rating, role abbr, flag — row, aligned to each other ── */
+.boosterSlot {
+  position: relative;
+  pointer-events: auto;
+}
+
+.boosterChip {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--gold, #d8ae4f);
+  border-radius: 0;
+  background: #10151d;
+  color: #fff;
+  font: 700 20px/1 'Familjen Grotesk', sans-serif;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, .35);
+}
+
+.fatigueChip { border-color: var(--accent, #ff4655); color: var(--accent, #ff4655); }
+
+.boosterTooltip {
+  position: absolute;
+  right: 54px;
+  top: 0;
+  width: 180px;
+  padding: 10px 12px;
+  background: #0c1118;
+  border: 2px solid #fff;
+  color: #fff;
+  font: 600 15px/1.25 'Familjen Grotesk', sans-serif;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity .12s, transform .12s;
+  pointer-events: none;
+}
+
+.boosterTooltip b { display: block; color: var(--gold, #d8ae4f); margin-bottom: 3px; }
+.boosterSlot:hover .boosterTooltip,
+.boosterChip:focus-visible + .boosterTooltip { opacity: 1; transform: translateX(0); }
+
+/* ── Specialties rail — a vertical column of cut-corner icon frames pinned to
+      the card's LEFT edge, each spilling half off the card, floated forward via
+      the .spec plane so it pops in the 3D tilt. Base-coordinate (400x580) sizes
+      scale down with displayScale. ── */
+.specialtiesRail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: auto;
+  z-index: 6;
+}
+
+.specSlot { position: relative; }
+
+.specCutChip {
+  width: 62px;
+  height: 62px;
+  transform: translateX(-50%); /* spill half off the left edge */
+  background: #0c1019;
+  border: 2.5px solid var(--spec, #d8b34c);
+  color: var(--spec, #d8b34c);
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.specSlot:hover .specCutChip {
+  background: var(--spec, #d8b34c);
+  color: #0c1019;
+}
+
+.specTooltip {
+  position: absolute;
+  left: calc(50% + 16px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  width: 300px;
+  background: rgba(10, 14, 22, 0.97);
+  border: 2px solid var(--spec, #d8b34c);
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 19px;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  z-index: 10;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+.specTooltip b {
+  display: block;
+  color: var(--spec, #d8b34c);
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.specSlot:hover .specTooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ── Top-left: rating, role abbr, flag ── */
 .topLeft {
   position: absolute;
   top: 10%;
@@ -154,7 +258,7 @@
   align-items: flex-end;
 }
 
-/* ── Player name — sits at the top of the stat panel ── */
+/* ── Player name ── */
 .playerName {
   position: absolute;
   bottom: calc(29% - 56px);
@@ -201,7 +305,6 @@
   line-height: 1;
 }
 
-/* ── Bottom logos: org + region, centered ── */
 .logoRow {
   display: flex;
   align-items: center;
@@ -216,9 +319,8 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  /* generous bottom padding: the card PNG silhouette tapers at the bottom */
-  padding: 52px 48px 90px;
+  gap: 14px;
+  padding: 40px 36px 60px;
   box-sizing: border-box;
 }
 
@@ -233,7 +335,7 @@
 .backStats {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .backStatRow {
@@ -257,7 +359,7 @@
 .backMeta {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 20px;
+  gap: 10px 16px;
 }
 
 .backMetaItem {
@@ -266,12 +368,43 @@
   gap: 1px;
 }
 
-.backPlaceholder {
-  border: 2px dashed;
-  border-radius: 8px;
-  padding: 14px;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.15em;
+.backSpecialties {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.specListBack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.backSpecRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.backSpecIcon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--spec, #d8b34c);
+  background: #0c1019;
+  border: 1.5px solid var(--spec, #d8b34c);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt,
+  .flip,
+  .glare,
+  .faceFront > * {
+    transition: none;
+  }
 }

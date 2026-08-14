@@ -24,3 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python tooling caches
+__pycache__/
+*.py[cod]

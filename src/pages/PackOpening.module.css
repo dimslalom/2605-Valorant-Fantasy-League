@@ -1,38 +1,87 @@
-.page {
-  min-height: 100%;
-  padding: 32px 40px;
-  background: #0d0f17;
+/* Shell, frame and status strip come from AppFrame + StatusStrip.
+
+   This route is an honest placeholder: packs are dealt inside a run, not here.
+   It says so and points somewhere useful, rather than offering a button that
+   does nothing. */
+
+.content {
+  flex: 1;
+  padding: var(--sp-12) var(--sp-8);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: var(--sp-3);
+  text-align: center;
+}
+
+.kicker {
+  color: var(--accent);
+  font: 700 var(--fs-micro) / var(--lh-tight) var(--font-mono);
+  letter-spacing: var(--track-mono);
+  text-transform: uppercase;
 }
 
 .title {
-  font-size: 28px;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading);
   font-weight: 700;
-  color: #e8e0ff;
-  letter-spacing: -0.5px;
+  color: var(--ink);
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
 }
 
 .stub {
-  font-size: 14px;
-  color: rgba(232, 224, 255, 0.4);
+  max-width: 46ch;
+  color: var(--muted);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.openBtn,
+.secondaryBtn {
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--sp-6);
+  border: none;
+  font-family: inherit;
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background var(--dur-micro), color var(--dur-micro),
+              transform var(--dur-micro);
 }
 
 .openBtn {
-  background: #e8e0ff;
-  color: #0d0f17;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 28px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s;
+  background: var(--accent);
+  color: var(--accent-ink);
+  --focus-color: #fff;
 }
+.openBtn:hover { background: #ff5d6a; }
 
-.openBtn:hover {
-  opacity: 0.85;
+.secondaryBtn {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.secondaryBtn:hover { background: var(--surface-hi); }
+
+/* Links don't get the global button press state, so they take it here. */
+.openBtn:active,
+.secondaryBtn:active { transform: translateY(1px) scale(0.985); }
+
+@media (max-width: 680px) {
+  /* Frame and strip offsets now come from AppFrame + StatusStrip. */
+  .content { padding: var(--sp-6) var(--sp-4); }
+  .actions { flex-direction: column; align-items: stretch; width: 100%; }
 }

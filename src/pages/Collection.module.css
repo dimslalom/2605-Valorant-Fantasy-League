@@ -1,40 +1,62 @@
-/* Player Library. Same design tokens as PerfectRun.module.css:
-   sharp corners, filled surfaces, one accent, uppercase micro labels,
-   separation by whitespace, no decorative hairlines. */
+/* Player Library — left icon mode-rail, top status strip, beveled filter chips,
+   card grid or list view, and bottom result strip. Shared VALORANT tokens:
+   sharp corners, one accent, uppercase monospace micro-labels, filled surfaces. */
 
-.page {
-  --ink: #ece8e1;
-  --muted: #8a8f9e;
-  --faint: #4c5160;
-  --raise: #161b29;
-  --raise-hi: #1e2435;
-  --accent: #ff4655;
+/* The shell, frame and status strip now come from AppFrame / StatusStrip —
+   this file only styles what is specific to the Library. */
 
-  min-height: 100%;
-  padding: 32px 48px 96px;
-  background: #0d0f17;
+.viewToggle {
+  display: flex;
+  gap: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.iconToggleBtn {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  /* Was 28x32. HIG floor for a control people hit repeatedly is 44x44. */
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.iconToggleBtn:hover {
   color: var(--ink);
+}
+
+.toggleActive {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ── Search + filters ── */
 .controls {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-bottom: 30px;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
 }
 
 .search {
   width: 100%;
-  max-width: 420px;
-  padding: 12px 16px;
+  max-width: 460px;
+  min-height: var(--tap-min);
+  padding: 11px 14px;
   border: none;
-  background: var(--raise);
+  background: var(--surface);
   color: var(--ink);
   font-family: inherit;
   font-size: 14px;
   letter-spacing: 0.02em;
-  outline: none;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
   transition: background 0.12s;
 }
 .search::placeholder {
@@ -44,51 +66,62 @@
   font-weight: 600;
   letter-spacing: 0.1em;
 }
-.search:focus { background: var(--raise-hi); }
+.search:focus { background: var(--surface-hi); }
 .search::-webkit-search-cancel-button { filter: grayscale(1); }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+}
 .filterGroup {
   display: flex;
-  align-items: baseline;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
 }
-
 .filterLabel {
-  width: 52px;
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--faint);
 }
-
 .filterChips {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
-
 .chip {
-  padding: 6px 12px;
+  /* Was 6px/11px padding on a 10.5px line — about 22px tall. Filter chips are
+     a primary, repeatedly-hit control, so they take the full 44px floor. */
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-3);
+  display: inline-flex;
+  align-items: center;
   border: none;
-  background: transparent;
+  background: var(--surface);
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
+  font: 700 var(--fs-micro) / var(--lh-tight) var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
   transition: background 0.12s, color 0.12s;
 }
-.chip:hover { background: var(--raise); color: var(--ink); }
-.chipActive { background: var(--accent); color: #fff; }
-.chipActive:hover { background: var(--accent); color: #fff; }
+.chip:hover { background: var(--surface-hi); color: var(--ink); }
+.chipActive, .chipActive:hover { background: var(--accent); color: #fff; }
 
 /* ── Card grid ── */
 .grid {
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  align-content: flex-start;
+  gap: 18px;
+  padding: 22px 24px 40px;
+}
+
+.grid > div {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 290px;
 }
 
 .empty {
@@ -97,8 +130,223 @@
   padding: 40px 0;
 }
 
+/* ── List / Table View ── */
+.denseContainer {
+  flex: 1;
+  padding: 16px 24px;
+  overflow-x: auto;
+}
+
+.denseTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.denseTable th {
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--line);
+  background: #0b0d14;
+}
+
+.denseRow {
+  border-bottom: 1px solid var(--line);
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+
+.denseRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.denseRow td {
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+.playerCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarImg {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.playerMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.playerName {
+  font-weight: 700;
+  color: #fff;
+}
+
+.playerCountry {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orgCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orgLogo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.08);
+  color: #d1d5db;
+}
+
+.tierBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tiergold { background: rgba(216, 179, 76, 0.2); color: var(--gold); border: 1px solid rgba(216, 179, 76, 0.4); }
+.tiersilver { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); }
+.tierlegendary { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+.specIconGroup {
+  display: flex;
+  gap: 4px;
+}
+
+.specCutBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #0c1019;
+  border: 1.5px solid var(--gold);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  color: var(--gold);
+}
+
+.ovrCell {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.statCell {
+  font-variant-numeric: tabular-nums;
+  color: #d1d5db;
+  font-size: 12px;
+}
+
+.inspectBtn {
+  background: var(--surface-hi);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  /* Sits inside a table row, so it takes the secondary 28px floor rather than
+     the full 44 — the row itself is the primary target. */
+  min-height: var(--tap-min-secondary);
+  padding: 0 var(--sp-3);
+  display: inline-flex;
+  align-items: center;
+  font: 700 var(--fs-micro) / var(--lh-tight) var(--font-mono);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.inspectBtn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.loadMoreRow {
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 32px;
+}
+
+.loadMoreBtn {
+  min-height: var(--tap-min);
+  padding: 0 24px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: 700 var(--fs-micro) / var(--lh-tight) var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.loadMoreBtn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── Bottom result strip ── */
+.footStrip {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 34px;
+  padding: 0 24px;
+  background: #0b0d14;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font: 700 10.5px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.footCount {
+  margin-left: auto;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tablet: the filter rows get tight before the mobile break, so ease the
+   gutters rather than jumping straight from desktop to phone. */
+@media (max-width: 1024px) {
+  .controls { padding: var(--sp-5) var(--sp-5); }
+  .filters { gap: var(--sp-4) var(--sp-5); }
+  .grid { padding: var(--sp-5) var(--sp-5) var(--sp-10); justify-content: center; }
+}
+
 @media (max-width: 680px) {
-  .page { padding: 20px 18px 72px; }
-  .filterGroup { flex-direction: column; gap: 6px; }
-  .filterLabel { width: auto; }
+  /* .frame / .statusStrip offsets now live in AppFrame + StatusStrip. */
+  .controls { padding: var(--sp-4) var(--sp-4); }
+  .filterGroup { align-items: flex-start; flex-direction: column; gap: var(--sp-2); }
+  .grid { padding: var(--sp-4) var(--sp-4) var(--sp-10); justify-content: center; }
+  /* The table has eight numeric columns; let it scroll rather than crush. */
+  .denseContainer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }

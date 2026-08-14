@@ -1,50 +1,457 @@
-.page {
+/* Shell, frame and status strip come from AppFrame + StatusStrip. */
+
+.mainContainer {
+  flex: 1;
   display: flex;
-  height: 100vh;
-  background: #0d0f17;
-  overflow: hidden;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.sidebar {
-  width: 200px;
-  flex-shrink: 0;
-  border-right: 1px solid rgba(232, 224, 255, 0.1);
-  padding: 20px 16px;
+/* 1a Important Match Hero Screen */
+.heroOverlay {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: radial-gradient(circle at center, #1e1015 0%, #0d0912 60%, #050308 100%);
+  position: relative;
 }
 
-.sidebar:last-child {
-  border-right: none;
-  border-left: 1px solid rgba(232, 224, 255, 0.1);
+.heroHeader {
+  text-align: center;
+  margin-bottom: 24px;
 }
 
-.sidebarTitle {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
+.heroBadge {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffb800;
+  background: rgba(255, 184, 0, 0.15);
+  border: 1px solid rgba(255, 184, 0, 0.4);
+  padding: 4px 14px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.heroTitle {
+  font-size: 38px;
+  font-weight: 700;
   letter-spacing: 1px;
-  color: rgba(232, 224, 255, 0.5);
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 70, 85, 0.4);
+}
+
+.heroSub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+
+.heroStage {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.teamHeroCard {
+  background: rgba(18, 24, 38, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  min-width: 320px;
+}
+
+.teamSideLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ff4655;
+}
+
+.teamName {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.teamOvrBadge {
+  background: rgba(255, 184, 0, 0.2);
+  color: #ffb800;
+  border: 1px solid rgba(255, 184, 0, 0.4);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.heroRosterCards {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.vsDivider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 28px;
+  color: #ff4655;
+}
+
+.mapBadge {
+  font-size: 11px;
+  color: #d1d5db;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.lockInBtn {
+  background: linear-gradient(135deg, #ff4655 0%, #d62839 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 16px 40px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255, 70, 85, 0.5);
+  transition: all 0.2s ease;
+}
+
+.lockInBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 70, 85, 0.7);
+}
+
+/* Match Shell */
+.matchShell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  gap: 16px;
+}
+
+.matchHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0d121f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 20px;
+}
+
+.scoreBoard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.teamScore {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.teamTag {
+  font-weight: 700;
+  font-size: 14px;
+  color: #ff4655;
+}
+
+.scoreNum {
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 12px;
+  border-radius: 4px;
+}
+
+.scoreDivider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roundCount {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffb800;
+  letter-spacing: 1px;
+}
+
+.vsText {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.modeToggleBar {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.modeBtn {
+  background: transparent;
+  color: #9ca3af;
+  border: none;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modeActive {
+  background: #ff4655;
+  color: #ffffff;
+}
+
+/* 1b Card Table View */
+.cardTableContainer {
+  background: radial-gradient(circle at center, #1b3829 0%, #0d1e16 70%, #050d09 100%);
+  border: 4px solid #2d1e14;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
+}
+
+.handStrip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.handLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+
+.handCards {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.centerStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.timeoutDock {
+  width: 100%;
+  max-width: 640px;
+}
+
+/* 1c Tactical Ops View */
+.tacticalOpsContainer {
+  flex: 1;
+  background: #090c14;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.tacticalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.tacPanel {
+  background: #0d121f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.tacTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff4655;
+  text-transform: uppercase;
   margin-bottom: 12px;
 }
 
-.playerList {
-  list-style: none;
+.formulaBox {
+  background: rgba(0, 0, 0, 0.5);
+  border-left: 3px solid #ff4655;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  font-size: 11px;
+  color: #d1d5db;
+}
+
+.statCompareList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statPairRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.pName { color: #ff4655; font-weight: 700; width: 100px; text-align: right; }
+.oName { color: #00d2ff; font-weight: 700; width: 100px; }
+
+.barWrap {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  margin: 0 10px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barFillPlayer { background: #ff4655; height: 100%; }
+.barFillOpp { background: #00d2ff; height: 100%; }
+
+.zoneBars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zoneRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.zoneMeter {
+  height: 22px;
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  color: #fff;
+}
+
+.logPanel {
+  grid-column: 1 / -1;
+}
+
+.logList {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.playerItem {
-  font-size: 13px;
-  color: #e8e0ff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(232, 224, 255, 0.05);
-}
-
-.center {
-  flex: 1;
+.logItem {
   display: flex;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.logRound { font-weight: 700; color: #ffb800; }
+.logZone { color: #9ca3af; }
+.logEcon { color: #34d399; font-weight: 700; font-size: 10px; }
+.logWin { color: #ff4655; font-weight: 700; margin-left: auto; }
+.logLoss { color: #6b7280; font-weight: 700; margin-left: auto; }
+
+.matchOverBar {
+  text-align: center;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.finishBtn {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+@media (max-width: 680px) {
+  .mainContainer { min-width: 0; overflow-x: clip; }
+  .heroOverlay { padding: 24px 16px; justify-content: flex-start; }
+  .heroHeader { margin-bottom: 18px; }
+  .heroTitle { font-size: 28px; }
+  .heroStage { width: 100%; flex-direction: column; gap: 16px; }
+  .teamHeroCard { width: 100%; min-width: 0; padding: 16px; overflow: hidden; }
+  .heroRosterCards,
+  .handCards {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: 8px;
+  }
+  .lockInBtn { width: 100%; padding: 14px 16px; }
+  .matchShell { padding: 12px; }
+  .matchHeader { flex-direction: column; gap: 12px; padding: 12px; }
+  .scoreBoard { width: 100%; justify-content: center; gap: 10px; }
+  .teamScore { gap: 6px; }
+  .scoreNum { font-size: 22px; padding: 2px 8px; }
+  .modeToggleBar { width: 100%; }
+  .modeBtn { flex: 1; }
+  .cardTableContainer,
+  .tacticalOpsContainer { padding: 12px; }
+  .tacticalGrid { grid-template-columns: minmax(0, 1fr); }
+  .tacPanel { min-width: 0; padding: 12px; }
+  .pName, .oName { width: 72px; }
+  .logItem { flex-wrap: wrap; }
+  .logWin, .logLoss { width: 100%; margin-left: 0; }
 }

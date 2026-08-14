@@ -2,8 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vct-lock-in",
   "main": "worker/index.js",
-  "compatibility_date": "2026-07-18",
+  "compatibility_date": "2026-08-14",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  },
 
   "routes": [
     {

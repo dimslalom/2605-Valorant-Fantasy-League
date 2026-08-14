@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import NavHeader from '../components/NavHeader';
+import ModeRail from '../components/ModeRail';
 import PlayerCard from '../components/PlayerCard';
 import cards from '../data/cards.json';
-import { ROSTER_SIZE } from '../engine/perfectRun';
+import { ROSTER_SIZE, SHOP_ITEMS, applyRunEffects } from '../engine/perfectRun';
 import { connectLobby, createLobby, joinLobby, loadSession, makeCommand } from '../lib/multiplayerClient';
 import { assetPath, countryName } from '../lib/utils';
 import styles from './Multiplayer.module.css';
@@ -20,7 +20,6 @@ export default function Multiplayer() {
   const [settings, setSettings] = useState({ gameLength: 'year', unboxing: 'normal' });
   const [session, setSession] = useState(() => routeCode ? loadSession(routeCode) : null);
   const [snapshot, setSnapshot] = useState(null);
-  const [status, setStatus] = useState('disconnected');
   const [error, setError] = useState('');
   const [animationEvent, setAnimationEvent] = useState(null);
   const socketRef = useRef(null);
@@ -37,7 +36,6 @@ export default function Multiplayer() {
         if (roundEvent) setAnimationEvent(roundEvent);
         if (message.type === 'command_rejected') setError(message.message);
       }, nextStatus => {
-        setStatus(nextStatus);
         if (nextStatus === 'disconnected' && !stopped) reconnectTimer = setTimeout(open, 1500);
       });
     };
@@ -80,7 +78,7 @@ export default function Multiplayer() {
   if (routeCode && !session) {
     return (
       <main className={styles.page}>
-        <NavHeader right={`Lobby ${routeCode}`} />
+        <ModeRail />
         <section className={styles.hero}>
           <span className={styles.kicker}>Join lobby {routeCode}</span>
           <h1>Enter your<br /><em>squad</em></h1>
@@ -97,7 +95,7 @@ export default function Multiplayer() {
   if (!routeCode || screen !== 'room') {
     return (
       <main className={styles.page}>
-        <NavHeader right="Multiplayer" />
+        <ModeRail />
         <section className={styles.hero}>
           <span className={styles.kicker}>2–16 squads · live draft · shared bracket</span>
           <h1>Multiplayer<br /><em>Lock-In</em></h1>
@@ -122,11 +120,11 @@ export default function Multiplayer() {
     );
   }
 
-  return <LobbyRoom snapshot={snapshot} session={session} status={status} error={error} send={send} animationEvent={animationEvent} clearAnimation={clearAnimation} />;
+  return <LobbyRoom snapshot={snapshot} session={session} error={error} send={send} animationEvent={animationEvent} clearAnimation={clearAnimation} />;
 }
 
-function LobbyRoom({ snapshot, session, status, error, send, animationEvent, clearAnimation }) {
-  if (!snapshot) return <main className={styles.page}><NavHeader right={status} /><div className={styles.loading}>Connecting to lobby…</div></main>;
+function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimation }) {
+  if (!snapshot) return <main className={styles.page}><ModeRail /><div className={styles.loading}>Connecting to lobby…</div></main>;
   const myId = session.competitorId ?? session.spectatorId;
   const me = snapshot.competitors.find(player => player.id === myId);
   const isHost = snapshot.hostId === myId;
@@ -136,10 +134,10 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
 
   return (
     <main className={styles.page}>
-      <NavHeader right={`${snapshot.code} · ${status}`} />
+      <ModeRail />
       <header className={styles.roomHeader}>
         <div><span className={styles.kicker}>Private lobby</span><h1>{snapshot.code}</h1></div>
-        <div className={styles.meta}><b>{snapshot.settings.gameLength}</b><span>{snapshot.settings.unboxing} packs</span><span>{snapshot.competitors.length}/16 squads</span></div>
+        <div className={styles.meta}><b>{snapshot.settings.gameLength}</b>{snapshot.settings.gameLength === 'endless' && snapshot.season && <span>Cycle {snapshot.season.cycle + 1} · Event {snapshot.season.eventIndex + 1}/3</span>}<span>{snapshot.settings.unboxing} packs</span><span>{snapshot.competitors.length}/16 squads</span></div>
       </header>
       {error && <p className={styles.error}>{error}</p>}
 
@@ -176,12 +174,16 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
       {snapshot.phase === 'igl_select' && <IglSelect me={me} selected={snapshot.draft.iglSelections[myId]} onChoose={id => send('choose_igl', { cardId: id })} deadlineAt={snapshot.draft.deadlineAt} serverNow={snapshot.serverNow} spectator={!me} />}
 
       {(snapshot.phase === 'tournament' || snapshot.phase === 'match_ready' || snapshot.phase === 'match_transition') && snapshot.tournament && (
-        <section className={styles.tournamentBoard}>
+        <section className={`${styles.tournamentBoard} ${snapshot.tournament.meta.kind === 'champions' && snapshot.settings.gameLength === 'endless' ? styles.bossBoard : ''}`}>
           <div className={styles.eventTitle}><span>{snapshot.tournament.meta.label}</span><b>{snapshot.tournament.rounds[snapshot.tournament.roundIdx].label}</b></div>
+          {snapshot.tournament.meta.modifier && <div className={styles.modifier}><b>{snapshot.tournament.meta.kind === 'champions' ? 'BOSS · ' : ''}{snapshot.tournament.meta.modifier.label}</b><span>{snapshot.tournament.meta.modifier.desc}</span></div>}
+          {snapshot.tournament.meta.kind === 'masters' && snapshot.season.events.find(event => event.kind === 'champions')?.modifier && <div className={styles.nextBoss}>NEXT BOSS: {snapshot.season.events.find(event => event.kind === 'champions').modifier.label}</div>}
           <MultiplayerBracket tournament={snapshot.tournament} animationEvent={animationEvent} onAnimationDone={clearAnimation} />
           {snapshot.settings.gameLength === 'endless' && isHost && <button className={styles.endless} onClick={() => send('end_endless')}>End Endless after this event</button>}
         </section>
       )}
+
+      {snapshot.phase === 'shop' && <MultiplayerShop snapshot={snapshot} me={me} myId={myId} send={send} />}
 
       {snapshot.phase === 'season_over' && <Standings snapshot={snapshot} isHost={isHost} send={send} />}
       {snapshot.phase === 'match_ready' && !animationEvent && snapshot.pendingTransition && <TimerBar label="Play match" waitingLabel="Match starts" pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
@@ -191,7 +193,29 @@ function LobbyRoom({ snapshot, session, status, error, send, animationEvent, cle
 }
 
 function RosterList({ snapshot, isHost, myId, send }) {
-  return <div className={styles.rosterList}>{snapshot.competitors.map((player, index) => <div key={player.id} className={styles.rosterRow}><span>{index + 1}</span><b>{player.squadName}{player.id === myId ? ' · YOU' : ''}</b><i className={player.connected ? styles.online : styles.offline}>{player.connected ? 'online' : 'offline'}</i>{player.id === snapshot.hostId && <em>HOST</em>}{isHost && player.id !== myId && <button onClick={() => send('kick_player', { competitorId: player.id })}>Remove</button>}</div>)}</div>;
+  return <div className={styles.rosterList}>{snapshot.competitors.map((player, index) => <div key={player.id} className={styles.rosterRow}><span>{index + 1}</span><b>{player.squadName}{player.id === myId ? ' · YOU' : ''} {snapshot.settings.gameLength === 'endless' && <small>{player.eliminated ? 'ELIMINATED' : `${'♥'.repeat(player.lives)}${'♡'.repeat(3 - player.lives)}`}</small>}</b><i className={player.connected ? styles.online : styles.offline}>{player.connected ? 'online' : 'offline'}</i>{player.id === snapshot.hostId && <em>HOST</em>}{isHost && player.id !== myId && snapshot.phase === 'lobby' && <button onClick={() => send('kick_player', { competitorId: player.id })}>Remove</button>}</div>)}</div>;
+}
+
+function MultiplayerShop({ snapshot, me, myId, send }) {
+  const [targetItem, setTargetItem] = useState(null);
+  if (!me || me.eliminated) return <section className={styles.shop}><span className={styles.kicker}>Eliminated</span><h2>Watching the shop</h2><Deadline deadlineAt={snapshot.shop.deadlineAt} serverNow={snapshot.serverNow} /></section>;
+  const selected = snapshot.shop.selectedCardIds[myId];
+  const packOpen = snapshot.shop.scoutUnlocked[myId];
+  const effects = applyRunEffects(me.rosterIds.map(id => cardMap.get(id)), me);
+  const buy = (item, cardId = null) => {
+    if (item.targeted && !cardId) { setTargetItem(item); return; }
+    send('buy_item', { itemKey: item.key, targetCardId: cardId });
+    setTargetItem(null);
+  };
+  return <section className={styles.shop}>
+    <div className={styles.shopHeader}><div><span className={styles.kicker}>Parallel shop</span><h2>{me.credits} credits · {'♥'.repeat(me.lives)}{'♡'.repeat(3 - me.lives)}</h2></div><Deadline deadlineAt={snapshot.shop.deadlineAt} serverNow={snapshot.serverNow} /></div>
+    {snapshot.season.events.find(event => event.kind === 'champions')?.modifier && <div className={styles.nextBoss}>NEXT BOSS: {snapshot.season.events.find(event => event.kind === 'champions').modifier.label}</div>}
+    <div className={styles.shopGrid}>{SHOP_ITEMS.map(item => <button key={item.key} disabled={me.credits < item.cost || snapshot.shop.doneIds.includes(myId)} className={targetItem?.key === item.key ? styles.shopActive : ''} onClick={() => buy(item)}><b>{item.glyph} · {item.label}</b><span>{item.desc}</span><strong>{item.cost} cr</strong></button>)}</div>
+    {packOpen && <MultiplayerDraftLane phase="shop" turnIndex={0} totalTurns={1} choices={snapshot.shop.packs[myId].map(id => cardMap.get(id)).filter(Boolean)} picks={effects} selectedId={selected} interactive onPick={card => send('choose_card', { cardId: card.id })} canSwap={Boolean(selected)} onSwap={card => send('choose_swap', { replaceCardId: card.id })} squadName={me.squadName} />}
+    {!packOpen && <div className={styles.shopSquad}>{effects.map(card => <PlayerCard key={card.id} card={card} boosterIcons={card.runFx ?? []} displayScale={0.28} selected={Boolean(targetItem)} onClick={targetItem ? () => buy(targetItem, card.id) : undefined} />)}</div>}
+    <div className={styles.readyList}>{snapshot.competitors.filter(player => !player.eliminated).map(player => <span key={player.id}>{snapshot.shop.doneIds.includes(player.id) ? '✓' : '…'} {player.squadName}</span>)}</div>
+    <button className={styles.primary} disabled={snapshot.shop.doneIds.includes(myId)} onClick={() => send('shop_done')}>Done shopping</button>
+  </section>;
 }
 
 function IglSelect({ me, selected, onChoose, deadlineAt, serverNow, spectator }) {
@@ -200,7 +224,7 @@ function IglSelect({ me, selected, onChoose, deadlineAt, serverNow, spectator })
 
 function Standings({ snapshot, isHost, send }) {
   const rows = Object.values(snapshot.season.standings).sort((a, b) => b.score - a.score || b.titles - a.titles);
-  return <section className={styles.standings}><span className={styles.kicker}>Season complete</span><h1>Final standings</h1>{rows.map((row, index) => <div key={row.competitorId}><span>{index + 1}</span><b>{row.squadName}</b><span>{row.titles} titles</span><span>{row.matchWins} wins</span><strong>{row.score}</strong></div>)}{isHost && <button className={styles.primary} onClick={() => send('return_to_lobby')}>Return everyone to lobby</button>}</section>;
+  return <section className={styles.standings}><span className={styles.kicker}>Season complete</span><h1>Final standings</h1>{rows.map((row, index) => <div key={row.competitorId}><span>{index + 1}</span><b>{row.squadName}{snapshot.competitors.find(player => player.id === row.competitorId)?.eliminated ? ' · ELIMINATED' : ''}</b><span>{snapshot.settings.gameLength === 'endless' ? `Cycle ${row.bestCycle + 1}` : `${row.titles} titles`}</span><span>{row.matchWins} wins</span><strong>{row.score}</strong></div>)}{isHost && <button className={styles.primary} onClick={() => send('return_to_lobby')}>Return everyone to lobby</button>}</section>;
 }
 
 const RIP_MS = 850;

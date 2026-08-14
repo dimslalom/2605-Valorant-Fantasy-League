@@ -1,54 +1,75 @@
-.page {
-  min-height: 100%;
-  padding: 32px 40px 60px;
-  background: #0d0f17;
+/* Shell, frame and status strip come from AppFrame + StatusStrip. */
+
+.content {
+  padding: 24px 32px 60px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 20px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.kicker {
+  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ff4655;
+  text-transform: uppercase;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  color: #e8e0ff;
+  color: #ffffff;
+  margin-top: 4px;
   letter-spacing: -0.5px;
 }
 
-.section {
-  border: 1px solid rgba(232, 224, 255, 0.1);
-  border-radius: 10px;
-  padding: 20px 24px;
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(232, 224, 255, 0.7);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
-}
-
-.stub {
-  font-size: 13px;
-  color: rgba(232, 224, 255, 0.3);
-  padding: 12px 0;
-}
-
 .startBtn {
-  align-self: flex-start;
-  background: #e8e0ff;
-  color: #0d0f17;
+  background: linear-gradient(135deg, #ff4655 0%, #d62839 100%);
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 12px 28px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  box-shadow: 0 4px 16px rgba(255, 70, 85, 0.4);
+  transition: all 0.2s ease;
 }
 
-.startBtn:hover {
-  opacity: 0.85;
+.startBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 70, 85, 0.6);
+}
+
+.startBtn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1024px) {
+  .content { padding: var(--sp-5) var(--sp-5) var(--sp-12); }
+}
+
+@media (max-width: 680px) {
+  /* Frame and strip offsets now come from AppFrame + StatusStrip. */
+  .content { padding: var(--sp-4) var(--sp-4) var(--sp-12); gap: var(--sp-4); }
+  /* The header stacks so the start button gets full width rather than being
+     squeezed next to the title. */
+  .headerBar { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+  .startBtn { width: 100%; }
 }

@@ -3,7 +3,17 @@ import {
   PACK_SIZE,
   ROUND_KEYS,
   ROUND_META,
+  ENDLESS_LIVES,
+  SHOP_ITEMS,
+  addEventFatigue,
+  applyPurchase,
+  buildSuperTeam,
+  drawEventModifier,
+  effectiveTeamPower,
+  endlessDifficulty,
+  eventCredits,
   hashSeed,
+  npcTeamPower,
   simNpcMatch,
   teamPower,
 } from './perfectRun.js';
@@ -14,6 +24,7 @@ export const DRAFT_DEADLINE_MS = 30_000;
 export const TRANSITION_DEADLINE_MS = 10_000;
 export const HOST_MIGRATION_MS = 30_000;
 export const LOBBY_TTL_MS = 24 * 60 * 60 * 1000;
+export const SHOP_DEADLINE_MS = 45_000;
 
 const SEED_ORDER = [
   [0, 15], [7, 8], [3, 12], [4, 11],
@@ -41,7 +52,7 @@ export function createLobbyState({ code, hostId, squadName, settings, seed, now 
     throw new GameError('invalid_settings', 'Choose Normal or ENC unboxing.');
   }
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     code,
     version: 1,
     seed: seed >>> 0,
@@ -53,6 +64,7 @@ export function createLobbyState({ code, hostId, squadName, settings, seed, now 
     competitors: [{
       id: hostId, squadName: name, joinedAt: now, connected: false,
       rosterIds: [], iglId: null, eliminated: false,
+      lives: ENDLESS_LIVES, credits: 0, fatigue: {}, boosts: {}, teamChemBonus: 0,
     }],
     spectators: [],
     draftedCardIds: [],
@@ -61,11 +73,29 @@ export function createLobbyState({ code, hostId, squadName, settings, seed, now 
     season: null,
     tournament: null,
     consolation: null,
+    shop: null,
     pendingTransition: null,
     animationEvent: null,
     endEndlessRequested: false,
     lastActiveAt: now,
   };
+}
+
+export function migrateLobbyState(state) {
+  if (!state) return state;
+  state.schemaVersion = 2;
+  state.shop ??= null;
+  state.endEndlessRequested ??= false;
+  for (const competitor of state.competitors ?? []) {
+    competitor.eliminated ??= false;
+    competitor.lives ??= ENDLESS_LIVES;
+    competitor.credits ??= 0;
+    competitor.fatigue ??= {};
+    competitor.boosts ??= {};
+    competitor.teamChemBonus ??= 0;
+  }
+  if (state.season?.standings) for (const row of Object.values(state.season.standings)) row.bestCycle ??= 0;
+  return state;
 }
 
 export function addCompetitor(state, { id, squadName, now }) {
@@ -79,6 +109,7 @@ export function addCompetitor(state, { id, squadName, now }) {
   state.competitors.push({
     id, squadName: name, joinedAt: now, connected: false,
     rosterIds: [], iglId: null, eliminated: false,
+    lives: ENDLESS_LIVES, credits: 0, fatigue: {}, boosts: {}, teamChemBonus: 0,
   });
   touch(state, now);
 }
@@ -123,6 +154,12 @@ export function applyCommand(state, actorId, command, cards, now) {
       break;
     case 'choose_swap':
       chooseSwap(state, actorId, payload.replaceCardId, cards, now, events);
+      break;
+    case 'buy_item':
+      buyShopItem(state, actorId, payload.itemKey, payload.targetCardId);
+      break;
+    case 'shop_done':
+      finishShopFor(state, actorId, cards, now, events);
       break;
     case 'skip_consolation':
       skipConsolation(state, actorId, cards, now, events);
@@ -199,6 +236,9 @@ export function advanceDeadlines(state, cards, now) {
   } else if (state.phase === 'consolation' && state.consolation?.deadlineAt <= now) {
     finishConsolationTurn(state, cards, now, events);
     changed = true;
+  } else if (state.phase === 'shop' && state.shop?.deadlineAt <= now) {
+    afterShop(state, cards, now, events);
+    changed = true;
   }
   if (changed) touch(state, now);
   return { changed, events };
@@ -211,7 +251,9 @@ export function nextAlarmAt(state) {
       ? state.pendingTransition?.deadlineAt
       : state.phase === 'consolation'
         ? state.consolation?.deadlineAt
-        : null;
+        : state.phase === 'shop'
+          ? state.shop?.deadlineAt
+          : null;
   return [
     state.hostMigrationAt,
     phaseDeadline,
@@ -236,7 +278,11 @@ export function makeSnakeOrder(seatOrder, rounds = 5) {
 }
 
 export function buildMultiplayerBracket(state, cards, kind) {
-  const humanTeams = state.competitors.map(p => makeHumanTeam(p, cards));
+  const endless = state.settings.gameLength === 'endless';
+  const cycle = state.season?.cycle ?? 0;
+  const modifier = state.season?.events?.[state.season.eventIndex]?.modifier ?? null;
+  const humans = endless ? state.competitors.filter(player => !player.eliminated) : state.competitors;
+  const humanTeams = humans.map(player => makeHumanTeam(player, cards, modifier?.key));
   const drafted = new Set(state.draftedCardIds);
   const byOrg = {};
   for (const card of cards) {
@@ -250,24 +296,40 @@ export function buildMultiplayerBracket(state, cards, kind) {
       return {
         id: `npc:${org}`, name: top[0].org_name ?? org, tag: org,
         logo: top[0].org_logo ?? null, rosterIds: top.map(c => c.id),
-        roster: top, power: top.reduce((sum, c) => sum + c.rating, 0) / 5,
+        roster: top,
+        power: endless ? npcTeamPower(top).result.power + endlessDifficulty(cycle).formBoost : top.reduce((sum, c) => sum + c.rating, 0) / 5,
         human: false,
       };
     })
     .sort((a, b) => b.power - a.power || a.id.localeCompare(b.id));
   const needed = 16 - humanTeams.length;
+  let allStars = [];
+  if (endless) {
+    const count = kind === 'champions' ? endlessDifficulty(cycle).superTeamCount : cycle >= 4 ? 1 : 0;
+    allStars = ['Americas', 'EMEA', 'Pacific', 'China'].slice(0, count)
+      .map(region => buildSuperTeam(region, cards, drafted)).filter(Boolean)
+      .map(team => ({ ...team, rosterIds: team.roster.map(card => card.id), power: team.power + endlessDifficulty(cycle).superTeamBoost, human: false }));
+  }
+  const orgNeeded = needed - allStars.length;
   const candidates = kind === 'champions' ? eligible : eligible.slice(0, 30);
   const npcs = kind === 'champions'
-    ? candidates.slice(0, needed)
-    : sample(state, candidates, needed);
-  if (npcs.length !== needed) throw new GameError('insufficient_npcs', 'Not enough eligible organizations to fill the bracket.');
-  const seeded = [...humanTeams, ...npcs]
+    ? candidates.slice(0, orgNeeded)
+    : sample(state, candidates, orgNeeded);
+  if (npcs.length !== orgNeeded) throw new GameError('insufficient_npcs', 'Not enough eligible organizations to fill the bracket.');
+  const opponentBoost = endless && modifier?.key === 'giant_killers' ? 3 : 0;
+  const seeded = [...humanTeams, ...npcs, ...allStars]
+    .map(team => team.human ? team : { ...team, power: team.power + opponentBoost })
     .sort((a, b) => b.power - a.power || a.id.localeCompare(b.id));
   const teams = Object.fromEntries(seeded.map(team => [team.id, team]));
-  const matches = SEED_ORDER.map(([a, b], index) => makeMatch(seeded[a], seeded[b], 'r16', index));
+  const matches = SEED_ORDER.map(([a, b], index) => {
+    const match = makeMatch(seeded[a], seeded[b], 'r16', index);
+    match.bestOf = modifier?.roundOverrides?.r16?.bestOf ?? match.bestOf;
+    return match;
+  });
   return {
     kind, teams, seeds: seeded.map(t => t.id), roundIdx: 0,
-    rounds: [{ key: 'r16', label: ROUND_META.r16.label, bestOf: 3, matches }],
+    modifier, roundOverrides: modifier?.roundOverrides ?? {},
+    rounds: [{ key: 'r16', label: ROUND_META.r16.label, bestOf: modifier?.roundOverrides?.r16?.bestOf ?? 3, matches }],
     currentHumanMatchId: null,
   };
 }
@@ -328,6 +390,12 @@ function chooseCard(state, actorId, cardId, cards, now) {
     }
     return;
   }
+  if (state.phase === 'shop') {
+    if (!state.shop.scoutUnlocked[actorId]) throw new GameError('pack_locked', 'Buy the Scout Pack first.');
+    if (!state.shop.packs[actorId]?.includes(cardId)) throw new GameError('invalid_card', 'That card is not in your pack.');
+    state.shop.selectedCardIds[actorId] = cardId;
+    return;
+  }
   if (state.phase !== 'consolation') throw new GameError('invalid_phase', 'There is no card to choose.');
   if (state.consolation.activeCompetitorId !== actorId) throw new GameError('not_your_turn', 'Another squad is opening a pack.');
   if (!state.consolation.offers.includes(cardId)) throw new GameError('invalid_card', 'That card is not in this pack.');
@@ -351,16 +419,21 @@ function startSeason(state, cards, now, events) {
 
 function makeEventCycle(state) {
   const cities = sample(state, CITIES, 3);
-  return [
+  const events = [
     { kind: 'masters', city: cities[0], label: `Masters ${cities[0]}` },
     { kind: 'masters', city: cities[1], label: `Masters ${cities[1]}` },
     { kind: 'champions', city: cities[2], label: `Champions ${cities[2]}` },
   ];
+  if (state.settings.gameLength === 'endless') {
+    for (const event of events) event.modifier = drawEventModifier(() => nextRandom(state), event.kind, state.season?.cycle ?? 0);
+  }
+  return events;
 }
 
 function startTournament(state, cards, now, events) {
   const meta = state.season.events[state.season.eventIndex];
   state.tournament = { ...buildMultiplayerBracket(state, cards, meta.kind), meta, championId: null };
+  state.tournament.eventStart = Object.fromEntries(Object.entries(state.season.standings).map(([id, row]) => [id, { ...row }]));
   state.phase = 'tournament';
   resolveUntilPresentation(state, cards, now, events);
 }
@@ -394,7 +467,9 @@ function resolveUntilPresentation(state, cards, now, events) {
     const winners = round.matches.map(match => match.winner);
     const nextMatches = [];
     for (let i = 0; i < winners.length; i += 2) {
-      nextMatches.push(makeMatch(tournament.teams[winners[i]], tournament.teams[winners[i + 1]], nextKey, i / 2));
+      const match = makeMatch(tournament.teams[winners[i]], tournament.teams[winners[i + 1]], nextKey, i / 2);
+      match.bestOf = tournament.roundOverrides?.[nextKey]?.bestOf ?? match.bestOf;
+      nextMatches.push(match);
     }
     const moves = winners.map((teamId, index) => ({
       teamId,
@@ -433,7 +508,9 @@ function advanceMatchTransition(state, cards, now, events) {
 function simulateMatch(state, match, cards) {
   const a = state.tournament.teams[match.a];
   const b = state.tournament.teams[match.b];
-  const result = simNpcMatch(() => nextRandom(state), hydrateTeam(a, cards), hydrateTeam(b, cards), match.bestOf);
+  const away = state.tournament.meta.modifier?.key === 'away_maps';
+  const bias = away && a.human !== b.human ? (a.human ? -2 : 2) : 0;
+  const result = simNpcMatch(() => nextRandom(state), hydrateTeam(a, cards), hydrateTeam(b, cards), match.bestOf, bias);
   Object.assign(match, { maps: result.maps, scoreA: result.scoreA, scoreB: result.scoreB, winner: result.winner });
   for (const competitor of state.competitors) {
     if (competitor.id !== match.a && competitor.id !== match.b) continue;
@@ -449,9 +526,7 @@ function finishTournament(state, cards, now, events) {
   const championId = state.tournament.championId;
   if (state.season.standings[championId]) {
     state.season.standings[championId].titles++;
-    state.season.standings[championId].score += 500;
   }
-  for (const row of Object.values(state.season.standings)) row.score = row.titles * 500 + row.matchWins * 100 + row.mapsWon * 20 - row.mapsLost;
   state.season.results ??= [];
   state.season.results.push({
     cycle: state.season.cycle,
@@ -459,6 +534,29 @@ function finishTournament(state, cards, now, events) {
     label: state.tournament.meta.label,
     championId,
   });
+  if (state.settings.gameLength === 'endless') {
+    const cycle = state.season.cycle;
+    for (const competitor of state.competitors.filter(player => !player.eliminated)) {
+      const row = state.season.standings[competitor.id];
+      const before = state.tournament.eventStart?.[competitor.id] ?? { matchWins: 0, mapsWon: 0, mapsLost: 0 };
+      const seriesWon = row.matchWins - before.matchWins;
+      const mapsWon = row.mapsWon - before.mapsWon;
+      const mapsLost = row.mapsLost - before.mapsLost;
+      const champion = championId === competitor.id;
+      competitor.credits += eventCredits({ mapsWon, seriesWon, champion, cycle });
+      competitor.fatigue = addEventFatigue(competitor, competitor.rosterIds.map(id => cardById(cards, id)), state.tournament.meta.modifier?.key === 'grueling_schedule' ? 2 : 1).fatigue;
+      if (!champion) {
+        competitor.lives = Math.max(0, competitor.lives - 1);
+        competitor.eliminated = competitor.lives === 0;
+      }
+      row.score += Math.round((seriesWon * 100 + mapsWon * 20 - mapsLost + (champion ? 150 : 0)) * (1 + 0.25 * cycle));
+      row.bestCycle = Math.max(row.bestCycle ?? 0, cycle);
+    }
+    if (state.season.eventIndex === 2) for (const row of Object.values(state.season.standings)) row.score += 200;
+    startShop(state, cards, now);
+    return;
+  }
+  for (const row of Object.values(state.season.standings)) row.score = row.titles * 500 + row.matchWins * 100 + row.mapsWon * 20 - row.mapsLost;
   const finalYearEvent = state.settings.gameLength === 'year' && state.season.eventIndex === 2;
   if (finalYearEvent) {
     state.phase = 'season_over';
@@ -474,6 +572,66 @@ function finishTournament(state, cards, now, events) {
   } else {
     afterConsolation(state, cards, now, events);
   }
+}
+
+function startShop(state, cards, now) {
+  const unavailable = new Set(state.draftedCardIds);
+  const packs = {};
+  for (const competitor of state.competitors.filter(player => !player.eliminated)) {
+    const available = cards.filter(card => !unavailable.has(card.id));
+    const pack = sample(state, available, Math.min(PACK_SIZE, available.length));
+    packs[competitor.id] = pack.map(card => card.id);
+    for (const card of pack) unavailable.add(card.id);
+  }
+  state.shop = { deadlineAt: now + SHOP_DEADLINE_MS, packs, selectedCardIds: {}, scoutUnlocked: {}, scoutPurchased: {}, doneIds: [] };
+  state.phase = 'shop';
+  state.pendingTransition = null;
+}
+
+function buyShopItem(state, actorId, itemKey, targetCardId) {
+  if (state.phase !== 'shop') throw new GameError('invalid_phase', 'The shop is closed.');
+  const competitor = state.competitors.find(player => player.id === actorId);
+  if (competitor.eliminated || state.shop.doneIds.includes(actorId)) throw new GameError('eliminated', 'This squad cannot shop.');
+  const item = SHOP_ITEMS.find(entry => entry.key === itemKey);
+  if (!item) throw new GameError('invalid_item', 'Unknown shop item.');
+  if (competitor.credits < item.cost) throw new GameError('insufficient_credits', 'Not enough credits.');
+  if (targetCardId && !competitor.rosterIds.includes(targetCardId)) throw new GameError('invalid_card', 'Choose a player from your squad.');
+  if (itemKey === 'scout_pack') {
+    if (state.shop.scoutPurchased[actorId]) throw new GameError('already_owned', 'Scout Pack already opened.');
+    state.shop.scoutUnlocked[actorId] = true;
+    state.shop.scoutPurchased[actorId] = true;
+  } else {
+    let next;
+    try { next = applyPurchase(competitor, itemKey, targetCardId); }
+    catch (error) { throw new GameError('invalid_purchase', error.message); }
+    competitor.fatigue = next.fatigue;
+    competitor.boosts = next.boosts;
+    competitor.teamChemBonus = next.teamChemBonus;
+  }
+  competitor.credits -= item.cost;
+}
+
+function finishShopFor(state, actorId, cards, now, events) {
+  if (state.phase !== 'shop') throw new GameError('invalid_phase', 'The shop is closed.');
+  const competitor = state.competitors.find(player => player.id === actorId);
+  if (competitor.eliminated) throw new GameError('eliminated', 'This squad is eliminated.');
+  if (!state.shop.doneIds.includes(actorId)) state.shop.doneIds.push(actorId);
+  if (state.competitors.filter(player => !player.eliminated).every(player => state.shop.doneIds.includes(player.id))) afterShop(state, cards, now, events);
+}
+
+function afterShop(state, cards, now, events) {
+  state.shop = null;
+  if (state.endEndlessRequested || state.competitors.every(player => player.eliminated)) {
+    state.phase = 'season_over';
+    return;
+  }
+  state.season.eventIndex++;
+  if (state.season.eventIndex >= 3) {
+    state.season.cycle++;
+    state.season.eventIndex = 0;
+    state.season.events = makeEventCycle(state);
+  }
+  startTournament(state, cards, now, events);
 }
 
 function dealConsolationOffer(state, cards, now) {
@@ -493,6 +651,22 @@ function dealConsolationOffer(state, cards, now) {
 }
 
 function chooseSwap(state, actorId, replaceCardId, cards, now, events) {
+  if (state.phase === 'shop') {
+    const selected = state.shop.selectedCardIds[actorId];
+    if (!selected) throw new GameError('choose_card_first', 'Choose the new card first.');
+    const competitor = state.competitors.find(player => player.id === actorId);
+    const index = competitor.rosterIds.indexOf(replaceCardId);
+    if (index < 0) throw new GameError('invalid_card', 'Choose a card from your squad to replace.');
+    competitor.rosterIds[index] = selected;
+    state.draftedCardIds = state.draftedCardIds.filter(id => id !== replaceCardId);
+    state.draftedCardIds.push(selected);
+    delete competitor.fatigue[replaceCardId];
+    delete competitor.boosts[replaceCardId];
+    if (competitor.iglId === replaceCardId) competitor.iglId = bestIgl(competitor.rosterIds, cards);
+    delete state.shop.selectedCardIds[actorId];
+    state.shop.scoutUnlocked[actorId] = false;
+    return;
+  }
   if (state.phase !== 'consolation' || state.consolation.activeCompetitorId !== actorId) throw new GameError('not_your_turn', 'Another squad has the consolation pack.');
   const selected = state.consolation.selectedCardId;
   if (!selected) throw new GameError('choose_card_first', 'Choose the new card first.');
@@ -523,6 +697,7 @@ function finishConsolationTurn(state, cards, now, events) {
 
 function afterConsolation(state, cards, now, events) {
   state.consolation = null;
+  state.shop = null;
   if (state.settings.gameLength === 'endless' && state.endEndlessRequested) {
     state.phase = 'season_over';
     return;
@@ -549,6 +724,12 @@ function resetToLobby(state, now) {
   for (const competitor of state.competitors) {
     competitor.rosterIds = [];
     competitor.iglId = null;
+    competitor.eliminated = false;
+    competitor.lives = ENDLESS_LIVES;
+    competitor.credits = 0;
+    competitor.fatigue = {};
+    competitor.boosts = {};
+    competitor.teamChemBonus = 0;
   }
   touch(state, now);
 }
@@ -570,12 +751,13 @@ function makeMatch(a, b, roundKey, index) {
   };
 }
 
-function makeHumanTeam(competitor, cards) {
+function makeHumanTeam(competitor, cards, modifierKey = null) {
   const roster = competitor.rosterIds.map(id => cardById(cards, id));
+  const effective = effectiveTeamPower(roster, competitor.iglId, competitor, modifierKey);
   return {
     id: competitor.id, name: competitor.squadName, tag: competitor.squadName.slice(0, 8).toUpperCase(),
-    logo: null, rosterIds: competitor.rosterIds, roster,
-    power: teamPower(roster, competitor.iglId).power, human: true,
+    logo: null, rosterIds: competitor.rosterIds, roster: effective.roster,
+    power: effective.power, human: true,
   };
 }
 
@@ -587,7 +769,7 @@ function hydrateTeam(team, cards) {
 function makeStandings(state) {
   return Object.fromEntries(state.competitors.map(p => [p.id, {
     competitorId: p.id, squadName: p.squadName,
-    titles: 0, matchWins: 0, mapsWon: 0, mapsLost: 0, score: 0,
+    titles: 0, matchWins: 0, mapsWon: 0, mapsLost: 0, score: 0, bestCycle: 0,
   }]));
 }
 

@@ -8,5 +8,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    // cards.json is intentionally a shared static-data chunk. It is about
+    // 85 kB over the wire despite exceeding Vite's generic 500 kB raw limit.
+    chunkSizeWarningLimit: 700,
   },
 })

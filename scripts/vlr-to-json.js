@@ -28,7 +28,7 @@ import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import {
-  EVENTS, PLAYER_OVERRIDES, IGL_NAMES, ICONS,
+  EVENTS, PLAYER_OVERRIDES, PLATE_OVERRIDES, IGL_NAMES, ICONS,
   TIER2_QUERY, TIER2_TITLE_MUST, TIER2_TITLE_SKIP, TIER2_EVENTS,
   TIER2_REGION_KEYWORDS, TIER2_REGION_FALLBACK, TIER2_STAT_PENALTY,
   VCT_STAT_BONUS,
@@ -39,6 +39,8 @@ const OUTPUT      = resolve(__dirname, '../src/data/cards.json');
 const ORGS_DIR    = resolve(__dirname, '../public/assets/orgs');
 const PLAYERS_DIR = resolve(__dirname, '../public/assets/players');
 const CACHE_DIR   = resolve(__dirname, '.cache/avatars');
+const PORTRAIT_CACHE_DIR = resolve(__dirname, '.cache/portraits');
+const HEADS_DATA  = resolve(__dirname, '../src/data/heads.json');
 const CARD_BG_DIR = resolve(__dirname, '../public/assets/card-bg');
 const BASE_URL    = process.env.VLR_API_BASE ?? 'http://127.0.0.1:3001';
 const DELAY_MS    = 350;
@@ -62,7 +64,7 @@ async function get(path, retries = 2) {
         console.warn(`    retry ${attempt + 1}/${retries}: ${path} (${err.message})`);
         await sleep(1000 * (attempt + 1));
       } else {
-        throw new Error(`${err.message} (${url})`);
+        throw new Error(`${err.message} (${url})`, { cause: err });
       }
     }
   }
@@ -150,6 +152,47 @@ function toISO2(country) {
 
 function slug(str) {
   return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function buildPortraitAssets(cards) {
+  mkdirSync(PORTRAIT_CACHE_DIR, { recursive: true });
+  const manifestPath = resolve(PORTRAIT_CACHE_DIR, 'manifest.json');
+  const manifest = {
+    plateOverrides: PLATE_OVERRIDES,
+    players: cards.map(card => ({
+      playerId: String(card.__playerId ?? card.id),
+      slug: slug(card.player),
+      player: card.player,
+      org: card.org,
+      orgLogo: card.org_logo,
+      league: card.league,
+      photo: card.photo,
+      noKitSwap: !!card.noKitSwap || card.league === 'icon' || !card.org,
+    })),
+  };
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+  console.log(`\nBuilding swappable heads and real-jersey plates...`);
+  const venvPython = resolve(__dirname, '.venv/bin/python');
+  const result = spawnSync(
+    existsSync(venvPython) ? venvPython : 'python3',
+    [resolve(__dirname, 'build_portraits.py'), '--manifest', manifestPath],
+    { stdio: 'inherit', cwd: __dirname },
+  );
+  if (result.status !== 0 || !existsSync(HEADS_DATA)) {
+    console.warn(`  ⚠ Portrait build failed; cards keep their existing photo rendering.`);
+    return;
+  }
+
+  const heads = JSON.parse(readFileSync(HEADS_DATA, 'utf8'));
+  for (const card of cards) {
+    if (card.noKitSwap || card.league === 'icon' || !card.org) continue;
+    const record = heads[String(card.__playerId ?? card.id)];
+    if (!record) continue;
+    card.head = record.head;
+    if (record.hair) card.hair = record.hair;
+    card.headGeom = record.headGeom;
+  }
 }
 
 // vlr.gg team pages don't expose player roles, so derive the role from the
@@ -516,7 +559,7 @@ async function main() {
       }
       teamInfo[teamId] = { tag, name, logoPath };
       process.stdout.write('.');
-    } catch (err) {
+    } catch {
       process.stdout.write('x');
     }
     await sleep(DELAY_MS);
@@ -637,6 +680,7 @@ async function main() {
     const cardId  = `${slug(orgTag)}-${slug(playerName)}-${tier}-001`;
 
     cards.push({
+      __playerId:  playerId,
       id:          cardId,
       player:      playerName,
       org:         orgTag,
@@ -650,6 +694,7 @@ async function main() {
       role,
       agents:      topAgents,
       photo:       ov.photo ?? photo,
+      noKitSwap:   ov.noKitSwap || undefined,
       stats,
       power,
       palette,
@@ -663,6 +708,12 @@ async function main() {
   }
 
   cards.push(...buildIconCards(iconData));
+
+  // Phase 7: extract reusable heads and one real-photo jersey plate per org,
+  // then attach the generated asset paths + geometry to each card.
+  buildPortraitAssets(cards);
+
+  for (const card of cards) delete card.__playerId;
 
   writeFileSync(OUTPUT, JSON.stringify(cards, null, 2));
   const tiers = cards.reduce((acc, c) => { acc[c.tier] = (acc[c.tier] ?? 0) + 1; return acc; }, {});

@@ -9,6 +9,7 @@ import {
   buildMultiplayerBracket,
   createLobbyState,
   makeSnakeOrder,
+  migrateLobbyState,
   nextAlarmAt,
   setConnection,
 } from '../src/engine/multiplayer.js';
@@ -189,12 +190,12 @@ test('Year reaches standings and skips final Champions consolation', () => {
   assert.equal(state.consolation, null);
 });
 
-test('Endless end request finishes the current event and its consolation first', () => {
+test('Endless end request finishes the current event and parallel shop first', () => {
   const state = lobbyWithPlayers(2, { gameLength: 'endless' });
   run(state, 'start_game', 'p1', {}, cards, 100);
   let now = 100;
   let requested = false;
-  let sawConsolation = false;
+  let sawShop = false;
   let guard = 0;
   while (state.phase !== 'season_over' && guard++ < 300) {
     if (state.phase === 'draft' || state.phase === 'igl_select') {
@@ -210,18 +211,52 @@ test('Endless end request finishes the current event and its consolation first',
     } else if (state.phase === 'match_ready') {
       now = state.pendingTransition.deadlineAt;
       advanceDeadlines(state, cards, now);
-    } else if (state.phase === 'consolation') {
-      sawConsolation = true;
-      now = state.consolation.deadlineAt;
+    } else if (state.phase === 'shop') {
+      sawShop = true;
+      now = state.shop.deadlineAt;
       advanceDeadlines(state, cards, now);
     } else {
       throw new Error(`Unexpected phase ${state.phase}`);
     }
   }
   assert.equal(requested, true);
-  assert.equal(sawConsolation, true);
+  assert.equal(sawShop, true);
   assert.equal(state.phase, 'season_over');
   assert.equal(state.season.results.length, 1);
+});
+
+test('v1 lobby migration adds endless run fields without changing existing data', () => {
+  const state = lobbyWithPlayers(2, { gameLength: 'endless' });
+  state.schemaVersion = 1;
+  delete state.shop;
+  for (const player of state.competitors) {
+    delete player.lives; delete player.credits; delete player.fatigue; delete player.boosts; delete player.teamChemBonus;
+  }
+  const migrated = migrateLobbyState(state);
+  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(migrated.shop, null);
+  assert.ok(migrated.competitors.every(player => player.lives === 3 && player.credits === 0));
+});
+
+test('endless shop deals disjoint packs, supports purchases, and is deterministic', () => {
+  const first = reachFirstShop();
+  const second = reachFirstShop();
+  assert.deepEqual(first, second);
+  const dealt = Object.values(first.shop.packs).flat();
+  assert.equal(new Set(dealt).size, dealt.length);
+  const shopper = first.competitors.find(player => !player.eliminated);
+  shopper.credits = 500;
+  run(first, 'buy_item', shopper.id, { itemKey: 'aim_coach', targetCardId: shopper.rosterIds[0] }, cards, first.shop.deadlineAt - 10);
+  assert.equal(shopper.credits, 440);
+  assert.equal(shopper.boosts[shopper.rosterIds[0]][0].key, 'aim_coach');
+  assert.equal(nextAlarmAt(first), first.shop.deadlineAt);
+});
+
+test('all eliminated endless squads reach a natural terminus after the shop', () => {
+  const state = reachFirstShop();
+  for (const player of state.competitors) { player.eliminated = true; player.lives = 0; }
+  advanceDeadlines(state, cards, state.shop.deadlineAt);
+  assert.equal(state.phase, 'season_over');
 });
 
 function run(state, type, actorId, payload, gameCards, now) {
@@ -231,6 +266,19 @@ function run(state, type, actorId, payload, gameCards, now) {
     expectedVersion: state.version,
     payload,
   }, gameCards, now);
+}
+
+function reachFirstShop() {
+  const state = lobbyWithPlayers(3, { gameLength: 'endless' });
+  run(state, 'start_game', 'p1', {}, cards, 100);
+  let guard = 0;
+  while (state.phase !== 'shop' && guard++ < 300) {
+    if (state.phase === 'draft' || state.phase === 'igl_select') advanceDeadlines(state, cards, state.draft.deadlineAt);
+    else if (state.phase === 'match_ready' || state.phase === 'match_transition') advanceDeadlines(state, cards, state.pendingTransition.deadlineAt);
+    else throw new Error(`Unexpected phase ${state.phase}`);
+  }
+  assert.equal(state.phase, 'shop');
+  return state;
 }
 
 function lobbyWithPlayers(count, overrides = {}) {

@@ -2,25 +2,25 @@ import { useDeferredValue, useState } from 'react';
 import { flushSync } from 'react-dom';
 import PlayerCard from '../components/PlayerCard';
 import CardFocusOverlay from '../components/CardFocusOverlay';
-import NavHeader from '../components/NavHeader';
+import AppFrame from '../components/AppFrame';
+import StatusStrip from '../components/StatusStrip';
+import SpecialtyIcon from '../components/SpecialtyIcon';
 import allCards from '../data/cards.json';
-import { countryName } from '../lib/utils';
+import { assetPath, countryName, roleAbbr, thumbnailSrc } from '../lib/utils';
+import { getCardSpecialties } from '../data/specialties';
 import styles from './Collection.module.css';
 
 const TIER_ORDER = ['bronze', 'silver', 'gold', 'icon', 'legendary', 'prestige', 'iconic'];
 
-// Filter options derived from the data so new tiers, regions, or roles show up
-// automatically after a re-sync.
 const TIERS = ['All', ...TIER_ORDER.filter(t => allCards.some(c => c.tier === t))];
 const REGIONS = ['All', ...new Set(allCards.map(c => c.region))];
 const ROLES = ['All', ...new Set(allCards.map(c => c.role))];
 const LEAGUES = ['All', 'VCT', 'Challengers', 'Icons'];
 const LEAGUE_KEY = { VCT: 'vct', Challengers: 't2', Icons: 'icon' };
+const PAGE_SIZE = 60;
 
-// Accent-fold so "leviatan" finds LEVIATÁN and "kru" finds KRÜ
 const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-// Precomputed haystack per card: name, tag, full org name, country
 const SEARCH_TEXT = new Map(allCards.map(c => [
   c.id,
   fold(`${c.player} ${c.org} ${c.org_name ?? ''} ${countryName(c.nationality)}`),
@@ -32,16 +32,12 @@ export default function Collection() {
   const [roleFilter, setRoleFilter] = useState('All');
   const [leagueFilter, setLeagueFilter] = useState('All');
   const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [focusedCard, setFocusedCard] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // keep typing snappy while hundreds of cards re-render
   const deferredQuery = fold(useDeferredValue(query).trim());
 
-  // Shared-element morph: the grid card itself flies to the center overlay
-  // (and back on close) via the View Transitions API. The grid slot is tagged
-  // `focused-card` on the side of the transition where the overlay is absent,
-  // the overlay carries the same name on the other side, and the browser
-  // interpolates between the two rects. Falls back to a plain state change.
   const morphTo = (nextCard, slotId) => {
     const slot = document.getElementById(slotId);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,43 +71,194 @@ export default function Collection() {
     return true;
   });
 
+  const anyFilter = tierFilter !== 'All' || regionFilter !== 'All'
+    || roleFilter !== 'All' || leagueFilter !== 'All' || deferredQuery !== '';
+  const visibleCards = filtered.slice(0, visibleCount);
+  const remaining = filtered.length - visibleCards.length;
+
   return (
-    <div className={styles.page}>
-      <NavHeader right={`${filtered.length} players`} />
-
-      <div className={styles.controls}>
-        <input
-          type="search"
-          className={styles.search}
-          placeholder="Search players, teams, countries"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search players"
-        />
-        <FilterGroup label="Tier" options={TIERS} value={tierFilter} onChange={setTierFilter} />
-        <FilterGroup label="Region" options={REGIONS} value={regionFilter} onChange={setRegionFilter} />
-        <FilterGroup label="Role" options={ROLES} value={roleFilter} onChange={setRoleFilter} />
-        <FilterGroup label="League" options={LEAGUES} value={leagueFilter} onChange={setLeagueFilter} />
-      </div>
-
-      <main className={styles.grid}>
-        {filtered.length === 0 ? (
-          <p className={styles.empty}>No players match. Try a different search or filter.</p>
-        ) : (
-          filtered.map((card) => (
-            <div
-              key={card.id}
-              id={`card-slot-${card.id}`}
-              style={{ visibility: focusedCard?.id === card.id ? 'hidden' : 'visible' }}
+    <AppFrame>
+      <StatusStrip crumb="Player Library" count={`${filtered.length} Players`}>
+          <div className={styles.viewToggle} role="group" aria-label="View mode">
+            <button
+              className={[styles.iconToggleBtn, viewMode === 'grid' ? styles.toggleActive : ''].join(' ')}
+              onClick={() => { setViewMode('grid'); setVisibleCount(PAGE_SIZE); }}
+              aria-pressed={viewMode === 'grid'}
+              aria-label="Grid view"
             >
-              <PlayerCard card={card} onClick={() => openCard(card)} />
-            </div>
-          ))
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1" />
+                <rect x="11" y="2.5" width="6.5" height="6.5" rx="1" />
+                <rect x="2.5" y="11" width="6.5" height="6.5" rx="1" />
+                <rect x="11" y="11" width="6.5" height="6.5" rx="1" />
+              </svg>
+            </button>
+            <button
+              className={[styles.iconToggleBtn, viewMode === 'list' ? styles.toggleActive : ''].join(' ')}
+              onClick={() => { setViewMode('list'); setVisibleCount(PAGE_SIZE); }}
+              aria-pressed={viewMode === 'list'}
+              aria-label="List view"
+            >
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                <rect x="2.5" y="3" width="15" height="3" rx="1" />
+                <rect x="2.5" y="8.5" width="15" height="3" rx="1" />
+                <rect x="2.5" y="14" width="15" height="3" rx="1" />
+              </svg>
+            </button>
+          </div>
+      </StatusStrip>
+
+        <div className={styles.controls}>
+          <input
+            type="search"
+            className={styles.search}
+            placeholder="Search players, teams, countries"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setVisibleCount(PAGE_SIZE); }}
+            aria-label="Search players"
+          />
+          <div className={styles.filters}>
+            <FilterGroup label="Tier" options={TIERS} value={tierFilter} onChange={(value) => { setTierFilter(value); setVisibleCount(PAGE_SIZE); }} />
+            <FilterGroup label="Region" options={REGIONS} value={regionFilter} onChange={(value) => { setRegionFilter(value); setVisibleCount(PAGE_SIZE); }} />
+            <FilterGroup label="Role" options={ROLES} value={roleFilter} onChange={(value) => { setRoleFilter(value); setVisibleCount(PAGE_SIZE); }} />
+            <FilterGroup label="League" options={LEAGUES} value={leagueFilter} onChange={(value) => { setLeagueFilter(value); setVisibleCount(PAGE_SIZE); }} />
+          </div>
+        </div>
+
+        {viewMode === 'grid' ? (
+          <main className={styles.grid}>
+            {filtered.length === 0 ? (
+              <p className={styles.empty}>No players match. Try a different search or filter.</p>
+            ) : (
+              visibleCards.map((card) => (
+                <div
+                  key={card.id}
+                  id={`card-slot-${card.id}`}
+                  style={{ visibility: focusedCard?.id === card.id ? 'hidden' : 'visible' }}
+                >
+                  <PlayerCard card={card} onClick={() => openCard(card)} />
+                </div>
+              ))
+            )}
+          </main>
+        ) : (
+          /* List View Table */
+          <main className={styles.denseContainer}>
+            {filtered.length === 0 ? (
+              <p className={styles.empty}>No players match. Try a different search or filter.</p>
+            ) : (
+              <table className={styles.denseTable}>
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Org</th>
+                    <th>Role</th>
+                    <th>Region</th>
+                    <th>Tier</th>
+                    <th>Specialties</th>
+                    <th>OVR</th>
+                    <th>AIM</th>
+                    <th>POS</th>
+                    <th>ABL</th>
+                    <th>MNT</th>
+                    <th>SYN</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleCards.map((card) => {
+                    const specs = getCardSpecialties(card);
+                    return (
+                      <tr
+                        key={card.id}
+                        id={`card-slot-${card.id}`}
+                        className={styles.denseRow}
+                        onClick={() => openCard(card)}
+                      >
+                        <td className={styles.playerCell}>
+                          <img
+                            src={assetPath(thumbnailSrc(card))}
+                            alt={card.player}
+                            className={styles.avatarImg}
+                            loading="lazy"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                          <div className={styles.playerMeta}>
+                            <span className={styles.playerName}>{card.player}</span>
+                            <span className={styles.playerCountry}>
+                              {card.nationality && <span className={`fi fi-${card.nationality.toLowerCase()}`} />}
+                              {countryName(card.nationality)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className={styles.orgCell}>
+                          {card.org_logo && <img src={assetPath(card.org_logo)} alt="" className={styles.orgLogo} />}
+                          <span>{card.org || 'FA'}</span>
+                        </td>
+                        <td>
+                          <span className={`${styles.roleBadge} ${styles['role' + card.role]}`}>
+                            {roleAbbr(card.role)}
+                          </span>
+                        </td>
+                        <td>{card.region}</td>
+                        <td>
+                          <span className={`${styles.tierBadge} ${styles['tier' + card.tier]}`}>
+                            {card.tier}
+                          </span>
+                        </td>
+                        <td>
+                          <div className={styles.specIconGroup}>
+                            {specs.map(s => (
+                              <span
+                                key={s.key}
+                                className={styles.specCutBadge}
+                                title={`${s.name}: ${s.desc}`}
+                              >
+                                <SpecialtyIcon spec={s.key} size="66%" />
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className={styles.ovrCell}>{card.rating}</td>
+                        <td className={styles.statCell}>{card.stats?.aim ?? '-'}</td>
+                        <td className={styles.statCell}>{card.stats?.positioning ?? '-'}</td>
+                        <td className={styles.statCell}>{card.stats?.ability ?? '-'}</td>
+                        <td className={styles.statCell}>{card.stats?.mentality ?? '-'}</td>
+                        <td className={styles.statCell}>{card.stats?.synergy ?? '-'}</td>
+                        <td>
+                          <button className={styles.inspectBtn}>Inspect</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </main>
         )}
-      </main>
+
+        {remaining > 0 && (
+          <div className={styles.loadMoreRow}>
+            <button
+              className={styles.loadMoreBtn}
+              onClick={() => setVisibleCount(count => count + PAGE_SIZE)}
+            >
+              Load {Math.min(PAGE_SIZE, remaining)} more players
+            </button>
+          </div>
+        )}
+
+        {/* Announced so a filter change is perceivable without watching the
+            grid — the result count is the only feedback the search gives. */}
+        <div className={styles.footStrip} role="status" aria-live="polite">
+          <span>{anyFilter ? 'Filters active' : 'All players'}</span>
+          <span className={styles.footCount}>
+            {visibleCards.length} of {filtered.length} shown ({viewMode === 'list' ? 'List View' : 'Grid View'})
+          </span>
+        </div>
 
       <CardFocusOverlay card={focusedCard} onClose={closeCard} />
-    </div>
+    </AppFrame>
   );
 }
 
