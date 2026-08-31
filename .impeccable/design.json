@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-28T00:00:00.000Z",
+  "title": "Design System: VFL — Valorant Fantasy League",
+  "extensions": {
+    "colorMeta": {
+      "accent": { "role": "primary", "displayName": "Signal Red", "canonical": "#ff4655", "tonalRamp": ["#3a0509", "#570810", "#7a0d17", "#a8141f", "#d62838", "#ff4655", "#ff7d88", "#ffb3ba"] },
+      "accent-soft": { "role": "primary", "displayName": "Signal Red Soft", "canonical": "rgba(255, 70, 85, 0.13)" },
+      "gold": { "role": "secondary", "displayName": "Champion Gold", "canonical": "#d8b34c", "tonalRamp": ["#332707", "#4d3a0b", "#6b500f", "#8a7330", "#a88f3d", "#d8b34c", "#e6c878", "#f3e0ab"] },
+      "gold-dim": { "role": "secondary", "displayName": "Gold Dim", "canonical": "#8a7330" },
+      "gold-soft": { "role": "secondary", "displayName": "Gold Soft", "canonical": "rgba(216, 179, 76, 0.14)" },
+      "win": { "role": "tertiary", "displayName": "Confirm Teal", "canonical": "#00c8a0", "tonalRamp": ["#002f26", "#00473a", "#00614f", "#008068", "#00a082", "#00c8a0", "#4ddcbe", "#9aecda"] },
+      "win-soft": { "role": "tertiary", "displayName": "Win Soft", "canonical": "rgba(0, 200, 160, 0.14)" },
+      "win-ink": { "role": "tertiary", "displayName": "Win Ink", "canonical": "#032019" },
+      "gold-ink": { "role": "secondary", "displayName": "Gold Ink", "canonical": "#211b06" },
+      "opponent": { "role": "tertiary", "displayName": "Opponent Cyan", "canonical": "#00d2ff", "tonalRamp": ["#00202b", "#003040", "#004155", "#00546e", "#0087ad", "#00d2ff", "#5cdfff", "#a3edff"] },
+      "bg": { "role": "neutral", "displayName": "Void", "canonical": "#0d0f17" },
+      "bg-deep": { "role": "neutral", "displayName": "Deep Void", "canonical": "#0b0d14" },
+      "bg-sunken": { "role": "neutral", "displayName": "Sunken Void", "canonical": "#090d16" },
+      "surface": { "role": "neutral", "displayName": "Slate Surface", "canonical": "#161b29" },
+      "surface-hi": { "role": "neutral", "displayName": "Slate Surface Hi", "canonical": "#1e2435" },
+      "surface-flyout": { "role": "neutral", "displayName": "Flyout Ink", "canonical": "#10131d" },
+      "surface-alt": { "role": "neutral", "displayName": "Nested Slate", "canonical": "#23293a" },
+      "line": { "role": "neutral", "displayName": "Structural Line", "canonical": "#1c2233" },
+      "line-bracket": { "role": "neutral", "displayName": "Bracket Line", "canonical": "#2b3145" },
+      "ink": { "role": "neutral", "displayName": "Bone Ink", "canonical": "#ece8e1" },
+      "muted": { "role": "neutral", "displayName": "Muted Steel", "canonical": "#8a8f9e" },
+      "faint": { "role": "neutral", "displayName": "Faint Steel", "canonical": "#4c5160" }
+    },
+    "typographyMeta": {
+      "hero": { "displayName": "Hero", "purpose": "Full-bleed page titles (room headers, standings)." },
+      "display": { "displayName": "Display", "purpose": "Section-level numerals and headlines." },
+      "heading": { "displayName": "Heading", "purpose": "Panel and card-group titles." },
+      "title": { "displayName": "Title", "purpose": "Sub-panel and modal titles." },
+      "body": { "displayName": "Body", "purpose": "Running text, descriptions, rule copy." },
+      "label": { "displayName": "Label", "purpose": "Field labels, kickers, roster row metadata." },
+      "micro": { "displayName": "Micro", "purpose": "Smallest step — non-interactive crumbs and tabular chip labels only." }
+    },
+    "shadows": [
+      { "name": "card", "value": "5px 5px 0 rgba(0, 0, 0, 0.4)", "purpose": "Resting stamped/printed offset for card-like elements." },
+      { "name": "card-lifted", "value": "8px 8px 0 rgba(0, 0, 0, 0.5)", "purpose": "Hover/press step for the same elements — offset grows, never blurs." },
+      { "name": "overlay", "value": "0 12px 40px rgba(0, 0, 0, 0.6)", "purpose": "The one soft shadow in the system; separates a true overlay (modal/flyout) from the whole page." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "purpose": "The house curve — default for entrances and state changes." },
+      { "name": "ease-in", "value": "cubic-bezier(0.5, 0, 0.85, 0.4)", "purpose": "Exits only." },
+      { "name": "ease-travel", "value": "cubic-bezier(0.5, 0, 0.2, 1)", "purpose": "Bracket travel path animation." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "680px" },
+      { "name": "compact", "value": "420px" },
+      { "name": "tablet", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Accent-filled call to action with a notched top-right/bottom-left corner cut.",
+      "html": "<button class=\"ds-btn-primary\">CONFIRM DRAFT</button>",
+      "css": ".ds-btn-primary { clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px)); background: #ff4655; color: #fff; border: none; padding: 15px 24px; font-family: 'Familjen Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: transform 120ms, opacity 120ms; } .ds-btn-primary:hover { background: #ff4655; transform: translateY(-1px); } .ds-btn-primary:active { transform: translateY(1px) scale(0.985); } .ds-btn-primary:focus-visible { outline: 2px solid #fff; outline-offset: 3px; } .ds-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Nested-slate button that resolves to the accent fill on hover.",
+      "html": "<button class=\"ds-btn-secondary\">CANCEL</button>",
+      "css": ".ds-btn-secondary { clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px)); background: #23293a; color: #ece8e1; border: none; padding: 15px 24px; font-family: 'Familjen Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: background 120ms, color 120ms; } .ds-btn-secondary:hover { background: #ff4655; color: #fff; } .ds-btn-secondary:focus-visible { outline: 2px solid #ff4655; outline-offset: 3px; }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "44x44 notched icon tile from the ModeRail; accent fill marks the active route.",
+      "html": "<button class=\"ds-nav-item ds-nav-item--active\" aria-current=\"page\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 4h16v16H4z\"/></svg></button>",
+      "css": ".ds-nav-item { width: 44px; height: 44px; display: grid; place-items: center; color: #8a8f9e; background: #161b29; border: none; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); transition: color 120ms, background 120ms; cursor: pointer; } .ds-nav-item:hover { color: #ece8e1; background: #1e2435; } .ds-nav-item--active, .ds-nav-item--active:hover { color: #fff; background: #ff4655; } .ds-nav-item:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }"
+    },
+    {
+      "name": "Status Strip",
+      "kind": "nav",
+      "refersTo": "status-strip",
+      "description": "Sticky page-identity row: mono uppercase crumb (the page's real h1) plus a tabular count.",
+      "html": "<div class=\"ds-strip\"><div class=\"ds-strip-left\"><h1 class=\"ds-strip-crumb\">COLLECTION</h1><span class=\"ds-strip-count\">128</span></div></div>",
+      "css": ".ds-strip { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 24px; background: #0b0d14; border-bottom: 1px solid #1c2233; } .ds-strip-left { display: flex; align-items: center; gap: 12px; } .ds-strip-crumb { margin: 0; color: #8a8f9e; font: 700 13px/1 ui-monospace, Menlo, monospace; letter-spacing: 0.14em; text-transform: uppercase; } .ds-strip-count { color: #ece8e1; font: 700 13px/1 ui-monospace, Menlo, monospace; letter-spacing: 0.14em; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Data Row Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The resting surface for a table/roster row, with a hard-offset printed shadow on its interactive (lifted) state.",
+      "html": "<div class=\"ds-card\">ROSTER ROW</div>",
+      "css": ".ds-card { background: #161b29; padding: 16px; box-shadow: 5px 5px 0 rgba(0,0,0,0.4); transition: box-shadow 150ms, transform 150ms; } .ds-card:hover { background: #1e2435; box-shadow: 8px 8px 0 rgba(0,0,0,0.5); transform: translate(-3px, -3px); }"
+    },
+    {
+      "name": "Form Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Borderless nested-slate field; the fill itself is the affordance, no outline at rest.",
+      "html": "<input class=\"ds-input\" placeholder=\"ROOM CODE\" />",
+      "css": ".ds-input { padding: 15px; border: none; background: #23293a; color: #fff; font-family: 'Familjen Grotesk', system-ui, sans-serif; font-size: 16px; } .ds-input:focus-visible { outline: 2px solid #ff4655; outline-offset: 3px; } .ds-input::placeholder { color: #8a8f9e; text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; }"
+    },
+    {
+      "name": "Notched Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Specialty/booster chip from PlayerCard: a cut-corner icon tile in the gold sub-brand color, with a flyout tooltip on hover.",
+      "html": "<div class=\"ds-chip-wrap\"><button class=\"ds-chip\">3</button><div class=\"ds-chip-tip\"><b>DUELIST BOOST</b>+3 ACS this round</div></div>",
+      "css": ".ds-chip-wrap { position: relative; display: inline-block; } .ds-chip { width: 44px; height: 44px; border: 3px solid #d8b34c; clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px)); background: #10151d; color: #fff; font: 700 20px/1 'Familjen Grotesk', sans-serif; box-shadow: 5px 5px 0 rgba(0,0,0,0.35); cursor: pointer; } .ds-chip-tip { position: absolute; left: calc(100% + 10px); top: 0; width: 180px; padding: 10px 12px; background: #0c1118; border: 2px solid #fff; color: #fff; font: 600 15px/1.25 'Familjen Grotesk', sans-serif; opacity: 0; transform: translateX(6px); transition: opacity 120ms, transform 120ms; pointer-events: none; } .ds-chip-tip b { display: block; color: #d8b34c; margin-bottom: 3px; } .ds-chip-wrap:hover .ds-chip-tip, .ds-chip:focus-visible + .ds-chip-tip { opacity: 1; transform: translateX(0); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Broadcast Overlay",
+    "overview": "VFL reads like the on-screen HUD of a Valorant broadcast, not like a consumer app skinned in red and black: status strips, bracket connectors, and stenciled mono labels sit directly on a near-black ground, and every surface behaves like a data readout rather than a decorative card. The system is deliberately cold and blunt — controls feel like hardware switches, not soft affordances. There is one accent color, and it is spent on the single most important thing on any given screen: the active nav item, the primary CTA, a live score.\n\nThe visual grammar is inherited from playvalorant.com and applied globally: sharp corners (mostly true right angles, with a small family of notched/cut corners reserved for interactive chrome), solid flat color fills, uppercase tabular-numeral type, and zero gradients or glows. Separation between regions comes from whitespace and filled surface blocks, never from decorative hairlines — a hairline only appears where it does real structural work (a strip's bottom edge, a table rule).\n\nDepth is cut-and-layered, not lit: elements stack as flat, notched silhouettes on top of one another, and where a shadow does appear it is a hard offset print (5px/5px, zero blur), never a soft ambient glow. Nothing in this system floats on light — it sits, printed, on the surface below it.",
+    "keyCharacteristics": [
+      "One accent (--accent, #ff4655), spent sparingly on active/primary state only",
+      "Flat fills over gradients; hard offset shadows over soft blur",
+      "Small family of clip-path \"cut corner\" notches on interactive chrome; everything else is a true right angle",
+      "Uppercase mono labels with wide tracking for anything structural (crumbs, counts, nav tips, stat labels)",
+      "Tabular numerals wherever a number can change, so digits don't reflow",
+      "Density and layout obey a strict 4pt spacing grid and an Apple HIG 44pt/28pt control-size floor"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "--accent marks exactly one thing per screen as primary or active. If two elements both want it, one of them is wrong.", "section": "colors" },
+      { "name": "The No-Glow Rule", "body": "No box-shadow blur radius beyond what a hard offset needs, no radial-gradient decoration, no filter: drop-shadow for ambiance. The one intentional exception is the PlayerCard glare layer, which simulates a physical foil card under light — a single, purpose-built effect, not a general pattern.", "section": "colors" },
+      { "name": "The Uppercase-Structural Rule", "body": "Uppercase + mono + wide tracking marks structural chrome (crumbs, kickers, nav tips, stat labels). Body copy and player names are never uppercased — that would flatten the one hierarchy signal the mono family provides.", "section": "typography" },
+      { "name": "The Print-Not-Light Rule", "body": "A shadow's offset is fixed at 5px/5px (or its 8px/8px lifted step); blur only appears on --shadow-overlay, which is the sole soft-shadow token in the system and exists to separate a full overlay from the page, not to imply directional light on a component.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do spend --accent on exactly one primary/active element per view (The One Accent Rule).",
+      "Do use the notched clip-path cut on interactive chrome only — nav items, buttons, chips, tooltips.",
+      "Do set font-variant-numeric: tabular-nums on any number that can change at runtime.",
+      "Do honor the 44px/28px control-size floor (--tap-min / --tap-min-secondary) for every new interactive element.",
+      "Do keep body copy and player names in normal case; reserve uppercase for structural/mono labels."
+    ],
+    "donts": [
+      "Don't add a soft blurred box-shadow or radial-gradient glow outside the two named exceptions (--shadow-overlay, PlayerCard's glare layer).",
+      "Don't round a structural container's corners — true right angles only; the notch cut is reserved for interactive chrome.",
+      "Don't introduce a second accent color. Gold and teal are status/sub-brand signals, not alternate accents.",
+      "Don't use a decorative hairline; a border only appears where it does real structural work (a strip edge, a table rule, a bracket connector)."
+    ]
+  }
+}

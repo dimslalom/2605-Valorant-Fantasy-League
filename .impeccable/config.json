@@ -1,0 +1,88 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "files": [
+          "src/components/CardFocusOverlay.module.css"
+        ],
+        "createdAt": "2026-08-28T03:03:21.879Z",
+        "reason": "icon glyph size (close ✕ character), not body-text ramp"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "files": [
+          "src/pages/PerfectRun.module.css"
+        ],
+        "createdAt": "2026-08-28T03:10:20.972Z",
+        "reason": "mask-image gradient stop (alpha mask, not a visible color)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "16px",
+        "files": [
+          "src/components/SquadSheet.module.css"
+        ],
+        "createdAt": "2026-08-28T04:03:15.219Z",
+        "reason": "matches CardFocusOverlay.module.css .close button's identical 16px glyph size — same close-icon pattern, not new drift"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "files": [
+          "src/components/SquadSheet.module.css"
+        ],
+        "createdAt": "2026-08-28T07:20:11.826Z",
+        "reason": "mask-image gradient opacity stop, not a paint color — mask only reads alpha here; identical to the existing .squadHero mask-image in PerfectRun.module.css"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "9px",
+        "files": [
+          "src/components/SquadSheet.module.css"
+        ],
+        "createdAt": "2026-08-28T08:13:41.318Z",
+        "reason": "mobile-only .faceRole shrink to fit the 150px card face — below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "files": [
+          "src/components/SquadSheet.module.css"
+        ],
+        "createdAt": "2026-08-28T08:13:41.370Z",
+        "reason": "mobile-only .facePlayer shrink to fit the 150px card face — below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "8px",
+        "files": [
+          "src/components/SquadSheet.module.css"
+        ],
+        "createdAt": "2026-08-28T08:13:41.421Z",
+        "reason": "mobile-only .faceStat shrink to fit a 5-item stat row inside the 150px card face — below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/pages/Multiplayer.module.css"
+        ],
+        "createdAt": "2026-08-31T06:43:06.650Z"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "8px",
+        "files": [
+          "src/components/SquadDock.module.css"
+        ],
+        "createdAt": "2026-08-31T09:15:48.156Z",
+        "reason": "matches the pre-existing .chipIgl badge text size (8px) this mobile IGL-plate rule replaces at the same breakpoint"
+      }
+    ]
+  }
+}

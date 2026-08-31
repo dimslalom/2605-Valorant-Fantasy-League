@@ -13,15 +13,16 @@
     "sync-icons": "node scripts/vlr-to-json.js --icons-only",
     "build-portraits": "scripts/.venv/bin/python scripts/build_portraits.py --cards src/data/cards.json",
     "test": "node --test test/*.test.js",
-    "test:perfect-run": "node --test test/endless.test.js test/perfectRunModes.test.js",
+    "test:perfect-run": "node --test test/endless.test.js test/perfectRunModes.test.js test/roundEvents.test.js",
     "test:multiplayer": "node --test test/multiplayer.test.js",
-    "test:hover": "node --test test/safeTriangle.test.js",
+    "test:hover": "node --test test/peekKey.test.js test/squadSheetPreview.test.js",
     "check": "npm run lint && npm test && npm run build && npx wrangler deploy --dry-run",
     "lint:app": "eslint src/engine/perfectRun.js src/engine/multiplayer.js src/pages/PerfectRun.jsx src/pages/Multiplayer.jsx src/lib/leaderboardClient.js src/lib/multiplayerClient.js worker/index.js test/perfectRunModes.test.js test/multiplayer.test.js",
     "lint:multiplayer": "eslint src/engine/multiplayer.js src/pages/Multiplayer.jsx src/lib/multiplayerClient.js worker/index.js"
   },
   "dependencies": {
     "flag-icons": "^7.5.0",
+    "motion": "^12.43.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.18.2"

@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom';
+import { m } from 'motion/react';
+import { DUR, EASE } from '../lib/motion';
 import BrandLogo from './BrandLogo';
 import styles from './ModeRail.module.css';
 
@@ -28,7 +30,7 @@ const ICON = {
 };
 
 const RAIL = [
-  { to: '/collection', key: 'library', label: 'Player Library' },
+  { to: '/cards', key: 'library', label: 'Player Library' },
   { to: '/run', key: 'run', label: 'Perfect Run' },
   { to: '/multiplayer', key: 'multiplayer', label: 'Multiplayer' },
 ];
@@ -48,7 +50,20 @@ export default function ModeRail() {
             aria-label={item.label}
             className={({ isActive }) => [styles.item, isActive ? styles.active : ''].join(' ')}
           >
-            {ICON[item.key]}
+            {/* The tile itself (this anchor) keeps its notched clip-path and
+                tap-target size completely static — only the glyph inside
+                presses/lifts, so the HUD frame never distorts. An anchor has
+                no built-in press feedback the way index.css's global
+                `button:active` rule provides for every <button> — this is
+                the one place in the app that needs its own. */}
+            <m.span
+              className={styles.press}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.92 }}
+              transition={{ duration: DUR.micro, ease: EASE.out }}
+            >
+              {ICON[item.key]}
+            </m.span>
             <span className={styles.tip} aria-hidden="true">{item.label}</span>
           </NavLink>
         ))}

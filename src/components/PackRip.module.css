@@ -1,0 +1,112 @@
+/* Extracted from PerfectRun.module.css / duplicated Multiplayer.jsx markup —
+   one pack-rip lane shared by every draft/consolation screen in the app. */
+
+.lane {
+  display: flex;
+  flex-direction: column;
+}
+.lane + .lane { margin-top: 40px; }
+
+.laneLabel {
+  display: block;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: var(--track-mono);
+  /* --pack-label-color is set by PerfectRun.module.css's .encTheme, which
+     wraps this component from outside its own CSS module during the ENC
+     event; falls back to the ordinary accent everywhere else. */
+  color: var(--pack-label-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.draftSlot {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.draftBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.draftNat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.draftCount {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: var(--track-mono);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Every player of the rolled nation in ONE horizontal row (Korea tops 70+).
+   The pack-rip animation plays inside this same box. Full-bleed to the
+   frame so a 5-card pack fits centered without clipping. */
+.strip {
+  position: relative; /* anchors the absolutely-positioned pack */
+  width: calc(100vw - var(--frame-inset));
+  margin-left: calc(50% - (100vw - var(--frame-inset)) / 2);
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  height: 336px;
+  margin-bottom: 26px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 6px 24px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-hi) transparent;
+}
+.strip::-webkit-scrollbar { height: 10px; }
+.strip::-webkit-scrollbar-track { background: transparent; }
+.strip::-webkit-scrollbar-thumb { background: var(--surface-hi); }
+.strip::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+/* Full-width row centered as a group when it fits; `safe center` falls back
+   to start alignment when a big ENC nation roster overflows, so the first
+   cards never get clipped out of scroll reach. */
+.stripCards {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: safe center;
+  gap: 20px;
+  width: 100%;
+}
+.stripCard { flex-shrink: 0; }
+.stripHidden { visibility: hidden; }
+
+/* Drag-to-dock ghost: a fixed-position portal clone that follows the
+   pointer, immune to the strip's own overflow-x clipping. Same hard offset
+   shadow SquadDock's hover preview already lifts a card with. */
+.dragGhost {
+  pointer-events: none;
+  z-index: 1000;
+  filter: drop-shadow(var(--shadow-card-lifted));
+}
+
+/* The pack's own opening moment now lives in PackTear (drag-to-tear 3D foil
+   peel) — it owns its footprint and reduced-motion branch itself. */
+
+@media (max-width: 680px) {
+  .strip { height: 260px; }
+  .draftBar { align-items: flex-start; }
+}

@@ -39,9 +39,13 @@
   --accent-soft: rgba(255, 70, 85, 0.13);
   --accent-ink: #fff;       /* text on an --accent fill */
   --win: #00c8a0;
+  --win-soft: rgba(0, 200, 160, 0.14);
+  --win-ink: #032019;       /* text on a --win fill */
   --gold: #d8b34c;          /* ENC chrome, same hue as the champion badge */
   --gold-dim: #8a7330;
   --gold-soft: rgba(216, 179, 76, 0.14);
+  --gold-ink: #211b06;      /* text on a --gold fill */
+  --opponent: #00d2ff;      /* match-log color coding: player is --accent, opponent is this */
 
   /* --- Type families ---------------------------------------------------- */
   --font-body: 'Familjen Grotesk', system-ui, sans-serif;
@@ -93,6 +97,15 @@
   /* --- Shell ------------------------------------------------------------ */
   --rail-size: 56px;        /* ModeRail width (side) / height (mobile top bar) */
   --strip-h: 44px;
+  /* The shared content column every page centres its content in.
+
+     IMPORTANT: the global `box-sizing: border-box` means max-width INCLUDES
+     padding. So a page that wants gutters must add them on top:
+         max-width: calc(var(--content-max) + var(--sp-12) * 2);
+         padding: ... var(--sp-12);
+     Setting `max-width: var(--content-max)` AND horizontal padding on the
+     same element silently shrinks the column by the gutters (this is what
+     made the in-run screens 984px while the menu was 1080px). */
   --content-max: 1080px;
 
   /* Horizontal space the shell takes out of the viewport. Elements that want

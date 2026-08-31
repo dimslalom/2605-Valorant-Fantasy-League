@@ -68,6 +68,7 @@ export default function PlayerPortrait({
         // before the bytes arrive, so lazy loading still works.
         width={PORTRAIT_W}
         height={PORTRAIT_H}
+        draggable={false}
       />
     );
   }
@@ -97,6 +98,7 @@ export default function PlayerPortrait({
         alt=""
         aria-hidden="true"
         loading={loading}
+        draggable={false}
       />
       <img
         className={`${styles.layer} ${styles.head}`}
@@ -105,6 +107,7 @@ export default function PlayerPortrait({
         aria-hidden="true"
         loading={loading}
         style={{ transform }}
+        draggable={false}
       />
       {/* same decoded image again, clipped to the collar down — drawing it in
           FRONT of the neck is what makes a seam gap structurally impossible */}
@@ -115,6 +118,7 @@ export default function PlayerPortrait({
         aria-hidden="true"
         loading={loading}
         style={{ clipPath: `inset(${collarInset}% 0 0 0)` }}
+        draggable={false}
       />
       {card.hair && (
         <img
@@ -124,6 +128,7 @@ export default function PlayerPortrait({
           aria-hidden="true"
           loading={loading}
           style={{ transform }}
+          draggable={false}
         />
       )}
     </div>

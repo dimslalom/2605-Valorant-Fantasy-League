@@ -4,6 +4,18 @@
   position: relative;
 }
 
+/* Every layer PNG (bg/photo/stat-bg/logos) is a plain <img>, and browsers
+   natively make those draggable regardless of any `draggable=false` set on
+   an ancestor — SquadDock's chip-swap drag lands squarely on one of these
+   layers, and without this the browser's own native "drag this image" ghost
+   hijacks the gesture instead of Framer Motion's. `draggable={false}` in JSX
+   covers Firefox; this covers Chrome/Safari, which don't fully honor that
+   attribute on <img>. */
+.stage img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 /* ── Tilt: pointer-driven rotation via CSS vars set by useCardTilt ── */
 .tilt {
   position: relative;

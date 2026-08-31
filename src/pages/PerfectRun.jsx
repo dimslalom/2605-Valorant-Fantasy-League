@@ -1,12 +1,21 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { m, AnimatePresence } from 'motion/react';
+import { DUR, EASE, STAGGER, eliminationFlash } from '../lib/motion';
 import ModeRail from '../components/ModeRail';
 import PlayerCard from '../components/PlayerCard';
 import PlayerPortrait from '../components/PlayerPortrait';
 import CardFocusOverlay from '../components/CardFocusOverlay';
+import PhaseTransition from '../components/PhaseTransition';
+import TacticalButton from '../components/TacticalButton';
+import SquadBar from '../components/SquadBar';
+import SquadDock from '../components/SquadDock';
+import MatchBackdrop from '../components/MatchBackdrop';
+import PackRip from '../components/PackRip';
 import allCards from '../data/cards.json';
 import { assetPath, countryName } from '../lib/utils';
-import useSafeHover from '../lib/useSafeHover';
+import useSkippableTimeline from '../lib/useSkippableTimeline';
+import useRunSpeed, { scaleDuration } from '../lib/useRunSpeed';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
   rollNationality, draftChoices, teamPower, samplePack,
@@ -21,7 +30,9 @@ import {
 import {
   getClientId, submitDailyScore, fetchDailyLeaderboard, fetchOverallLeaderboard,
 } from '../lib/leaderboardClient';
+import { describeRound, roundPacing, roundSignificance } from '../engine/roundEvents';
 import styles from './PerfectRun.module.css';
+import hub from '../styles/hub.module.css';
 
 const STORAGE_KEY = 'vfl-perfectrun';
 
@@ -45,23 +56,14 @@ function isMobile() {
 function newRunSeed(mode) {
   return mode === 'daily' ? todaySeed() : (Date.now() & 0xffffffff);
 }
-function animationTime() {
-  return performance.now();
-}
-
 const TRAVEL_MS = 900;
+// Stable empty-Set default so BracketCell's `pendingArrivalIds?.has(...)`
+// check never needs a fresh Set() on every render of every non-traveling cell.
+const EMPTY_TEAM_ID_SET = new Set();
 
 // Endless no longer carries fatigue/boosts; effectiveTeamPower still runs so
 // event modifiers apply, fed this inert run-state.
 const NO_RUN_FX = { fatigue: {}, boosts: {}, teamChemBonus: 0 };
-
-// The stamp belongs to a document load, not to React navigation. Capturing the
-// initial path at module evaluation lets a hard load at /run play it while an
-// in-app visit from another mode stays settled. The module flag prevents a
-// later route-away/route-back cycle in the same tab from replaying it.
-const RUN_WAS_INITIAL_ROUTE = typeof window !== 'undefined'
-  && window.location.pathname.replace(/\/+$/, '').endsWith('/run');
-let stampPlayedThisDocument = false;
 
 const FAN_POOL = allCards.filter(card => card.photo !== '/assets/players/placeholder.png');
 function drawFanCards() {
@@ -75,12 +77,8 @@ function drawFanCards() {
 
 export default function PerfectRun() {
   const navigate = useNavigate();
-  const [playBrandStamp] = useState(() => RUN_WAS_INITIAL_ROUTE && !stampPlayedThisDocument);
-  useEffect(() => {
-    if (playBrandStamp) stampPlayedThisDocument = true;
-  }, [playBrandStamp]);
-  // menu | country | name | draft | review | intro | run | result | enc_result | locked | pack | over
-  const [phase, setPhaseRaw] = useState('menu');
+  // menu | country | name | draft | intro | run | result | enc_result | manage | pack | over
+  const [phase, setPhase] = useState('menu');
   const [mode, setMode] = useState('solo');           // solo | daily | enc
   const [runLength, setRunLength] = useState('season'); // season | endless
   const [squadName, setSquadName] = useState('');
@@ -97,11 +95,14 @@ export default function PerfectRun() {
   const [selectedNation, setSelectedNation] = useState(null);
   const [nat, setNat] = useState(null);
   const [choices, setChoices] = useState([]);
-  const [rerolls, setRerolls] = useState(3);
+  const [packs, setPacks] = useState(3);
   const [ripId, setRipId] = useState(0); // bumped per roll, keys the pack-rip
 
-  // review
-  const [iglId, setIglId] = useState(null);
+  // review — the leftmost dock slot is always the IGL, so there's no
+  // separate stored choice: dragging a card into position 0 (SquadDock's
+  // chip-swap) or tapping a face on SquadHero both just reorder `picks`,
+  // and this recomputes from wherever that reorder landed.
+  const iglId = picks[0]?.id ?? null;
 
   // season
   const [season, setSeason] = useState([]);          // [{kind,city,label} x3]
@@ -117,48 +118,91 @@ export default function PerfectRun() {
   const [revealCount, setRevealCount] = useState(0);
   const [maps, setMaps] = useState([]);                // map names for the player's series
   const [mapResults, setMapResults] = useState([]);    // finished {a,b,winA,mvp,map}
+  // Holds the series' finished results between "series over" and the
+  // skippable pause before returning to the board — null when no series is
+  // waiting. A boolean-shaped active flag (`!== null`) rather than the array
+  // itself, so useSkippableTimeline's effect (keyed on `active`) actually
+  // retriggers series to series instead of staying permanently "active".
+  const [pendingBoardReturn, setPendingBoardReturn] = useState(null);
+  // Speedrunner preference — Normal/Fast/Instant — persisted alongside the
+  // run's other saves. Scales the three longest auto-advance pauses below;
+  // round-to-round pacing itself still runs through roundEvents.js's own
+  // `roundPacing(desc, opts)` seam, so the engine file is never touched.
+  // No menu control for it any more — the universal skip button (see
+  // `currentSkip` below) now covers the "let me go faster" need directly,
+  // for every automatic sequence in the run, not just these three. The
+  // preference itself (and its persistence) stays wired for a possible
+  // future settings page rather than being ripped out.
+  const [runSpeed] = useRunSpeed(loadSaves().motionSpeed, (next) => {
+    const saves = loadSaves();
+    saves.motionSpeed = next;
+    saveSaves(saves);
+  });
   const [live, setLive] = useState(null);              // {a,b} while a map animates
+  const [liveRound, setLiveRound] = useState(0);
+  const [roundPulse, setRoundPulse] = useState(null);
+  // Which side just won the most recent round — 'A' (player) or 'B' (opp) —
+  // keyed so a repeat winner still re-flashes. The score digits key off
+  // `key` to remount and replay a brief color flash toward --ink at rest.
+  const [roundFlash, setRoundFlash] = useState(null);
+  // Backdrop zoom is a persistent 1-3 state, not a pulse: it steps up when
+  // play gets tense and then STAYS there — it does not auto-revert after a
+  // round the way the old one-shot "surge" animation did. It only resets at
+  // two points: a fresh series (playMatch) and back at the bracket board
+  // (backToBoard), which must always read as the calmest, most zoomed-out
+  // view. zoomLevelRef mirrors the state for synchronous reads inside the
+  // reveal timeout chain, where the state value in that closure would
+  // otherwise be stale from whenever playNextMap was originally called.
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const zoomLevelRef = useRef(1);
+  // Picks which backdrop image shows. Bumped once when a series starts, and
+  // again each time zoomLevel actually escalates (so at most twice more per
+  // series, since there are only two steps above 1) — tying image variety to
+  // the same tension that drives the zoom, rather than a schedule no one
+  // could see happening.
+  const [backdropVariant, setBackdropVariant] = useState(0);
 
   // consolation pack
   const [packNat, setPackNat] = useState(null);
   const [packChoices, setPackChoices] = useState([]);
-  const [packPick, setPackPick] = useState(null);
+  // { card, targetId } once a pack card has been dragged onto a specific
+  // dock chip — the swap doesn't touch `picks` yet at that point, only once
+  // it's confirmed (see confirmSwap/cancelSwap below). Picking is drag-only
+  // here on purpose: a plain tap can't tell PackRip which existing roster
+  // member it's meant to replace, only that a card was chosen.
+  const [pendingSwap, setPendingSwap] = useState(null);
 
-  // Bottom action bar squad drawer. Three independent reasons to be open —
-  // the phase pinned it, the pointer is on it (safe-hover), or a card is
-  // being inspected — so hovering away can never yank a pinned fan shut.
-  const [squadPinned, setSquadPinned] = useState(false);
-  const [squadHover, setSquadHover] = useState(false);
+  // Squad chip → single-card focus overlay (flip, specialties).
   const [focusCard, setFocusCard] = useState(null);
-  const squadOpen = squadPinned || squadHover || focusCard !== null;
 
   const animTimer = useRef(null);
   const revealTimer = useRef(null);
-  const advanceTimer = useRef(null);
   const seriesActive = useRef(false); // guards double "Play your match"
+  // The currently-live map's finishMap, so a skip button can jump straight
+  // to that map's (already fully computed) result instead of waiting out
+  // the round-by-round reveal. Bracket travel's equivalent early-exit sits
+  // next to its own animation below (travelSkipRef).
+  const matchSkipRef = useRef(null);
+  const travelSkipRef = useRef(null);
 
   // travel animation plumbing
   const cellRefs = useRef({});
   const bracketRef = useRef(null);
   const overlayRef = useRef(null);
   const travelInfo = useRef(null);
+  // Team ids currently mid-flight to the next round. While a team's id is in
+  // this set, its destination cell renders literal "TBD" instead of the real
+  // matchup — the traveling clone is what visually "delivers" the reveal, so
+  // the destination never flashes the answer before the clone carrying it
+  // actually arrives. Cleared per-team as each clone's own animation finishes.
+  const [pendingArrivalIds, setPendingArrivalIds] = useState(EMPTY_TEAM_ID_SET);
   const historyRef = useRef([]);
   const usedCitiesRef = useRef([]); // endless: recent host cities, no repeats
 
   useEffect(() => () => {
-    clearInterval(animTimer.current);
+    clearTimeout(animTimer.current);
     clearInterval(revealTimer.current);
-    clearTimeout(advanceTimer.current);
   }, []);
-
-  // Every phase change goes through here: the squad drawer opens itself
-  // wherever the roster is the working material (card openings, the shop)
-  // and tucks away for the bracket/match views.
-  function setPhase(next) {
-    if (['draft', 'review', 'pack'].includes(next)) setSquadPinned(true);
-    else if (['intro', 'run', 'menu'].includes(next)) { setSquadPinned(false); setSquadHover(false); }
-    setPhaseRaw(next);
-  }
 
   const pickedIds = new Set(picks.map(p => p.id));
   const endless = runLength === 'endless';
@@ -188,19 +232,21 @@ export default function PerfectRun() {
     setMode(selectedMode);
     setRunLength(length);
     setSquadName('');
-    setPicks([]); setIglId(null); setSelectedNation(null); setRipId(0);
-    setRerolls(selectedMode === 'daily' ? 1 : 3);
+    setPicks([]); setSelectedNation(null); setRipId(0);
+    setPacks(selectedMode === 'daily' ? 1 : 3);
     const openingSeason = length === 'endless' ? nextEndlessCycle(rng.current, 0) : makeSeason(rng.current);
     setSeason(openingSeason);
     usedCitiesRef.current = openingSeason.map(t => t.city);
     setTourIndex(0); setTourResults([]); setCurrentResult(null); setSeasonResult(null);
     setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
-    setMaps([]); setMapResults([]); setLive(null);
+    setMaps([]); setMapResults([]); setLive(null); setLiveRound(0); setRoundPulse(null); setRoundFlash(null); setBackdropVariant(0);
+    setZoomLevel(1); zoomLevelRef.current = 1;
+    setPendingBoardReturn(null);
+    setPendingArrivalIds(EMPTY_TEAM_ID_SET);
     historyRef.current = [];
-    setPackNat(null); setPackChoices([]); setPackPick(null);
-    clearInterval(animTimer.current);
+    setPackNat(null); setPackChoices([]); setPendingSwap(null);
+    clearTimeout(animTimer.current);
     clearInterval(revealTimer.current);
-    clearTimeout(advanceTimer.current);
     seriesActive.current = false;
     setPanelOpen(false);
     if (selectedMode === 'enc') {
@@ -218,7 +264,7 @@ export default function PerfectRun() {
     if (!pool) return;
     setSelectedNation(nationality);
     setSquadName(countryName(nationality));
-    setPicks([]); setIglId(null); setNat(nationality);
+    setPicks([]); setNat(nationality);
     setChoices(pool.cards);
     setPhase('draft');
   }
@@ -254,13 +300,30 @@ export default function PerfectRun() {
         rollSlot(new Set(next.map(p => p.id)));
       }
     } else {
-      setPhase('review');
+      setPhase('manage');
     }
   }
 
+  // Dock-chip drag-to-swap. Safe to apply directly to local state — and
+  // load-bearing now, not just cosmetic: the leftmost slot (index 0) is
+  // always the IGL (see `iglId` above), so swapping a card into or out of
+  // position 0 is how you change who leads the team, including mid-season
+  // between matches (the dock stays visible everywhere `barVisible` is true
+  // except live match simulation itself).
+  function swapPicks(idA, idB) {
+    setPicks(prev => {
+      const iA = prev.findIndex(p => p.id === idA);
+      const iB = prev.findIndex(p => p.id === idB);
+      if (iA === -1 || iB === -1 || iA === iB) return prev;
+      const next = [...prev];
+      [next[iA], next[iB]] = [next[iB], next[iA]];
+      return next;
+    });
+  }
+
   function reroll() {
-    if (rerolls <= 0) return;
-    setRerolls(r => r - 1);
+    if (packs <= 0) return;
+    setPacks(p => p - 1);
     rollSlot(pickedIds);
   }
 
@@ -295,13 +358,17 @@ export default function PerfectRun() {
     setPhase('run');
   }
 
-  // Intro splash auto-advances into the bracket draw.
-  useEffect(() => {
-    if (phase !== 'intro') return undefined;
-    const timer = setTimeout(beginBracket, reduceMotion() ? 250 : 1900);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, tourIndex]);
+  // Intro splash auto-advances into the bracket draw — skippable (Space,
+  // Enter, or a click on the hint) and scaled by the run-speed preference.
+  // useSkippableTimeline's own useReducedMotion subscription replaces the
+  // ad hoc reduceMotion() read here, so toggling the OS setting mid-splash
+  // now actually takes effect instead of waiting for the next mount.
+  const introTimeline = useSkippableTimeline({
+    duration: scaleDuration(1900, runSpeed),
+    active: phase === 'intro',
+    reducedDuration: 250,
+    onDone: beginBracket,
+  });
 
   const round = tour ? currentRound(tour) : null;
   const pMatch = tour ? playerMatch(tour) : null;
@@ -314,8 +381,13 @@ export default function PerfectRun() {
     const seriesMaps = pickMaps(rng.current, round.bestOf);
     setMaps(seriesMaps);
     setMapResults([]);
+    setLiveRound(0);
+    setRoundPulse(null);
+    setRoundFlash(null);
+    setBackdropVariant(v => v + 1); // this series' baseline backdrop
+    setZoomLevel(1); zoomLevelRef.current = 1; // every series starts calm
     setView('match');
-    setTimeout(() => playNextMap(seriesMaps, []), 350);
+    animTimer.current = setTimeout(() => playNextMap(seriesMaps, []), 350);
   }
 
   // ── Player series (match view, auto-plays map to map) ────────────────────
@@ -339,30 +411,73 @@ export default function PerfectRun() {
     );
     const mapName = seriesMaps[resultsSoFar.length];
 
-    const startedAt = animationTime();
     setLive({ a: 0, b: 0 });
-    animTimer.current = setInterval(() => {
-      const i = Math.min(result.rounds.length, Math.floor((animationTime() - startedAt) / 55) + 1);
-      const seq = result.rounds.slice(0, i);
-      setLive({
-        a: seq.filter(r => r === 'A').length,
-        b: seq.filter(r => r === 'B').length,
-      });
-      if (i >= result.rounds.length) {
-        clearInterval(animTimer.current);
-        setLive(null);
-        const updated = [...resultsSoFar, { ...result, map: mapName }];
-        setMapResults(updated);
+    setLiveRound(0);
 
-        const wonNow = updated.filter(r => r.winA).length;
-        const lostNow = updated.length - wonNow;
-        if (wonNow < needed && lostNow < needed) {
-          setTimeout(() => playNextMap(seriesMaps, updated), 650);
-        } else {
-          setTimeout(() => backToBoard(updated), 1700);
+    function finishMap() {
+      matchSkipRef.current = null;
+      setLive(null);
+      const updated = [...resultsSoFar, { ...result, map: mapName }];
+      setMapResults(updated);
+
+      const wonNow = updated.filter(r => r.winA).length;
+      const lostNow = updated.length - wonNow;
+      if (wonNow < needed && lostNow < needed) {
+        animTimer.current = setTimeout(() => playNextMap(seriesMaps, updated), 650);
+      } else {
+        // Handed off to the seriesEndTimeline below (skippable, run-speed
+        // scaled) rather than a bare setTimeout — pendingBoardReturn flipping
+        // null -> array is what that hook's `active` flag keys off.
+        setPendingBoardReturn(updated);
+      }
+    }
+
+    function revealRound(index) {
+      const desc = describeRound(result.rounds, index);
+      if (!desc) return;
+      setLive({ a: desc.a, b: desc.b });
+      setLiveRound(desc.round);
+      setRoundFlash(previous => ({ key: (previous?.key ?? 0) + 1, side: desc.winner }));
+      if (roundSignificance(desc) === 'significant') {
+        // Zoom is a persistent state, so this only ever steps UP within a
+        // match — never resets itself after a round the way a pulse would.
+        // A close finish holds isMatchPoint true for several rounds in a
+        // row, so most of those land here with nothing to do; only the
+        // round that actually clears the next threshold changes anything.
+        const nextZoom = (desc.isMapPoint || desc.isOvertime) ? 3 : 2;
+        if (nextZoom > zoomLevelRef.current) {
+          zoomLevelRef.current = nextZoom;
+          setZoomLevel(nextZoom);
+          setBackdropVariant(v => v + 1); // fresh imagery as tension escalates
+        }
+        if (desc.isOvertime || desc.isStreakBreak) {
+          setRoundPulse(previous => ({ key: (previous?.key ?? 0) + 1, kind: 'shake' }));
         }
       }
-    }, 55);
+
+      if (index >= result.rounds.length - 1) {
+        // Hold the deciding round for one beat so the counter visibly reaches
+        // the final number before the row turns into a completed map.
+        animTimer.current = setTimeout(finishMap, roundPacing(desc));
+        return;
+      }
+
+      animTimer.current = setTimeout(() => revealRound(index + 1), roundPacing(desc));
+    }
+
+    matchSkipRef.current = finishMap;
+    revealRound(0);
+  }
+
+  // Cancels whatever round-reveal step is pending and jumps straight to the
+  // current map's already-fully-computed result — simMap runs the whole map
+  // upfront, the reveal is purely presentational, so nothing here is a
+  // shortcut past unknown outcomes.
+  function skipMatch() {
+    clearTimeout(animTimer.current);
+    const fn = matchSkipRef.current;
+    matchSkipRef.current = null;
+    fn?.();
   }
 
   function backToBoard(results) {
@@ -375,6 +490,10 @@ export default function PerfectRun() {
       stage: round.label, opp: opp.name,
       mapsWon: wonMaps, mapsLost: lostMaps, roundDiff, won,
       score: results.map(r => `${r.a}-${r.b}`).join('  '),
+      // Only maps the player's own side actually took — an opponent's MVP
+      // isn't a squad-report stat. Feeds the manage screen's tournament
+      // report (most MVPs) after the tournament ends.
+      mvpIds: results.filter(r => r.winA).map(r => r.mvp.id),
     };
     const nextHistory = [...historyRef.current, seriesResult];
     historyRef.current = nextHistory;
@@ -386,6 +505,7 @@ export default function PerfectRun() {
     const npcCount = round.matches.filter(m => !m.isPlayerMatch).length;
     setRevealCount(0);
     setView('board');
+    setZoomLevel(1); zoomLevelRef.current = 1; // the bracket page is always the calmest view
     setBoardState('revealing');
     let shown = 0;
     revealTimer.current = setInterval(() => {
@@ -393,8 +513,9 @@ export default function PerfectRun() {
       setRevealCount(shown);
       if (shown >= npcCount) {
         clearInterval(revealTimer.current);
+        // boardCompleteTimeline (below) owns the pause into `advance()` now —
+        // skippable and run-speed scaled, keyed off boardState === 'complete'.
         setBoardState('complete');
-        advanceTimer.current = setTimeout(advance, 2200);
       }
     }, 200);
   }
@@ -425,19 +546,99 @@ export default function PerfectRun() {
     travelThenNextRound();
   }
 
+  // Skippable pause between a finished series and the board reveal —
+  // pendingBoardReturn carries the just-played results across the wait.
+  // Reset to null on fire so the boolean `active` flag actually toggles
+  // false -> true again for the *next* series (an array reference alone
+  // wouldn't retrigger the hook's effect, which is keyed on `active`).
+  const seriesEndTimeline = useSkippableTimeline({
+    duration: scaleDuration(1700, runSpeed),
+    active: pendingBoardReturn !== null,
+    onDone: () => {
+      const results = pendingBoardReturn;
+      setPendingBoardReturn(null);
+      backToBoard(results);
+    },
+  });
+
+  // Skippable pause once the bracket board finishes revealing NPC results,
+  // before advancing the player onward (next round / result / consolation).
+  const boardCompleteTimeline = useSkippableTimeline({
+    duration: scaleDuration(2200, runSpeed),
+    active: boardState === 'complete',
+    onDone: advance,
+  });
+
+  // Whichever of the run's three long auto-advance pauses is currently live
+  // — intro splash, series-end pause, or board-complete pause — drives one
+  // shared skip hint. They're mutually exclusive by construction (distinct
+  // phase/boardState/pendingBoardReturn conditions), so at most one is ever
+  // truthy.
+  const activeTimeline = phase === 'intro' ? introTimeline
+    : pendingBoardReturn !== null ? seriesEndTimeline
+      : boardState === 'complete' ? boardCompleteTimeline
+        : null;
+
+  // One shared skip affordance for every automatic sequence in the run —
+  // not just the three duration-based pauses above, but the live match
+  // round-reveal (`live !== null`) and the bracket travel flight
+  // (`boardState === 'travel'`) too. All four are mutually exclusive by
+  // construction, so at most one is ever truthy; `progress` is only
+  // meaningful for the duration-based ones (a plain button otherwise).
+  const currentSkip = activeTimeline && activeTimeline.remaining > 0
+    ? { skip: activeTimeline.skip, progress: activeTimeline.progress }
+    : live !== null
+      ? { skip: skipMatch, progress: null }
+      : boardState === 'travel'
+        ? { skip: skipTravel, progress: null }
+        : null;
+
+  useEffect(() => {
+    if (!currentSkip) return undefined;
+    function onKey(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        currentSkip.skip();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSkip?.skip]);
+
   // Generate stable destination rows, then fly every winner forward while
   // keeping the completed source round mounted.
   function travelThenNextRound() {
     const prevRound = currentRound(tour);
     nextBracketRound(tour);
     const newRound = currentRound(tour);
-    travelInfo.current = {
-      moves: prevRound.matches.map((match, index) => ({
-        teamId: match.winner,
-        fromKey: `${prevRound.key}:${index}`,
-        toKey: `${newRound.key}:${newRound.matches.findIndex(next => next.a === match.winner || next.b === match.winner)}`,
-      })),
-    };
+    const moves = prevRound.matches.map((match, index) => ({
+      teamId: match.winner,
+      fromKey: `${prevRound.key}:${index}`,
+      toKey: `${newRound.key}:${newRound.matches.findIndex(next => next.a === match.winner || next.b === match.winner)}`,
+    }));
+    travelInfo.current = { moves };
+    // nextBracketRound already placed every winner into the new round's real
+    // matchups, but the UI shouldn't show that answer until each winner's
+    // clone actually arrives — this is what keeps the destination on "TBD"
+    // for the moves still mid-flight. Keyed by "toKey:teamId", not bare
+    // teamId: a winner's id is ALSO sitting in its OLD round's cell (the
+    // match it just won, still on screen one column back) — a bare-id Set
+    // would mask that already-decided source cell too, since the same id
+    // legitimately appears in both places. The composite key only ever
+    // matches the one destination slot a given move is actually flying to.
+    setPendingArrivalIds(new Set(moves.map(move => `${move.toKey}:${move.teamId}`)));
+    // Real bug this masked until now: revealCount carries the PREVIOUS
+    // round's NPC-reveal progress (e.g. 7, from a Round-of-16 cycle). Left
+    // unreset, the new round's own isRevealed() check — npcMatches.indexOf(m)
+    // < revealCount — is satisfied for every match in a smaller round (a
+    // Quarterfinal has only ~4), so every destination cell picked up
+    // .revealed styling the instant travel started, one frame before its
+    // row's own text ever changed. That combination — dressed as "revealed"
+    // while its text still said TBD — is what actually read as "the TBD
+    // animating": two mismatched visual changes landing apart instead of
+    // one clean swap when the traveling clone lands.
+    setRevealCount(0);
     setTour({ ...tour });
     setBoardState('travel');
   }
@@ -451,6 +652,7 @@ export default function PerfectRun() {
     const container = bracketRef.current;
 
     if (reduceMotion() || isMobile() || !info?.moves?.length || !overlay || !container) {
+      travelSkipRef.current = null;
       finish();
       return;
     }
@@ -467,28 +669,38 @@ export default function PerfectRun() {
       const b = toRow.getBoundingClientRect();
       const x0 = a.left - cRect.left, y0 = a.top - cRect.top;
       const x1 = b.left - cRect.left, y1 = b.top - cRect.top;
+      // The clone keeps its won/lost border for the whole flight rather than
+      // going neutral — it's carrying forward the result that just earned
+      // this team the trip, so the color travels with it instead of cutting
+      // out. The destination itself stays on "TBD" throughout (driven by
+      // pendingArrivalIds, not a visibility hide) and only the clone ever
+      // sits at that position mid-flight — nothing to hide there.
       const clone = fromRow.cloneNode(true);
       clone.classList.add(styles.travelClone);
-      clone.classList.remove(styles.cellWon, styles.cellLost);
       const cloneScore = clone.querySelector('[data-bracket-score]');
       if (cloneScore) cloneScore.textContent = '';
       clone.style.width = `${a.width}px`;
       clone.style.height = `${a.height}px`;
       overlay.appendChild(clone);
-      fromRow.style.visibility = 'hidden';
-      toRow.style.visibility = 'hidden';
-      cleanups.push(() => {
-        clone.remove();
-        fromRow.style.visibility = '';
-        toRow.style.visibility = '';
-      });
+      cleanups.push(() => clone.remove());
       const bridgeX = x0 + (x1 - x0) * 0.5;
       return clone.animate([
         { transform: `translate(${x0}px, ${y0}px)` },
         { transform: `translate(${bridgeX}px, ${y0}px)`, offset: 0.35 },
         { transform: `translate(${bridgeX}px, ${y1}px)`, offset: 0.65 },
         { transform: `translate(${x1}px, ${y1}px)` },
-      ], { duration: TRAVEL_MS, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' }).finished.catch(() => {});
+      ], { duration: TRAVEL_MS, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' }).finished.then(() => {
+        // This clone has landed — reveal its real matchup at the
+        // destination. Other still-in-flight moves keep their own keys in
+        // the set until their own clone lands, independently.
+        const arrivalKey = `${move.toKey}:${move.teamId}`;
+        setPendingArrivalIds(prev => {
+          if (!prev.has(arrivalKey)) return prev;
+          const next = new Set(prev);
+          next.delete(arrivalKey);
+          return next;
+        });
+      }).catch(() => {});
     });
 
     let done = false;
@@ -496,16 +708,42 @@ export default function PerfectRun() {
       if (done) return;
       done = true;
       cleanups.forEach(fn => fn());
+      setPendingArrivalIds(EMPTY_TEAM_ID_SET);
       finish();
     };
+    // Skipping just runs the same cleanup early — the in-flight clones get
+    // torn down and any WAAPI animation still finishing on them lands on an
+    // already-removed node, harmless. Their .finished callbacks racing in
+    // after are already guarded (see the `prev.has` check above).
+    travelSkipRef.current = cleanup;
     Promise.all(animations).then(cleanup);
     const guard = setTimeout(cleanup, TRAVEL_MS + 400);
-    return () => { clearTimeout(guard); cleanup(); };
+    return () => { travelSkipRef.current = null; clearTimeout(guard); cleanup(); };
   }, [boardState]);
+
+  function skipTravel() {
+    travelSkipRef.current?.();
+  }
 
   function endTournament(champion, finishRound = round.label, championId = champion ? 'player' : null) {
     const finishedSeries = historyRef.current;
     const evalT = evaluateTournament(finishedSeries, champion);
+
+    // Tournament-report stats for the manage screen: an MVP leaderboard
+    // across every map the player's side won this tournament, plus the
+    // series/map record and who led. Computed here (once, at the moment the
+    // tournament actually ends) rather than re-derived on every manage-screen
+    // render, since `picks`/`iglId` may have already moved on by the time
+    // that screen re-renders after a pack swap.
+    const mvpCounts = new Map();
+    for (const s of finishedSeries) {
+      for (const id of s.mvpIds ?? []) mvpCounts.set(id, (mvpCounts.get(id) ?? 0) + 1);
+    }
+    const mvpBoard = [...mvpCounts.entries()]
+      .map(([id, count]) => ({ card: picks.find(p => p.id === id), count }))
+      .filter(entry => entry.card)
+      .sort((a, b) => b.count - a.count);
+
     const result = {
       kind: def.kind, label: def.label, city: def.city,
       champion, series: finishedSeries, badges: evalT.badges,
@@ -513,9 +751,16 @@ export default function PerfectRun() {
       championId,
       championNation: championId ? tour.teams[championId]?.nationality : null,
       cycle: def.cycle ?? Math.floor(tourIndex / 3),
+      mvpBoard,
+      seriesWon: finishedSeries.filter(s => s.won).length,
+      seriesPlayed: finishedSeries.length,
+      mapsWonTotal: finishedSeries.reduce((s, x) => s + x.mapsWon, 0),
+      mapsLostTotal: finishedSeries.reduce((s, x) => s + x.mapsLost, 0),
+      igl: picks.find(p => p.id === iglId) ?? null,
     };
     setTourResults(rs => [...rs, result]);
     setCurrentResult(result);
+    if (champion) setPacks(p => p + 1);
     if (mode === 'enc') {
       const saves = loadSaves();
       saves.enc = updateEncRecords(saves.enc, {
@@ -531,12 +776,7 @@ export default function PerfectRun() {
   function continueFromResult() {
     const isLast = !endless && tourIndex >= season.length - 1;
     if (isLast) { finishSeason(); return; }
-    if (currentResult.champion) {
-      setPhase('locked');
-    } else {
-      rollPack();
-      setPhase('pack');
-    }
+    setPhase('manage');
   }
 
   function finishSeason() {
@@ -582,7 +822,7 @@ export default function PerfectRun() {
     setPhase('intro');
   }
 
-  // ── Consolation pack ────────────────────────────────────────────────────────
+  // ── Squad packs ──────────────────────────────────────────────────────────
 
   function rollPack() {
     const ids = new Set(picks.map(p => p.id));
@@ -594,18 +834,34 @@ export default function PerfectRun() {
       setPackNat(null);
       setPackChoices(samplePack(rng.current, allCards, ids));
     }
-    setPackPick(null);
+    setPendingSwap(null);
     setRipId(id => id + 1);
   }
 
-  function swapInto(oldCard) {
-    const next = picks.map(p => (p.id === oldCard.id ? packPick : p));
+  // Spends one banked pack, opening it right away. Committed the instant
+  // it's opened — declining the swap afterward still costs the pack, same
+  // as a draft reroll spends its pack whether or not you like what you see.
+  function openPack() {
+    if (packs <= 0) return;
+    setPacks(p => p - 1);
+    rollPack();
+    setPhase('pack');
+  }
+
+  // In-place replacement (same index) — if the outgoing card was the
+  // leftmost/IGL slot, the incoming one lands there too and just inherits
+  // the title, no separate reassignment needed.
+  function confirmSwap() {
+    if (!pendingSwap) return;
+    const { card: incoming, targetId } = pendingSwap;
+    const next = picks.map(p => (p.id === targetId ? incoming : p));
     setPicks(next);
-    if (iglId === oldCard.id) {
-      const newIgl = [...next].sort((a, b) => b.rating - a.rating)[0];
-      setIglId(newIgl.id);
-    }
-    nextTournament();
+    setPendingSwap(null);
+    setPhase('manage');
+  }
+
+  function cancelSwap() {
+    setPendingSwap(null);
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -639,14 +895,8 @@ export default function PerfectRun() {
       case 'draft':
         return mode === 'enc' ? [] : [{
           key: 'reroll', kind: 'secondary', onClick: reroll,
-          disabled: rerolls <= 0,
-          label: `Reroll ${nat ? 'nation' : 'pack'} (${rerolls})`,
-        }];
-      case 'review':
-        return [{
-          key: 'enter', kind: 'primary', disabled: !iglId,
-          onClick: () => setPhase('intro'),
-          label: iglId ? `Enter ${season[0]?.label ?? 'the season'}` : 'Choose an IGL',
+          disabled: packs <= 0,
+          label: `Reroll ${nat ? 'nation' : 'pack'} (${packs})`,
         }];
       case 'run':
         return view === 'board' && boardState === 'pairings'
@@ -660,19 +910,28 @@ export default function PerfectRun() {
           },
           ...(endless ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
         ];
-      case 'locked':
+      case 'manage': {
+        // No dedicated IGL-review step anymore — the leftmost dock slot
+        // always has someone in it the instant the roster's full, and this
+        // same screen (chemistry + portraits) is also the very first stop
+        // after drafting, before any tournament has a result to report on.
+        const preSeason = !currentResult;
         return [
           {
-            key: 'next', kind: 'primary', onClick: nextTournament,
-            label: endless ? 'Keep it rolling' : `On to ${season[tourIndex + 1]?.city}`,
+            key: 'next', kind: 'primary',
+            onClick: preSeason ? () => setPhase('intro') : nextTournament,
+            label: preSeason
+              ? `Enter ${season[0]?.label ?? 'the season'}`
+              : (endless ? 'Keep it rolling' : `On to ${season[tourIndex + 1]?.city}`),
           },
-          ...(endless ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
+          ...(endless && !preSeason ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
         ];
+      }
       case 'pack':
         return [
           {
             key: 'skip', kind: 'secondary',
-            onClick: nextTournament,
+            onClick: () => setPhase('manage'),
             label: 'Keep squad',
           },
           ...(endless ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
@@ -682,87 +941,99 @@ export default function PerfectRun() {
     }
   })();
 
-  const barVisible = ['draft', 'review', 'intro', 'run', 'result', 'locked', 'pack'].includes(phase);
-  const drawerRoster = picks;
-
-  // The phase's per-card action, surfaced as a button inside the focus overlay
-  // instead of firing on a blind tap in the fan. Label and effect are split so
-  // nothing that touches the run's refs runs while rendering.
-  function cardActionLabel(card) {
-    if (phase === 'review') {
-      return card.id === iglId
-        ? { label: 'Current IGL', disabled: true }
-        : { label: 'Name as IGL' };
+  // Space also fires whatever the bar's single primary action is (Continue,
+  // On to X, Play your match →) — everywhere skip doesn't already own the
+  // key. Skipped while focus sits on something that already handles
+  // Space/Enter itself (a button, a link) or is mid-typing (the squad name
+  // field) — this is a global convenience shortcut, not a replacement for
+  // normal keyboard activation of whatever's actually focused.
+  const primaryBarAction = barActions.find(a => a.kind === 'primary' && !a.disabled);
+  const hasSkip = Boolean(currentSkip);
+  const primaryOnClick = primaryBarAction?.onClick;
+  useEffect(() => {
+    if (hasSkip || !primaryOnClick) return undefined;
+    function onKey(e) {
+      if (e.key !== ' ' && e.key !== 'Enter') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A') return;
+      e.preventDefault();
+      primaryOnClick();
     }
-    if (phase === 'pack' && packPick) return { label: `Swap out for ${packPick.player}` };
-    return null;
-  }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [hasSkip, primaryOnClick]);
 
-  function runCardAction(card) {
-    if (!card) return;
-    if (phase === 'review') { if (card.id !== iglId) setIglId(card.id); return; }
-    if (phase === 'pack' && packPick) swapInto(card);
-  }
+  const barVisible = ['draft', 'intro', 'run', 'result', 'manage', 'pack'].includes(phase)
+    && !(phase === 'run' && view === 'match');
+  const drawerRoster = picks;
+  const latestMap = mapResults.at(-1) ?? null;
+  const stageScore = live ?? latestMap ?? { a: 0, b: 0 };
 
   return (
-    <div className={[styles.shell, mode === 'enc' && phase !== 'menu' ? styles.encTheme : '', barVisible ? styles.withBar : ''].join(' ')}>
+    <>
+    <MatchBackdrop
+      active={phase !== 'menu'}
+      mode={phase === 'run' && view === 'match' ? 'live' : 'calm'}
+      kind={def?.kind ?? null}
+      variant={backdropVariant}
+      reaction={roundPulse}
+      // Belt and suspenders on top of the explicit resets in playMatch and
+      // backToBoard: even if some future path forgot to reset the state,
+      // the bracket page (and everywhere else that isn't the live match)
+      // can never render an escalated zoom, because it isn't live.
+      zoomLevel={phase === 'run' && view === 'match' ? zoomLevel : 1}
+    />
+    <div className={[
+      styles.shell,
+      phase !== 'menu' ? styles.immersive : '',
+      mode === 'enc' && phase !== 'menu' ? styles.encTheme : '',
+      barVisible ? styles.withBar : '',
+    ].join(' ')}>
       <ModeRail />
 
       <div className={styles.frame}>
-        {phase !== 'menu' && (
-          <div className={styles.statusStrip}>
-            <span className={styles.crumb}>Perfect Run</span>
-            <span className={styles.count}>
-              {phase === 'run' && round && def
-                ? `${def.label} · ${round.label} (Bo${round.bestOf})`
-                : 'Solo / Season'}
-            </span>
-          </div>
-        )}
+        <main className={[
+          styles.page,
+          phase === 'menu' ? styles.menuPage : '',
+          phase === 'run' && view === 'match' ? styles.matchPage : '',
+        ].join(' ')}>
 
-        <main className={`${styles.page} ${phase === 'menu' ? styles.menuPage : ''}`}>
-
+      <AnimatePresence mode="wait">
       {phase === 'menu' && (
-        <>
-          <section className={styles.menu}>
-            <div className={styles.menuMain}>
-              <h1 className={`${styles.menuBrand} ${playBrandStamp ? styles.menuBrandStamping : ''}`}>
-                <img
-                  className={styles.menuLogotype}
-                  src={assetPath('/assets/brand/perfect-run-logotype.webp')}
-                  alt="Perfect Run"
-                />
-                <img
-                  className={`${styles.vctStamp} ${playBrandStamp ? styles.vctStampAnimate : ''}`}
-                  src={assetPath('/assets/brand/vct-stamp.webp')}
-                  alt="Valorant Champions Tour"
-                />
-              </h1>
-              <p className={styles.menuTag}>Pick your run. Zero maps dropped.</p>
+        <PhaseTransition phaseKey="menu">
+        <div className={hub.column}>
+          <div className={`${hub.title} ${styles.rise}`}>
+            <img
+              className={hub.logotype}
+              src={assetPath('/assets/brand/gauntlet-logotype.webp')}
+              alt="VCT Gauntlet"
+            />
+          </div>
 
-              <div className={styles.menuModes}>
+          <div className={hub.body}>
+            <div className={styles.menuStack}>
+              <div className={`${styles.menuModes} ${styles.rise} ${styles.riseB}`}>
                 <div className={`${styles.modeBtn} ${styles.modeSplit}`}>
                   <span className={styles.modeBtnName}>Solo Run</span>
                   <span className={styles.modeSplitActions}>
                     <button className={styles.modeSplitAction} onClick={() => startRun('solo', 'season')}>
                       One Season
-                      <small>3 cities</small>
                     </button>
                     <button className={styles.modeSplitAction} onClick={() => startRun('solo', 'endless')}>
                       Endless
-                      <small>no finish line</small>
                     </button>
                   </span>
                 </div>
                 {dailyPlayed ? (
                   <button className={styles.modeBtn} onClick={() => openBoard('today')}>
-                    <span className={styles.modeBtnName}>Daily Challenge</span>
-                    <span className={styles.modeBtnSub}>played today · view leaderboard</span>
+                    <span className={styles.modeBtnName}>
+                      Daily Challenge
+                      <span className={styles.modeBtnFlag}>Played</span>
+                    </span>
                   </button>
                 ) : (
                   <button className={styles.modeBtn} onClick={() => startRun('daily')}>
                     <span className={styles.modeBtnName}>Daily Challenge</span>
-                    <span className={styles.modeBtnSub}>shared packs, 1 reroll, once a day</span>
                   </button>
                 )}
                 <button className={`${styles.modeBtn} ${styles.encTile}`} onClick={() => startRun('enc')}>
@@ -770,15 +1041,13 @@ export default function PerfectRun() {
                     <span className={styles.encMark} aria-hidden="true">ENC</span>
                     Esports Nations Cup
                   </span>
-                  <span className={styles.modeBtnSub}>choose a nation · 32-team cup</span>
                 </button>
                 <button className={styles.modeBtn} onClick={() => navigate('/multiplayer')}>
                   <span className={styles.modeBtnName}>Multiplayer</span>
-                  <span className={styles.modeBtnSub}>2–16 squads · lobby code</span>
                 </button>
               </div>
 
-              <div className={styles.recordStrip}>
+              <div className={`${hub.meta} ${styles.recordStrip} ${styles.rise} ${styles.riseC}`}>
                 <span>Best <b><CountUp value={saves.bestScore ?? 0} /></b></span>
                 <span>Endless <b><CountUp value={saves.bestEndless ?? 0} /></b></span>
                 <span>Cycle <b><CountUp value={saves.bestCycle ?? 0} /></b></span>
@@ -800,21 +1069,24 @@ export default function PerfectRun() {
               )}
             </div>
 
-            <div className={styles.menuFan} aria-hidden="true">
+            <div className={`${styles.menuFan} ${styles.fanIn}`} aria-hidden="true">
               {fanCards.map(card => (
                 <div key={card.id} className={styles.fanCard}>
                   <PlayerCard card={card} displayScale={0.52} />
                 </div>
               ))}
             </div>
-          </section>
+          </div>
+
           <p className={styles.disclaimer}>
             Ratings are approximations tuned for game balance, not official VCT statistics.
           </p>
-        </>
+        </div>
+        </PhaseTransition>
       )}
 
       {phase === 'name' && (
+        <PhaseTransition phaseKey="name">
         <section className={styles.nameStep}>
           <span className={styles.introMarker}>Build your season</span>
           <h2 className={styles.nameTitle}>Name your squad<em>//</em></h2>
@@ -842,13 +1114,17 @@ export default function PerfectRun() {
             </button>
           </form>
         </section>
+        </PhaseTransition>
       )}
 
       {phase === 'country' && (
+        <PhaseTransition phaseKey="country">
         <CountryPicker options={nationalOptions} onChoose={chooseNation} />
+        </PhaseTransition>
       )}
 
       {phase === 'draft' && (
+        <PhaseTransition phaseKey="draft">
         <section>
           <DraftLane
             nation={nat}
@@ -859,20 +1135,11 @@ export default function PerfectRun() {
             label={mode === 'enc' ? `Build the ${countryName(selectedNation)} roster` : undefined}
           />
         </section>
-      )}
-
-      {phase === 'review' && (
-        <section>
-          <SquadHero picks={picks} />
-          {mode === 'enc' && power?.lines.some(line => String(line.label).startsWith('Missing:')) && (
-            <p className={styles.roleWarning}>This lineup is missing role coverage. You can still enter, but chemistry will reduce its power.</p>
-          )}
-          {power && <ChemPanel power={power} />}
-          <p className={styles.reviewHint}>Tap a card below to name your in-game leader.</p>
-        </section>
+        </PhaseTransition>
       )}
 
       {phase === 'intro' && def && (
+        <PhaseTransition phaseKey="intro">
         <section className={`${styles.intro} ${def.kind === 'champions' && endless ? styles.bossIntro : ''}`}>
           <span className={styles.introMarker}>
             {endless ? `Tournament ${tourIndex + 1}` : `Tournament ${tourIndex + 1} / ${season.length}`}
@@ -883,60 +1150,80 @@ export default function PerfectRun() {
           {endless && def.kind === 'masters' && season.find((event, index) => index >= tourIndex && event.kind === 'champions')?.modifier && (
             <div className={styles.nextBoss}>NEXT BOSS: {season.find((event, index) => index >= tourIndex && event.kind === 'champions').modifier.label}</div>
           )}
-          <p className={styles.introTag}>
-            {mode === 'enc' ? `${nationalOptions.length} nations. One world champion.` : '16 teams. Single elimination.'}
-          </p>
         </section>
+        </PhaseTransition>
       )}
 
       {phase === 'run' && view === 'board' && tour && round && (
+        <PhaseTransition phaseKey="run:board">
         <Board
           tour={tour}
           round={round}
           boardState={boardState}
           revealCount={revealCount}
           outcome={playerOutcome()}
+          squadName={squadName}
+          pendingArrivalIds={pendingArrivalIds}
           registerCell={(k, el) => { if (el) cellRefs.current[k] = el; }}
           bracketRef={bracketRef}
           overlayRef={overlayRef}
         />
+        </PhaseTransition>
       )}
 
       {phase === 'run' && view === 'match' && round && opp && (
+        <PhaseTransition phaseKey="run:match">
         <section className={styles.broadcast}>
-          {/* Two overlapping cut-out photo bands flanking the score plate */}
           <div className={styles.castHeroes} aria-hidden="true">
             <HeroBand roster={picks} side="left" />
             <HeroBand roster={opp.roster} side="right" />
           </div>
 
-          <div className={styles.castScore}>
-            <span className={styles.castTeamA}>{squadName}</span>
-            <span className={styles.castBig}>{mapsWon}–{mapsLost}</span>
-            <span className={styles.castTeamB}>
-              {opp.name}
-              {opp.logo && <img src={assetPath(opp.logo)} alt="" />}
+          <div className={`${styles.castSide} ${styles.castSideLeft}`}>
+            <span className={styles.castTeamName}>{squadName}</span>
+            <span className={styles.castPower}>
+              Power {power.power.toFixed(1)}
+              {mode === 'enc' && <FormBadge label={tour.teams.player.formLabel} />}
             </span>
+            {picks.map(p => (
+              <span key={p.id} className={styles.castPlayer}>
+                {p.player}{p.id === iglId ? ' (IGL)' : ''} · {p.rating}
+              </span>
+            ))}
           </div>
 
-          <div className={styles.castBody}>
-            <div className={styles.castSide}>
-              <span className={styles.castPower}>
-                Power {power.power.toFixed(1)}
-                {mode === 'enc' && <FormBadge label={tour.teams.player.formLabel} />}
+          <div className={styles.castCentre} aria-live="polite">
+            <span className={styles.liveTag}>
+              {seriesOver
+                ? (mapsWon >= needed ? 'Series won' : 'Series lost')
+                : `Live · ${maps[mapResults.length]}`}
+            </span>
+            <div className={styles.castScore}>
+              <span className={styles.castSeries}>Series {mapsWon}–{mapsLost}</span>
+              {/* Flashes the round-winner's color (--accent for the player,
+                  --opponent for them) and settles back to --ink — the
+                  smallest change that makes "who just won that round"
+                  unmistakable without a bespoke banner. Keying on
+                  roundFlash.key remounts the span so a repeat winner still
+                  replays the flash instead of no-op-ing on an unchanged
+                  initial value. */}
+              <m.span
+                key={roundFlash?.key ?? 'idle'}
+                className={styles.castBig}
+                initial={roundFlash ? { color: roundFlash.side === 'A' ? 'var(--accent)' : 'var(--opponent)' } : false}
+                animate={{ color: 'var(--ink)' }}
+                transition={{ duration: DUR.hero }}
+              >
+                {stageScore.a}–{stageScore.b}
+              </m.span>
+              <span className={styles.castRound}>
+                {live ? `Round ${liveRound}` : latestMap ? `${latestMap.map} final` : 'Map loading'}
               </span>
-              {picks.map(p => (
-                <span key={p.id} className={styles.castPlayer}>
-                  {p.player}{p.id === iglId ? ' (IGL)' : ''} · {p.rating}
-                </span>
-              ))}
             </div>
-
             <div className={styles.castMaps}>
-              {maps.slice(0, Math.max(mapResults.length + 1, needed)).map((m, i) => {
+              {maps.map((m, i) => {
                 const r = mapResults[i];
                 const isLive = live && i === mapResults.length;
-                if (!r && !isLive && i > mapResults.length) return null;
                 return (
                   <div key={m} className={[styles.castMapRow, r ? (r.winA ? styles.mapWin : styles.mapLoss) : '', isLive ? styles.castMapLive : ''].join(' ')}>
                     <span className={styles.castMapName}>{m}</span>
@@ -949,75 +1236,92 @@ export default function PerfectRun() {
                 );
               })}
             </div>
-
-            <div className={`${styles.castSide} ${styles.castSideRight}`}>
-              <span className={styles.castPower}>
-                Power {opp.power.toFixed(1)}
-                {mode === 'enc' && <FormBadge label={opp.formLabel} />}
-              </span>
-              {opp.roster.map(p => (
-                <span key={p.id} className={styles.castPlayer}>
-                  {p.player}{p.id === opp.iglId ? ' (IGL)' : ''} · {p.rating}
-                </span>
-              ))}
-            </div>
           </div>
 
-          <span className={styles.liveTag}>
-            {seriesOver
-              ? (mapsWon >= needed ? 'Series won' : 'Series lost')
-              : `Live: ${maps[mapResults.length]}`}
-          </span>
+          <div className={`${styles.castSide} ${styles.castSideRight}`}>
+            <span className={styles.castTeamName}>
+              {opp.name}
+              {opp.logo && <img src={assetPath(opp.logo)} alt="" />}
+            </span>
+            <span className={styles.castPower}>
+              Power {opp.power.toFixed(1)}
+              {mode === 'enc' && <FormBadge label={opp.formLabel} />}
+            </span>
+            {opp.roster.map(p => (
+              <span key={p.id} className={styles.castPlayer}>
+                {p.player}{p.id === opp.iglId ? ' (IGL)' : ''} · {p.rating}
+              </span>
+            ))}
+          </div>
         </section>
+        </PhaseTransition>
       )}
 
       {phase === 'result' && currentResult && (
+        <PhaseTransition phaseKey="result">
         <TournamentResult
           result={currentResult}
           runningScore={runningScore.score}
           endless={endless}
         />
+        </PhaseTransition>
       )}
 
       {phase === 'enc_result' && currentResult && tour && (
+        <PhaseTransition phaseKey="enc_result">
         <EncResult
           result={currentResult}
           tour={tour}
           saves={saves.enc}
+          squadName={squadName}
           onReplay={() => startRun('enc')}
           onMenu={() => setPhase('menu')}
         />
+        </PhaseTransition>
       )}
 
-      {phase === 'locked' && def && (
-        <section className={styles.between}>
-          <span className={styles.introMarker}>Squad locked in</span>
-          <h2 className={styles.betweenTitle}>Champions stay together</h2>
-          <p className={styles.groupNote}>
-            You took {currentResult?.label}. Your winning squad rolls on unchanged.
-          </p>
-          <SquadStrip picks={picks} iglId={iglId} squadName={squadName} />
-          <div className={styles.nextTeaser}>
-            {endless
-              ? <>Next up <b>tournament {tourIndex + 2}</b></>
-              : <>Next up <b>{season[tourIndex + 1]?.label}</b></>}
+      {phase === 'manage' && def && (
+        <PhaseTransition phaseKey="manage">
+        <section className={[styles.between, styles.manageScreen].join(' ')}>
+          <span className={styles.introMarker}>
+            {!currentResult ? 'Squad ready' : currentResult.champion ? 'Squad locked in' : 'Regroup'}
+          </span>
+          <h2 className={styles.betweenTitle}>
+            {!currentResult ? 'Take the field' : currentResult.champion ? 'Champions stay together' : 'Back to the drawing board'}
+          </h2>
+          {mode === 'enc' && power?.lines.some(line => String(line.label).startsWith('Missing:')) && (
+            <p className={styles.roleWarning}>This lineup is missing role coverage. You can still enter, but chemistry will reduce its power.</p>
+          )}
+          {power && <ChemPanel power={power} />}
+          {/* Newest first — `tourResults` accumulates in chronological order
+              as each tournament resolves, currentResult already being its
+              own last entry. */}
+          <div className={styles.tourReportList}>
+            {[...tourResults].reverse().map((result, i) => (
+              <TournamentReport key={`${tourResults.length - 1 - i}-${result.label}`} result={result} />
+            ))}
           </div>
         </section>
+        </PhaseTransition>
       )}
 
       {phase === 'pack' && (
+        <PhaseTransition phaseKey="pack">
         <PackPhase
           nat={packNat}
           choices={packChoices}
           ripId={ripId}
-          pick={packPick}
-          onPickNew={setPackPick}
+          picks={picks}
+          pendingSwap={pendingSwap}
+          onDropSwap={(card, targetId) => setPendingSwap({ card, targetId })}
+          onConfirm={confirmSwap}
+          onCancel={cancelSwap}
         />
+        </PhaseTransition>
       )}
 
-
-
       {phase === 'over' && seasonResult && (
+        <PhaseTransition phaseKey="over">
         <SeasonOver
           result={seasonResult}
           tourResults={tourResults}
@@ -1026,139 +1330,85 @@ export default function PerfectRun() {
           onReplay={() => startRun(mode, runLength)}
           onMenu={() => setPhase('menu')}
         />
+        </PhaseTransition>
+      )}
+      </AnimatePresence>
+
+      {currentSkip && (
+        <SkipHint onSkip={currentSkip.skip} progress={currentSkip.progress} />
       )}
       </main>
       </div>
 
-      {barVisible && (
-        <ActionBar
-          roster={drawerRoster}
-          iglId={iglId}
-          squadName={squadName}
-          squadOpen={squadOpen}
-          onToggleSquad={() => setSquadPinned(open => !open)}
-          onHoverOpen={() => setSquadHover(true)}
-          onHoverClose={() => setSquadHover(false)}
-          actions={barActions}
-          selectedCardId={phase === 'review' ? iglId : undefined}
-          onFocusCard={setFocusCard}
-        />
+      {/* Fixed chrome, not scrolling page content — a sibling of SquadBar,
+          entirely outside AnimatePresence/PhaseTransition above, so no
+          Framer Motion ancestor's clip-path wipe can trap it into the wrong
+          containing block for position: fixed (see .manageFaces). Purely
+          decorative here (no onPick), the roster's already reachable via
+          the dock chips right below it. */}
+      {phase === 'manage' && (
+        <div className={styles.manageFaces} aria-hidden="true">
+          <SquadHero picks={picks} iglId={iglId} />
+        </div>
       )}
 
-      {/* Tapping a fanned card opens it full size (and flippable) rather than
+      {barVisible && (
+        <SquadBar
+          dock={(
+            <SquadDock
+              roster={drawerRoster}
+              size={ROSTER_SIZE}
+              iglId={iglId}
+              squadName={squadName}
+              onFocusCard={setFocusCard}
+              focusCardId={focusCard?.id ?? null}
+              packs={packs}
+              // Only wired up while the manage screen owns the "open a
+              // pack" action — the pack badge stays a visible readout on
+              // every other phase (draft, run, result…) but forcing phase
+              // to 'pack' from, say, mid-match would be a broken jump, not
+              // a shortcut.
+              onOpenPack={phase === 'manage' ? openPack : null}
+              onSwap={swapPicks}
+            />
+          )}
+        >
+          {/* action.onClick (playMatch, reroll, etc.) is passed by reference
+              here, never called; whatever refs those functions touch
+              internally are only actually read once the button fires,
+              inside the event handler React's own docs name as the
+              sanctioned place for it. */}
+          {barActions.map(action => (
+            <TacticalButton
+              key={action.key}
+              className={action.kind === 'primary' ? styles.primary : styles.secondary}
+              onClick={action.onClick}
+              disabled={action.disabled}
+            >
+              {action.label}
+            </TacticalButton>
+          ))}
+        </SquadBar>
+      )}
+
+      {/* Clicking a dock chip opens it full size (and flippable) rather than
           firing the phase's action blind — the action moves into the overlay,
           where you can actually read the card you're acting on. */}
       <CardFocusOverlay
         card={focusCard}
         onClose={() => setFocusCard(null)}
-        action={focusCard ? cardActionLabel(focusCard) : null}
-        onAction={() => runCardAction(focusCard)}
       />
     </div>
-  );
-}
-
-// ── Squad stats (VFL Wireframes 2c, trimmed): the role bars are redundant
-//    with the fanned cards you can already see, so this is just the number
-//    that changes — power, chemistry, and the bonus you're missing. ──
-
-const ROLE_SLOTS = [
-  ['DUEL', 'Duelist'],
-  ['INIT', 'Initiator'],
-  ['CTRL', 'Controller'],
-  ['SENT', 'Sentinel'],
-];
-
-function SquadStats({ roster, iglId }) {
-  if (!roster.length) return null;
-  const missing = ROLE_SLOTS.filter(([, cls]) => !roster.some(c => c.role === cls)).map(([tag]) => tag);
-  const live = teamPower(roster, iglId);
-
-  return (
-    <div className={styles.squadStats}>
-      <span className={styles.squadStat}>Power<b className={styles.statPower}>{live.power.toFixed(1)}</b></span>
-      <span className={styles.squadStat}>Chem<b className={live.chem >= 0 ? styles.pos : styles.neg}>{live.chem >= 0 ? '+' : ''}{live.chem}</b></span>
-      {missing.length > 0 && <span className={styles.squadNeed}>▲ NEED {missing.join(' · ')}</span>}
-    </div>
-  );
-}
-
-// ── Squad fan: the drafted cards ARE the squad view — no second copy pops
-//    up elsewhere. Folded into a tight hand at rest; tap it and those exact
-//    cards rise and grow in place, fanning out to be legible. The stats
-//    (power/chem/need) float in beside them while risen. ──
-
-function SquadFan({ roster, iglId, squadName, squadOpen, onToggle, onHoverOpen, onHoverClose, selectedCardId, onFocusCard }) {
-  const n = roster.length;
-  // Hover intent to open, safe triangle to stay open.
-  //   · enter/move live on the STACK only, so crossing the bar's empty middle
-  //     on the way to a button can't arm the open.
-  //   · leave lives on the whole AREA, so drifting off a card into the gap
-  //     beside it doesn't count as leaving at all.
-  //   · the triangle aims at the cards + stats chip, which are transformed far
-  //     outside .fanArea's own (wide, invisible) layout box.
-  const { ref: hoverRef, hoverProps } = useSafeHover({
-    isOpen: squadOpen,
-    onOpen: onHoverOpen,
-    onClose: onHoverClose,
-    unionSelector: '[data-fan-card], [data-fan-stats]',
-  });
-  const { onPointerEnter, onPointerMove, onPointerLeave } = hoverProps;
-
-  return (
-    <div
-      ref={hoverRef}
-      onPointerLeave={onPointerLeave}
-      onClick={e => { if (!e.target.closest('[data-fan-card]')) onToggle(); }}
-      className={[styles.fanArea, squadOpen ? styles.fanOpen : ''].join(' ')}
-    >
-      {squadOpen && n > 0 && (
-        <div data-fan-stats className={styles.fanStats}>
-          <span className={styles.fanStatsName}>
-            {squadName || 'Your squad'}
-            <small>{n} / {ROSTER_SIZE}</small>
-          </span>
-          <SquadStats roster={roster} iglId={iglId} />
-        </div>
-      )}
-
-      <div className={styles.fanStack} onPointerEnter={onPointerEnter} onPointerMove={onPointerMove}>
-        {n === 0 && <span className={styles.fanEmpty} aria-hidden="true" />}
-        {roster.map((card, i) => {
-          const isSelected = selectedCardId !== undefined && card.id === selectedCardId;
-          // Closed (touch, or before hover intent lands): any card opens the
-          // hand. Open: a card opens full size in the focus overlay, which is
-          // also where the phase's action for that card lives.
-          const onCardTap = squadOpen ? () => onFocusCard(card) : onToggle;
-          return (
-            <span key={card.id} data-fan-card className={styles.fanCardWrap} style={{ '--off': i - (n - 1) / 2 }}>
-              {/* Ring + IGL tag live on the (3.2x-scaled) fanCardScale, so they
-                  use their own small values rather than PlayerCard's built-in
-                  selection ring, which the scale would blow up. */}
-              <span className={[styles.fanCardScale, isSelected ? styles.fanSelected : ''].join(' ')}>
-                <PlayerCard
-                  card={card}
-                  boosterIcons={card.runFx ?? []}
-                  displayScale={0.12}
-                  tilt={false}
-                  onClick={onCardTap}
-                />
-                {card.id === iglId && <span className={styles.fanIgl}>IGL</span>}
-              </span>
-            </span>
-          );
-        })}
-      </div>
-
-      {n > 0 && !squadOpen && <span className={styles.fanBadge}>{n}</span>}
-    </div>
+    </>
   );
 }
 
 // ── Squad hero: the drafted five as overlapping cut-out photos, dealt in
-//    one at a time. Shown on the review screen while team power settles. ──
+//    one at a time. Purely decorative — shown on the manage screen, in front
+//    of the chemistry/tournament report. IGL is a position (leftmost dock
+//    slot, reassigned there by drag-to-swap), not something picked here. ──
 
-function SquadHero({ picks }) {
+function SquadHero({ picks, iglId }) {
   // Every card has a portrait now — a photo-less one composites a grey head
   // onto its org's kit, exactly as its card does. Filtering on `photo` used to
   // drop those players out of the lineup entirely, so a squad with two
@@ -1173,6 +1423,7 @@ function SquadHero({ picks }) {
           style={{ '--i': i, zIndex: Math.round(10 - Math.abs(i - mid)) }}
         >
           <PlayerPortrait card={card} fluid loading="lazy" />
+          {card.id === iglId && <span className={styles.squadIgl}>IGL</span>}
         </div>
       ))}
     </div>
@@ -1197,45 +1448,6 @@ function HeroBand({ roster, side }) {
           <PlayerPortrait card={card} fluid loading="lazy" />
         </div>
       ))}
-    </div>
-  );
-}
-
-// ── Bottom action bar: the squad fan and the phase's actions ───────────────
-
-function ActionBar({ roster, iglId, squadName, squadOpen, onToggleSquad, onHoverOpen, onHoverClose, actions, selectedCardId, onFocusCard }) {
-  return (
-    <div className={styles.actionBar}>
-      {/* Three explicit zones (grid, not flex-flow order) so the fan sits at
-          the bar's true center no matter how wide the side content is. */}
-      <div className={styles.actionBarInner}>
-        <div className={styles.barLeft} />
-
-        <SquadFan
-          roster={roster}
-          iglId={iglId}
-          squadName={squadName}
-          squadOpen={squadOpen}
-          onToggle={onToggleSquad}
-          onHoverOpen={onHoverOpen}
-          onHoverClose={onHoverClose}
-          selectedCardId={selectedCardId}
-          onFocusCard={onFocusCard}
-        />
-
-        <div className={styles.barActions}>
-          {actions.map(action => (
-            <button
-              key={action.key}
-              className={action.kind === 'primary' ? styles.primary : styles.secondary}
-              onClick={action.onClick}
-              disabled={action.disabled}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1270,7 +1482,7 @@ function CountryPicker({ options, onChoose }) {
 
 // ── Board: the current stage as a live bracket ───────────────────────────────
 
-function Board({ tour, round, boardState, revealCount, outcome, registerCell, bracketRef, overlayRef }) {
+function Board({ tour, round, boardState, revealCount, outcome, squadName, pendingArrivalIds, registerCell, bracketRef, overlayRef }) {
   const npcMatches = round.matches.filter(m => !m.isPlayerMatch);
   const isRevealed = (m) => {
     if (m.isPlayerMatch) return !!m.winner;
@@ -1279,7 +1491,9 @@ function Board({ tour, round, boardState, revealCount, outcome, registerCell, br
   };
 
   const statusLine = (() => {
-    if (boardState === 'pairings') return 'Single elimination. Win or go home.';
+    // Nothing has happened yet at this state, and no line reads better than a
+    // restated rule (the bracket itself already shows the format).
+    if (boardState === 'pairings') return '';
     if (boardState === 'complete') {
       if (outcome === 'champion') return 'You are the champions.';
       if (outcome === 'out') return 'Your run ends here.';
@@ -1303,6 +1517,8 @@ function Board({ tour, round, boardState, revealCount, outcome, registerCell, br
         tour={tour}
         currentRoundKey={round.key}
         isRevealed={isRevealed}
+          squadName={squadName}
+          pendingArrivalIds={pendingArrivalIds}
           registerCell={registerCell}
           bracketRef={bracketRef}
           overlayRef={overlayRef}
@@ -1321,7 +1537,7 @@ function FormBadge({ label, prefix }) {
   );
 }
 
-function Bracket({ tour, currentRoundKey, isRevealed, registerCell, bracketRef, overlayRef, hideCurrentPlayer }) {
+function Bracket({ tour, currentRoundKey, isRevealed, squadName, pendingArrivalIds, registerCell, bracketRef, overlayRef, hideCurrentPlayer }) {
   const preliminary = tour.rounds.find(round => round.key === 'preliminary');
   const keys = tour.roundKeys ?? ['r16', 'quarter', 'semi', 'final'];
   const baseMatches = (tour.mainSize ?? 16) / 2;
@@ -1338,6 +1554,16 @@ function Bracket({ tour, currentRoundKey, isRevealed, registerCell, bracketRef, 
         match={m}
         revealed={revealed}
         hidePlayer={hideCurrentPlayer && isCurrent}
+        squadName={squadName}
+        // BracketCell checks pendingArrivalIds by "thisCellKey:teamId", not
+        // bare teamId — a winner's id also already sits in its OLD round's
+        // cell (the match it just won, still on screen one column back), so
+        // a bare-id check would mask that already-decided source cell too.
+        // Passing this cell's own key lets BracketCell match only its own
+        // slot's entry, so a raw id shared between the source and
+        // destination cells never collides.
+        pendingArrivalIds={pendingArrivalIds}
+        cellKey={key}
         cellRef={el => registerCell(key, el)}
       />
     );
@@ -1365,6 +1591,7 @@ function Bracket({ tour, currentRoundKey, isRevealed, registerCell, bracketRef, 
                 match={match}
                 revealed={preliminary.key === currentRoundKey ? isRevealed(match) : !!match.winner}
                 hidePlayer={false}
+                squadName={squadName}
                 cellRef={el => registerCell(`preliminary:${index}`, el)}
               />
             ))}
@@ -1403,7 +1630,7 @@ function Bracket({ tour, currentRoundKey, isRevealed, registerCell, bracketRef, 
   );
 }
 
-function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
+function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArrivalIds = EMPTY_TEAM_ID_SET, cellKey, cellRef }) {
   if (!match) {
     return (
       <div className={styles.bracketCell} ref={cellRef}>
@@ -1414,19 +1641,38 @@ function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
   }
   const a = tour.teams[match.a];
   const b = tour.teams[match.b];
-  const row = (team, score, isWinner, isLoser) => (
-    <div
-      className={[styles.bracketTeam, isWinner ? styles.cellWon : '', isLoser ? styles.cellLost : '', team.isPlayer ? styles.bracketYou : '', hidePlayer && team.isPlayer ? styles.roundHidden : ''].join(' ')}
-      data-team-id={team.id}
-    >
-      {team.nationality
-        ? <span className={`fi fi-${team.nationality.toLowerCase()}`} aria-hidden="true" />
-        : team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
-      <span className={styles.cellSeed}>{seedOf(tour, team.id)}</span>
-      <span className={styles.cellTag}>{team.isPlayer ? (team.nationality ? `YOU · ${team.tag}` : 'YOU') : team.tag}</span>
-      <span className={styles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
-    </div>
-  );
+  // A team mid-flight to this slot (see travelThenNextRound/pendingArrivalIds)
+  // renders as TBD here too — data-team-id stays put either way so the travel
+  // effect's querySelector still finds this exact row to measure and animate
+  // toward. The traveling clone is what visually delivers the reveal; this
+  // cell only shows the real matchup once that clone has actually landed.
+  // Checked as "thisCellKey:teamId", not bare teamId: a winner's id also
+  // already sits in its OLD round's cell one column back (the match it just
+  // won), and a bare-id check would mask that already-decided cell too.
+  const row = (team, score, isWinner, isLoser) => {
+    const pending = pendingArrivalIds.has(`${cellKey}:${team.id}`);
+    return (
+      <div
+        className={[styles.bracketTeam, isWinner ? styles.cellWon : '', isLoser ? styles.cellLost : '', team.isPlayer ? styles.bracketYou : '', hidePlayer && team.isPlayer ? styles.roundHidden : ''].join(' ')}
+        data-team-id={team.id}
+      >
+        {pending ? (
+          <span className={styles.cellTag}>TBD</span>
+        ) : (
+          <>
+            {team.nationality
+              ? <span className={`fi fi-${team.nationality.toLowerCase()}`} aria-hidden="true" />
+              : team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
+            <span className={styles.cellSeed}>{seedOf(tour, team.id)}</span>
+            <span className={styles.cellTag}>
+              {team.isPlayer ? (team.nationality ? `${squadName} · ${team.tag}` : squadName) : team.tag}
+            </span>
+            <span className={styles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
+          </>
+        )}
+      </div>
+    );
+  };
   return (
     <div className={[styles.bracketCell, match.isPlayerMatch ? styles.playerMatch : '', revealed ? styles.revealed : ''].join(' ')} ref={cellRef}>
       {row(a, match.scoreA, revealed && match.winner === a.id, revealed && match.winner === b.id)}
@@ -1435,7 +1681,7 @@ function BracketCell({ tour, match, revealed, hidePlayer, cellRef }) {
   );
 }
 
-function EncResult({ result, tour, saves, onReplay, onMenu }) {
+function EncResult({ result, tour, saves, squadName, onReplay, onMenu }) {
   const champion = tour.teams[result.championId];
   return (
     <section className={styles.encResult}>
@@ -1443,9 +1689,13 @@ function EncResult({ result, tour, saves, onReplay, onMenu }) {
       <h1 className={result.champion ? styles.overWin : styles.overFail}>
         {result.champion ? `${countryName(champion.nationality)} are world champions` : `${countryName(champion.nationality)} win the cup`}
       </h1>
-      <p className={styles.groupNote}>
-        {result.champion ? 'You completed the national run.' : `${countryName(selectedNationFromTour(tour))} finished in the ${result.finishRound}.`}
-      </p>
+      {result.champion ? (
+        <p className={styles.groupNote}>You completed the national run.</p>
+      ) : (
+        <m.p className={styles.groupNote} animate={eliminationFlash.animate}>
+          {`${countryName(selectedNationFromTour(tour))} finished in the ${result.finishRound}.`}
+        </m.p>
+      )}
       <div className={styles.encRecordStrip}>
         <span>Best finish <b>{saves?.bestFinish ?? '—'}</b></span>
         <span>Titles <b>{saves?.titles ?? 0}</b></span>
@@ -1455,6 +1705,7 @@ function EncResult({ result, tour, saves, onReplay, onMenu }) {
         tour={tour}
         currentRoundKey="complete"
         isRevealed={() => true}
+        squadName={squadName}
         registerCell={() => {}}
         bracketRef={null}
         overlayRef={null}
@@ -1478,9 +1729,17 @@ function TournamentResult({ result, runningScore, endless }) {
   return (
     <section className={styles.result}>
       <span className={styles.introMarker}>{result.label}</span>
-      <h2 className={result.champion ? styles.overWin : styles.overFail}>
-        {result.champion ? 'Champions' : `Out in the ${result.finishRound}`}
-      </h2>
+      {result.champion ? (
+        <h2 className={styles.overWin}>Champions</h2>
+      ) : (
+        // Elimination is one of R3's four rationed triggers: a single
+        // authored glitch that settles into a desaturated hold, not a pulse
+        // that snaps back — the run is actually over, so the color stays
+        // drained rather than recovering.
+        <m.h2 className={styles.overFail} animate={eliminationFlash.animate}>
+          {`Out in the ${result.finishRound}`}
+        </m.h2>
+      )}
 
       {result.badges.length > 0 && (
         <div className={styles.badges}>
@@ -1495,12 +1754,18 @@ function TournamentResult({ result, runningScore, endless }) {
 
       <div className={styles.historyList}>
         {result.series.map((h, i) => (
-          <div key={i} className={[styles.historyRow, h.won ? styles.mapWin : styles.mapLoss].join(' ')}>
+          <m.div
+            key={i}
+            className={[styles.historyRow, h.won ? styles.mapWin : styles.mapLoss].join(' ')}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: DUR.enter, ease: EASE.out, delay: i * STAGGER }}
+          >
             <span className={styles.historyStage}>{h.stage}</span>
             <span className={styles.historyOpp}>vs {h.opp}</span>
             <span className={styles.historyScore}>{h.mapsWon}–{h.mapsLost}</span>
             <span className={styles.historyMaps}>{h.score}</span>
-          </div>
+          </m.div>
         ))}
       </div>
 
@@ -1509,34 +1774,55 @@ function TournamentResult({ result, runningScore, endless }) {
   );
 }
 
-// ── Consolation pack: pick one, swap one ─────────────────────────────────────
+// ── Squad pack: pick one, swap one ───────────────────────────────────────────
 
-function PackPhase({ nat, choices, ripId, pick, onPickNew }) {
+// Picking is drag-only: dragging a pack card onto a specific dock chip is
+// what tells the game which roster member it's proposed to replace, so a
+// blind tap can't stand in for that (there's no chip for it to name). The
+// drop only proposes the swap — nothing touches `picks` until Confirm.
+function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConfirm, onCancel }) {
+  const outgoing = pendingSwap ? picks.find(p => p.id === pendingSwap.targetId) : null;
   return (
     <section>
       <div className={styles.boardHead}>
-        <span className={styles.stageLabel}>Consolation pack</span>
+        <span className={styles.stageLabel}>Open pack</span>
       </div>
 
-      {!pick && (
+      {/* Always mounted, just hidden — conditionally rendering this in and
+          out of the tree instead would remount PackRip/PackTear every time
+          Cancel clears `pendingSwap`, replaying the whole tear-open
+          animation from scratch instead of snapping straight back to the
+          already-revealed strip. */}
+      <div style={pendingSwap ? { display: 'none' } : undefined}>
         <DraftLane
           nation={nat}
           choices={choices}
           ripId={ripId}
           interactive
-          onPick={onPickNew}
+          onPick={onDropSwap}
+          dropTarget="chip"
+          clickable={false}
         />
-      )}
+        <p className={styles.swapHint}>Drag a card into the dock below to choose who it replaces.</p>
+      </div>
 
-      {/* Once a card is chosen, the swap-out target is picked straight from the
-          bottom squad fan (see ActionBar onCardClick) — no second card set. */}
-      {pick && (
+      {pendingSwap && outgoing && (
         <div className={styles.swapArea}>
-          <div className={styles.swapIncoming}>
-            <span className={styles.stripLabel}>Incoming</span>
-            <PlayerCard card={pick} displayScale={0.42} />
+          <div className={styles.swapConfirm}>
+            <div className={styles.swapIncoming}>
+              <span className={styles.stripLabel}>Incoming</span>
+              <PlayerCard card={pendingSwap.card} displayScale={0.42} />
+            </div>
+            <span className={styles.swapArrow} aria-hidden="true">→</span>
+            <div className={styles.swapOutgoing}>
+              <span className={styles.stripLabel}>Leaving</span>
+              <PlayerCard card={outgoing} displayScale={0.42} />
+            </div>
           </div>
-          <p className={styles.swapHint}>Tap a squad card below to swap this player in.</p>
+          <div className={styles.swapConfirmActions}>
+            <TacticalButton className={styles.secondary} onClick={onCancel}>Cancel</TacticalButton>
+            <TacticalButton className={styles.primary} onClick={onConfirm}>Confirm swap</TacticalButton>
+          </div>
         </div>
       )}
     </section>
@@ -1681,90 +1967,51 @@ function ChemPanel({ power }) {
   );
 }
 
-function SquadStrip({ picks, iglId, squadName = 'Your squad' }) {
+// The manage screen's backdrop: a flat stat readout for the tournament that
+// just ended, in the same label/big-number/breakdown-rows language ChemPanel
+// already uses on the review screen — not a fresh "card of stats" template.
+// Sits behind SquadHero's portraits (lower z-index, same section), so it
+// reads as the report the squad is standing in front of, not a separate box.
+function TournamentReport({ result }) {
+  if (!result) return null;
+  const topMvp = result.mvpBoard?.[0];
+  const seriesLost = result.seriesPlayed - result.seriesWon;
   return (
-    <div className={styles.rosterStrip}>
-      <span className={styles.stripLabel}>{squadName}</span>
-      {picks.map(card => (
-        <div key={card.id} className={styles.squadStripCard}>
-          <PlayerCard card={card} displayScale={0.3} />
-          {card.id === iglId && <span className={styles.squadIgl}>IGL</span>}
-        </div>
-      ))}
+    <div className={styles.tourReport} aria-hidden="true">
+      <div className={styles.tourReportTotal}>
+        <span>{result.label}</span>
+        <b>{result.champion ? 'Champion' : result.finishRound}</b>
+      </div>
+      <ul className={styles.tourReportLines}>
+        <li><span>Series</span><b>{result.seriesWon}–{seriesLost}</b></li>
+        <li><span>Maps</span><b>{result.mapsWonTotal}–{result.mapsLostTotal}</b></li>
+        {topMvp && (
+          <li><span>Most MVPs</span><b>{topMvp.card.player} · {topMvp.count}</b></li>
+        )}
+        {result.igl && (
+          <li><span>In-game leader</span><b>{result.igl.player}</b></li>
+        )}
+      </ul>
     </div>
   );
 }
 
 // ── Draft lane: header + pack rip + horizontal choice strip + picks ─────────
 
-const RIP_MS = 850;
-
-function DraftLane({ nation, choices, ripId, interactive, onPick, label }) {
-  const [ripping, setRipping] = useState(false);
-  const stripRef = useRef(null);
-  const ripTimer = useRef(null);
-
-  useEffect(() => {
-    if (!ripId) return undefined;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const startTimer = setTimeout(() => {
-      setRipping(!reduced);
-      if (stripRef.current) stripRef.current.scrollLeft = 0;
-      if (!reduced) ripTimer.current = setTimeout(() => setRipping(false), RIP_MS);
-    }, 0);
-    return () => {
-      clearTimeout(startTimer);
-      clearTimeout(ripTimer.current);
-    };
-  }, [ripId]);
-
-  const onWheel = (e) => {
-    if (stripRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      stripRef.current.scrollLeft += e.deltaY;
-    }
-  };
-
-  // nation === null means a "normal" unboxing pack of random cards; its face
-  // carries only the mark — the contents speak when the pack tears.
-  const face = (
-    <span className={styles.packFaceInner}>
-      {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 46, height: 33 }} />}
-      {nation && <span className={styles.packName}>{countryName(nation)}</span>}
-      <span className={nation ? styles.packSlash : styles.packSlashBig}>//</span>
-    </span>
-  );
-
+function DraftLane({ nation, choices, ripId, interactive, onPick, label, dropTarget, clickable }) {
   return (
-    <div className={styles.lane}>
-      <div className={styles.draftBar}>
-        <div>
-          {label && <span className={styles.laneLabel}>{label}</span>}
-          {nation && (
-            <span className={styles.draftNat}>
-              <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 34, height: 24 }} />
-              {countryName(nation)}
-              <small className={styles.draftCount}>{choices.length} available</small>
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className={styles.strip} ref={stripRef} onWheel={onWheel}>
-        {ripping && (
-          <div className={styles.pack} key={`p${ripId}`} aria-hidden="true">
-            <div className={`${styles.packFace} ${styles.packTop}`}>{face}</div>
-            <div className={`${styles.packFace} ${styles.packBottom}`}>{face}</div>
-          </div>
-        )}
-        <div key={`c${ripId}`} className={[styles.stripCards, ripping ? styles.stripHidden : styles.stripReveal].join(' ')}>
-          {choices.map((card, i) => (
-            <div key={card.id} className={styles.stripCard} style={{ '--i': Math.min(i, 10) }}>
-              <PlayerCard card={card} displayScale={0.5} onClick={interactive ? () => onPick(card) : undefined} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <PackRip
+      ripId={ripId}
+      nation={nation}
+      packTitle={nation ? countryName(nation) : undefined}
+      choices={choices}
+      interactive={interactive}
+      onPick={onPick}
+      headerLabel={label}
+      displayScale={0.5}
+      dropTarget={dropTarget}
+      clickable={clickable}
+    />
   );
 }
 
@@ -1788,4 +2035,28 @@ function CountUp({ value }) {
     return () => cancelAnimationFrame(raf);
   }, [value]);
   return <>{n}</>;
+}
+
+// The shared skip affordance for every automatic sequence in the run — the
+// three duration-based pauses (intro splash, series-end, board-complete),
+// the live match round-reveal, and the bracket travel flight. `progress`
+// (1 -> 0, a draining bar) only exists for the duration-based ones; the
+// other two are indeterminate, so the button renders alone — deliberately
+// the smaller of the two looks, since those two already have their own
+// clear motion (a scoreline ticking, a team flying across the bracket) to
+// read as "this is still going," where the button's only job is offering
+// the door out, not narrating progress that's already visible elsewhere.
+// Space/Enter is wired globally in the effect above; this is the visible +
+// pointer-reachable door into the same skip.
+function SkipHint({ onSkip, progress }) {
+  return (
+    <div className={styles.skipHint} role="status">
+      <div className={styles.skipTrack}>
+        <div className={styles.skipFill} style={progress != null ? { '--progress': progress } : undefined} />
+      </div>
+      <button type="button" className={styles.skipBtn} onClick={onSkip}>
+        Space to skip
+      </button>
+    </div>
+  );
 }

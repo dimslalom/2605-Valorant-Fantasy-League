@@ -150,7 +150,7 @@ export function applyCommand(state, actorId, command, cards, now) {
       chooseCard(state, actorId, payload.cardId, cards, now, events);
       break;
     case 'choose_igl':
-      chooseIgl(state, actorId, payload.cardId, cards, now, events);
+      x(state, actorId, payload.cardId, cards, now, events);
       break;
     case 'choose_swap':
       chooseSwap(state, actorId, payload.replaceCardId, cards, now, events);
@@ -402,7 +402,7 @@ function chooseCard(state, actorId, cardId, cards, now) {
   state.consolation.selectedCardId = cardId;
 }
 
-function chooseIgl(state, actorId, cardId, cards, now, events) {
+function x(state, actorId, cardId, cards, now, events) {
   if (state.phase !== 'igl_select') throw new GameError('invalid_phase', 'IGL selection is closed.');
   const competitor = state.competitors.find(p => p.id === actorId);
   if (!competitor.rosterIds.includes(cardId)) throw new GameError('invalid_card', 'Choose an IGL from your squad.');

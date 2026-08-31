@@ -258,22 +258,22 @@ export default function Match() {
                         <div className={styles.zoneRow}>
                           <span>A SITE</span>
                           <div className={styles.zoneMeter}>
-                            <div style={{ width: '65%', background: '#ff4655' }}>65% YOU</div>
-                            <div style={{ width: '35%', background: '#00d2ff' }}>35% OPP</div>
+                            <div style={{ width: '65%', background: 'var(--accent)' }}>65% YOU</div>
+                            <div style={{ width: '35%', background: 'var(--opponent)' }}>35% OPP</div>
                           </div>
                         </div>
                         <div className={styles.zoneRow}>
                           <span>MID / B SITE</span>
                           <div className={styles.zoneMeter}>
-                            <div style={{ width: '48%', background: '#ff4655' }}>48% YOU</div>
-                            <div style={{ width: '52%', background: '#00d2ff' }}>52% OPP</div>
+                            <div style={{ width: '48%', background: 'var(--accent)' }}>48% YOU</div>
+                            <div style={{ width: '52%', background: 'var(--opponent)' }}>52% OPP</div>
                           </div>
                         </div>
                         <div className={styles.zoneRow}>
                           <span>C SITE</span>
                           <div className={styles.zoneMeter}>
-                            <div style={{ width: '70%', background: '#ff4655' }}>70% YOU</div>
-                            <div style={{ width: '30%', background: '#00d2ff' }}>30% OPP</div>
+                            <div style={{ width: '70%', background: 'var(--accent)' }}>70% YOU</div>
+                            <div style={{ width: '30%', background: 'var(--opponent)' }}>30% OPP</div>
                           </div>
                         </div>
                       </div>

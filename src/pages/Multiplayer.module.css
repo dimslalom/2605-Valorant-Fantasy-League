@@ -7,19 +7,21 @@
   min-height: 100dvh;
   margin-left: calc(var(--rail-size) + var(--safe-l));
   margin-right: var(--safe-r);
-  /* The bottom pad clears the fixed timer dock plus the home indicator. */
-  padding: var(--sp-8) var(--sp-12) calc(120px + var(--safe-b));
+  padding: var(--sp-8) var(--sp-12) calc(var(--sp-8) + var(--safe-b));
   background: var(--bg);
   color: var(--ink);
 }
 
+/* Clearance for the fixed chrome docked below the content: the squad bar
+   (SquadBar.module.css) on its own, or stacked under the match TimerBar
+   when both are up — see LobbyRoom's `dockVisible`/`timerVisible`. */
+.page.withDock { padding-bottom: calc(156px + var(--safe-b)); }
+.page.withTimer { padding-bottom: calc(264px + var(--safe-b)); }
+
 /* Beveled corners on interactive surfaces, matching the unified system */
 .primary,.secondary,.toggle button { clip-path:polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px)); }
-.hero { max-width:1080px; margin:48px auto; }
-.hero h1,.roomHeader h1,.standings h1 { margin:10px 0 32px; font-size:clamp(54px,9vw,100px); line-height:.88; text-transform:uppercase; }
-.hero h1 em { color:var(--accent); font-style:normal; }
+.roomHeader h1,.standings h1 { margin:0; font-size:clamp(54px,9vw,100px); line-height:.88; text-transform:uppercase; }
 .kicker { color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
-.paths { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .panel,.rules { padding:28px; background:var(--panel); }
 .panel h2,.lobbyGrid h2,.rules h2 { margin:0 0 24px; text-transform:uppercase; }
 .panel label { display:grid; gap:8px; margin:16px 0; color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
@@ -35,49 +37,47 @@
 .secondary { background:#23293a; color:white; }
 .error { padding:12px 16px; background:#4b1820; color:#ffb7bd; }
 .loading { display:grid; min-height:70vh; place-items:center; color:var(--muted); }
-.roomHeader { max-width:1180px; margin:30px auto; display:flex; justify-content:space-between; align-items:end; }
+.roomHeader { max-width:var(--content-max); margin:0 auto 30px; display:flex; justify-content:space-between; align-items:end; }
 .roomHeader h1 { margin-bottom:0; }
 .meta { display:flex; gap:16px; text-transform:uppercase; color:var(--muted); }
 .meta b { color:var(--accent); }
-.lobbyGrid { display:grid; grid-template-columns:2fr 1fr; gap:20px; max-width:1180px; margin:auto; }
+.lobbyGrid { display:grid; grid-template-columns:2fr 1fr; gap:20px; max-width:var(--content-max); margin:auto; }
 .rosterList { display:grid; gap:4px; }
 .rosterRow { display:grid; grid-template-columns:30px 1fr 80px 60px auto; align-items:center; min-height:54px; padding:0 16px; background:var(--panel); }
 .rosterRow i,.rosterRow em { font-size:10px; font-style:normal; letter-spacing:.08em; text-transform:uppercase; }
 .online { color:#00c8a0; }.offline { color:var(--muted); }.rosterRow em { color:var(--accent); }
 .rosterRow button { border:0; background:transparent; color:#ff8e98; }
 .rules p { color:var(--muted); line-height:1.6; }
-.draftStage { max-width:1180px; margin:40px auto; text-align:center; }
+.draftStage { max-width:var(--content-max); margin:0 auto; text-align:center; }
 .draftStage h2 { font-size:36px; text-transform:uppercase; }
 .multiplayerLane { text-align:left; }
 .nation { font-size:20px; color:var(--accent); text-transform:uppercase; }
-.cards { display:flex; justify-content:center; gap:14px; overflow-x:auto; padding:25px 10px; }
-.cards>div { animation:packReveal .32s cubic-bezier(.2,.8,.2,1) both; }
-.cards>div:nth-child(2){animation-delay:.06s}.cards>div:nth-child(3){animation-delay:.12s}
-@keyframes packReveal{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
 .deadline { display:block; margin:20px; color:var(--muted); font-variant-numeric:tabular-nums; }
-.swapPrompt { margin-right:10px; color:var(--accent); font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
-.swapTarget { position:relative; transition:transform .16s ease,filter .16s ease; }
-.swapTarget:hover { transform:translateY(-5px); filter:brightness(.72) saturate(.7); }
-.swapTargetLabel { position:absolute; z-index:3; left:50%; top:50%; padding:7px 9px; background:var(--accent); color:#fff; font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; pointer-events:none; opacity:0; transform:translate(-50%,-30%); transition:opacity .14s,transform .14s; }
-.swapTarget:hover .swapTargetLabel,.swapTarget:focus-within .swapTargetLabel { opacity:1; transform:translate(-50%,-50%); }
-.eventTitle { max-width:1500px; margin:24px auto; display:flex; justify-content:space-between; text-transform:uppercase; }.eventTitle span { color:var(--accent); font-weight:700; }
-.tournamentBoard { max-width:1500px; margin:0 auto; }
-.timerDock { position:fixed; z-index:var(--z-dock); left:0; right:0; bottom:0; padding:46px 24px calc(18px + var(--safe-b)); background:linear-gradient(transparent,rgba(13,15,23,.96) 45%); }
+.eventTitle { max-width:var(--content-max); margin:0 auto 24px; display:flex; justify-content:space-between; text-transform:uppercase; }.eventTitle span { color:var(--accent); font-weight:700; }
+.tournamentBoard { max-width:var(--content-max); margin:0 auto; }
+/* Sits ABOVE the squad bar rather than competing with it for the same
+   strip — see .page.withTimer for the matching content clearance. */
+.timerDock { position:fixed; z-index:var(--z-dock); left:0; right:0; bottom:156px; padding:46px 24px 18px; background:linear-gradient(transparent,rgba(13,15,23,.96) 45%); }
 .timerDock button { position:relative; display:block; width:min(720px,100%); min-height:68px; margin:auto; overflow:hidden; border:2px solid var(--accent); background:#191d2a; color:white; font-size:17px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; transition:transform .15s,filter .15s; }
 .timerDock button::before { content:''; position:absolute; inset:0; background:var(--accent); transform:scaleX(var(--remaining)); transform-origin:left; transition:transform .1s linear; }.timerDock button span { position:relative; }.timerDock button:not(:disabled):hover { transform:translateY(-3px); filter:brightness(1.08); }.timerDock button:not(:disabled):active { transform:translateY(1px) scale(.99); }
 .endless { display:block; margin:24px auto; border:0; background:transparent; color:var(--muted); text-decoration:underline; }
-.standings { max-width:900px; margin:40px auto; }.standings>div { display:grid; grid-template-columns:40px 1fr 100px 100px 80px; padding:18px; background:var(--panel); margin:4px 0; }.standings strong { color:var(--accent); text-align:right; }
+.standings { max-width:900px; margin:0 auto; }.standings>div { display:grid; grid-template-columns:40px 1fr 100px 100px 80px; padding:18px; background:var(--panel); margin:4px 0; }.standings strong { color:var(--accent); text-align:right; }
 .rosterRow small { color:var(--accent); margin-left:8px; }
 .bossBoard { border:2px solid #d8ae4f; padding:18px; }
 .modifier { max-width:680px; margin:12px auto; padding:14px 18px; background:var(--panel); border-left:4px solid var(--accent); display:flex; justify-content:space-between; gap:16px; }
 .nextBoss { width:max-content; margin:12px auto; padding:9px 14px; background:#d8ae4f; color:#111; font-weight:700; letter-spacing:.08em; }
-.shop { max-width:1180px; margin:40px auto; }
+.shop { max-width:var(--content-max); margin:0 auto; }
 .shopHeader { display:flex; justify-content:space-between; align-items:center; }
 .shopHeader h2 { font-size:clamp(28px,5vw,52px); text-transform:uppercase; }
 .shopGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:20px 0; }
 .shopGrid button { min-height:130px; padding:18px; border:1px solid var(--line); background:var(--panel); color:var(--ink); text-align:left; display:flex; flex-direction:column; gap:8px; }
 .shopGrid button span { color:var(--muted); flex:1; }.shopGrid button strong { color:#d8ae4f; }.shopGrid button:disabled { opacity:.4; }.shopGrid .shopActive { outline:3px solid var(--accent); }
-.shopSquad { display:flex; gap:14px; overflow-x:auto; padding:20px 8px; }
 .readyList { display:flex; flex-wrap:wrap; gap:12px; margin:18px 0; color:var(--muted); }
-@media(max-width:680px){.page{margin-left:0;margin-top:48px;padding:20px 16px 120px}.paths,.lobbyGrid,.shopGrid{grid-template-columns:1fr}.roomHeader,.shopHeader{align-items:start;flex-direction:column}.meta{flex-wrap:wrap;margin-top:20px}.cards{justify-content:flex-start}.standings>div{grid-template-columns:30px 1fr 70px}.standings>div span:nth-of-type(3),.standings>div span:nth-of-type(4){display:none}.timerDock{padding-inline:12px}}
-@media(prefers-reduced-motion:reduce){.timerDock button,.timerDock button::before{transition:none}.cards>div{animation:none}}
+@media(max-width:680px){
+  .page{margin-left:0;margin-top:48px;padding:var(--sp-5) var(--sp-4) calc(var(--sp-5) + var(--safe-b))}
+  .page.withDock{padding-bottom:calc(134px + var(--safe-b))}
+  .page.withTimer{padding-bottom:calc(210px + var(--safe-b))}
+  .lobbyGrid,.shopGrid{grid-template-columns:1fr}.roomHeader,.shopHeader{align-items:start;flex-direction:column}.meta{flex-wrap:wrap;margin-top:20px}.standings>div{grid-template-columns:30px 1fr 70px}.standings>div span:nth-of-type(3),.standings>div span:nth-of-type(4){display:none}
+  .timerDock{padding-inline:12px;bottom:110px}
+}
+@media(prefers-reduced-motion:reduce){.timerDock button,.timerDock button::before{transition:none}}

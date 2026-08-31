@@ -9,7 +9,6 @@
   gap: 18px;
   background: rgba(8, 8, 14, 0.88);
   backdrop-filter: blur(8px);
-  animation: fadeIn 0.18s ease-out;
 }
 
 .focusContainer {
@@ -19,15 +18,10 @@
   max-width: 90vw;
 }
 
-.cardWrap {
-  view-transition-name: focused-card;
-}
-
 .specSidebar {
-  --gold: #d8b34c;
   width: 300px;
-  background: #0b0d14;
-  border: 1px solid #232a3b;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -44,7 +38,7 @@
 
 .noSpecs {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .specCardsList {
@@ -56,9 +50,13 @@
 }
 
 .specDetailCard {
-  background: #10131d;
-  border-left: 3px solid var(--gold);
-  padding: 12px 14px;
+  background: var(--surface-flyout);
+  border: 1px solid var(--line);
+  padding: 14px 16px;
+  /* Sharp bevel instead of a coloured rule - matches the cut corner language
+     used everywhere else (ModeRail items, search fields, chips) rather than
+     inventing a new "accent bar" idiom for just this one card. */
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
 }
 
 .specHeader {
@@ -71,7 +69,7 @@
 .specBadgeIcon {
   width: 30px;
   height: 30px;
-  background: #0c1019;
+  background: var(--surface-flyout);
   border: 1.5px solid var(--gold);
   clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
   display: flex;
@@ -85,33 +83,36 @@
   font: 700 14px/1 ui-monospace, Menlo, monospace;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--ink);
 }
 
 .specDesc {
   font-size: 12.5px;
-  color: #9ca3af;
+  color: var(--muted);
   line-height: 1.5;
   margin: 0;
 }
 
+/* Notched square rather than a circle — the system has no circular chrome
+   anywhere else. Sized to the 44px primary-control floor. */
 .close {
   position: absolute;
   top: 22px;
   right: 28px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(232, 224, 255, 0.25);
-  background: rgba(232, 224, 255, 0.08);
-  color: #e8e0ff;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  border: 1px solid var(--line);
+  background: var(--surface-flyout);
+  color: var(--ink);
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--dur-micro), color var(--dur-micro);
 }
 
 .close:hover {
-  background: rgba(232, 224, 255, 0.18);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .footer {
@@ -125,37 +126,26 @@
 .action {
   padding: 13px 30px;
   border: none;
-  background: #ff4655;
-  color: #fff;
-  font-size: 13px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
   clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
-  transition: background 0.12s;
+  transition: transform var(--dur-hover);
 }
-.action:hover:not(:disabled) { background: #e03c4a; }
-.action:disabled { background: #3a3f4d; color: #7a7f8c; cursor: default; }
+.action:hover:not(:disabled) { transform: translateY(-1px); }
+.action:disabled { background: var(--surface-alt); color: var(--muted); cursor: default; }
 
 .hint {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: rgba(232, 224, 255, 0.45);
+  color: var(--faint);
   text-transform: uppercase;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .backdrop {
-    animation: none;
-  }
 }
 
 @media (max-width: 680px) {

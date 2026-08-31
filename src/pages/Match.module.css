@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: radial-gradient(circle at center, #1e1015 0%, #0d0912 60%, #050308 100%);
+  background: var(--bg-sunken);
   position: relative;
 }
 
@@ -25,32 +25,31 @@
 }
 
 .heroBadge {
-  font-family: var(--font-display, 'DM Sans', sans-serif);
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: var(--fs-micro);
   font-weight: 700;
-  letter-spacing: 2px;
-  color: #ffb800;
-  background: rgba(255, 184, 0, 0.15);
-  border: 1px solid rgba(255, 184, 0, 0.4);
+  letter-spacing: var(--track-mono);
+  color: var(--gold);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-dim);
   padding: 4px 14px;
-  border-radius: 4px;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
   display: inline-block;
   margin-bottom: 8px;
 }
 
 .heroTitle {
-  font-size: 38px;
+  font-size: var(--fs-display);
   font-weight: 700;
-  letter-spacing: 1px;
-  color: #ffffff;
-  text-shadow: 0 0 20px rgba(255, 70, 85, 0.4);
+  letter-spacing: -0.015em;
+  color: var(--ink);
 }
 
 .heroSub {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: var(--fs-label);
+  color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: var(--track-caps);
 }
 
 .heroStage {
@@ -63,39 +62,38 @@
 }
 
 .teamHeroCard {
-  background: rgba(18, 24, 38, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-overlay);
   min-width: 320px;
 }
 
 .teamSideLabel {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #ff4655;
+  letter-spacing: var(--track-mono);
+  color: var(--accent);
 }
 
 .teamName {
-  font-size: 22px;
+  font-size: var(--fs-title);
   font-weight: 700;
-  color: #ffffff;
+  color: var(--ink);
 }
 
 .teamOvrBadge {
-  background: rgba(255, 184, 0, 0.2);
-  color: #ffb800;
-  border: 1px solid rgba(255, 184, 0, 0.4);
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
   padding: 4px 12px;
-  border-radius: 4px;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 
 .heroRosterCards {
@@ -110,37 +108,35 @@
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  font-size: 28px;
-  color: #ff4655;
+  font-size: var(--fs-heading);
+  color: var(--accent);
 }
 
 .mapBadge {
-  font-size: 11px;
-  color: #d1d5db;
-  background: rgba(255, 255, 255, 0.1);
+  font-size: var(--fs-micro);
+  color: var(--ink);
+  background: var(--surface-alt);
   padding: 4px 10px;
-  border-radius: 4px;
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: var(--track-mono);
 }
 
 .lockInBtn {
-  background: linear-gradient(135deg, #ff4655 0%, #d62839 100%);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
-  border-radius: 6px;
+  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
   padding: 16px 40px;
-  font-size: 15px;
+  font-size: var(--fs-lead);
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: var(--track-caps);
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(255, 70, 85, 0.5);
-  transition: all 0.2s ease;
+  transition: transform var(--dur-hover);
 }
 
 .lockInBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255, 70, 85, 0.7);
 }
 
 /* Match Shell */
@@ -156,9 +152,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #0d121f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
   padding: 12px 20px;
 }
 
@@ -176,17 +171,17 @@
 
 .teamTag {
   font-weight: 700;
-  font-size: 14px;
-  color: #ff4655;
+  font-size: var(--fs-body);
+  color: var(--accent);
 }
 
 .scoreNum {
-  font-size: 26px;
+  font-size: var(--fs-heading);
   font-weight: 700;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  background: var(--surface-alt);
   padding: 2px 12px;
-  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .scoreDivider {
@@ -196,52 +191,51 @@
 }
 
 .roundCount {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
-  color: #ffb800;
-  letter-spacing: 1px;
+  color: var(--gold);
+  letter-spacing: var(--track-mono);
 }
 
 .vsText {
-  font-size: 10px;
-  color: #6b7280;
+  font-size: var(--fs-micro);
+  color: var(--muted);
 }
 
 .modeToggleBar {
   display: flex;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--bg-sunken);
   padding: 4px;
-  border-radius: 6px;
 }
 
 .modeBtn {
   background: transparent;
-  color: #9ca3af;
+  color: var(--muted);
   border: none;
   padding: 6px 14px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
   font-weight: 700;
-  border-radius: 4px;
   cursor: pointer;
+  transition: background var(--dur-micro), color var(--dur-micro);
 }
 
 .modeActive {
-  background: #ff4655;
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
-/* 1b Card Table View */
+/* 1b Card Table View: flat sunken surface with a sharp bracket border,
+   matching DeckBuilder's felt table rather than a separate gradient/glow
+   treatment of the same concept. */
 .cardTableContainer {
-  background: radial-gradient(circle at center, #1b3829 0%, #0d1e16 70%, #050d09 100%);
-  border: 4px solid #2d1e14;
-  border-radius: 12px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line-bracket);
   padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
 }
 
 .handStrip {
@@ -253,10 +247,10 @@
 }
 
 .handLabel {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
-  letter-spacing: 1.2px;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: var(--track-mono);
+  color: var(--muted);
   text-transform: uppercase;
 }
 
@@ -282,9 +276,8 @@
 /* 1c Tactical Ops View */
 .tacticalOpsContainer {
   flex: 1;
-  background: #090c14;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
   padding: 20px;
 }
 
@@ -295,29 +288,27 @@
 }
 
 .tacPanel {
-  background: #0d121f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 16px;
 }
 
 .tacTitle {
-  font-size: 13px;
+  font-size: var(--fs-label);
   font-weight: 700;
-  letter-spacing: 1px;
-  color: #ff4655;
+  letter-spacing: var(--track-mono);
+  color: var(--accent);
   text-transform: uppercase;
   margin-bottom: 12px;
 }
 
 .formulaBox {
-  background: rgba(0, 0, 0, 0.5);
-  border-left: 3px solid #ff4655;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
   padding: 8px 12px;
-  border-radius: 4px;
   margin-bottom: 14px;
-  font-size: 11px;
-  color: #d1d5db;
+  font-size: var(--fs-micro);
+  color: var(--ink);
 }
 
 .statCompareList {
@@ -330,24 +321,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: var(--fs-micro);
 }
 
-.pName { color: #ff4655; font-weight: 700; width: 100px; text-align: right; }
-.oName { color: #00d2ff; font-weight: 700; width: 100px; }
+.pName { color: var(--accent); font-weight: 700; width: 100px; text-align: right; }
+.oName { color: var(--opponent); font-weight: 700; width: 100px; }
 
 .barWrap {
   flex: 1;
   height: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-alt);
   display: flex;
   margin: 0 10px;
-  border-radius: 4px;
   overflow: hidden;
 }
 
-.barFillPlayer { background: #ff4655; height: 100%; }
-.barFillOpp { background: #00d2ff; height: 100%; }
+.barFillPlayer { background: var(--accent); height: 100%; }
+.barFillOpp { background: var(--opponent); height: 100%; }
 
 .zoneBars {
   display: flex;
@@ -359,21 +349,20 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
-  color: #9ca3af;
+  color: var(--muted);
 }
 
 .zoneMeter {
   height: 22px;
   display: flex;
-  border-radius: 4px;
   overflow: hidden;
-  font-size: 10px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   line-height: 22px;
   text-align: center;
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .logPanel {
@@ -392,43 +381,41 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--bg-sunken);
   padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--fs-label);
 }
 
-.logRound { font-weight: 700; color: #ffb800; }
-.logZone { color: #9ca3af; }
-.logEcon { color: #34d399; font-weight: 700; font-size: 10px; }
-.logWin { color: #ff4655; font-weight: 700; margin-left: auto; }
-.logLoss { color: #6b7280; font-weight: 700; margin-left: auto; }
+.logRound { font-weight: 700; color: var(--gold); }
+.logZone { color: var(--muted); }
+.logEcon { color: var(--win); font-weight: 700; font-size: var(--fs-micro); }
+.logWin { color: var(--accent); font-weight: 700; margin-left: auto; }
+.logLoss { color: var(--muted); font-weight: 700; margin-left: auto; }
 
 .matchOverBar {
   text-align: center;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: var(--win-soft);
+  border: 1px solid var(--win);
   padding: 16px;
-  border-radius: 8px;
   margin-top: 16px;
 }
 
 .finishBtn {
-  background: #10b981;
-  color: #fff;
+  background: var(--win);
+  color: var(--bg-deep);
   border: none;
   padding: 10px 24px;
   font-weight: 700;
-  border-radius: 4px;
   cursor: pointer;
   margin-top: 8px;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
 }
 
 @media (max-width: 680px) {
   .mainContainer { min-width: 0; overflow-x: clip; }
   .heroOverlay { padding: 24px 16px; justify-content: flex-start; }
   .heroHeader { margin-bottom: 18px; }
-  .heroTitle { font-size: 28px; }
+  .heroTitle { font-size: var(--fs-heading); }
   .heroStage { width: 100%; flex-direction: column; gap: 16px; }
   .teamHeroCard { width: 100%; min-width: 0; padding: 16px; overflow: hidden; }
   .heroRosterCards,
@@ -444,7 +431,7 @@
   .matchHeader { flex-direction: column; gap: 12px; padding: 12px; }
   .scoreBoard { width: 100%; justify-content: center; gap: 10px; }
   .teamScore { gap: 6px; }
-  .scoreNum { font-size: 22px; padding: 2px 8px; }
+  .scoreNum { font-size: var(--fs-title); padding: 2px 8px; }
   .modeToggleBar { width: 100%; }
   .modeBtn { flex: 1; }
   .cardTableContainer,

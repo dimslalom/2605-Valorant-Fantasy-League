@@ -115,13 +115,35 @@
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 18px;
+  /* Spacing between cards now comes entirely from each cell's own padding
+     below, not a shared gap. See that rule for why. */
+  gap: 0;
   padding: 22px 24px 40px;
 }
 
+/* `content-visibility: auto` (kept for render perf across 900+ mounted
+   cards) implies paint containment, which clips ANY child that paints
+   outside this box.
+
+   Two separate things bleed past a card's own box on purpose: the
+   specialty chip, always spilling left (see PlayerCard's .specCutChip),
+   and the hover-triggered tilt + lift (useCardTilt's --rx/--ry/--lift),
+   which can push any edge outward depending on pointer position. Padding
+   only the static chip bleed (measured ~19-20px, not the 15.5px the naive
+   half-chip-width math suggests) left the hover case still clipping, which
+   is what this padding pass is actually fixing.
+
+   Rather than tune four asymmetric values that would need re-measuring
+   every time maxTilt/lift changes in useCardTilt, this uses one generous
+   uniform buffer comfortably past every measured worst case (chip bleed
+   ~20px static, tilt ~8px, lift ~6-8px, combined hover parallax on the
+   chip untested but bounded well under this). The grid's own `gap` is
+   folded in here so total density doesn't also grow by the old gap on
+   top of it. */
 .grid > div {
   content-visibility: auto;
-  contain-intrinsic-size: 200px 290px;
+  contain-intrinsic-size: 264px 354px;
+  padding: 32px;
 }
 
 .empty {

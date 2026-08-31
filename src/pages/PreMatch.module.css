@@ -1,11 +1,13 @@
 /* Shell, frame and status strip come from AppFrame + StatusStrip. */
 
 .content {
-  padding: 24px 32px 60px;
+  padding: var(--sp-8) var(--sp-12) 60px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 1400px;
+  /* Same content column as the hub pages; gutters added on top of the
+     column width, not subtracted from it. See tokens.css. */
+  max-width: calc(var(--content-max) + var(--sp-12) * 2);
   width: 100%;
   margin: 0 auto;
 }

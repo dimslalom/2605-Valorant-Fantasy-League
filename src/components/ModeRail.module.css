@@ -45,6 +45,15 @@
 }
 .item:hover { color: var(--ink); background: var(--surface-hi); }
 .item:active { background: var(--surface-hi); }
+
+/* Fills the tile; Framer Motion drives its own hover/tap scale (see
+   ModeRail.jsx) so only the glyph presses, not the notched frame around it. */
+.press {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
 .active, .active:hover {
   color: var(--accent-ink);
   background: var(--accent);

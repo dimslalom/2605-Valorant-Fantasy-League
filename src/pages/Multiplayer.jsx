@@ -1,15 +1,27 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { m } from 'motion/react';
+import { DUR, EASE, STAGGER, eliminationFlash } from '../lib/motion';
 import ModeRail from '../components/ModeRail';
-import PlayerCard from '../components/PlayerCard';
+import CardFocusOverlay from '../components/CardFocusOverlay';
+import SquadBar from '../components/SquadBar';
+import SquadDock from '../components/SquadDock';
+import SquadSheet from '../components/SquadSheet';
+import PackRip from '../components/PackRip';
+import TacticalButton from '../components/TacticalButton';
 import cards from '../data/cards.json';
-import { ROSTER_SIZE, SHOP_ITEMS, applyRunEffects } from '../engine/perfectRun';
+import { ROSTER_SIZE, SHOP_ITEMS, applyRunEffects, teamPower } from '../engine/perfectRun';
 import { connectLobby, createLobby, joinLobby, loadSession, makeCommand } from '../lib/multiplayerClient';
 import { assetPath, countryName } from '../lib/utils';
+import usePeekKey from '../lib/usePeekKey';
 import styles from './Multiplayer.module.css';
+import hub from '../styles/hub.module.css';
 import soloStyles from './PerfectRun.module.css';
 
 const cardMap = new Map(cards.map(card => [card.id, card]));
+// Stable empty-Set default so MultiplayerBracketCell's pending-arrival check
+// never needs a fresh Set() on every render of every non-traveling cell.
+const EMPTY_TEAM_ID_SET = new Set();
 
 export default function Multiplayer() {
   const { code: routeCode } = useParams();
@@ -79,14 +91,18 @@ export default function Multiplayer() {
     return (
       <main className={styles.page}>
         <ModeRail />
-        <section className={styles.hero}>
-          <span className={styles.kicker}>Join lobby {routeCode}</span>
-          <h1>Enter your<br /><em>squad</em></h1>
-          <form className={styles.panel} onSubmit={handleJoin}>
-            <NameInput value={name} onChange={setName} />
-            <button className={styles.primary}>Join lobby</button>
-          </form>
-          {error && <p className={styles.error}>{error}</p>}
+        <section className={hub.column}>
+          <div className={hub.title}>
+            <h1 className={hub.titleText}>Enter your<br /><em>squad</em></h1>
+          </div>
+          <div className={hub.body}>
+            <form className={styles.panel} onSubmit={handleJoin}>
+              <h2>Join lobby {routeCode}</h2>
+              <NameInput value={name} onChange={setName} />
+              <button className={styles.primary}>Join lobby</button>
+            </form>
+          </div>
+          {error && <p className={styles.error} role="alert">{error}</p>}
         </section>
       </main>
     );
@@ -96,10 +112,11 @@ export default function Multiplayer() {
     return (
       <main className={styles.page}>
         <ModeRail />
-        <section className={styles.hero}>
-          <span className={styles.kicker}>2–16 squads · live draft · shared bracket</span>
-          <h1>Multiplayer<br /><em>Lock-In</em></h1>
-          <div className={styles.paths}>
+        <section className={hub.column}>
+          <div className={hub.title}>
+            <h1 className={hub.titleText}>Multiplayer<br /><em>Lock-In</em></h1>
+          </div>
+          <div className={hub.body}>
             <form className={styles.panel} onSubmit={handleCreate}>
               <h2>Create lobby</h2>
               <NameInput value={name} onChange={setName} />
@@ -114,7 +131,7 @@ export default function Multiplayer() {
               <button className={styles.primary}>Join lobby</button>
             </form>
           </div>
-          {error && <p className={styles.error}>{error}</p>}
+          {error && <p className={styles.error} role="alert">{error}</p>}
         </section>
       </main>
     );
@@ -124,16 +141,130 @@ export default function Multiplayer() {
 }
 
 function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimation }) {
+  // Squad chip -> single-card focus overlay; SQUAD button / manual dismiss
+  // of an optional pinned action. Declared unconditionally (Rules of Hooks)
+  // even though the "connecting…" branch below doesn't need any of them yet.
+  const [focusCard, setFocusCard] = useState(null);
+  const [shopTarget, setShopTarget] = useState(null);
+  const [sheetTapOpen, setSheetTapOpen] = useState(false);
+  const [sheetDismissed, setSheetDismissed] = useState(false);
+
+  const myId = snapshot && (session.competitorId ?? session.spectatorId);
+  const me = snapshot?.competitors.find(player => player.id === myId);
+  const isHost = snapshot?.hostId === myId;
+  const activeId = snapshot?.draft?.activeCompetitorId ?? snapshot?.consolation?.activeCompetitorId;
+  const offers = snapshot?.phase === 'draft' ? snapshot.draft?.offers : snapshot?.consolation?.offers;
+  const active = snapshot?.competitors.find(player => player.id === activeId);
+
+  // My squad, always — regardless of whose turn it is. The draft/consolation
+  // stage shows whoever is currently opening a pack (often not me); the dock
+  // is a fixed "this is you", visible from the first pick through the
+  // season's final standings.
+  const dockRoster = me ? applyRunEffects(me.rosterIds.map(id => cardMap.get(id)), me) : [];
+  const dockPower = dockRoster.length === ROSTER_SIZE ? teamPower(dockRoster, me?.iglId) : null;
+  const dockVisible = Boolean(snapshot) && snapshot.phase !== 'lobby' && dockRoster.length > 0;
+
+  function buyItem(item, cardId = null) {
+    if (item.targeted && !cardId) { setShopTarget(item); return; }
+    send('buy_item', { itemKey: item.key, targetCardId: cardId });
+    setShopTarget(null);
+  }
+
+  // Two different game moments both resolve through the same choose_swap
+  // command: the draft's consolation-pack turn, and the shop's scout pack.
+  const consolationSelected = snapshot?.phase === 'consolation' && activeId === myId && Boolean(snapshot.consolation?.selectedCardId);
+  const shopSwapSelected = snapshot?.phase === 'shop' && me && !me.eliminated
+    && Boolean(snapshot.shop?.scoutUnlocked?.[myId]) && Boolean(snapshot.shop?.selectedCardIds?.[myId]);
+
+  // Shaped for the SquadSheet contract — clicking an eligible card fires the
+  // pick directly, no separate per-card button needed.
+  const squadAction = snapshot?.phase === 'igl_select' && me
+    ? {
+        prompt: 'Choose your in-game leader',
+        onPick: (card) => send('choose_igl', { cardId: card.id }),
+        isEligible: (card) => card.id !== me.iglId,
+        dismissible: false,
+        confirmPrompt: (card) => `Name ${card.player} as IGL?`,
+      }
+    : consolationSelected || shopSwapSelected
+      ? {
+          prompt: 'Choose who leaves',
+          onPick: (card) => send('choose_swap', { replaceCardId: card.id }),
+          dismissible: true,
+          confirmPrompt: (card) => `Swap out ${card.player}?`,
+        }
+      : snapshot?.phase === 'shop' && shopTarget
+        ? {
+            prompt: `Apply ${shopTarget.label} to…`,
+            onPick: (card) => buyItem(shopTarget, card.id),
+            dismissible: true,
+            confirmPrompt: (card) => `Apply ${shopTarget.label} to ${card.player}?`,
+          }
+        : null;
+
+  // Same three phase actions, shaped for the single-card focus overlay
+  // (opened from a dock chip) instead — a button rather than a bare click,
+  // matching the overlay's existing action/onAction contract.
+  function chipActionLabel(card) {
+    if (snapshot?.phase === 'igl_select' && me) {
+      return card.id === me.iglId ? { label: 'Current IGL', disabled: true } : { label: 'Name as IGL' };
+    }
+    if (consolationSelected || shopSwapSelected) return { label: 'Swap out' };
+    if (snapshot?.phase === 'shop' && shopTarget) return { label: `Apply ${shopTarget.label}` };
+    return null;
+  }
+  function runChipAction(card) {
+    if (!card) return;
+    if (snapshot?.phase === 'igl_select' && me) { if (card.id !== me.iglId) send('choose_igl', { cardId: card.id }); return; }
+    if (consolationSelected || shopSwapSelected) { send('choose_swap', { replaceCardId: card.id }); return; }
+    if (snapshot?.phase === 'shop' && shopTarget) buyItem(shopTarget, card.id);
+  }
+
+  // Identifies *which* pin is asking, so a dismiss can be scoped to it and a
+  // dismissed sheet becomes pinnable again the moment the trigger changes.
+  const pinTrigger = snapshot?.phase === 'igl_select' && me && !me.iglId
+    ? 'igl'
+    : consolationSelected
+      ? `consolation:${snapshot.consolation.selectedCardId}`
+      : shopSwapSelected
+        ? `shop-swap:${snapshot.shop.selectedCardIds[myId]}`
+        : snapshot?.phase === 'shop' && shopTarget
+          ? `shop-target:${shopTarget.key}`
+          : null;
+
+  // Adjusted during render (React's documented pattern for "reset on prop
+  // change"), matching CardFocusOverlay's own flip-reset idiom.
+  const prevPinTrigger = useRef(pinTrigger);
+  if (prevPinTrigger.current !== pinTrigger) {
+    prevPinTrigger.current = pinTrigger;
+    if (sheetDismissed) setSheetDismissed(false);
+  }
+  const prevPhaseForSheet = useRef(snapshot?.phase);
+  if (prevPhaseForSheet.current !== snapshot?.phase) {
+    prevPhaseForSheet.current = snapshot?.phase;
+    if (sheetTapOpen) setSheetTapOpen(false);
+    if (shopTarget) setShopTarget(null);
+  }
+  const sheetPinned = Boolean(pinTrigger) && !sheetDismissed;
+  const sheetPeek = usePeekKey({ enabled: dockVisible });
+  const sheetOpen = dockVisible && (sheetPinned || sheetPeek || sheetTapOpen);
+
+  function closeSquadSheet() {
+    setSheetTapOpen(false);
+    setSheetDismissed(true);
+    if (snapshot?.phase === 'shop') setShopTarget(null);
+  }
+
   if (!snapshot) return <main className={styles.page}><ModeRail /><div className={styles.loading}>Connecting to lobby…</div></main>;
-  const myId = session.competitorId ?? session.spectatorId;
-  const me = snapshot.competitors.find(player => player.id === myId);
-  const isHost = snapshot.hostId === myId;
-  const activeId = snapshot.draft?.activeCompetitorId ?? snapshot.consolation?.activeCompetitorId;
-  const offers = snapshot.phase === 'draft' ? snapshot.draft?.offers : snapshot.consolation?.offers;
-  const active = snapshot.competitors.find(player => player.id === activeId);
+
+  // TimerBar is its own fixed bottom banner; when it's up, it sits ABOVE the
+  // squad bar (see .timerDock's bottom offset) rather than the two competing
+  // for the same strip, so the page needs to clear both stacked.
+  const timerVisible = (snapshot.phase === 'match_ready' && !animationEvent && Boolean(snapshot.pendingTransition))
+    || snapshot.phase === 'match_transition';
 
   return (
-    <main className={styles.page}>
+    <main className={[styles.page, dockVisible ? styles.withDock : '', timerVisible ? styles.withTimer : ''].join(' ')}>
       <ModeRail />
       <header className={styles.roomHeader}>
         <div><span className={styles.kicker}>Private lobby</span><h1>{snapshot.code}</h1></div>
@@ -144,7 +275,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
       {snapshot.phase === 'lobby' && (
         <section className={styles.lobbyGrid}>
           <div><h2>Competitors</h2><RosterList snapshot={snapshot} isHost={isHost} myId={myId} send={send} /></div>
-          <aside className={styles.rules}><h2>Ready check</h2><p>Five snake-draft rounds. Cards are unique across the lobby. Late arrivals spectate once the host starts.</p>{isHost ? <button className={styles.primary} disabled={snapshot.competitors.length < 2} onClick={() => send('start_game')}>Start game</button> : <span>Waiting for the host</span>}</aside>
+          <aside className={styles.rules}><h2>Ready check</h2><p>Five snake-draft rounds. Cards are unique across the lobby. Late arrivals spectate once the host starts.</p>{isHost ? <TacticalButton className={styles.primary} disabled={snapshot.competitors.length < 2} onClick={() => send('start_game')}>Start game</TacticalButton> : <span>Waiting for the host</span>}</aside>
         </section>
       )}
 
@@ -162,16 +293,21 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
             selectedId={snapshot.consolation?.selectedCardId}
             interactive={activeId === myId}
             onPick={card => send('choose_card', { cardId: card.id })}
-            canSwap={snapshot.phase === 'consolation' && activeId === myId && Boolean(snapshot.consolation.selectedCardId)}
-            onSwap={card => send('choose_swap', { replaceCardId: card.id })}
             squadName={active?.squadName ?? 'Squad'}
           />
-          {snapshot.phase === 'consolation' && activeId === myId && <button className={styles.secondary} onClick={() => send('skip_consolation')}>Skip pack</button>}
+          {snapshot.phase === 'consolation' && activeId === myId && <TacticalButton className={styles.secondary} onClick={() => send('skip_consolation')}>Skip pack</TacticalButton>}
           <Deadline deadlineAt={snapshot.draft?.deadlineAt ?? snapshot.consolation?.deadlineAt} serverNow={snapshot.serverNow} />
         </section>
       )}
 
-      {snapshot.phase === 'igl_select' && <IglSelect me={me} selected={snapshot.draft.iglSelections[myId]} onChoose={id => send('choose_igl', { cardId: id })} deadlineAt={snapshot.draft.deadlineAt} serverNow={snapshot.serverNow} spectator={!me} />}
+      {snapshot.phase === 'igl_select' && (
+        <section className={styles.draftStage}>
+          <span className={styles.kicker}>Concurrent selection</span>
+          <h2>Choose your IGL</h2>
+          {!me && <p>Competitors are choosing their callers.</p>}
+          <Deadline deadlineAt={snapshot.draft.deadlineAt} serverNow={snapshot.serverNow} />
+        </section>
+      )}
 
       {(snapshot.phase === 'tournament' || snapshot.phase === 'match_ready' || snapshot.phase === 'match_transition') && snapshot.tournament && (
         <section className={`${styles.tournamentBoard} ${snapshot.tournament.meta.kind === 'champions' && snapshot.settings.gameLength === 'endless' ? styles.bossBoard : ''}`}>
@@ -183,11 +319,49 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
         </section>
       )}
 
-      {snapshot.phase === 'shop' && <MultiplayerShop snapshot={snapshot} me={me} myId={myId} send={send} />}
+      {snapshot.phase === 'shop' && <MultiplayerShop snapshot={snapshot} me={me} myId={myId} send={send} targetItem={shopTarget} onBuy={buyItem} />}
 
       {snapshot.phase === 'season_over' && <Standings snapshot={snapshot} isHost={isHost} send={send} />}
       {snapshot.phase === 'match_ready' && !animationEvent && snapshot.pendingTransition && <TimerBar label="Play match" waitingLabel="Match starts" pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
       {snapshot.phase === 'match_transition' && <TimerBar label="Play next match" waitingLabel="Next match" pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
+
+      {dockVisible && (
+        <SquadBar
+          dock={(
+            <SquadDock
+              roster={dockRoster}
+              size={ROSTER_SIZE}
+              iglId={me?.iglId}
+              squadName={me?.squadName}
+              onFocusCard={setFocusCard}
+              focusCardId={focusCard?.id ?? null}
+              onOpenSheet={() => setSheetTapOpen(true)}
+            />
+          )}
+        />
+      )}
+
+      {/* Clicking a dock chip opens it full size (and flippable) rather than
+          firing the phase's action blind. */}
+      <CardFocusOverlay
+        card={focusCard}
+        onClose={() => setFocusCard(null)}
+        action={focusCard ? chipActionLabel(focusCard) : null}
+        onAction={() => runChipAction(focusCard)}
+      />
+
+      {/* The full team scoreboard: held-Tab peek, pinned open by the SQUAD
+          button on touch, or pinned by the lobby itself when a phase needs a
+          card picked (squadAction, above). */}
+      <SquadSheet
+        open={sheetOpen}
+        onClose={closeSquadSheet}
+        roster={dockRoster}
+        iglId={me?.iglId}
+        squadName={me?.squadName}
+        power={dockPower}
+        action={squadAction}
+      />
     </main>
   );
 }
@@ -196,117 +370,69 @@ function RosterList({ snapshot, isHost, myId, send }) {
   return <div className={styles.rosterList}>{snapshot.competitors.map((player, index) => <div key={player.id} className={styles.rosterRow}><span>{index + 1}</span><b>{player.squadName}{player.id === myId ? ' · YOU' : ''} {snapshot.settings.gameLength === 'endless' && <small>{player.eliminated ? 'ELIMINATED' : `${'♥'.repeat(player.lives)}${'♡'.repeat(3 - player.lives)}`}</small>}</b><i className={player.connected ? styles.online : styles.offline}>{player.connected ? 'online' : 'offline'}</i>{player.id === snapshot.hostId && <em>HOST</em>}{isHost && player.id !== myId && snapshot.phase === 'lobby' && <button onClick={() => send('kick_player', { competitorId: player.id })}>Remove</button>}</div>)}</div>;
 }
 
-function MultiplayerShop({ snapshot, me, myId, send }) {
-  const [targetItem, setTargetItem] = useState(null);
-  if (!me || me.eliminated) return <section className={styles.shop}><span className={styles.kicker}>Eliminated</span><h2>Watching the shop</h2><Deadline deadlineAt={snapshot.shop.deadlineAt} serverNow={snapshot.serverNow} /></section>;
+function MultiplayerShop({ snapshot, me, myId, send, targetItem, onBuy }) {
+  if (!me || me.eliminated) return <section className={styles.shop}><m.span className={styles.kicker} animate={eliminationFlash.animate}>Eliminated</m.span><h2>Watching the shop</h2><Deadline deadlineAt={snapshot.shop.deadlineAt} serverNow={snapshot.serverNow} /></section>;
   const selected = snapshot.shop.selectedCardIds[myId];
   const packOpen = snapshot.shop.scoutUnlocked[myId];
   const effects = applyRunEffects(me.rosterIds.map(id => cardMap.get(id)), me);
-  const buy = (item, cardId = null) => {
-    if (item.targeted && !cardId) { setTargetItem(item); return; }
-    send('buy_item', { itemKey: item.key, targetCardId: cardId });
-    setTargetItem(null);
-  };
   return <section className={styles.shop}>
     <div className={styles.shopHeader}><div><span className={styles.kicker}>Parallel shop</span><h2>{me.credits} credits · {'♥'.repeat(me.lives)}{'♡'.repeat(3 - me.lives)}</h2></div><Deadline deadlineAt={snapshot.shop.deadlineAt} serverNow={snapshot.serverNow} /></div>
     {snapshot.season.events.find(event => event.kind === 'champions')?.modifier && <div className={styles.nextBoss}>NEXT BOSS: {snapshot.season.events.find(event => event.kind === 'champions').modifier.label}</div>}
-    <div className={styles.shopGrid}>{SHOP_ITEMS.map(item => <button key={item.key} disabled={me.credits < item.cost || snapshot.shop.doneIds.includes(myId)} className={targetItem?.key === item.key ? styles.shopActive : ''} onClick={() => buy(item)}><b>{item.glyph} · {item.label}</b><span>{item.desc}</span><strong>{item.cost} cr</strong></button>)}</div>
-    {packOpen && <MultiplayerDraftLane phase="shop" turnIndex={0} totalTurns={1} choices={snapshot.shop.packs[myId].map(id => cardMap.get(id)).filter(Boolean)} picks={effects} selectedId={selected} interactive onPick={card => send('choose_card', { cardId: card.id })} canSwap={Boolean(selected)} onSwap={card => send('choose_swap', { replaceCardId: card.id })} squadName={me.squadName} />}
-    {!packOpen && <div className={styles.shopSquad}>{effects.map(card => <PlayerCard key={card.id} card={card} boosterIcons={card.runFx ?? []} displayScale={0.28} selected={Boolean(targetItem)} onClick={targetItem ? () => buy(targetItem, card.id) : undefined} />)}</div>}
+    <div className={styles.shopGrid}>{SHOP_ITEMS.map(item => <button key={item.key} disabled={me.credits < item.cost || snapshot.shop.doneIds.includes(myId)} className={targetItem?.key === item.key ? styles.shopActive : ''} onClick={() => onBuy(item)}><b>{item.glyph} · {item.label}</b><span>{item.desc}</span><strong>{item.cost} cr</strong></button>)}</div>
+    {/* Picking a new card from the scout pack still happens here; the swap
+        target it feeds into is chosen from the squad sheet (see LobbyRoom's
+        `shopSwapSelected` / `squadAction`) rather than a second card row. */}
+    {packOpen && <MultiplayerDraftLane phase="shop" turnIndex={0} totalTurns={1} choices={snapshot.shop.packs[myId].map(id => cardMap.get(id)).filter(Boolean)} picks={effects} selectedId={selected} interactive onPick={card => send('choose_card', { cardId: card.id })} squadName={me.squadName} />}
     <div className={styles.readyList}>{snapshot.competitors.filter(player => !player.eliminated).map(player => <span key={player.id}>{snapshot.shop.doneIds.includes(player.id) ? '✓' : '…'} {player.squadName}</span>)}</div>
-    <button className={styles.primary} disabled={snapshot.shop.doneIds.includes(myId)} onClick={() => send('shop_done')}>Done shopping</button>
+    <TacticalButton className={styles.primary} disabled={snapshot.shop.doneIds.includes(myId)} onClick={() => send('shop_done')}>Done shopping</TacticalButton>
   </section>;
-}
-
-function IglSelect({ me, selected, onChoose, deadlineAt, serverNow, spectator }) {
-  return <section className={styles.draftStage}><span className={styles.kicker}>Concurrent selection</span><h2>Choose your IGL</h2>{spectator ? <p>Competitors are choosing their callers.</p> : <div className={styles.cards}>{me.rosterIds.map(id => <PlayerCard key={id} card={cardMap.get(id)} displayScale={0.34} selected={selected === id} onClick={() => onChoose(id)} />)}</div>}<Deadline deadlineAt={deadlineAt} serverNow={serverNow} /></section>;
 }
 
 function Standings({ snapshot, isHost, send }) {
   const rows = Object.values(snapshot.season.standings).sort((a, b) => b.score - a.score || b.titles - a.titles);
-  return <section className={styles.standings}><span className={styles.kicker}>Season complete</span><h1>Final standings</h1>{rows.map((row, index) => <div key={row.competitorId}><span>{index + 1}</span><b>{row.squadName}{snapshot.competitors.find(player => player.id === row.competitorId)?.eliminated ? ' · ELIMINATED' : ''}</b><span>{snapshot.settings.gameLength === 'endless' ? `Cycle ${row.bestCycle + 1}` : `${row.titles} titles`}</span><span>{row.matchWins} wins</span><strong>{row.score}</strong></div>)}{isHost && <button className={styles.primary} onClick={() => send('return_to_lobby')}>Return everyone to lobby</button>}</section>;
+  return (
+    <section className={styles.standings}>
+      <span className={styles.kicker}>Season complete</span>
+      <h1>Final standings</h1>
+      {/* Parity with Perfect Run's TournamentResult history rows — same
+          tokenized entrance and stagger, snapping the final order into
+          place one row at a time instead of dumping the whole table at
+          once. */}
+      {rows.map((row, index) => (
+        <m.div
+          key={row.competitorId}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: DUR.enter, ease: EASE.out, delay: index * STAGGER }}
+        >
+          <span>{index + 1}</span>
+          <b>{row.squadName}{snapshot.competitors.find(player => player.id === row.competitorId)?.eliminated ? ' · ELIMINATED' : ''}</b>
+          <span>{snapshot.settings.gameLength === 'endless' ? `Cycle ${row.bestCycle + 1}` : `${row.titles} titles`}</span>
+          <span>{row.matchWins} wins</span>
+          <strong>{row.score}</strong>
+        </m.div>
+      ))}
+      {isHost && <TacticalButton className={styles.primary} onClick={() => send('return_to_lobby')}>Return everyone to lobby</TacticalButton>}
+    </section>
+  );
 }
 
-const RIP_MS = 850;
-
-function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, picks, selectedId, interactive, onPick, canSwap, onSwap, squadName }) {
-  const [ripping, setRipping] = useState(false);
-  const stripRef = useRef(null);
-  const ripTimer = useRef(null);
+function MultiplayerDraftLane({ phase, turnIndex, totalTurns, nation, choices, picks, selectedId, interactive, onPick, squadName }) {
   const ripId = `${phase}:${turnIndex}:${choices.map(card => card.id).join(',')}`;
-
-  useEffect(() => {
-    if (!choices.length) return undefined;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const startTimer = setTimeout(() => {
-      setRipping(!reduced);
-      if (stripRef.current) stripRef.current.scrollLeft = 0;
-      if (!reduced) ripTimer.current = setTimeout(() => setRipping(false), RIP_MS);
-    }, 0);
-    return () => {
-      clearTimeout(startTimer);
-      clearTimeout(ripTimer.current);
-    };
-  }, [ripId, choices.length]);
-
-  const onWheel = event => {
-    if (stripRef.current && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-      stripRef.current.scrollLeft += event.deltaY;
-    }
-  };
-  const packTitle = nation ? countryName(nation) : 'Multiplayer pack';
-  const face = (
-    <span className={soloStyles.packFaceInner}>
-      {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 46, height: 33 }} />}
-      <span className={soloStyles.packName}>{packTitle}</span>
-      <span className={soloStyles.packSlash}>//</span>
-    </span>
-  );
-
   return (
-    <div className={`${soloStyles.lane} ${styles.multiplayerLane}`}>
-      <div className={soloStyles.draftBar}>
-        <div>
-          <span className={soloStyles.laneLabel}>{squadName}</span>
-          <span className={soloStyles.draftSlot}>
-            {phase === 'draft' ? `Pick ${Math.min(picks.length + 1, ROSTER_SIZE)} of ${ROSTER_SIZE}` : `Consolation ${turnIndex + 1} of ${totalTurns}`}
-          </span>
-          <span className={soloStyles.draftNat}>
-            {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 34, height: 24 }} />}
-            {nation ? countryName(nation) : 'Five card pack'}
-            <small className={soloStyles.draftCount}>{choices.length} available</small>
-          </span>
-        </div>
-      </div>
-
-      <div className={soloStyles.strip} ref={stripRef} onWheel={onWheel}>
-        {ripping && (
-          <div className={soloStyles.pack} key={`p${ripId}`} aria-hidden="true">
-            <div className={`${soloStyles.packFace} ${soloStyles.packTop}`}>{face}</div>
-            <div className={`${soloStyles.packFace} ${soloStyles.packBottom}`}>{face}</div>
-          </div>
-        )}
-        <div key={`c${ripId}`} className={[soloStyles.stripCards, ripping ? soloStyles.stripHidden : soloStyles.stripReveal].join(' ')}>
-          {choices.map((card, index) => (
-            <div key={card.id} className={soloStyles.stripCard} style={{ '--i': Math.min(index, 10) }}>
-              <PlayerCard card={card} displayScale={0.45} selected={selectedId === card.id} onClick={interactive ? () => onPick(card) : undefined} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {picks.length > 0 && (
-        <div className={soloStyles.rosterStrip}>
-          <span className={canSwap ? styles.swapPrompt : soloStyles.stripLabel}>{canSwap ? 'Choose who leaves' : squadName}</span>
-          {picks.map(card => (
-            <div key={card.id} className={canSwap ? styles.swapTarget : undefined}>
-              <PlayerCard card={card} displayScale={0.28} onClick={canSwap ? () => onSwap(card) : undefined} />
-              {canSwap && <span className={styles.swapTargetLabel}>Swap out</span>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <PackRip
+      ripId={ripId}
+      nation={nation}
+      packTitle={nation ? countryName(nation) : 'Five card pack'}
+      choices={choices}
+      interactive={interactive}
+      onPick={onPick}
+      selectedId={selectedId}
+      displayScale={0.45}
+      headerLabel={squadName}
+      headerSlot={phase === 'draft' ? `Pick ${Math.min(picks.length + 1, ROSTER_SIZE)} of ${ROSTER_SIZE}` : `Consolation ${turnIndex + 1} of ${totalTurns}`}
+      className={styles.multiplayerLane}
+    />
   );
 }
 
@@ -314,14 +440,24 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
   const refs = useRef({});
   const overlayRef = useRef(null);
   const wrapRef = useRef(null);
+  // "destinationSlot:teamId" pairs currently mid-flight — that exact
+  // destination cell renders "TBD" until its own clone lands, same idiom as
+  // Perfect Run's solo bracket. Keyed by slot+team, not bare team id: a
+  // winner's id also already sits in its OLD round's cell (the match it
+  // just won, still on screen one column back) — a bare-id Set would mask
+  // that already-decided source cell too, since the same id legitimately
+  // appears in both places.
+  const [pendingArrivalIds, setPendingArrivalIds] = useState(EMPTY_TEAM_ID_SET);
+
   useLayoutEffect(() => {
-    if (!animationEvent?.moves?.length) return;
+    if (!animationEvent?.moves?.length) return undefined;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches || matchMedia('(max-width: 680px)').matches;
-    if (reduced) { onAnimationDone(); return; }
+    if (reduced) { onAnimationDone(); return undefined; }
     const wrap = wrapRef.current;
     const overlay = overlayRef.current;
     const base = wrap?.getBoundingClientRect();
-    if (!wrap || !overlay || !base) { onAnimationDone(); return; }
+    if (!wrap || !overlay || !base) { onAnimationDone(); return undefined; }
+    setPendingArrivalIds(new Set(animationEvent.moves.map(move => `${move.destinationSlot}:${move.teamId}`)));
     const cleanups = [];
     const animations = animationEvent.moves.map(move => {
       const source = refs.current[move.sourceSlot]?.querySelector(`[data-team-id="${CSS.escape(move.teamId)}"]`);
@@ -334,9 +470,7 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
       clone.style.width = `${a.width}px`;
       clone.style.height = `${a.height}px`;
       overlay.appendChild(clone);
-      source.style.visibility = 'hidden';
-      destination.style.visibility = 'hidden';
-      cleanups.push(() => { clone.remove(); source.style.visibility = ''; destination.style.visibility = ''; });
+      cleanups.push(() => clone.remove());
       const x0 = a.left - base.left, y0 = a.top - base.top, x1 = b.left - base.left, y1 = b.top - base.top;
       const bridge = x0 + (x1 - x0) / 2;
       return clone.animate([
@@ -344,9 +478,21 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
         { transform: `translate(${bridge}px, ${y0}px)`, offset: .35 },
         { transform: `translate(${bridge}px, ${y1}px)`, offset: .65 },
         { transform: `translate(${x1}px, ${y1}px)` },
-      ], { duration: 900, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' }).finished.catch(() => {});
+      ], { duration: 900, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' }).finished.then(() => {
+        const arrivalKey = `${move.destinationSlot}:${move.teamId}`;
+        setPendingArrivalIds(prev => {
+          if (!prev.has(arrivalKey)) return prev;
+          const next = new Set(prev);
+          next.delete(arrivalKey);
+          return next;
+        });
+      }).catch(() => {});
     });
-    Promise.all(animations).then(() => { cleanups.forEach(fn => fn()); onAnimationDone(); });
+    Promise.all(animations).then(() => {
+      cleanups.forEach(fn => fn());
+      setPendingArrivalIds(EMPTY_TEAM_ID_SET);
+      onAnimationDone();
+    });
     return () => cleanups.forEach(fn => fn());
   }, [animationEvent, onAnimationDone]);
 
@@ -359,6 +505,8 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
     <MultiplayerBracketCell
       tournament={tournament}
       match={round?.matches[index]}
+      pendingArrivalIds={pendingArrivalIds}
+      cellKey={`${key}:${index}`}
       cellRef={element => { refs.current[`${key}:${index}`] = element; }}
     />
   );
@@ -389,7 +537,7 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
   );
 }
 
-function MultiplayerBracketCell({ tournament, match, cellRef }) {
+function MultiplayerBracketCell({ tournament, match, pendingArrivalIds = EMPTY_TEAM_ID_SET, cellKey, cellRef }) {
   if (!match) {
     return (
       <div className={soloStyles.bracketCell} ref={cellRef}>
@@ -399,19 +547,32 @@ function MultiplayerBracketCell({ tournament, match, cellRef }) {
     );
   }
   const revealed = Boolean(match.winner);
+  // A team mid-flight to this slot renders as TBD until its own clone lands
+  // — data-team-id stays put either way so the travel effect's querySelector
+  // still finds this row to measure and animate toward. Checked as
+  // "thisCellKey:teamId", not bare teamId: a winner's id also already sits
+  // in its OLD round's cell one column back (the match it just won), and a
+  // bare-id check would mask that already-decided cell too.
   const row = (teamId, score) => {
     const team = tournament.teams[teamId];
     const winner = revealed && match.winner === teamId;
+    const pending = pendingArrivalIds.has(`${cellKey}:${teamId}`);
     return (
       <div
         key={teamId}
         data-team-id={teamId}
         className={[soloStyles.bracketTeam, winner ? soloStyles.cellWon : '', revealed && !winner ? soloStyles.cellLost : '', team.human ? soloStyles.bracketYou : ''].join(' ')}
       >
-        {team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={soloStyles.youMark}>★</span>}
-        <span className={soloStyles.cellSeed}>{tournament.seeds.indexOf(teamId) + 1}</span>
-        <span className={soloStyles.cellTag}>{team.tag}</span>
-        <span className={soloStyles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
+        {pending ? (
+          <span className={soloStyles.cellTag}>TBD</span>
+        ) : (
+          <>
+            {team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={soloStyles.youMark}>★</span>}
+            <span className={soloStyles.cellSeed}>{tournament.seeds.indexOf(teamId) + 1}</span>
+            <span className={soloStyles.cellTag}>{team.tag}</span>
+            <span className={soloStyles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
+          </>
+        )}
       </div>
     );
   };

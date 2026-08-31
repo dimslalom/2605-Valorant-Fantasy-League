@@ -1,0 +1,220 @@
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* A real small PlayerCard now, not a bespoke chip — the wrapper only needs
+   to hold a positioning context for the IGL tag and the hover preview.
+   `z-index`/nudge on hover use :focus-within, not :focus-visible: focus
+   actually lands on PlayerCard's own inner button, one level down. */
+.chip {
+  position: relative;
+  z-index: 1;
+  transition: transform var(--dur-transform);
+}
+.chip:hover, .chip:focus-within {
+  z-index: 5;
+}
+
+/* Slight neighbour nudge — only the immediate left/right chip, a few px, so
+   the hovered chip reads as "lifting out" without the whole row shuffling. */
+.chip:hover + .chip,
+.chip:focus-within + .chip {
+  transform: translateX(4px);
+}
+.chip:has(+ .chip:hover),
+.chip:has(+ .chip:focus-within) {
+  transform: translateX(-4px);
+}
+
+/* Drop-target cue while a chip drag is in flight — set imperatively
+   (not React state) by DraggableChip's own pointer handlers as the cursor
+   crosses other chips. Sharp accent outline, not a glow, matching the
+   broadcast-HUD line language used everywhere else in the dock. */
+.chip[data-drop-active="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Drag-to-swap ghost: a fixed-position portal clone that follows the
+   pointer, matching PackRip's own drag ghost. */
+.dragGhost {
+  pointer-events: none;
+  z-index: 1000;
+  filter: drop-shadow(var(--shadow-card-lifted));
+}
+
+/* The whole leftmost slot doubles as an IGL nameplate now — replaces the old
+   small corner tag now that "IGL" is a position (leftmost dock slot, see the
+   derived `iglId` in PerfectRun.jsx), not a flag stuck onto whichever card
+   happened to get chosen. The plate sits BEHIND the card (z-index -1, same
+   stacking context as `.chip`'s own) and pokes out above it for the "IGL"
+   text — the card itself is opaque, so that strip is the only part of the
+   plate actually visible; the rest exists so the whole slot reads as one
+   solid red block, not a text label floating over the art. */
+.chip[data-igl="true"] {
+  position: relative;
+  z-index: 2;
+}
+.chip[data-igl="true"]::before {
+  content: 'IGL';
+  position: absolute;
+  inset: -15px -3px -3px -3px;
+  z-index: -1;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 3px;
+  font: 700 9px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.1em;
+}
+
+/* Card is 400x580 natively; at CHIP_SCALE (0.16) that's 64x92.8 — matched
+   here so the hatched placeholder sits flush with real tiles in the row. */
+.chipEmpty {
+  width: 64px;
+  height: 93px;
+  border: 1px dashed var(--faint);
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0 6px, transparent 6px 12px);
+}
+
+/* The magnified preview: a real mini PlayerCard, popped straight up off the
+   chip's own box (no measurement needed — it's positioned relative to the
+   chip, not the viewport) and inert to pointer events so it can never steal
+   its own hover. */
+.chipPreview {
+  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(var(--shadow-card-lifted));
+  animation: chipRise var(--dur-transform) var(--ease-out) both;
+}
+
+@keyframes chipRise {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+/* A real thumbnail of the pack art, not a text readout — matches the "small
+   real PlayerCard tiles, not a bespoke chip" logic above. The count sits as
+   a notched corner emblem, same idiom as .chipIgl's corner tag. */
+.packBadge {
+  position: relative;
+  display: inline-flex;
+  align-self: center;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+/* Only the real <button> variant (onOpenPack supplied) gets interactive
+   feedback — the plain <span> readout on every other phase stays inert. */
+.packBadge[type="button"] {
+  cursor: pointer;
+  transition: transform var(--dur-hover);
+}
+.packBadge[type="button"]:hover:not(:disabled) { transform: translateY(-2px); }
+.packBadge[type="button"]:active:not(:disabled) { transform: translateY(0) scale(0.94); }
+.packBadge[type="button"]:disabled { cursor: default; }
+.packBadge[type="button"]:focus-visible {
+  outline: var(--focus-ring) solid var(--accent);
+  outline-offset: var(--focus-offset);
+}
+.packThumb {
+  width: 22px;
+  height: 32px;
+  object-fit: cover;
+  display: block;
+  filter: drop-shadow(var(--shadow-card));
+}
+.packBadge[data-empty="true"] .packThumb {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+.packCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 15px;
+  padding: 1px 3px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 700 9px/1.4 ui-monospace, Menlo, monospace;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  z-index: 1;
+}
+.packBadge[data-empty="true"] .packCount {
+  background: var(--surface-alt);
+  color: var(--faint);
+}
+
+.squadBtn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  transition: background var(--dur-hover), color var(--dur-hover);
+}
+.squadBtn:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+@media (hover: none) {
+  .chipPreview { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip, .chip:hover + .chip, .chip:has(+ .chip:hover) { transition: none; }
+  .chipPreview { animation: none; }
+}
+
+@media (max-width: 680px) {
+  .dock { gap: 10px; }
+  .chips { gap: 4px; }
+  /* 400x580 at CHIP_SCALE_MOBILE (0.13) — matches the smaller displayScale
+     SquadDock.jsx switches PlayerCard to below this breakpoint. */
+  .chipEmpty { width: 52px; height: 75px; }
+  .name { display: none; }
+  .chip[data-igl="true"]::before { inset: -13px -2px -2px -2px; font-size: 8px; }
+}

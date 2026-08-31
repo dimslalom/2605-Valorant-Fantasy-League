@@ -1,6 +1,8 @@
+import { m } from 'motion/react';
 import { roleAbbr, cardTextColor, countryName, regionFullName, assetPath } from '../lib/utils';
 import useCardTilt from '../lib/useCardTilt';
 import { getCardSpecialties } from '../data/specialties';
+import { cardSpring, DUR, EASE } from '../lib/motion';
 import SpecialtyIcon from './SpecialtyIcon';
 import PlayerPortrait from './PlayerPortrait';
 import styles from './PlayerCard.module.css';
@@ -40,6 +42,13 @@ export default function PlayerCard({
   flipped = false,
   boosterIcons = [],
   kit,
+  // Opt-in shared-layout id (R2 — spring physics, PlayerCard only; see
+  // src/lib/motion.js). Two call sites currently claim a given card's id at
+  // once (a dock chip and CardFocusOverlay) — the one-owner rule is the
+  // caller's job: whichever mount currently isn't "the" visible instance of
+  // that card must pass layoutId={undefined}, or Framer Motion has two
+  // elements racing to own the same shared-layout animation.
+  layoutId,
 }) {
   const textColor  = cardTextColor(card.palette);
   const mutedColor = textColor + 'aa';
@@ -52,7 +61,15 @@ export default function PlayerCard({
   const { tiltRef, onPointerMove, onPointerLeave } = useCardTilt({ disabled: !tilt });
 
   return (
-    <div
+    <m.div
+      layoutId={layoutId}
+      // `layout` stays on the spring (the layoutId morph between the dock,
+      // overlay, and draft strip); `default` covers whileTap's `scale` — a
+      // separate, sharp press-confirm distinct from the continuous pointer
+      // tilt in useCardTilt.js, which lives on the nested `.tilt` div below
+      // and so never fights this one for the same `transform`.
+      transition={{ layout: cardSpring, default: { duration: DUR.micro, ease: EASE.out } }}
+      whileTap={onClick ? { scale: 0.97 } : undefined}
       style={{ width: CARD_W * displayScale, height: CARD_H * displayScale, flexShrink: 0 }}
       onClick={onClick}
       onPointerMove={onPointerMove}
@@ -85,7 +102,7 @@ export default function PlayerCard({
 
             {/* ── FRONT FACE ── */}
             <div className={`${styles.face} ${styles.faceFront}`}>
-              <img className={styles.layerBg} style={PLANE.bg} src={bgSrc} alt="" aria-hidden="true" />
+              <img className={styles.layerBg} style={PLANE.bg} src={bgSrc} alt="" aria-hidden="true" draggable={false} />
 
               <PlayerPortrait
                 card={card}
@@ -94,7 +111,7 @@ export default function PlayerCard({
                 style={PLANE.photo}
               />
 
-              <img className={styles.layerStatBg} style={PLANE.top} src={assetPath(`/assets/stat-bg/${card.palette}-stat-bg.png`)} alt="" aria-hidden="true" />
+              <img className={styles.layerStatBg} style={PLANE.top} src={assetPath(`/assets/stat-bg/${card.palette}-stat-bg.png`)} alt="" aria-hidden="true" draggable={false} />
 
               <div className={styles.layerText} style={PLANE.top}>
                 <div className={styles.topLeft}>
@@ -156,9 +173,9 @@ export default function PlayerCard({
 
                   <div className={styles.logoRow}>
                     {card.org_logo && (
-                      <img src={assetPath(card.org_logo)} alt={card.org} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                      <img src={assetPath(card.org_logo)} alt={card.org} style={{ width: 32, height: 32, objectFit: 'contain' }} draggable={false} />
                     )}
-                    <img src={regionLogo} alt={card.region} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                    <img src={regionLogo} alt={card.region} style={{ width: 32, height: 32, objectFit: 'contain' }} draggable={false} />
                   </div>
                 </div>
               </div>
@@ -186,7 +203,7 @@ export default function PlayerCard({
             {/* ── BACK FACE ── */}
             {flippable && (
               <div className={`${styles.face} ${styles.faceBack}`}>
-                <img className={styles.layerBg} src={bgSrc} alt="" aria-hidden="true" />
+                <img className={styles.layerBg} src={bgSrc} alt="" aria-hidden="true" draggable={false} />
                 <div className={styles.backContent} style={{ color: textColor }}>
                   <div className={styles.backHeader}>
                     <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.25em', color: mutedColor }}>
@@ -252,7 +269,7 @@ export default function PlayerCard({
           </div>
         </div>
       </div>
-    </div>
+    </m.div>
   );
 }
 

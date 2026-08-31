@@ -10,10 +10,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
-  background: rgba(18, 22, 34, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  background: var(--surface);
+  border: 1px solid var(--line);
 }
 
 .tableMeta {
@@ -23,11 +21,11 @@
 }
 
 .tableTitle {
-  font-family: var(--font-display, 'DM Sans', sans-serif);
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 1.2px;
-  color: #d1d5db;
+  font-size: var(--fs-label);
+  letter-spacing: 0.1em;
+  color: var(--ink);
   text-transform: uppercase;
   display: flex;
   align-items: center;
@@ -38,17 +36,16 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  background: var(--win);
 }
 
 .ovrBadge {
-  background: rgba(255, 184, 0, 0.15);
-  border: 1px solid rgba(255, 184, 0, 0.4);
-  color: #ffb800;
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
   padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 13px;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  font-size: var(--fs-label);
   font-weight: 600;
 }
 
@@ -59,19 +56,19 @@
 }
 
 .stratLabel {
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: var(--fs-micro);
+  color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: var(--track-mono);
 }
 
 .stratSelect {
-  background: #0f1422;
-  color: #f3f4f6;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: var(--surface-alt);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
   padding: 6px 12px;
-  font-size: 13px;
+  font-size: var(--fs-label);
   font-weight: 600;
   cursor: pointer;
 }
@@ -83,14 +80,14 @@
   border-color: var(--accent);
 }
 
-/* 2b Felt Card Table surface with 2c flex empty slots */
+/* The card table: flat sunken surface with a sharp bracket border and a
+   faint diagonal weave texture standing in for the felt, rather than a
+   photorealistic gradient/glow — kept in the same flat, cut-and-layered
+   language as the rest of the shell. */
 .feltTable {
-  background: radial-gradient(circle at center, #1b3829 0%, #0d1e16 65%, #050d09 100%);
-  border: 4px solid #2d1e14;
-  outline: 1px solid rgba(255, 184, 0, 0.3);
-  border-radius: 16px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line-bracket);
   padding: 24px 20px;
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.7), 0 8px 32px rgba(0, 0, 0, 0.6);
   position: relative;
   overflow: hidden;
 }
@@ -124,31 +121,27 @@
   flex: 1 1 150px;
   max-width: 175px;
   min-height: 235px;
-  border-radius: 10px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-transform) var(--ease-out);
   position: relative;
 }
 
 .emptyFlexSlot {
-  border: 2px dashed rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.25);
+  border: 2px dashed var(--line-bracket);
+  background: var(--bg-deep);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
 }
 
 .emptyFlexSlot:hover {
-  border-color: #ff4655;
-  background: rgba(255, 70, 85, 0.08);
+  border-color: var(--accent);
+  background: var(--accent-soft);
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(255, 70, 85, 0.25);
 }
 
 .slotActive {
-  border-color: #ffb800 !important;
-  box-shadow: 0 0 16px rgba(255, 184, 0, 0.5) !important;
+  border-color: var(--gold) !important;
 }
 
 .emptyContent {
@@ -156,35 +149,35 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
   text-align: center;
 }
 
 .emptyIcon {
   font-size: 28px;
   font-weight: 300;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
+  width: var(--tap-min);
+  height: var(--tap-min);
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  border: 1px dashed var(--line-bracket);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ff4655;
-  background: rgba(0, 0, 0, 0.3);
+  color: var(--accent);
+  background: var(--bg-deep);
 }
 
 .emptyLabel {
-  font-size: 13px;
+  font-size: var(--fs-label);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #e5e7eb;
+  letter-spacing: 0.1em;
+  color: var(--ink);
 }
 
 .emptySub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: var(--fs-micro);
+  color: var(--faint);
 }
 
 .filledSlot {
@@ -209,49 +202,48 @@
 }
 
 .iglBtn {
-  background: rgba(30, 41, 59, 0.9);
-  color: #94a3b8;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  background: var(--surface-alt);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color var(--dur-micro), border-color var(--dur-micro);
 }
 
 .iglBtn:hover {
-  border-color: #ffb800;
-  color: #ffb800;
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 .iglActive {
-  background: rgba(255, 184, 0, 0.2);
-  border-color: #ffb800;
-  color: #ffb800;
+  background: var(--gold-soft);
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 .removeBtn {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   cursor: pointer;
 }
 
 .removeBtn:hover {
-  background: #ef4444;
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* Pool Drawer */
 .poolDrawer {
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
   padding: 16px;
 }
 
@@ -265,11 +257,11 @@
 }
 
 .drawerTitle {
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #f3f4f6;
+  letter-spacing: 0.1em;
+  color: var(--ink);
 }
 
 .drawerFilters {
@@ -279,12 +271,12 @@
 }
 
 .searchInput {
-  background: #090d16;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border-radius: 4px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: var(--fs-micro);
 }
 
 .searchInput:focus-visible {
@@ -297,20 +289,20 @@
 }
 
 .roleChip {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #9ca3af;
-  border-radius: 4px;
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 600;
   cursor: pointer;
 }
 
 .roleActive {
-  background: #ff4655;
-  color: #fff;
-  border-color: #ff4655;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
 }
 
 .cardGrid {
@@ -328,7 +320,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-transform);
 }
 
 .poolCardItem:hover {
@@ -338,15 +330,15 @@
 .addOverlayBtn {
   position: absolute;
   bottom: 8px;
-  background: rgba(255, 70, 85, 0.9);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
   border: none;
-  border-radius: 4px;
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 700;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--dur-hover);
 }
 
 .poolCardItem:hover .addOverlayBtn {
