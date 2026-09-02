@@ -4,12 +4,14 @@ import { m, useMotionValue, animate } from 'motion/react';
 import PlayerCard from './PlayerCard';
 import CardReveal from './CardReveal';
 import PackTear from './PackTear';
+import CountryFlag from './CountryFlag';
 import { cardSpring } from '../lib/motion';
+import useReducedMotion from '../lib/useReducedMotion';
 import styles from './PackRip.module.css';
 
 const DRAG_THRESHOLD = 6; // px of pointer travel before a press counts as a drag, not a tap
 
-// One pack-rip lane, shared by Perfect Run's draft/pack screens and
+// One pack-rip lane, shared by Gauntlet's draft/pack screens and
 // Multiplayer's draft/consolation screens — previously duplicated near-
 // verbatim (same shake/tear keyframes, same reduced-motion branch) in each
 // page. Card reveal goes through CardReveal (tier-scaled entrance); the
@@ -45,16 +47,16 @@ export default function PackRip({
 }) {
   const [ripping, setRipping] = useState(false);
   const stripRef = useRef(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!ripId) return undefined;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const startTimer = setTimeout(() => {
-      setRipping(!reduced);
+      setRipping(!reducedMotion);
       if (stripRef.current) stripRef.current.scrollLeft = 0;
     }, 0);
     return () => clearTimeout(startTimer);
-  }, [ripId]);
+  }, [ripId, reducedMotion]);
 
   const onWheel = (e) => {
     if (stripRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -70,7 +72,7 @@ export default function PackRip({
           {headerSlot && <span className={styles.draftSlot}>{headerSlot}</span>}
           {packTitle && (
             <span className={styles.draftNat}>
-              {nation && <span className={`fi fi-${nation.toLowerCase()}`} style={{ width: 34, height: 24 }} />}
+              {nation && <CountryFlag code={nation} style={{ width: 34, height: 24 }} />}
               {packTitle}
               <small className={styles.draftCount}>{choices.length} available</small>
             </span>

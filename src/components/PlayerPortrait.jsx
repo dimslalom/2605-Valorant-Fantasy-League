@@ -32,6 +32,7 @@ export default function PlayerPortrait({
   className = '',
   style,
   loading = 'lazy',
+  fetchPriority = 'auto',
   // Card plane is a fixed 400x412 box; the broadcast/hero bands size faces as
   // a share of their container. Every offset below is expressed as a
   // percentage of the portrait's own box, so the same composite is correct at
@@ -62,6 +63,8 @@ export default function PlayerPortrait({
         src={assetPath(card.photo)}
         alt={card.player}
         loading={loading}
+        fetchPriority={fetchPriority}
+        decoding="async"
         // Intrinsic size matters here: a lazy image with no dimensions collapses
         // to zero height, never intersects the viewport, and so never loads —
         // which blanks every photo card. width/height give it an aspect ratio
@@ -98,6 +101,8 @@ export default function PlayerPortrait({
         alt=""
         aria-hidden="true"
         loading={loading}
+        fetchPriority={fetchPriority}
+        decoding="async"
         draggable={false}
       />
       <img
@@ -106,6 +111,8 @@ export default function PlayerPortrait({
         alt=""
         aria-hidden="true"
         loading={loading}
+        fetchPriority={fetchPriority}
+        decoding="async"
         style={{ transform }}
         draggable={false}
       />
@@ -117,6 +124,8 @@ export default function PlayerPortrait({
         alt=""
         aria-hidden="true"
         loading={loading}
+        fetchPriority={fetchPriority}
+        decoding="async"
         style={{ clipPath: `inset(${collarInset}% 0 0 0)` }}
         draggable={false}
       />
@@ -127,6 +136,8 @@ export default function PlayerPortrait({
           alt=""
           aria-hidden="true"
           loading={loading}
+          fetchPriority={fetchPriority}
+          decoding="async"
           style={{ transform }}
           draggable={false}
         />

@@ -12,7 +12,8 @@ export const DUR = {
   hover: 0.15,      // --dur-hover   — hover affordance
   transform: 0.2,   // --dur-transform — lift, scale, slide
   enter: 0.32,      // --dur-enter   — element entrance
-  hero: 0.55,       // --dur-hero    — full-screen phase entrance
+  hero: 0.48,       // --dur-hero    — championship / hero entrance
+  travel: 0.6,      // --dur-travel  — measured bracket movement
 };
 
 // cubic-bezier control points, matching tokens.css 1:1.
@@ -53,11 +54,12 @@ export const chipPop = {
   exit: { opacity: 0, transition: { duration: DUR.micro, ease: EASE.in } },
 };
 
-// A backdrop wipe for full-phase transitions.
+// Full phases move as one restrained broadcast panel. Descendants should not
+// repeat this entrance with their own CSS animation.
 export const wipeIn = {
-  initial: { clipPath: 'inset(0 0 100% 0)' },
-  animate: { clipPath: 'inset(0 0 0% 0)', transition: { duration: DUR.hero, ease: EASE.out } },
-  exit: { clipPath: 'inset(0 100% 0 0)', transition: { duration: DUR.hover, ease: EASE.in } },
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: DUR.enter, ease: EASE.out } },
+  exit: { opacity: 0, y: -4, transition: { duration: DUR.transform, ease: EASE.in } },
 };
 
 // ── R2 Card — spring physics, PlayerCard only ──────────────────────────────

@@ -1,6 +1,6 @@
 /* Floating inset dock — same placement rule as the rest of the chrome: it
    never touches the left, right, or bottom edge (the rail is the only chrome
-   allowed to span full-bleed). Layout lifted from Perfect Run's old
+   allowed to span full-bleed). Layout lifted from Gauntlet's old
    .actionBar/.actionBarInner, regridded auto/1fr now that the dock has a
    real (non-empty) left zone. */
 .bar {

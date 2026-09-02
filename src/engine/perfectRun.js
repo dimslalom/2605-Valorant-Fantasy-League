@@ -1,4 +1,4 @@
-// Perfect Run game engine.
+// Gauntlet game engine.
 // Draft-by-nationality rolls, team chemistry, and a seeded SEASON of three
 // single-elimination tournaments (two Masters, then Champions), each a 16-team
 // bracket named after a random world city. Every match is simulated, not just
@@ -12,14 +12,32 @@ import { getCardSpecialties } from '../data/specialties.js';
 
 // ── Seeded RNG ───────────────────────────────────────────────────────────────
 
+// The generator's entire state is the single uint32 `a`, and the first thing
+// next() does is advance it — so mulberry32(rngState(r)) resumes r's stream
+// exactly. That is what makes an endless run resumable across a reload
+// without replaying it. The arithmetic is untouched, so every seeded stream
+// (the daily seed included) is bit-identical to before `state` existed.
 export function mulberry32(seed) {
   let a = seed >>> 0;
-  return function () {
+  function next() {
     a |= 0; a = (a + 0x6D2B79F5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  }
+  // A property rather than a {next, state} object: every call site passes the
+  // rng as a bare function (simMap, pickN, weightedPick, shuffle...), and this
+  // stays invisible to all of them.
+  next.state = () => a >>> 0;
+  return next;
+}
+
+export function rngState(rng) {
+  return typeof rng?.state === 'function' ? rng.state() : null;
+}
+
+export function restoreRng(state) {
+  return mulberry32(state >>> 0);
 }
 
 export function hashSeed(str) {
@@ -442,185 +460,10 @@ export function makeSeason(rng) {
   ];
 }
 
-// Endless mode: one more event, forever. The first cycle mirrors a season
-// (Masters, Masters, then Champions); from the third event on every field is
-// Champions-caliber (buildBracket's 'champions' kind = exactly the top 15
-// orgs), which is the difficulty ramp. `usedCities` is a sliding window of
-// recent hosts so cities do not repeat back-to-back.
-export function nextEndlessEvent(rng, index, usedCities = []) {
-  const pool = CITIES.filter(c => !usedCities.includes(c));
-  const city = pickN(rng, pool.length ? pool : CITIES, 1)[0];
-  const kind = index % 3 < 2 ? 'masters' : 'champions';
-  const cycle = endlessCycle(index);
-  const modifier = drawEventModifier(rng, kind, cycle);
-  return { kind, city, label: `${kind === 'champions' ? 'Champions' : 'Masters'} ${city}`, modifier, cycle };
-}
-
-// ── Endless roguelike ───────────────────────────────────────────────────────
-
-export const ENDLESS_LIVES = 3;
-export const FATIGUE_PENALTY_CAP = 5;
-export const BOOST_RATING_CAP = 3;
-export const ENDLESS_REGIONS = ['Americas', 'EMEA', 'Pacific', 'China'];
-
-export function endlessCycle(eventIndex) {
-  return Math.floor(eventIndex / 3);
-}
-
-export function endlessDifficulty(cycle) {
-  const safeCycle = Math.max(0, cycle);
-  const formBoost = safeCycle <= 3 ? safeCycle * 3 : 9 + (safeCycle - 3) * 1.5;
-  return {
-    formBoost,
-    superTeamCount: Math.min(4, Math.max(0, safeCycle - 1)),
-    superTeamBoost: formBoost / 2,
-    mastersModifierChance: safeCycle === 0 ? 0 : Math.min(0.6, 0.25 + 0.1 * safeCycle),
-  };
-}
-
-export const MODIFIERS = {
-  hostile_crowd: { key: 'hostile_crowd', label: 'Hostile Crowd', desc: 'Your squad loses 4 power.', pool: 'boss' },
-  giant_killers: { key: 'giant_killers', label: 'Giant Killers', desc: 'Every opponent gains 3 power.', pool: 'both' },
-  duelist_slump: { key: 'duelist_slump', label: 'Duelist Slump', desc: 'Your Duelists lose 3 rating.', pool: 'both' },
-  igl_silenced: { key: 'igl_silenced', label: 'IGL Silenced', desc: 'Your IGL chemistry bonus is disabled.', pool: 'boss' },
-  cold_streak: { key: 'cold_streak', label: 'Cold Streak', desc: 'Chemistry contributes at half strength.', pool: 'boss' },
-  bo1_r16: { key: 'bo1_r16', label: 'Sudden Death', desc: 'The round of 16 is best-of-one.', pool: 'both', roundOverrides: { r16: { bestOf: 1 } } },
-  grueling_schedule: { key: 'grueling_schedule', label: 'Grueling Schedule', desc: 'This event adds double fatigue.', pool: 'both' },
-  away_maps: { key: 'away_maps', label: 'Away Maps', desc: 'The map odds lean 2 power toward your opponent.', pool: 'boss', bias: -2 },
-};
-
-export function drawEventModifier(rng, kind, cycle) {
-  const difficulty = endlessDifficulty(cycle);
-  if (kind === 'masters' && rng() >= difficulty.mastersModifierChance) return null;
-  const allowed = Object.values(MODIFIERS).filter(modifier =>
-    modifier.pool === 'both' || (kind === 'champions' ? modifier.pool === 'boss' : modifier.pool === 'masters'));
-  return allowed[Math.floor(rng() * allowed.length)] ?? null;
-}
-
-export function nextEndlessCycle(rng, cycleIndex, usedCities = []) {
-  const available = CITIES.filter(city => !usedCities.includes(city));
-  const cities = pickN(rng, available.length >= 3 ? available : CITIES, 3);
-  return ['masters', 'masters', 'champions'].map((kind, index) => ({
-    kind,
-    city: cities[index],
-    label: `${kind === 'champions' ? 'Champions' : 'Masters'} ${cities[index]}`,
-    cycle: cycleIndex,
-    modifier: drawEventModifier(rng, kind, cycleIndex),
-  }));
-}
-
 export function npcTeamPower(roster) {
   if (!roster.length) return { power: 0, iglId: null };
   return roster.map(card => ({ iglId: card.id, result: teamPower(roster, card.id) }))
     .sort((a, b) => b.result.power - a.result.power || String(a.iglId).localeCompare(String(b.iglId)))[0];
-}
-
-export function buildSuperTeam(region, cards, pickedIds = new Set()) {
-  const pool = cards.filter(card => card.region === region && !pickedIds.has(card.id));
-  const roster = [];
-  for (const role of ROLE_CLASSES) {
-    const best = pool.filter(card => card.role === role).sort((a, b) => b.rating - a.rating || String(a.id).localeCompare(String(b.id)))[0];
-    if (best) roster.push(best);
-  }
-  for (const card of [...pool].sort((a, b) => b.rating - a.rating || String(a.id).localeCompare(String(b.id)))) {
-    if (roster.length >= ROSTER_SIZE) break;
-    if (!roster.includes(card)) roster.push(card);
-  }
-  if (roster.length < ROSTER_SIZE) return null;
-  const best = npcTeamPower(roster);
-  return { id: `allstar:${region}`, tag: region.slice(0, 3).toUpperCase(), name: `${region} All-Stars`, region, logo: null,
-    roster, iglId: best.iglId, power: best.result.power, isPlayer: false };
-}
-
-export function buildEndlessBracket(rng, cards, pickedIds, playerTeam, kind, cycle, modifier = null) {
-  const difficulty = endlessDifficulty(cycle);
-  const pool = eligibleOrgs(cards, pickedIds).map(team => {
-    const best = npcTeamPower(team.roster);
-    return { ...team, iglId: best.iglId, power: best.result.power + difficulty.formBoost };
-  });
-  const neededAllStars = kind === 'champions' ? difficulty.superTeamCount : cycle >= 4 ? 1 : 0;
-  const allStars = ENDLESS_REGIONS.slice(0, neededAllStars)
-    .map(region => buildSuperTeam(region, cards, pickedIds)).filter(Boolean)
-    .map(team => ({ ...team, power: team.power + difficulty.superTeamBoost }));
-  const npcCount = 15 - allStars.length;
-  const orgs = kind === 'champions' ? pool.slice(0, npcCount) : pickN(rng, pool.slice(0, 30), npcCount);
-  const opponentBoost = modifier?.key === 'giant_killers' ? 3 : 0;
-  const all = [playerTeam, ...orgs, ...allStars]
-    .map(team => team.isPlayer ? team : { ...team, power: team.power + opponentBoost })
-    .sort((a, b) => b.power - a.power || String(a.id).localeCompare(String(b.id)));
-  const teams = Object.fromEntries(all.map(team => [team.id, team]));
-  const bestOf = modifier?.roundOverrides?.r16?.bestOf ?? ROUND_META.r16.bestOf;
-  return { kind, teams, seeds: all.map(team => team.id), roundOverrides: modifier?.roundOverrides ?? {}, modifier,
-    rounds: [{ key: 'r16', label: ROUND_META.r16.label, bestOf, matches: SEED_ORDER.map(([i, j]) => makeMatch(all[i].id, all[j].id, bestOf)) }], roundIdx: 0 };
-}
-
-export function fatiguePenalty(value) {
-  return Math.min(FATIGUE_PENALTY_CAP, Math.max(0, Number(value) || 0));
-}
-
-export function addEventFatigue(runState, roster, multiplier = 1) {
-  const next = { ...runState, fatigue: { ...(runState.fatigue ?? {}) } };
-  for (const card of roster) next.fatigue[card.id] = (next.fatigue[card.id] ?? 0) + multiplier;
-  return next;
-}
-
-export function applyRunEffects(roster, runState = {}) {
-  const fatigue = runState.fatigue ?? {};
-  const boosts = runState.boosts ?? {};
-  if (!Object.keys(fatigue).length && !Object.keys(boosts).length) return roster;
-  return roster.map(card => {
-    const penalty = fatiguePenalty(fatigue[card.id]);
-    const cardBoosts = boosts[card.id] ?? [];
-    if (!penalty && !cardBoosts.length) return card;
-    const ratingBoost = Math.min(BOOST_RATING_CAP, cardBoosts.reduce((sum, boost) => sum + (boost.rating ?? 0), 0));
-    const stats = { ...card.stats };
-    for (const boost of cardBoosts) if (boost.stat) stats[boost.stat] = Math.min(99, (stats[boost.stat] ?? 0) + (boost.value ?? 0));
-    const runFx = cardBoosts.map(boost => ({ key: boost.key, glyph: boost.glyph, label: boost.label, desc: boost.desc, tone: 'boost' }));
-    if (penalty) runFx.push({ key: 'fatigue', glyph: `${penalty}`, label: `Fatigue ${penalty}`, desc: `-${penalty} rating`, tone: 'fatigue' });
-    return { ...card, rating: card.rating + ratingBoost - penalty, stats, runFx };
-  });
-}
-
-export function effectiveTeamPower(roster, iglId, runState = {}, modifierKey = null) {
-  let adjusted = applyRunEffects(roster, runState);
-  if (modifierKey === 'duelist_slump') adjusted = adjusted.map(card => card.role === 'Duelist' ? { ...card, rating: card.rating - 3 } : card);
-  const result = teamPower(adjusted, modifierKey === 'igl_silenced' ? null : iglId);
-  const chemFactor = modifierKey === 'cold_streak' ? 0.3 : 0.6;
-  const teamChemBonus = Math.min(6, Math.max(0, runState.teamChemBonus ?? 0));
-  return { ...result, roster: adjusted,
-    power: result.base + result.chem * chemFactor + teamChemBonus * 0.6 - (modifierKey === 'hostile_crowd' ? 4 : 0) };
-}
-
-export function eventCredits({ mapsWon = 0, seriesWon = 0, champion = false, cycle = 0 }) {
-  return mapsWon * 20 + seriesWon * 40 + (champion ? 150 : 30) + cycle * 10;
-}
-
-export const SHOP_ITEMS = [
-  { key: 'scout_pack', label: 'Scout Pack', cost: 100, desc: 'Open a five-card swap pack.', glyph: 'P' },
-  { key: 'aim_coach', label: 'Aim Coach', cost: 60, desc: '+1 rating and +2 aim for one player.', glyph: 'A', targeted: true },
-  { key: 'mental_coach', label: 'Mental Coach', cost: 60, desc: '+1 rating and +2 mentality for one player.', glyph: 'M', targeted: true },
-  { key: 'energy_drink', label: 'Energy Drink', cost: 40, desc: 'Clear one player’s fatigue.', glyph: 'E', targeted: true },
-  { key: 'team_retreat', label: 'Team Retreat', cost: 90, desc: 'Reduce team fatigue by 2.', glyph: 'R' },
-  { key: 'synergy_camp', label: 'Synergy Camp', cost: 120, desc: '+2 team chemistry (three stacks max).', glyph: 'S' },
-];
-
-export function applyPurchase(runState, itemKey, targetCardId = null) {
-  const item = SHOP_ITEMS.find(entry => entry.key === itemKey);
-  if (!item) throw new Error('Unknown shop item.');
-  if (item.targeted && !targetCardId) throw new Error('Choose a player for this item.');
-  const next = { fatigue: { ...(runState.fatigue ?? {}) }, boosts: Object.fromEntries(Object.entries(runState.boosts ?? {}).map(([id, list]) => [id, [...list]])), teamChemBonus: runState.teamChemBonus ?? 0 };
-  if (itemKey === 'aim_coach' || itemKey === 'mental_coach') {
-    const stat = itemKey === 'aim_coach' ? 'aim' : 'mentality';
-    next.boosts[targetCardId] ??= [];
-    next.boosts[targetCardId].push({ key: itemKey, glyph: item.glyph, label: item.label, desc: item.desc, rating: 1, stat, value: 2 });
-  } else if (itemKey === 'energy_drink') {
-    delete next.fatigue[targetCardId];
-  } else if (itemKey === 'team_retreat') {
-    for (const id of Object.keys(next.fatigue)) next.fatigue[id] = Math.max(0, next.fatigue[id] - 2);
-  } else if (itemKey === 'synergy_camp') {
-    next.teamChemBonus = Math.min(6, next.teamChemBonus + 2);
-  }
-  return next;
 }
 
 export const ROUND_KEYS = ['r16', 'quarter', 'semi', 'final'];
@@ -641,22 +484,31 @@ const SEED_ORDER = [
   [0, 15], [7, 8], [3, 12], [4, 11], [1, 14], [6, 9], [2, 13], [5, 10],
 ];
 
-// Every org with a full five-man roster and nobody already drafted; its best
-// five by rating, strongest orgs first.
-function eligibleOrgs(cards, pickedIds) {
+// Every org that can still field five undrafted players; its best five by
+// rating, strongest orgs first.
+//
+// Signing a player takes that PLAYER off the market, not their whole team:
+// the old rule dropped the entire org if any one of its players had been
+// drafted, so a five-org draft silently deleted five teams from the opponent
+// pool. Orgs with no depth (only 41 of 159 carry a sixth player) still fall
+// out on their own once they can't field five — which is the rule players
+// actually expect.
+export function eligibleOrgs(cards, pickedIds) {
   const byOrg = {};
   for (const c of cards) {
     if (!c.org) continue; // icons are org-less and never form an opponent team
+    if (pickedIds.has(c.id)) continue;
     (byOrg[c.org] ??= []).push(c);
   }
   return Object.entries(byOrg)
-    .filter(([, list]) => list.length >= 5 && list.every(p => !pickedIds.has(p.id)))
+    .filter(([, list]) => list.length >= 5)
     .map(([org, list]) => {
       const roster = [...list].sort((a, b) => b.rating - a.rating).slice(0, 5);
+      const best = npcTeamPower(roster);
       return {
         id: org, tag: org, name: roster[0].org_name ?? org,
-        logo: roster[0].org_logo, roster,
-        power: roster.reduce((s, p) => s + p.rating, 0) / 5,
+        logo: roster[0].org_logo, roster, iglId: best.iglId,
+        power: best.result.power,
         isPlayer: false,
       };
     })
@@ -927,8 +779,10 @@ export function updateEncRecords(records = {}, { series, champion, mapsLost, fin
 
 // Season summary across all tournaments. `results` are per-tournament
 // objects ({ champion, series }). Endless runs can be any length, so the
-// three-title slam/perfect badges only apply to fixed seasons.
-export function evaluateSeason(results, { endless = false } = {}) {
+// Evaluate one ordinary three-tournament year. Passing a partial year is
+// useful for the live score shown between tournaments; year-only awards are
+// naturally withheld until all three titles have actually been won.
+export function evaluateSeason(results) {
   const badges = [];
   const titles = results.filter(r => r.champion).length;
   const allSeries = results.flatMap(r => r.series);
@@ -937,8 +791,8 @@ export function evaluateSeason(results, { endless = false } = {}) {
   const mapsLost = allSeries.reduce((s, r) => s + r.mapsLost, 0);
   const roundDiff = allSeries.reduce((s, r) => s + r.roundDiff, 0);
 
-  const grandSlam = !endless && titles === 3;
-  const perfectSeason = !endless && titles === 3 && mapsLost === 0;
+  const grandSlam = results.length === 3 && titles === 3;
+  const perfectSeason = grandSlam && mapsLost === 0;
   if (grandSlam) {
     badges.push({ key: 'grand_slam', label: 'GRAND SLAM', desc: 'Won all three tournaments' });
   }
@@ -946,22 +800,51 @@ export function evaluateSeason(results, { endless = false } = {}) {
     badges.push({ key: 'perfect_season', label: 'PERFECT SEASON', desc: 'Three titles, zero maps dropped' });
   }
 
-  const fixedScore = seriesWon * 100 + mapsWon * 20 + roundDiff + titles * 150 +
-    (grandSlam ? 300 : 0) + (perfectSeason ? 500 : 0);
-  const endlessScore = results.reduce((total, result, index) => {
-    const cycle = result.cycle ?? endlessCycle(index);
-    const eventSeries = result.series ?? [];
-    const base = eventSeries.filter(series => series.won).length * 100 +
-      eventSeries.reduce((sum, series) => sum + (series.mapsWon ?? 0) * 20 + (series.roundDiff ?? 0), 0) +
-      (result.champion ? 150 : 0);
-    return total + base * (1 + 0.25 * cycle);
-  }, 0);
-  const clearedCycles = endless ? results.filter((result, index) => (result.champion && index % 3 === 2)).length : 0;
-  const score = Math.max(0, Math.round(endless ? endlessScore + clearedCycles * 200 : fixedScore));
-  const bestCycle = endless ? results.reduce((best, result, index) => Math.max(best, result.cycle ?? endlessCycle(index)), 0) : undefined;
+  const score = Math.max(0, Math.round(
+    seriesWon * 100 + mapsWon * 20 + roundDiff + titles * 150 +
+    (grandSlam ? 300 : 0) + (perfectSeason ? 500 : 0),
+  ));
 
   return {
     badges, score, titles, seriesWon, mapsWon, mapsLost, roundDiff,
-    grandSlam, perfectSeason, events: results.length, bestCycle,
+    grandSlam, perfectSeason, events: results.length,
+  };
+}
+
+// Endless is deliberately not a second ruleset. It is an aggregate of
+// consecutive ordinary years, including the current partial year. Keeping
+// the grouping here guarantees that scoring and annual awards cannot drift
+// away from evaluateSeason as the normal game evolves.
+export function evaluateEndless(results) {
+  const years = [];
+  for (let index = 0; index < results.length; index += 3) {
+    years.push(evaluateSeason(results.slice(index, index + 3)));
+  }
+
+  const completedYears = Math.floor(results.length / 3);
+  const badges = years.flatMap((year, yearIndex) => (
+    yearIndex < completedYears
+      ? year.badges.map(badge => ({
+        ...badge,
+        key: `year_${yearIndex + 1}_${badge.key}`,
+        label: `YEAR ${yearIndex + 1} · ${badge.label}`,
+      }))
+      : []
+  ));
+
+  return {
+    badges,
+    score: years.reduce((sum, year) => sum + year.score, 0),
+    titles: years.reduce((sum, year) => sum + year.titles, 0),
+    seriesWon: years.reduce((sum, year) => sum + year.seriesWon, 0),
+    mapsWon: years.reduce((sum, year) => sum + year.mapsWon, 0),
+    mapsLost: years.reduce((sum, year) => sum + year.mapsLost, 0),
+    roundDiff: years.reduce((sum, year) => sum + year.roundDiff, 0),
+    grandSlam: years.slice(0, completedYears).some(year => year.grandSlam),
+    perfectSeason: years.slice(0, completedYears).some(year => year.perfectSeason),
+    events: results.length,
+    completedYears,
+    currentYear: Math.floor(results.length / 3) + 1,
+    years,
   };
 }

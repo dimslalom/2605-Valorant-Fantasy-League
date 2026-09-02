@@ -1,4 +1,4 @@
-/* Shared skeleton for the two top level hub screens: Perfect Run's mode menu
+/* Shared skeleton for the two top level hub screens: Gauntlet's mode menu
    and Multiplayer Lock In.
 
    Both pages import THIS file instead of keeping private copies of the same
@@ -25,7 +25,7 @@
 }
 
 /* Reserving a height here is what actually keeps the two pages aligned. The
-   Perfect Run logotype is a raster asset and the Multiplayer title is live
+   Gauntlet logotype is a raster asset and the Multiplayer title is live
    text, so their natural heights differ; pinning the band means the body
    starts at the same y on both regardless. */
 .title {

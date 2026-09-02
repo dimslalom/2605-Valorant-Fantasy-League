@@ -1,4 +1,4 @@
-/* Perfect Run design tokens (scoped to this page).
+/* Gauntlet design tokens (scoped to this page).
    Direction: playvalorant.com. Sharp corners, solid color blocks, one accent,
    uppercase display type, tabular numerals. No glows, no gradients.
    Separation comes from whitespace (between sections) and filled surfaces
@@ -1182,6 +1182,10 @@
 }
 .swapIncoming, .swapOutgoing { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .swapArrow { font-size: 28px; font-weight: 700; color: var(--faint); }
+.keyboardSwap { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px; margin:16px auto; }
+.keyboardSwap b { width:100%; color:var(--muted); text-align:center; }
+.keyboardSwap button { padding:10px 14px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; }
+.keyboardSwap button:hover,.keyboardSwap button:focus-visible { border-color:var(--accent); color:var(--accent); }
 .swapConfirmActions { display: flex; gap: 12px; }
 .swapHint { font-size: 13px; color: var(--muted); max-width: 220px; text-align: center; margin: 0 auto 24px; }
 
@@ -1557,26 +1561,6 @@
 
 .boardScore { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.bossIntro { border: 2px solid var(--gold); padding: 42px; }
-.bossBadge, .nextBoss { display: inline-flex; padding: 9px 14px; background: var(--gold); color: var(--gold-ink); font-weight: 700; letter-spacing: .08em; }
-.modifierBanner { margin: 22px auto 0; max-width: 560px; padding: 16px 20px; background: var(--accent-soft); border: 1px solid var(--accent); display: flex; flex-direction: column; gap: 4px; }
-.nextBoss { margin: 18px 0; }
-.shop { padding: 28px 0 72px; }
-.shopHead { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
-.shopHead h2 { font-size: clamp(38px, 6vw, 76px); margin: 4px 0; }
-.shopHead h2 em { color: var(--accent); }
-.shopWallet { font-weight: 700; }
-.shopWallet b { font-size: 30px; color: var(--gold); }
-.shopWallet span { color: var(--accent); letter-spacing: 3px; }
-.shopGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 28px; }
-.shopItem { min-height: 150px; padding: 18px; border: 1px solid var(--line); background: var(--surface); color: var(--text); text-align: left; display: grid; grid-template-columns: 42px 1fr auto; gap: 7px 10px; align-items: center; }
-.shopItem > span { grid-row: 1 / 4; width: 40px; height: 40px; display: grid; place-items: center; border: 2px solid var(--gold); color: var(--gold); font-weight: 700; }
-.shopItem small { grid-column: 2 / 4; color: var(--muted); }
-.shopItem strong { color: var(--gold); }
-.shopItem:disabled { opacity: .42; }
-.shopSelected { outline: 3px solid var(--accent); }
-.shopSquad { display: flex; gap: 14px; overflow-x: auto; padding: 18px 12px 28px; }
-
 /* ── Bottom bar clearance: the squad dock + phase actions live in the
       shared SquadBar component (src/components/SquadBar.module.css) now —
       this page only needs to reserve room for it under the scrollable
@@ -1671,7 +1655,5 @@
   .modeSplitActions { width: 100%; }
   .modeSplitAction { flex: 1; }
   .boardPanel { max-width: none; }
-  .shopGrid { grid-template-columns: 1fr; }
-  .shopHead { align-items: flex-start; flex-direction: column; }
   .withBar .page { padding-bottom: 174px; }
 }

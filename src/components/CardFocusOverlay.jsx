@@ -5,6 +5,7 @@ import PlayerCard from './PlayerCard';
 import { getCardSpecialties } from '../data/specialties';
 import SpecialtyIcon from './SpecialtyIcon';
 import { fadeIn } from '../lib/motion';
+import useDialogFocusTrap from '../lib/useDialogFocusTrap';
 import styles from './CardFocusOverlay.module.css';
 
 const CARD_H = 580;
@@ -15,8 +16,9 @@ const CARD_H = 580;
 export default function CardFocusOverlay({ card, onClose, action = null, onAction }) {
   const [flipped, setFlipped] = useState(false);
   const closeRef = useRef(null);
-  const returnFocusRef = useRef(null);
+  const dialogRef = useRef(null);
   const cardRef = useRef(card);
+  useDialogFocusTrap(Boolean(card), dialogRef, closeRef);
   useEffect(() => {
     cardRef.current = card;
   });
@@ -57,16 +59,6 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card]);
 
-  // Move focus into the dialog on open, and back to whatever opened it on
-  // close — a keyboard/screen-reader user tabbing after opening otherwise
-  // lands back in the page behind the overlay.
-  useEffect(() => {
-    if (!card) return;
-    returnFocusRef.current = document.activeElement;
-    closeRef.current?.focus();
-    return () => returnFocusRef.current?.focus?.();
-  }, [card]);
-
   const scale = card ? Math.min(1, (window.innerHeight * 0.82) / CARD_H) : 0;
   const specialties = card ? getCardSpecialties(card) : [];
 
@@ -78,6 +70,7 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
     <AnimatePresence>
       {card && (
         <m.div
+          ref={dialogRef}
           className={styles.backdrop}
           variants={fadeIn}
           initial="initial"

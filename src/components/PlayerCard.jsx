@@ -5,6 +5,7 @@ import { getCardSpecialties } from '../data/specialties';
 import { cardSpring, DUR, EASE } from '../lib/motion';
 import SpecialtyIcon from './SpecialtyIcon';
 import PlayerPortrait from './PlayerPortrait';
+import CountryFlag from './CountryFlag';
 import styles from './PlayerCard.module.css';
 
 const CARD_W = 400;
@@ -40,8 +41,9 @@ export default function PlayerCard({
   tilt = true,
   flippable = false,
   flipped = false,
-  boosterIcons = [],
   kit,
+  portraitLoading = 'lazy',
+  portraitFetchPriority = 'auto',
   // Opt-in shared-layout id (R2 — spring physics, PlayerCard only; see
   // src/lib/motion.js). Two call sites currently claim a given card's id at
   // once (a dock chip and CardFocusOverlay) — the one-owner rule is the
@@ -76,7 +78,11 @@ export default function PlayerCard({
       onPointerLeave={onPointerLeave}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      onKeyDown={onClick ? (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onClick();
+      } : undefined}
     >
       <div
         className={styles.stage}
@@ -109,9 +115,9 @@ export default function PlayerCard({
                 kit={kit}
                 className={styles.layerPhoto}
                 style={PLANE.photo}
+                loading={portraitLoading}
+                fetchPriority={portraitFetchPriority}
               />
-
-              <img className={styles.layerStatBg} style={PLANE.top} src={assetPath(`/assets/stat-bg/${card.palette}-stat-bg.png`)} alt="" aria-hidden="true" draggable={false} />
 
               <div className={styles.layerText} style={PLANE.top}>
                 <div className={styles.topLeft}>
@@ -121,10 +127,7 @@ export default function PlayerCard({
                   <span style={{ fontSize: 28, fontWeight: 600, letterSpacing: '0.02em', color: textColor }}>
                     {roleAbbr(card.role)}
                   </span>
-                  <span
-                    className={`fi fi-${card.nationality.toLowerCase()}`}
-                    style={{ width: 46, height: 34, borderRadius: 2 }}
-                  />
+                  <CountryFlag code={card.nationality} style={{ width: 46, height: 34, borderRadius: 2 }} />
                 </div>
 
                 {showEditionTop && (
@@ -179,19 +182,6 @@ export default function PlayerCard({
                   </div>
                 </div>
               </div>
-
-              {boosterIcons.length > 0 && (
-                <div className={styles.boosterRail} style={{ '--z': '50px', '--shift': '10px' }} aria-label="Player effects">
-                  {boosterIcons.map((icon, index) => (
-                    <div className={styles.boosterSlot} key={`${icon.key}-${index}`}>
-                      <button className={`${styles.boosterChip} ${icon.tone === 'fatigue' ? styles.fatigueChip : styles.boostChip}`} type="button" aria-label={`${icon.label}: ${icon.desc}`}>
-                        {icon.glyph}
-                      </button>
-                      <span className={styles.boosterTooltip}><b>{icon.label}</b>{icon.desc}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
 
               <div
                 className={styles.glare}

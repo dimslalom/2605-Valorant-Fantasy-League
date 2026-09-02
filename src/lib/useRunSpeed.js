@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-// Persistent Normal/Fast/Instant preference for Perfect Run's auto-advance
+// Persistent Normal/Fast/Instant preference for Gauntlet's auto-advance
 // pacing — a speedrunner sets this once instead of mashing skip on every
 // timer, every run. Speed scales duration by a multiplier rather than
 // swapping in different fixed values, so it composes cleanly with

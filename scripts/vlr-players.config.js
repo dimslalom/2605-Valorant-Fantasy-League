@@ -41,7 +41,7 @@ export const VCT_STAT_BONUS = 3;
 // ── Real IGLs ────────────────────────────────────────────────────────────────
 // Lowercased aliases of players who actually call the game. Best-effort list,
 // review and extend freely; rosters shift and tier-2 IGLs are mostly unknown.
-// A flagged player named as your IGL in Perfect Run earns a bigger bonus.
+// A flagged player named as your IGL in Gauntlet earns a bigger bonus.
 export const IGL_NAMES = new Set([
   'boaster', 'saadhak', 'stax', 'kingg', 'valyn', 'boostio', 'munchkin',
   'd4v41', 'haodong', 'nobody', 'boo', 'kr1stal', 'crazyguy', 'melser',

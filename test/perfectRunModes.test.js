@@ -2,11 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import liveCards from '../src/data/cards.json' with { type: 'json' };
 import {
-  CITIES,
   PACK_SIZE,
   evaluateSeason,
   mulberry32,
-  nextEndlessEvent,
   samplePack,
   buildCpuNationalTeam,
   buildVariedCpuNationalTeam,
@@ -35,37 +33,6 @@ test('normal packs contain five distinct available cards and are deterministic',
   assert.ok(first.every(card => !picked.has(card.id)));
   assert.deepEqual(first.map(card => card.id), second.map(card => card.id));
   assert.deepEqual(first.map(card => card.rating), [...first].map(card => card.rating).sort((a, b) => b - a));
-});
-
-test('endless events ramp to Champions fields and avoid recent cities', () => {
-  const used = CITIES.slice(0, 10);
-  const first = nextEndlessEvent(mulberry32(7), 0, used);
-  const second = nextEndlessEvent(mulberry32(8), 1, used);
-  const third = nextEndlessEvent(mulberry32(9), 2, used);
-
-  assert.equal(first.kind, 'masters');
-  assert.equal(second.kind, 'masters');
-  assert.equal(third.kind, 'champions');
-  assert.ok(!used.includes(first.city));
-  assert.ok(!used.includes(second.city));
-  assert.ok(!used.includes(third.city));
-});
-
-test('endless summaries suppress fixed-season badges and report event count', () => {
-  const results = Array.from({ length: 3 }, () => ({
-    champion: true,
-    series: [{ won: true, mapsWon: 2, mapsLost: 0, roundDiff: 8 }],
-  }));
-  const season = evaluateSeason(results);
-  const endless = evaluateSeason(results, { endless: true });
-
-  assert.equal(season.grandSlam, true);
-  assert.equal(season.perfectSeason, true);
-  assert.equal(endless.grandSlam, false);
-  assert.equal(endless.perfectSeason, false);
-  assert.equal(endless.events, 3);
-  assert.ok(endless.score < season.score);
-  assert.deepEqual(endless.badges, []);
 });
 
 test('season scores never fall below zero after a heavy loss', () => {

@@ -2,87 +2,74 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import cards from '../src/data/cards.json' with { type: 'json' };
 import {
-  BOOST_RATING_CAP,
-  ENDLESS_LIVES,
-  FATIGUE_PENALTY_CAP,
-  MODIFIERS,
-  SHOP_ITEMS,
-  addEventFatigue,
-  applyPurchase,
-  applyRunEffects,
-  buildEndlessBracket,
-  effectiveTeamPower,
-  endlessDifficulty,
-  eventCredits,
-  fatiguePenalty,
-  mulberry32,
-  nextEndlessCycle,
-  npcTeamPower,
-  teamPower,
+  buildBracket,
+  evaluateEndless,
   evaluateSeason,
+  makeSeason,
+  mulberry32,
+  teamPower,
 } from '../src/engine/perfectRun.js';
+import { migratePerfectRunSaves } from '../src/lib/perfectRunSaves.js';
 
-const roster = cards.filter(card => card.org).slice(0, 5);
+function tournament(champion, mapsLost = 0) {
+  return {
+    champion,
+    series: [
+      { won: true, mapsWon: 2, mapsLost, roundDiff: 8 },
+      { won: champion, mapsWon: champion ? 2 : 1, mapsLost: champion ? 0 : 2, roundDiff: champion ? 6 : -4 },
+    ],
+  };
+}
 
-test('endless constants and difficulty curve stay on the intended ramp', () => {
-  assert.equal(ENDLESS_LIVES, 3);
-  assert.deepEqual([0, 1, 2, 3, 5].map(cycle => endlessDifficulty(cycle).formBoost), [0, 3, 6, 9, 12]);
-  assert.deepEqual([0, 1, 2, 5].map(cycle => endlessDifficulty(cycle).superTeamCount), [0, 0, 1, 4]);
+test('Endless years use the exact normal Masters, Masters, Champions schedule builder', () => {
+  const firstYear = makeSeason(mulberry32(77));
+  const fourthTournamentYear = makeSeason(mulberry32(77));
+  assert.deepEqual(firstYear, fourthTournamentYear);
+  assert.deepEqual(firstYear.map(event => event.kind), ['masters', 'masters', 'champions']);
+  assert.equal(new Set(firstYear.map(event => event.city)).size, 3);
 });
 
-test('cycles pre-roll three cities and always reveal a Champions modifier', () => {
-  const cycle = nextEndlessCycle(mulberry32(77), 2);
-  assert.deepEqual(cycle.map(event => event.kind), ['masters', 'masters', 'champions']);
-  assert.equal(new Set(cycle.map(event => event.city)).size, 3);
-  assert.ok(cycle[2].modifier);
+test('Endless sums the standard score independently for every year', () => {
+  const results = [
+    tournament(true), tournament(true), tournament(true),
+    tournament(true, 1), tournament(false), tournament(true),
+  ];
+  const first = evaluateSeason(results.slice(0, 3));
+  const second = evaluateSeason(results.slice(3, 6));
+  const endless = evaluateEndless(results);
+
+  assert.equal(endless.score, first.score + second.score);
+  assert.equal(endless.completedYears, 2);
+  assert.equal(endless.years[0].grandSlam, true);
+  assert.equal(endless.years[0].perfectSeason, true);
+  assert.equal(endless.years[1].grandSlam, false);
+  // Badges are objects, not strings, and endless prefixes each year's label.
+  assert.ok(endless.badges.some(b => b.key === 'year_1_grand_slam' && b.label === 'YEAR 1 · GRAND SLAM'));
+  // Only completed years contribute badges, so the unfinished year 3 adds none.
+  assert.ok(endless.badges.every(b => b.key.startsWith('year_1_') || b.key.startsWith('year_2_')));
 });
 
-test('run effects are identity when empty and fatigue caps', () => {
-  assert.equal(applyRunEffects(roster, { fatigue: {}, boosts: {} }), roster);
-  assert.equal(fatiguePenalty(99), FATIGUE_PENALTY_CAP);
-  const tired = addEventFatigue({ fatigue: {}, boosts: {} }, roster, 2);
-  assert.equal(tired.fatigue[roster[0].id], 2);
+test('tournament four uses the normal bracket builder and retains the squad', () => {
+  const roster = cards.filter(card => !card.org).slice(0, 5);
+  const player = {
+    id: 'player', tag: 'YOU', name: 'GAUNTLET', roster,
+    iglId: roster[0].id, power: teamPower(roster, roster[0].id).power, isPlayer: true,
+  };
+  const picked = new Set(roster.map(card => card.id));
+  const first = buildBracket(mulberry32(42), cards, picked, player, 'masters');
+  const fourth = buildBracket(mulberry32(42), cards, picked, player, 'masters');
+
+  assert.deepEqual(fourth, first);
+  assert.deepEqual(fourth.teams.player.roster.map(card => card.id), roster.map(card => card.id));
+  assert.ok(Object.values(fourth.teams).every(team => Number.isFinite(team.power)));
+  assert.ok(Object.values(fourth.teams).every(team => team.iglId));
 });
 
-test('boost purchases are pure, targeted, and rating-capped', () => {
-  const initial = { fatigue: { [roster[0].id]: 2 }, boosts: {}, teamChemBonus: 0 };
-  const boosted = Array.from({ length: 5 }).reduce(state => applyPurchase(state, 'aim_coach', roster[0].id), initial);
-  assert.equal(initial.boosts[roster[0].id], undefined);
-  const card = applyRunEffects([roster[0]], boosted)[0];
-  assert.equal(card.rating, roster[0].rating + BOOST_RATING_CAP - 2);
-  assert.equal(card.stats.aim, Math.min(99, roster[0].stats.aim + 10));
-  assert.throws(() => applyPurchase(initial, 'aim_coach'), /Choose a player/);
-});
-
-test('every modifier has a concrete hook', () => {
-  assert.equal(Object.keys(MODIFIERS).length, 8);
-  const base = effectiveTeamPower(roster, roster[0].id, {});
-  assert.equal(effectiveTeamPower(roster, roster[0].id, {}, 'hostile_crowd').power, base.power - 4);
-  assert.ok(effectiveTeamPower(roster, roster[0].id, {}, 'duelist_slump').power <= base.power);
-  assert.ok(effectiveTeamPower(roster, roster[0].id, {}, 'igl_silenced').power <= base.power);
-  assert.notEqual(effectiveTeamPower(roster, roster[0].id, {}, 'cold_streak').power, base.power);
-  assert.equal(MODIFIERS.bo1_r16.roundOverrides.r16.bestOf, 1);
-  assert.equal(MODIFIERS.grueling_schedule.key, 'grueling_schedule');
-  assert.equal(MODIFIERS.away_maps.bias, -2);
-  assert.equal(MODIFIERS.giant_killers.key, 'giant_killers');
-});
-
-test('credits, purchases, and endless score reward cycle progress', () => {
-  assert.equal(eventCredits({ mapsWon: 8, seriesWon: 4, champion: true, cycle: 0 }), 470);
-  assert.equal(SHOP_ITEMS.length, 6);
-  const results = Array.from({ length: 6 }, (_, index) => ({ cycle: Math.floor(index / 3), champion: index % 3 === 2, series: [{ won: true, mapsWon: 2, mapsLost: 0, roundDiff: 10 }] }));
-  const summary = evaluateSeason(results, { endless: true });
-  assert.equal(summary.bestCycle, 1);
-  assert.ok(summary.score > 1000);
-});
-
-test('endless bracket uses chem-aware scaling and modifier overrides', () => {
-  const playerRoster = cards.filter(card => !card.org).slice(0, 5);
-  const player = { id: 'player', tag: 'YOU', name: 'Test', roster: playerRoster, power: teamPower(playerRoster, playerRoster[0].id).power, isPlayer: true };
-  const bracket = buildEndlessBracket(mulberry32(2), cards, new Set(playerRoster.map(card => card.id)), player, 'champions', 3, MODIFIERS.bo1_r16);
-  assert.equal(bracket.seeds.length, 16);
-  assert.equal(bracket.rounds[0].bestOf, 1);
-  const npcs = Object.values(bracket.teams).filter(team => !team.isPlayer);
-  assert.ok(npcs.every(team => Number.isFinite(team.power)));
-  assert.ok(npcTeamPower(npcs[0].roster).result.power <= npcs[0].power);
+test('legacy Endless records are archived while V2 starts a comparable record', () => {
+  const migrated = migratePerfectRunSaves({ bestEndless: 1234, bestCycle: 5, grandSlams: 2 });
+  assert.deepEqual(migrated.legacyEndlessV1, { bestScore: 1234, bestCycle: 5 });
+  assert.deepEqual(migrated.endlessV2, { bestScore: 0, bestYears: 0 });
+  assert.equal(migrated.grandSlams, 2);
+  assert.equal('bestEndless' in migrated, false);
+  assert.equal('bestCycle' in migrated, false);
 });

@@ -4,9 +4,6 @@ import { LazyMotion, MotionConfig, LayoutGroup } from 'motion/react';
 import RouteErrorBoundary, { NotFound } from './components/RouteError';
 
 const Collection = lazy(() => import('./pages/Collection'));
-const PreMatch = lazy(() => import('./pages/PreMatch'));
-const Match = lazy(() => import('./pages/Match'));
-const PackOpening = lazy(() => import('./pages/PackOpening'));
 const PerfectRun = lazy(() => import('./pages/PerfectRun'));
 const Multiplayer = lazy(() => import('./pages/Multiplayer'));
 
@@ -37,9 +34,9 @@ export default function App() {
                   {/* Renamed from /collection - kept as a redirect so old links still work. */}
                   <Route path="/collection" element={<Navigate to="/cards" replace />} />
                   <Route path="/cards" element={<Collection />} />
-                  <Route path="/prematch" element={<PreMatch />} />
-                  <Route path="/match" element={<Match />} />
-                  <Route path="/pack" element={<PackOpening />} />
+                  <Route path="/prematch" element={<Navigate to="/run" replace />} />
+                  <Route path="/match" element={<Navigate to="/run" replace />} />
+                  <Route path="/pack" element={<Navigate to="/run" replace />} />
                   <Route path="/run" element={<PerfectRun />} />
                   <Route path="/multiplayer" element={<Multiplayer />} />
                   <Route path="/lobby/:code" element={<Multiplayer />} />

@@ -5,9 +5,11 @@ import CardFocusOverlay from '../components/CardFocusOverlay';
 import AppFrame from '../components/AppFrame';
 import StatusStrip from '../components/StatusStrip';
 import SpecialtyIcon from '../components/SpecialtyIcon';
+import CountryFlag from '../components/CountryFlag';
 import allCards from '../data/cards.json';
 import { assetPath, countryName, roleAbbr, thumbnailSrc } from '../lib/utils';
 import { getCardSpecialties } from '../data/specialties';
+import useReducedMotion from '../lib/useReducedMotion';
 import styles from './Collection.module.css';
 
 const TIER_ORDER = ['bronze', 'silver', 'gold', 'icon', 'legendary', 'prestige', 'iconic'];
@@ -35,13 +37,13 @@ export default function Collection() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [focusedCard, setFocusedCard] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const reducedMotion = useReducedMotion();
 
   const deferredQuery = fold(useDeferredValue(query).trim());
 
   const morphTo = (nextCard, slotId) => {
     const slot = document.getElementById(slotId);
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!document.startViewTransition || !slot || reduced) {
+    if (!document.startViewTransition || !slot || reducedMotion) {
       setFocusedCard(nextCard);
       return;
     }
@@ -186,7 +188,7 @@ export default function Collection() {
                           <div className={styles.playerMeta}>
                             <span className={styles.playerName}>{card.player}</span>
                             <span className={styles.playerCountry}>
-                              {card.nationality && <span className={`fi fi-${card.nationality.toLowerCase()}`} />}
+                              {card.nationality && <CountryFlag code={card.nationality} />}
                               {countryName(card.nationality)}
                             </span>
                           </div>

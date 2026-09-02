@@ -8,6 +8,7 @@ import PlayerPortrait from '../components/PlayerPortrait';
 import CardFocusOverlay from '../components/CardFocusOverlay';
 import PhaseTransition from '../components/PhaseTransition';
 import TacticalButton from '../components/TacticalButton';
+import CountryFlag from '../components/CountryFlag';
 import SquadBar from '../components/SquadBar';
 import SquadDock from '../components/SquadDock';
 import MatchBackdrop from '../components/MatchBackdrop';
@@ -16,16 +17,18 @@ import allCards from '../data/cards.json';
 import { assetPath, countryName } from '../lib/utils';
 import useSkippableTimeline from '../lib/useSkippableTimeline';
 import useRunSpeed, { scaleDuration } from '../lib/useRunSpeed';
+import useReducedMotion from '../lib/useReducedMotion';
+import { loadPerfectRunSaves as loadSaves, savePerfectRunSaves as saveSaves } from '../lib/perfectRunSaves';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
   rollNationality, draftChoices, teamPower, samplePack,
   makeSeason, buildBracket, nextBracketRound, currentRound, playerMatch,
   setPlayerResult, resolveNpcMatches, seedOf,
   pickMaps, simMap, evaluateTournament, evaluateSeason,
+  evaluateEndless,
   eligibleNationalPools, buildCpuNationalTeam, nationalChallengeTier,
   buildNationalBracket, resolveTournamentToChampion, updateEncRecords,
   teamSimulationPower,
-  buildEndlessBracket, effectiveTeamPower, nextEndlessCycle,
 } from '../engine/perfectRun';
 import {
   getClientId, submitDailyScore, fetchDailyLeaderboard, fetchOverallLeaderboard,
@@ -34,36 +37,17 @@ import { describeRound, roundPacing, roundSignificance } from '../engine/roundEv
 import styles from './PerfectRun.module.css';
 import hub from '../styles/hub.module.css';
 
-const STORAGE_KEY = 'vfl-perfectrun';
-
-function loadSaves() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {}; }
-  catch { return {}; }
-}
-function saveSaves(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
 function dateKey() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
-function reduceMotion() {
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-function isMobile() {
-  return window.matchMedia('(max-width: 680px)').matches;
-}
 function newRunSeed(mode) {
   return mode === 'daily' ? todaySeed() : (Date.now() & 0xffffffff);
 }
-const TRAVEL_MS = 900;
+const TRAVEL_MS = 600;
 // Stable empty-Set default so BracketCell's `pendingArrivalIds?.has(...)`
 // check never needs a fresh Set() on every render of every non-traveling cell.
 const EMPTY_TEAM_ID_SET = new Set();
-
-// Endless no longer carries fatigue/boosts; effectiveTeamPower still runs so
-// event modifiers apply, fed this inert run-state.
-const NO_RUN_FX = { fatigue: {}, boosts: {}, teamChemBonus: 0 };
 
 const FAN_POOL = allCards.filter(card => card.photo !== '/assets/players/placeholder.png');
 function drawFanCards() {
@@ -77,6 +61,7 @@ function drawFanCards() {
 
 export default function PerfectRun() {
   const navigate = useNavigate();
+  const reducedMotion = useReducedMotion();
   // menu | country | name | draft | intro | run | result | enc_result | manage | pack | over
   const [phase, setPhase] = useState('menu');
   const [mode, setMode] = useState('solo');           // solo | daily | enc
@@ -197,8 +182,6 @@ export default function PerfectRun() {
   // actually arrives. Cleared per-team as each clone's own animation finishes.
   const [pendingArrivalIds, setPendingArrivalIds] = useState(EMPTY_TEAM_ID_SET);
   const historyRef = useRef([]);
-  const usedCitiesRef = useRef([]); // endless: recent host cities, no repeats
-
   useEffect(() => () => {
     clearTimeout(animTimer.current);
     clearInterval(revealTimer.current);
@@ -206,9 +189,8 @@ export default function PerfectRun() {
 
   const pickedIds = new Set(picks.map(p => p.id));
   const endless = runLength === 'endless';
-  const currentModifier = season[tourIndex]?.modifier?.key ?? null;
   const power = picks.length === ROSTER_SIZE
-    ? (endless ? effectiveTeamPower(picks, iglId, NO_RUN_FX, currentModifier) : teamPower(picks, iglId))
+    ? teamPower(picks, iglId)
     : null;
   const nationalPools = useMemo(() => eligibleNationalPools(allCards), []);
   const nationalOptions = useMemo(() => {
@@ -234,9 +216,8 @@ export default function PerfectRun() {
     setSquadName('');
     setPicks([]); setSelectedNation(null); setRipId(0);
     setPacks(selectedMode === 'daily' ? 1 : 3);
-    const openingSeason = length === 'endless' ? nextEndlessCycle(rng.current, 0) : makeSeason(rng.current);
+    const openingSeason = makeSeason(rng.current);
     setSeason(openingSeason);
-    usedCitiesRef.current = openingSeason.map(t => t.city);
     setTourIndex(0); setTourResults([]); setCurrentResult(null); setSeasonResult(null);
     setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
     setMaps([]); setMapResults([]); setLive(null); setLiveRound(0); setRoundPulse(null); setRoundFlash(null); setBackdropVariant(0);
@@ -331,15 +312,17 @@ export default function PerfectRun() {
 
   function beginBracket() {
     const def = season[tourIndex];
+    // iglId matters even though the player's own matches sim from live
+    // `power`: once a bracket resolves rounds the player isn't in, the team
+    // goes through simNpcMatch -> simMap(..., teamA.iglId, ...), and omitting
+    // it silently drops the IGL's chemistry and Mastermind roll.
     const playerTeam = {
       id: 'player', tag: 'YOU', name: squadName, logo: null,
-      roster: picks, power: power.power, isPlayer: true,
+      roster: picks, iglId, power: power.power, isPlayer: true,
     };
     const t = mode === 'enc'
       ? buildNationalBracket(rng.current, allCards, selectedNation, picks, iglId)
-      : endless
-        ? buildEndlessBracket(rng.current, allCards, pickedIds, playerTeam, def.kind, def.cycle, def.modifier)
-        : buildBracket(rng.current, allCards, pickedIds, playerTeam, def.kind);
+      : buildBracket(rng.current, allCards, pickedIds, playerTeam, def.kind);
     if (mode === 'enc') {
       for (const team of Object.values(t.teams)) team.name = countryName(team.nationality);
       // A top-30 seed receives a preliminary bye. Resolve those two matches
@@ -405,7 +388,7 @@ export default function PerfectRun() {
     const playerMatchPower = mode === 'enc' ? teamSimulationPower(tour.teams.player) : power.power;
     const result = simMap(
       rng.current, playerMatchPower, teamSimulationPower(opp), picks, opp.roster,
-      endless ? (def.modifier?.bias ?? 0) : 0,
+      0,
       mode === 'enc' ? (tour.teams.player?.iglId ?? iglId) : iglId,
       opp.iglId ?? null,
     );
@@ -651,7 +634,7 @@ export default function PerfectRun() {
     const overlay = overlayRef.current;
     const container = bracketRef.current;
 
-    if (reduceMotion() || isMobile() || !info?.moves?.length || !overlay || !container) {
+    if (reducedMotion || !info?.moves?.length || !overlay || !container) {
       travelSkipRef.current = null;
       finish();
       return;
@@ -659,6 +642,8 @@ export default function PerfectRun() {
 
     const cRect = container.getBoundingClientRect();
     const cleanups = [];
+    const runningAnimations = [];
+    const travelDuration = scaleDuration(TRAVEL_MS, runSpeed);
     const animations = info.moves.map(move => {
       const fromEl = cellRefs.current[move.fromKey];
       const toEl = cellRefs.current[move.toKey];
@@ -684,12 +669,14 @@ export default function PerfectRun() {
       overlay.appendChild(clone);
       cleanups.push(() => clone.remove());
       const bridgeX = x0 + (x1 - x0) * 0.5;
-      return clone.animate([
+      const animation = clone.animate([
         { transform: `translate(${x0}px, ${y0}px)` },
         { transform: `translate(${bridgeX}px, ${y0}px)`, offset: 0.35 },
         { transform: `translate(${bridgeX}px, ${y1}px)`, offset: 0.65 },
         { transform: `translate(${x1}px, ${y1}px)` },
-      ], { duration: TRAVEL_MS, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' }).finished.then(() => {
+      ], { duration: travelDuration, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' });
+      runningAnimations.push(animation);
+      return animation.finished.then(() => {
         // This clone has landed — reveal its real matchup at the
         // destination. Other still-in-flight moves keep their own keys in
         // the set until their own clone lands, independently.
@@ -707,6 +694,7 @@ export default function PerfectRun() {
     const cleanup = () => {
       if (done) return;
       done = true;
+      runningAnimations.forEach(animation => animation.cancel());
       cleanups.forEach(fn => fn());
       setPendingArrivalIds(EMPTY_TEAM_ID_SET);
       finish();
@@ -717,9 +705,9 @@ export default function PerfectRun() {
     // after are already guarded (see the `prev.has` check above).
     travelSkipRef.current = cleanup;
     Promise.all(animations).then(cleanup);
-    const guard = setTimeout(cleanup, TRAVEL_MS + 400);
+    const guard = setTimeout(cleanup, travelDuration + 400);
     return () => { travelSkipRef.current = null; clearTimeout(guard); cleanup(); };
-  }, [boardState]);
+  }, [boardState, reducedMotion, runSpeed]);
 
   function skipTravel() {
     travelSkipRef.current?.();
@@ -750,7 +738,7 @@ export default function PerfectRun() {
       finishRound,
       championId,
       championNation: championId ? tour.teams[championId]?.nationality : null,
-      cycle: def.cycle ?? Math.floor(tourIndex / 3),
+      year: Math.floor(tourIndex / 3) + 1,
       mvpBoard,
       seriesWon: finishedSeries.filter(s => s.won).length,
       seriesPlayed: finishedSeries.length,
@@ -780,15 +768,16 @@ export default function PerfectRun() {
   }
 
   function finishSeason() {
-    const result = evaluateSeason(tourResults, { endless });
+    const result = endless ? evaluateEndless(tourResults) : evaluateSeason(tourResults);
     setSeasonResult(result);
 
     const saves = loadSaves();
     // Endless scores grow without bound, so they get their own best and
     // never mix with the fixed-season record.
     if (endless) {
-      saves.bestEndless = Math.max(saves.bestEndless ?? 0, result.score);
-      saves.bestCycle = Math.max(saves.bestCycle ?? 0, result.bestCycle ?? 0);
+      saves.endlessV2 ??= { bestScore: 0, bestYears: 0 };
+      saves.endlessV2.bestScore = Math.max(saves.endlessV2.bestScore ?? 0, result.score);
+      saves.endlessV2.bestYears = Math.max(saves.endlessV2.bestYears ?? 0, result.completedYears ?? 0);
     }
     else saves.bestScore = Math.max(saves.bestScore ?? 0, result.score);
     saves.badges ??= {};
@@ -797,8 +786,11 @@ export default function PerfectRun() {
       const key = tr.kind === 'champions' ? 'champions' : 'masters';
       saves.badges[key] = (saves.badges[key] ?? 0) + 1;
     }
-    if (result.grandSlam) saves.badges.grand_slam = (saves.badges.grand_slam ?? 0) + 1;
-    if (result.perfectSeason) saves.badges.perfect_season = (saves.badges.perfect_season ?? 0) + 1;
+    const completedYearResults = endless ? result.years.slice(0, result.completedYears) : [result];
+    const grandSlams = completedYearResults.filter(year => year.grandSlam).length;
+    const perfectSeasons = completedYearResults.filter(year => year.perfectSeason).length;
+    if (grandSlams) saves.badges.grand_slam = (saves.badges.grand_slam ?? 0) + grandSlams;
+    if (perfectSeasons) saves.badges.perfect_season = (saves.badges.perfect_season ?? 0) + perfectSeasons;
     if (mode === 'daily') {
       saves.dailyScores ??= {};
       const k = dateKey();
@@ -814,9 +806,7 @@ export default function PerfectRun() {
   function nextTournament() {
     const next = tourIndex + 1;
     if (endless && next >= season.length) {
-      const events = nextEndlessCycle(rng.current, Math.floor(next / 3), usedCitiesRef.current);
-      usedCitiesRef.current = [...usedCitiesRef.current, ...events.map(event => event.city)].slice(-10);
-      setSeason(s => [...s, ...events]);
+      setSeason(s => [...s, ...makeSeason(rng.current)]);
     }
     setTourIndex(next);
     setPhase('intro');
@@ -884,7 +874,7 @@ export default function PerfectRun() {
 
   // Memoized: endless runs make this O(events) and it renders often.
   const runningScore = useMemo(
-    () => evaluateSeason(tourResults, { endless }),
+    () => endless ? evaluateEndless(tourResults) : evaluateSeason(tourResults),
     [tourResults, endless],
   );
 
@@ -922,7 +912,9 @@ export default function PerfectRun() {
             onClick: preSeason ? () => setPhase('intro') : nextTournament,
             label: preSeason
               ? `Enter ${season[0]?.label ?? 'the season'}`
-              : (endless ? 'Keep it rolling' : `On to ${season[tourIndex + 1]?.city}`),
+              : endless && tourIndex % 3 === 2
+                ? `Start Year ${Math.floor(tourIndex / 3) + 2}`
+                : `On to ${season[tourIndex + 1]?.city}`,
           },
           ...(endless && !preSeason ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
         ];
@@ -1049,8 +1041,8 @@ export default function PerfectRun() {
 
               <div className={`${hub.meta} ${styles.recordStrip} ${styles.rise} ${styles.riseC}`}>
                 <span>Best <b><CountUp value={saves.bestScore ?? 0} /></b></span>
-                <span>Endless <b><CountUp value={saves.bestEndless ?? 0} /></b></span>
-                <span>Cycle <b><CountUp value={saves.bestCycle ?? 0} /></b></span>
+                <span>Endless <b><CountUp value={saves.endlessV2?.bestScore ?? 0} /></b></span>
+                <span>Years <b><CountUp value={saves.endlessV2?.bestYears ?? 0} /></b></span>
                 <span>Titles <b><CountUp value={titleCount} /></b></span>
                 <span>Slams <b><CountUp value={saves.badges?.grand_slam ?? 0} /></b></span>
                 <span>Perfect <b><CountUp value={saves.badges?.perfect_season ?? 0} /></b></span>
@@ -1072,7 +1064,7 @@ export default function PerfectRun() {
             <div className={`${styles.menuFan} ${styles.fanIn}`} aria-hidden="true">
               {fanCards.map(card => (
                 <div key={card.id} className={styles.fanCard}>
-                  <PlayerCard card={card} displayScale={0.52} />
+                  <PlayerCard card={card} displayScale={0.52} portraitLoading="eager" portraitFetchPriority="high" />
                 </div>
               ))}
             </div>
@@ -1140,16 +1132,13 @@ export default function PerfectRun() {
 
       {phase === 'intro' && def && (
         <PhaseTransition phaseKey="intro">
-        <section className={`${styles.intro} ${def.kind === 'champions' && endless ? styles.bossIntro : ''}`}>
+        <section className={styles.intro}>
           <span className={styles.introMarker}>
-            {endless ? `Tournament ${tourIndex + 1}` : `Tournament ${tourIndex + 1} / ${season.length}`}
+            {endless
+              ? `Year ${Math.floor(tourIndex / 3) + 1} · Tournament ${(tourIndex % 3) + 1} / 3`
+              : `Tournament ${tourIndex + 1} / ${season.length}`}
           </span>
           <h1 className={styles.introTitle}>{def.label}<em>//</em></h1>
-          {endless && def.kind === 'champions' && <span className={styles.bossBadge}>BOSS EVENT</span>}
-          {endless && def.modifier && <div className={styles.modifierBanner}><b>{def.modifier.label}</b><span>{def.modifier.desc}</span></div>}
-          {endless && def.kind === 'masters' && season.find((event, index) => index >= tourIndex && event.kind === 'champions')?.modifier && (
-            <div className={styles.nextBoss}>NEXT BOSS: {season.find((event, index) => index >= tourIndex && event.kind === 'champions').modifier.label}</div>
-          )}
         </section>
         </PhaseTransition>
       )}
@@ -1466,7 +1455,7 @@ function CountryPicker({ options, onChoose }) {
       <div className={styles.countryGrid}>
         {options.map(option => (
           <button key={option.nationality} className={styles.countryCard} onClick={() => onChoose(option.nationality)}>
-            <span className={`fi fi-${option.nationality.toLowerCase()} ${styles.countryFlag}`} aria-hidden="true" />
+            <CountryFlag code={option.nationality} className={styles.countryFlag} />
             <span className={styles.countryIdentity}>
               <b>{countryName(option.nationality)}</b>
               <small>{option.cards.length} players</small>
@@ -1508,7 +1497,6 @@ function Board({ tour, round, boardState, revealCount, outcome, squadName, pendi
       <div className={styles.boardHead}>
         <span className={styles.stageLabel}>{round.label} (Bo{round.bestOf})</span>
         <span className={styles.boardStatus}>
-          {tour.kind === 'enc' && <FormBadge label={tour.teams.player?.formLabel} prefix="Your form" />}
           <span className={styles.groupNote}>{statusLine}</span>
         </span>
       </div>
@@ -1661,7 +1649,7 @@ function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArri
         ) : (
           <>
             {team.nationality
-              ? <span className={`fi fi-${team.nationality.toLowerCase()}`} aria-hidden="true" />
+              ? <CountryFlag code={team.nationality} />
               : team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
             <span className={styles.cellSeed}>{seedOf(tour, team.id)}</span>
             <span className={styles.cellTag}>
@@ -1776,12 +1764,18 @@ function TournamentResult({ result, runningScore, endless }) {
 
 // ── Squad pack: pick one, swap one ───────────────────────────────────────────
 
-// Picking is drag-only: dragging a pack card onto a specific dock chip is
-// what tells the game which roster member it's proposed to replace, so a
-// blind tap can't stand in for that (there's no chip for it to name). The
-// drop only proposes the swap — nothing touches `picks` until Confirm.
 function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConfirm, onCancel }) {
   const outgoing = pendingSwap ? picks.find(p => p.id === pendingSwap.targetId) : null;
+  const [keyboardCard, setKeyboardCard] = useState(null);
+  useEffect(() => {
+    if (pendingSwap) setKeyboardCard(null);
+  }, [pendingSwap, ripId]);
+
+  function choosePackCard(card, targetId) {
+    if (targetId) onDropSwap(card, targetId);
+    else setKeyboardCard(card);
+  }
+
   return (
     <section>
       <div className={styles.boardHead}>
@@ -1799,11 +1793,18 @@ function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConf
           choices={choices}
           ripId={ripId}
           interactive
-          onPick={onDropSwap}
+          onPick={choosePackCard}
           dropTarget="chip"
-          clickable={false}
+          clickable
         />
-        <p className={styles.swapHint}>Drag a card into the dock below to choose who it replaces.</p>
+        <p className={styles.swapHint}>Drag a card into the dock, or select it and choose a player below.</p>
+        {keyboardCard && (
+          <div className={styles.keyboardSwap} role="group" aria-label={`Choose who ${keyboardCard.player} replaces`}>
+            <b>Replace with {keyboardCard.player}</b>
+            {picks.map(card => <button type="button" key={card.id} onClick={() => onDropSwap(keyboardCard, card.id)}>{card.player}</button>)}
+            <button type="button" onClick={() => setKeyboardCard(null)}>Cancel</button>
+          </div>
+        )}
       </div>
 
       {pendingSwap && outgoing && (
@@ -1879,7 +1880,7 @@ function SeasonOver({ result, tourResults, season, endless, onReplay, onMenu }) 
 
       <div className={styles.scoreLine}>
         Score<b>{result.score}</b>
-        {endless ? ` ${result.events} ${result.events === 1 ? 'tournament' : 'tournaments'},` : ''}
+        {endless ? ` ${result.completedYears} completed ${result.completedYears === 1 ? 'year' : 'years'},` : ''}
         {' '}{result.titles} {result.titles === 1 ? 'title' : 'titles'}, {result.seriesWon} series won,
         {' '}{result.mapsWon} maps, {result.roundDiff >= 0 ? '+' : ''}{result.roundDiff} round differential
       </div>
@@ -2018,8 +2019,9 @@ function DraftLane({ nation, choices, ripId, interactive, onPick, label, dropTar
 // Eased count-up for the records strip
 function CountUp({ value }) {
   const [n, setN] = useState(0);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
-    if (!value || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!value || reducedMotion) {
       const raf = requestAnimationFrame(() => setN(value ?? 0));
       return () => cancelAnimationFrame(raf);
     }
@@ -2033,7 +2035,7 @@ function CountUp({ value }) {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [value]);
+  }, [value, reducedMotion]);
   return <>{n}</>;
 }
 

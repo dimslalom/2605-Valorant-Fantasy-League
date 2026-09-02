@@ -242,7 +242,6 @@ function DraggableChip({
       <PlayerCard
         card={card}
         layoutId={focusCardId === card.id ? undefined : `card-${card.id}`}
-        boosterIcons={card.runFx ?? []}
         displayScale={chipScale}
         tilt={false}
         onClick={onClick}
@@ -250,7 +249,7 @@ function DraggableChip({
 
       {hoveredId === card.id && !isDragging && (
         <span className={styles.chipPreview} aria-hidden="true">
-          <PlayerCard card={card} boosterIcons={card.runFx ?? []} displayScale={PREVIEW_SCALE} tilt={false} />
+          <PlayerCard card={card} displayScale={PREVIEW_SCALE} tilt={false} />
         </span>
       )}
 
@@ -268,7 +267,7 @@ function DraggableChip({
             scale: 1.3,
           }}
         >
-          <PlayerCard card={card} boosterIcons={card.runFx ?? []} displayScale={CHIP_SCALE} tilt={false} />
+          <PlayerCard card={card} displayScale={CHIP_SCALE} tilt={false} />
         </m.div>,
         document.body,
       )}

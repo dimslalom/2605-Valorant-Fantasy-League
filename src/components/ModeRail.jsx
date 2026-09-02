@@ -6,7 +6,7 @@ import styles from './ModeRail.module.css';
 
 // The Broadcast-frame's left edge: a slim icon rail that replaces the top text
 // nav on data-forward screens (Library, Multiplayer). Card Table screens (the
-// Perfect Run home) keep their own centered chrome, per the wireframe system.
+// Gauntlet home) keep their own centered chrome, per the wireframe system.
 
 const ICON = {
   library: (
@@ -31,7 +31,7 @@ const ICON = {
 
 const RAIL = [
   { to: '/cards', key: 'library', label: 'Player Library' },
-  { to: '/run', key: 'run', label: 'Perfect Run' },
+  { to: '/run', key: 'run', label: 'Gauntlet' },
   { to: '/multiplayer', key: 'multiplayer', label: 'Multiplayer' },
 ];
 

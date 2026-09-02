@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------------------------
    VFL design tokens — the single source of truth.
 
-   Direction (inherited from the Perfect Run sheet, now global):
+   Direction (inherited from the Gauntlet sheet, now global):
    playvalorant.com. Sharp corners, solid color blocks, one accent, uppercase
    display type, tabular numerals. No glows, no gradients. Separation comes
    from whitespace (between sections) and filled surfaces (between data rows),
@@ -32,7 +32,7 @@
   /* --- Text ------------------------------------------------------------- */
   --ink: #ece8e1;
   --muted: #8a8f9e;
-  --faint: #4c5160;
+  --faint: #818899;
 
   /* --- Accent & status -------------------------------------------------- */
   --accent: #ff4655;
@@ -129,7 +129,8 @@
   --dur-hover: 150ms;       /* hover affordance */
   --dur-transform: 200ms;   /* lift, scale, slide */
   --dur-enter: 320ms;       /* element entrance */
-  --dur-hero: 550ms;        /* full-screen phase entrance */
+  --dur-hero: 480ms;        /* championship / hero entrance */
+  --dur-travel: 600ms;      /* measured bracket movement */
 
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);   /* the house curve */
   --ease-in: cubic-bezier(0.5, 0, 0.85, 0.4);   /* exits only */

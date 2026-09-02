@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { m, useAnimationControls } from 'motion/react';
 import backdrops from '../data/backdrops';
+import useReducedMotion from '../lib/useReducedMotion';
 import styles from './MatchBackdrop.module.css';
 
 // The pool for a tournament kind is that kind's own art plus the shared
@@ -15,12 +16,12 @@ function poolFor(kind) {
 // Wide enough to actually read as "zooming in" against a dimmed, scrimmed
 // full-viewport image — the original 1.02/1.07/1.13 range (2-13%) was
 // provably reaching the DOM correctly but was too subtle to perceive.
-const ZOOM_SCALE = { 1: 1.04, 2: 1.22, 3: 1.45 };
+const ZOOM_SCALE = { 1: 1.04, 2: 1.14, 3: 1.25 };
 // This component's own bespoke deceleration for the zoom transition — not
 // the house --ease-out — kept as a literal array (motion.js's tokens don't
 // cover it) the same way the tilt and travel effects each keep their own.
 const ZOOM_EASE = [0.16, 1, 0.3, 1];
-const ZOOM_DURATION = 1.4;
+const ZOOM_DURATION = 0.8;
 
 // The shake animation itself is 480ms — already longer than one 150ms round
 // tick, which is fine, the effect is allowed to spill into the next round or
@@ -30,7 +31,7 @@ const ZOOM_DURATION = 1.4;
 // before it became a guarded, persistent state. This is a simpler time-based
 // guard rather than state, since shake has no state of its own to be
 // monotonic about — it just needs to not retrigger mid-flight.
-const SHAKE_MS = 480;
+const SHAKE_MS = 320;
 
 // `variant` selects the image and is expected to change rarely — once per
 // match series, plus up to twice more as `zoomLevel` escalates. `zoomLevel`
@@ -49,16 +50,17 @@ const SHAKE_MS = 480;
 export default function MatchBackdrop({ active, mode = 'calm', kind = null, variant = 0, zoomLevel = 1, reaction = null }) {
   const controls = useAnimationControls();
   const shakeStartedAt = useRef(0);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     controls.start({
       scale: ZOOM_SCALE[zoomLevel] ?? ZOOM_SCALE[1],
-      transition: { duration: ZOOM_DURATION, ease: ZOOM_EASE },
+      transition: { duration: reducedMotion ? 0 : ZOOM_DURATION, ease: ZOOM_EASE },
     });
-  }, [zoomLevel, controls]);
+  }, [zoomLevel, controls, reducedMotion]);
 
   useEffect(() => {
-    if (!reaction || reaction.kind !== 'shake') return;
+    if (reducedMotion || !reaction || reaction.kind !== 'shake') return;
     const now = Date.now();
     if (now - shakeStartedAt.current < SHAKE_MS) return; // let the in-flight shake finish
     shakeStartedAt.current = now;
@@ -66,7 +68,7 @@ export default function MatchBackdrop({ active, mode = 'calm', kind = null, vari
       y: [0, -0.6, 0.5, -0.3, 0],
       transition: { duration: SHAKE_MS / 1000, ease: 'easeInOut' },
     });
-  }, [reaction, controls]);
+  }, [reaction, controls, reducedMotion]);
 
   if (!active) return null;
 

@@ -6,6 +6,7 @@ import PlayerPortrait from './PlayerPortrait';
 import useMediaQuery from '../lib/useMediaQuery';
 import { previewScale } from '../lib/squadSheetPreview';
 import { DUR, EASE } from '../lib/motion';
+import useDialogFocusTrap from '../lib/useDialogFocusTrap';
 import styles from './SquadSheet.module.css';
 
 // The squad tab: the same photo band as the review screen's IGL pick (faces
@@ -51,13 +52,14 @@ export default function SquadSheet({
   children,
 }) {
   const closeRef = useRef(null);
-  const returnFocusRef = useRef(null);
+  const dialogRef = useRef(null);
   const dismissible = !action || action.dismissible !== false;
   const canPick = Boolean(action) && action.pickable !== false;
   const coarse = useMediaQuery('(hover: none)');
   const mobile = useMediaQuery('(max-width: 680px)');
   const viewportHeight = useViewportHeight();
   const scale = previewScale(viewportHeight, mobile);
+  useDialogFocusTrap(open, dialogRef, dismissible ? closeRef : undefined);
 
   const [previewId, setPreviewId] = useState(null);
   const [armedId, setArmedId] = useState(null);
@@ -96,13 +98,6 @@ export default function SquadSheet({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, dismissible, onClose]);
 
-  useEffect(() => {
-    if (!open) return undefined;
-    returnFocusRef.current = document.activeElement;
-    closeRef.current?.focus();
-    return () => returnFocusRef.current?.focus?.();
-  }, [open]);
-
   if (!open) return null;
 
   const mid = (roster.length - 1) / 2;
@@ -119,9 +114,11 @@ export default function SquadSheet({
 
   return createPortal(
     <div
+      ref={dialogRef}
       className={styles.backdrop}
       onClick={dismissible ? requestClose : undefined}
       role="dialog"
+      tabIndex={-1}
       aria-modal="true"
       aria-label={`${squadName || 'Your squad'} scoreboard`}
     >
@@ -132,7 +129,7 @@ export default function SquadSheet({
       <div className={styles.sheet} onClick={(e) => e.stopPropagation()}>
         {previewCard && scale > 0 && (
           <div className={styles.preview} aria-hidden="true">
-            <PlayerCard card={previewCard} boosterIcons={previewCard.runFx ?? []} displayScale={scale} tilt={false} />
+            <PlayerCard card={previewCard} displayScale={scale} tilt={false} />
           </div>
         )}
 

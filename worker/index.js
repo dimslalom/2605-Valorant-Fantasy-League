@@ -137,8 +137,15 @@ export class Lobby extends DurableObject {
     this.auth = null;
     this.ready = ctx.blockConcurrencyWhile(async () => {
       const stored = await ctx.storage.get(['game', 'auth']);
-      this.game = migrateLobbyState(stored.get('game') ?? null);
+      const storedGame = stored.get('game') ?? null;
+      const previousRulesVersion = storedGame?.rulesVersion ?? 1;
+      this.game = migrateLobbyState(storedGame);
       this.auth = stored.get('auth') ?? { competitors: {}, spectators: {} };
+      if (this.game && previousRulesVersion < this.game.rulesVersion) {
+        await ctx.storage.put('game', this.game);
+        const at = nextAlarmAt(this.game);
+        if (at) await ctx.storage.setAlarm(Math.max(at, Date.now() + 1));
+      }
     });
   }
 
@@ -317,7 +324,7 @@ export class Lobby extends DurableObject {
 
   async scheduleAlarm() {
     const at = this.game && nextAlarmAt(this.game);
-    if (at) await this.ctx.storage.setAlarm(at);
+    if (at) await this.ctx.storage.setAlarm(Math.max(at, Date.now() + 1));
     else await this.ctx.storage.deleteAlarm();
   }
 }

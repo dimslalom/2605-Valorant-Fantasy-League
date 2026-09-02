@@ -129,55 +129,6 @@
   mask-size: 100% 100%;
 }
 
-.boosterRail {
-  position: absolute;
-  z-index: 4;
-  right: -16px;
-  top: 148px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  pointer-events: none;
-}
-
-.boosterSlot {
-  position: relative;
-  pointer-events: auto;
-}
-
-.boosterChip {
-  width: 44px;
-  height: 44px;
-  border: 3px solid var(--gold, #d8ae4f);
-  border-radius: 0;
-  background: #10151d;
-  color: #fff;
-  font: 700 20px/1 'Familjen Grotesk', sans-serif;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, .35);
-}
-
-.fatigueChip { border-color: var(--accent, #ff4655); color: var(--accent, #ff4655); }
-
-.boosterTooltip {
-  position: absolute;
-  right: 54px;
-  top: 0;
-  width: 180px;
-  padding: 10px 12px;
-  background: #0c1118;
-  border: 2px solid #fff;
-  color: #fff;
-  font: 600 15px/1.25 'Familjen Grotesk', sans-serif;
-  opacity: 0;
-  transform: translateX(6px);
-  transition: opacity .12s, transform .12s;
-  pointer-events: none;
-}
-
-.boosterTooltip b { display: block; color: var(--gold, #d8ae4f); margin-bottom: 3px; }
-.boosterSlot:hover .boosterTooltip,
-.boosterChip:focus-visible + .boosterTooltip { opacity: 1; transform: translateX(0); }
-
 /* ── Specialties rail — a vertical column of cut-corner icon frames pinned to
       the card's LEFT edge, each spilling half off the card, floated forward via
       the .spec plane so it pops in the 3D tilt. Base-coordinate (400x580) sizes
