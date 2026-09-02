@@ -1,7 +1,7 @@
 export const PERFECT_RUN_STORAGE_KEY = 'vfl-perfectrun';
 export const PERFECT_RUN_SAVE_VERSION = 3;
 
-// This blob is read on every render, so it holds records only — never a run.
+// This blob is read on every render, so it holds records only - never a run.
 // The endless run itself lives under its own key (see lib/endlessRunSave.js),
 // because parsing tens of kilobytes per frame during a live map is not free.
 
@@ -40,7 +40,7 @@ export function migratePerfectRunSaves(data) {
 
   // v2 -> v3: a rules change, not a shape change. The V2 score was set under
   // a flat, unscaled world with no ladder, so it is not comparable to a V3
-  // score and starts fresh — but it is kept intact and readable as an archive
+  // score and starts fresh - but it is kept intact and readable as an archive
   // rather than deleted, exactly like legacyEndlessV1.
   migrated.endlessV3 ??= emptyEndlessV3();
 

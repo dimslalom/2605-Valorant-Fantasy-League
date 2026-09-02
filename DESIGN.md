@@ -1,5 +1,5 @@
 ---
-name: VFL — Valorant Fantasy League
+name: VFL - Valorant Fantasy League
 description: A broadcast-overlay HUD for drafting and running fantasy Valorant rosters.
 colors:
   bg: "#0d0f17"
@@ -53,6 +53,11 @@ typography:
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
+  annotation:
+    fontFamily: "Familjen Grotesk, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: 1.4
   label:
     fontFamily: "ui-monospace, Menlo, monospace"
     fontSize: "13px"
@@ -62,6 +67,12 @@ typography:
   micro:
     fontFamily: "ui-monospace, Menlo, monospace"
     fontSize: "11px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "0.14em"
+  nano:
+    fontFamily: "ui-monospace, Menlo, monospace"
+    fontSize: "10px"
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.14em"
@@ -104,17 +115,17 @@ components:
     textColor: "{colors.accent-ink}"
 ---
 
-# Design System: VFL — Valorant Fantasy League
+# Design System: VFL - Valorant Fantasy League
 
 ## Overview
 
 **Creative North Star: "The Broadcast Overlay"**
 
-VFL reads like the on-screen HUD of a Valorant broadcast, not like a consumer app skinned in red and black: status strips, bracket connectors, and stenciled mono labels sit directly on a near-black ground, and every surface behaves like a data readout rather than a decorative card. The system is deliberately cold and blunt — controls feel like hardware switches, not soft affordances. There is one accent color, and it is spent on the single most important thing on any given screen: the active nav item, the primary CTA, a live score.
+VFL reads like the on-screen HUD of a Valorant broadcast, not like a consumer app skinned in red and black: status strips, bracket connectors, and stenciled mono labels sit directly on a near-black ground, and every surface behaves like a data readout rather than a decorative card. The system is deliberately cold and blunt - controls feel like hardware switches, not soft affordances. There is one accent color, and it is spent on the single most important thing on any given screen: the active nav item, the primary CTA, a live score.
 
-The visual grammar is inherited from playvalorant.com and applied globally: sharp corners (mostly true right angles, with a small family of notched/cut corners reserved for interactive chrome), solid flat color fills, uppercase tabular-numeral type, and zero gradients or glows. Separation between regions comes from whitespace and filled surface blocks, never from decorative hairlines — a hairline only appears where it does real structural work (a strip's bottom edge, a table rule).
+The visual grammar is inherited from playvalorant.com and applied globally: sharp corners (mostly true right angles, with a small family of notched/cut corners reserved for interactive chrome), solid flat color fills, uppercase tabular-numeral type, and zero gradients or glows. Separation between regions comes from whitespace and filled surface blocks, never from decorative hairlines - a hairline only appears where it does real structural work (a strip's bottom edge, a table rule).
 
-Depth is cut-and-layered, not lit: elements stack as flat, notched silhouettes on top of one another, and where a shadow does appear it is a hard offset print (5px/5px, zero blur), never a soft ambient glow. Nothing in this system floats on light — it sits, printed, on the surface below it.
+Depth is cut-and-layered, not lit: ordinary interface elements stack as flat, notched silhouettes on top of one another, and where a shadow does appear it is a hard offset print (5px/5px, zero blur), never a soft ambient glow. PlayerCard is the deliberate material exception: while physically lifted, its contact edge stays sharp and a restrained altitude penumbra separates the moving object from the table.
 
 **Key Characteristics:**
 - One accent (`--accent`, #ff4655), spent sparingly on active/primary state only
@@ -129,13 +140,13 @@ Depth is cut-and-layered, not lit: elements stack as flat, notched silhouettes o
 The palette is near-monochrome ink-on-graphite with one hot accent and one cool "win" signal; gold is reserved for a single sub-brand (the Esports Nations Cup) rather than general decoration.
 
 ### Primary
-- **Signal Red** (`#ff4655`, `--accent`): the one accent. Active nav state, primary buttons, hover state on secondary controls, live/selected indicators. Never used decoratively — its presence always means "this is the active or primary thing."
+- **Signal Red** (`#ff4655`, `--accent`): the one accent. Active nav state, primary buttons, hover state on secondary controls, live/selected indicators. Never used decoratively - its presence always means "this is the active or primary thing."
 - **Signal Red Soft** (`rgba(255, 70, 85, 0.13)`, `--accent-soft`): accent-tinted fill for rows/badges that reference the accent without competing with it.
 
 ### Secondary
-- **Champion Gold** (`#d8b34c`, `--gold`): reserved for Esports Nations Cup chrome, rating/OVR badges, and the specialties/booster iconography on PlayerCard — a deliberately separate hue so prestige and event surfaces read as a distinct register, not a re-skin.
+- **Champion Gold** (`#d8b34c`, `--gold`): reserved for Esports Nations Cup chrome, rating/OVR badges, and the specialties/booster iconography on PlayerCard - a deliberately separate hue so prestige and event surfaces read as a distinct register, not a re-skin.
 - **Gold Dim** (`#8a7330`, `--gold-dim`) / **Gold Soft** (`rgba(216, 179, 76, 0.14)`, `--gold-soft`): gold's muted and tint steps, same usage discipline as the red pair.
-- **Gold Ink** (`#211b06`, `--gold-ink`): the dark text color used on a `--gold` fill (badges, ENC hover states) — gold is light enough that white text fails contrast on it.
+- **Gold Ink** (`#211b06`, `--gold-ink`): the dark text color used on a `--gold` fill (badges, ENC hover states) - gold is light enough that white text fails contrast on it.
 
 ### Tertiary
 - **Confirm Teal** (`#00c8a0`, `--win`): status-only. Marks a win, an online roster indicator, a positive delta. Not used as a UI accent.
@@ -144,7 +155,7 @@ The palette is near-monochrome ink-on-graphite with one hot accent and one cool 
 
 ### Neutral
 - **Void** (`#0d0f17`, `--bg`): page ground.
-- **Deep Void** (`#0b0d14`, `--bg-deep`) / **Sunken Void** (`#090d16`, `--bg-sunken`): recessed chrome — rails, status strips, wells the page content sits inside.
+- **Deep Void** (`#0b0d14`, `--bg-deep`) / **Sunken Void** (`#090d16`, `--bg-sunken`): recessed chrome - rails, status strips, wells the page content sits inside.
 - **Slate Surface** (`#161b29`, `--surface`): the resting surface for data rows and panels.
 - **Slate Surface Hi** (`#1e2435`, `--surface-hi`): hover/emphasis step above `--surface`.
 - **Flyout Ink** (`#10131d`, `--surface-flyout`): tooltips and popovers.
@@ -158,14 +169,14 @@ The palette is near-monochrome ink-on-graphite with one hot accent and one cool 
 ### Named Rules
 **The One Accent Rule.** `--accent` marks exactly one thing per screen as primary or active. If two elements both want it, one of them is wrong.
 
-**The No-Glow Rule.** No `box-shadow` blur radius beyond what a hard offset needs, no radial-gradient decoration, no `filter: drop-shadow` for ambiance. The one intentional exception is the PlayerCard glare layer, which simulates a physical foil card under light — a single, purpose-built effect, not a general pattern.
+**The No-Glow Rule.** No `box-shadow` blur radius beyond what a hard offset needs, no radial-gradient decoration, no `filter: drop-shadow` for ambiance. PlayerCard is the one intentional material exception: its glare simulates foil under light and its opacity-only altitude penumbra appears while the physical card lifts. Neither treatment is a reusable panel decoration.
 
 ## Typography
 
 **Display Font:** Familjen Grotesk (with system-ui, sans-serif fallback)
 **Label/Mono Font:** ui-monospace (with Menlo, monospace fallback)
 
-**Character:** One grotesque carries every weight of the interface — headline and body are the same family at different weights, so voice never shifts between "marketing" and "UI." The monospace family is reserved for anything structural: it signals "this is a readout," not prose.
+**Character:** One grotesque carries every weight of the interface - headline and body are the same family at different weights, so voice never shifts between "marketing" and "UI." The monospace family is reserved for anything structural: it signals "this is a readout," not prose.
 
 ### Hierarchy
 - **Hero** (700, `clamp(38px, 7vw, 84px)`, line-height 1): full-bleed page titles (room headers, standings).
@@ -173,37 +184,41 @@ The palette is near-monochrome ink-on-graphite with one hot accent and one cool 
 - **Heading** (700, 28px, line-height 1.2): panel and card-group titles.
 - **Title** (700, 22px, line-height 1.2): sub-panel and modal titles.
 - **Body** (400, 15px, line-height 1.5): running text, descriptions, rule copy.
+- **Annotation** (400, 12px, sans, line-height 1.4): supporting text that hangs off a value rather than standing alone - an MVP credit under a map score, a badge's one-line description, the sub-total under a chemistry figure. Almost always `--muted`. It is *not* a small Body: if a sentence can stand on its own, it is Body.
 - **Label** (700, 13px, mono, 0.14em tracking, uppercase): field labels, kickers, roster row metadata.
-- **Micro** (700, 11px, mono, 0.14em tracking, uppercase): the smallest step — non-interactive crumbs and tabular chip labels only, never body copy.
+- **Micro** (700, 11px, mono, 0.14em tracking, uppercase): non-interactive crumbs and tabular chip labels only, never body copy.
+- **Nano** (700, 10px, mono, 0.14em tracking, uppercase): the floor. Two uses only - the densest chips and flags where Micro will not fit (a tile's status pill), and the mobile step-down of a Micro readout whose row must survive a 375px viewport. Never introduce Nano at desktop width to fit more in; that is a layout problem, not a type problem.
 
 All numeric data (scores, stats, counts, ratings) uses `font-variant-numeric: tabular-nums` so digits never cause layout shift as they update.
 
 ### Named Rules
-**The Uppercase-Structural Rule.** Uppercase + mono + wide tracking marks structural chrome (crumbs, kickers, nav tips, stat labels). Body copy and player names are never uppercased — that would flatten the one hierarchy signal the mono family provides.
+**The Descending-Steps Rule.** Below Body the ramp splits by family, and the family carries the meaning: 12px Annotation is *sans*, because it is prose that supports a value; 11px Micro and 10px Nano are *mono and uppercase*, because they are structural chrome. There is no small sans-uppercase step and no 12px mono step - if a size feels like it needs one, the wrong element is being sized.
+
+**The Uppercase-Structural Rule.** Uppercase + mono + wide tracking marks structural chrome (crumbs, kickers, nav tips, stat labels). Body copy and player names are never uppercased - that would flatten the one hierarchy signal the mono family provides.
 
 ## Layout
 
 The shared content column is `--content-max: 1080px`, centered, with gutters added on top of (not inside) that max-width. A left rail (`--rail-size`, 56px desktop) reserves horizontal space via `--frame-inset`; on mobile the rail becomes a 48px top bar and `--frame-inset` drops to 0, so bleed-to-edge elements must branch their width calc on the same breakpoint.
 
-Spacing follows a strict 4pt scale (`--sp-1` 4px through `--sp-12` 48px) — no arbitrary pixel gaps. The primary responsive breakpoint is 680px (rail → top bar, multi-column grids collapse to one column); a secondary breakpoint at 420px drops visible nav labels to sr-only text once three labelled tiles stop fitting a touch-width screen.
+Spacing follows a strict 4pt scale (`--sp-1` 4px through `--sp-12` 48px) - no arbitrary pixel gaps. The primary responsive breakpoint is 680px (rail → top bar, multi-column grids collapse to one column); a secondary breakpoint at 420px drops visible nav labels to sr-only text once three labelled tiles stop fitting a touch-width screen.
 
 Every control respects the Apple HIG size floor: 44px (`--tap-min`) for primary controls, 28px (`--tap-min-secondary`) for controls that sit inside an already-large target (e.g. an inspect button inside a full data row).
 
 ## Elevation & Depth
 
-Cut-and-layered, not lit. The system has no ambient light source: surfaces don't glow, and nothing casts a soft shadow implying a light above the screen. Depth instead comes from (a) flat color layering — a lighter surface stacked on a darker one reads as "in front" — and (b) a small hard-offset shadow family that reads as print, not light.
+Cut-and-layered, not lit. The system has no ambient light source: surfaces don't glow, and nothing casts a soft shadow implying a light above the screen. Depth instead comes from (a) flat color layering - a lighter surface stacked on a darker one reads as "in front" - and (b) a small hard-offset shadow family that reads as print, not light.
 
 ### Shadow Vocabulary
 - **Card** (`5px 5px 0 rgba(0, 0, 0, 0.4)`, `--shadow-card`): resting state for stamped/printed elements (booster chips, panels that need to read as physically offset).
-- **Card Lifted** (`8px 8px 0 rgba(0, 0, 0, 0.5)`, `--shadow-card-lifted`): hover/press state for the same elements — the offset grows, it never blurs.
+- **Card Lifted** (`8px 8px 0 rgba(0, 0, 0, 0.5)`, `--shadow-card-lifted`): hover/press state for the same elements - the offset grows, it never blurs.
 - **Overlay** (`0 12px 40px rgba(0, 0, 0, 0.6)`, `--shadow-overlay`): the one soft shadow in the system, reserved for true overlay surfaces (modals, flyouts) that need to visually separate from the entire page behind them, not from a neighboring surface.
 
 ### Named Rules
-**The Print-Not-Light Rule.** A shadow's offset is fixed at 5px/5px (or its 8px/8px lifted step); blur only appears on `--shadow-overlay`, which is the sole soft-shadow token in the system and exists to separate a full overlay from the page, not to imply directional light on a component.
+**The Print-Not-Light Rule.** A shadow's offset is fixed at 5px/5px (or its 8px/8px lifted step); blur otherwise appears only on `--shadow-overlay`, which separates a full overlay from the page. PlayerCard's transient altitude penumbra is the sole component-level exception and may not be copied to ordinary panels or controls.
 
 ## Shapes
 
-Two coexisting corner languages, used by role rather than by taste. Structural containers (strips, panels, page-level rows) are true right angles — zero radius. Interactive chrome — nav items, primary/secondary buttons, the load-more control, PlayerCard's specialty and booster chips, tooltip flyouts — carries a small notched corner cut with `clip-path: polygon(...)`, typically an 8–13px diagonal cut on the top-right and bottom-left corners. The notch is the system's one signature geometric flourish; it never appears on passive containers, only on things you can act on.
+Two coexisting corner languages, used by role rather than by taste. Structural containers (strips, panels, page-level rows) are true right angles - zero radius. Interactive chrome - nav items, primary/secondary buttons, the load-more control, PlayerCard's specialty and booster chips, tooltip flyouts - carries a small notched corner cut with `clip-path: polygon(...)`, typically an 8–13px diagonal cut on the top-right and bottom-left corners. The notch is the system's one signature geometric flourish; it never appears on passive containers, only on things you can act on.
 
 ## Components
 
@@ -221,16 +236,25 @@ Two coexisting corner languages, used by role rather than by taste. Structural c
 
 ### Status Strip
 - **Style:** sticky breadcrumb row, `--bg-deep` ground, bottom hairline in `--line`, min-height `--strip-h` (44px desktop / 40px mobile).
-- **Crumb:** renders as the page's real `<h1>` — mono, uppercase, `--muted`, wide tracking.
+- **Crumb:** renders as the page's real `<h1>` - mono, uppercase, `--muted`, wide tracking.
 - **Count:** same type treatment, `--ink` color, tabular numerals.
 
 ### PlayerCard (signature component)
-The hero object of the app: a tilting, flippable trading card (3D perspective tilt driven by pointer position, a separate slower flip transition for front/back, and a screen-blend glare layer that simulates foil under light — the system's one deliberate departure from the No-Glow Rule). Specialty and booster chips sit on cut-corner notched tiles in `--gold`, spilling half off the card edge, with hover tooltips in the same notched-flyout language as the rest of the system. Respects `prefers-reduced-motion` by disabling tilt/flip/glare transitions outright.
+The hero object of the app: a tilting, flippable trading card (3D perspective tilt driven by pointer position, a separate slower flip transition for front/back, and a screen-blend glare layer that simulates foil under light - the system's one deliberate departure from the No-Glow Rule). Specialty chips sit on cut-corner notched tiles in `--gold`, spilling half off the card edge, with hover tooltips in the same notched-flyout language as the rest of the system. Respects `prefers-reduced-motion` by disabling tilt/flip/glare transitions outright.
+
+### Kinetic interaction law
+Player cards are the system's only spring-driven physical objects. A card uses a damped spring with continuous velocity, a deterministic `id`-seeded resting angle, a 1000px perspective, cursor-relative pitch/yaw, and velocity-derived roll. Pointer movement writes rounded transform and world-space glare variables directly to the card rather than rendering React state per frame. Hover, focus, inspection, and drag form a single elevation ladder; the soft altitude penumbra is a PlayerCard-only physical-material exception to the otherwise flat Print-Not-Light rule.
+
+Pack cards deal at 65ms intervals, settle into a five-card fan, then breathe in a phase-shifted 3.2-second wave. High-tier reveals receive one 120ms edge flash and stage jolt. Dock swaps part only the immediate neighbours, lift/dim the outgoing slot, and land through the shared card spring. IGL assignment uses one sharp stamp and shockwave.
+
+Match presentation is causal rather than instantaneous: the already-computed simulation result is never changed, but active duel specialties pulse their owning roster row sequentially at 140ms each before the round score reel commits. Screen displacement is reserved for overtime, streak breaks, and map-deciding outcomes. Procedural Web Audio supplies low-volume hover, lift, drop, flip, IGL, specialty, and impact cues without shipping sound assets.
+
+Under `prefers-reduced-motion`, tilt, roll, shake, stagger, fan/wave, and spatial specialty motion are removed. State remains visible through immediate accent borders and at most a 120ms opacity response; sound remains available. Moving layers animate only `transform` and `opacity`, round physics coordinates to two decimals, and acquire `will-change` only during hover/focus/drag.
 
 ### SquadDock + SquadSheet (persistent roster control)
-Replaces the earlier card-fan-in-a-drawer pattern, which opened from cursor position — a mode that could be triggered or lost by accident. The dock (`SquadDock`) is a permanent row of notched 52px chips (44px on mobile) in the bottom `SquadBar`: portrait crop, rating, an IGL tag, a fatigue/boost dot — always legible, no open/close state to get wrong. Hovering a chip lifts one real `PlayerCard` above it (mouse only, suppressed under `prefers-reduced-motion` and `(hover: none)`); clicking a chip opens the single-card `CardFocusOverlay`.
+Replaces the earlier card-fan-in-a-drawer pattern, which opened from cursor position - a mode that could be triggered or lost by accident. The dock (`SquadDock`) is a permanent row of notched 52px chips (44px on mobile) in the bottom `SquadBar`: portrait crop, rating, an IGL tag, a fatigue/boost dot - always legible, no open/close state to get wrong. Hovering a chip lifts one real `PlayerCard` above it (mouse only, suppressed under `prefers-reduced-motion` and `(hover: none)`); clicking a chip opens the single-card `CardFocusOverlay`.
 
-The full team scoreboard (`SquadSheet`) is a bottom sheet, not a centered modal — it rises from the dock's own edge and stops short of the top of the screen, so a page that pins it open still shows its own hero and context above the dim (no `backdrop-filter` blur, for the same reason). It opens three ways: held **Tab** (`usePeekKey`, released to close — the VALORANT/CS scoreboard gesture), the dock's `SQUAD` button (mouse/touch), or a phase pinning it open when a card needs picking (`action: { prompt, onPick, isEligible?, dismissible, skip? }` — clicking an eligible card fires the pick directly, no per-card button). Mandatory picks (naming an IGL) hold against Esc; optional ones (a pack swap, a shop target) close on Esc and remain reachable again via peek.
+The full team scoreboard (`SquadSheet`) is a bottom sheet, not a centered modal - it rises from the dock's own edge and stops short of the top of the screen, so a page that pins it open still shows its own hero and context above the dim (no `backdrop-filter` blur, for the same reason). It opens three ways: held **Tab** (`usePeekKey`, released to close - the VALORANT/CS scoreboard gesture), the dock's `SQUAD` button (mouse/touch), or a phase pinning it open when a card needs picking (`action: { prompt, onPick, isEligible?, dismissible, skip? }` - clicking an eligible card fires the pick directly, no per-card button). Mandatory picks (naming an IGL) hold against Esc; optional ones (a pack swap, a shop target) close on Esc and remain reachable again via peek.
 
 **Tab-key tradeoff:** Tab is taken for the peek gesture on every screen the dock is visible, except inside a text input/textarea/contenteditable (`isTypingTarget`). Shift+Tab is left alone, so keyboard-only users can still traverse backward; the `SQUAD` button is always a mouse/touch-reachable door into the same sheet.
 
@@ -238,13 +262,13 @@ The full team scoreboard (`SquadSheet`) is a bottom sheet, not a centered modal 
 
 ### Do:
 - **Do** spend `--accent` on exactly one primary/active element per view (The One Accent Rule).
-- **Do** use the notched `clip-path` cut on interactive chrome only — nav items, buttons, chips, tooltips.
+- **Do** use the notched `clip-path` cut on interactive chrome only - nav items, buttons, chips, tooltips.
 - **Do** set `font-variant-numeric: tabular-nums` on any number that can change at runtime.
 - **Do** honor the 44px/28px control-size floor (`--tap-min` / `--tap-min-secondary`) for every new interactive element.
 - **Do** keep body copy and player names in normal case; reserve uppercase for structural/mono labels.
 
 ### Don't:
 - **Don't** add a soft blurred `box-shadow` or `radial-gradient` glow outside the two named exceptions (`--shadow-overlay`, PlayerCard's glare layer).
-- **Don't** round a structural container's corners — true right angles only; the notch cut is reserved for interactive chrome.
+- **Don't** round a structural container's corners - true right angles only; the notch cut is reserved for interactive chrome.
 - **Don't** introduce a second accent color. Gold and teal are status/sub-brand signals, not alternate accents.
 - **Don't** use a decorative hairline; a border only appears where it does real structural work (a strip edge, a table rule, a bracket connector).

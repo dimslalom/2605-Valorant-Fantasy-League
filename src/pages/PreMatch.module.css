@@ -48,7 +48,11 @@
   letter-spacing: 1px;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(255, 70, 85, 0.4);
-  transition: all 0.2s ease;
+  transition:
+    background-color var(--dur-micro),
+    color var(--dur-micro),
+    box-shadow var(--dur-transform) var(--ease-out),
+    transform var(--dur-transform) var(--ease-out);
 }
 
 .startBtn:hover:not(:disabled) {

@@ -1,4 +1,4 @@
-# VCT Card Game — Design Knowledge Base
+# VCT Card Game - Design Knowledge Base
 ## Everything decided so far
 
 ---
@@ -34,7 +34,7 @@ Secondary: FIFA Ultimate Team players who follow esports.
 
 ### During the match
 - Match fast-forwards automatically, round scores tick
-- You watch your game plan execute — most rounds you do nothing
+- You watch your game plan execute - most rounds you do nothing
 - **Economy calls** between rounds: full buy / force / eco (This can be automatic or changed by you)
 - **Timeouts** (2 per map, limited): pause both sides, adjust strategy or activate a player power
 - **Player power activation** outside timeout (limited uses)
@@ -84,7 +84,7 @@ vs same for opponent → higher score wins
 
 Overall rating (OVR) = average of all five stats, shown on card face.
 
-### Strategy system (Option A — modifier stack)
+### Strategy system (Option A - modifier stack)
 
 Strategy sets a tradeoff across the 5 players. You're not picking "good strategy," you're picking which players get buffed and which get disadvantaged.
 
@@ -132,7 +132,7 @@ Silver < Gold < Legendary < Prestige < Iconic
 | Gold | Established starters, regional standouts | Standard packs (rare) | Always in pool |
 | Legendary | Top fraggers, global stars | Standard packs (very rare) | Always in pool |
 | Prestige | Event-specific: MVP, Champs roster, special achievements | Time-limited drops, tied to real VCT events | May return as archive packs |
-| Iconic | All-time legends, retired greats, fan favorites | Special means only — never in packs | One per account, no duplicates, permanent flex |
+| Iconic | All-time legends, retired greats, fan favorites | Special means only - never in packs | One per account, no duplicates, permanent flex |
 
 Tiers are dynamic and configured in data. New tiers can be added by defining a name, palette, stat ceiling, and power slot count. Nothing is hardcoded.
 
@@ -172,9 +172,9 @@ Tiers are dynamic and configured in data. New tiers can be added by defining a n
 
 ### The edition + palette system
 
-- `tier` — drives mechanical rarity (pack odds, stat ceiling, power slots)
-- `edition` — human-readable event label shown on the card face (Prestige and Iconic only)
-- `palette` — drives which PNG asset files are loaded
+- `tier` - drives mechanical rarity (pack odds, stat ceiling, power slots)
+- `edition` - human-readable event label shown on the card face (Prestige and Iconic only)
+- `palette` - drives which PNG asset files are loaded
 
 ```
 Silver / Gold / Legendary   → edition: null,  palette: "silver" / "gold" / "legendary"
@@ -200,9 +200,9 @@ Both are time-limited but can return as "archive packs" in future seasons.
 
 ### Iconic acquisition (never in packs)
 
-- Campaign reward — complete story mode
-- Ranked milestone — season-end reward for top rank
-- Legacy event — limited time unlock
+- Campaign reward - complete story mode
+- Ranked milestone - season-end reward for top rank
+- Legacy event - limited time unlock
 - One per account, no trading, no duplicates
 
 ### Player power design language
@@ -219,10 +219,10 @@ Every power modifies one or more of the five stats. Powers are tied to the playe
 | FNS | IGL Brain | Team Mentality +15 and Synergy +10 for 3 duels |
 
 Power categories:
-- **Individual buffs** — boost the card holder's own stats
-- **Team buffs** — boost the whole team's stats
-- **Enemy debuffs** — reduce opponent stats
-- **Conditional** — only trigger in specific circumstances (CT side, when team is down 3+, etc.)
+- **Individual buffs** - boost the card holder's own stats
+- **Team buffs** - boost the whole team's stats
+- **Enemy debuffs** - reduce opponent stats
+- **Conditional** - only trigger in specific circumstances (CT side, when team is down 3+, etc.)
 
 ### Pay-to-win mitigation
 
@@ -260,10 +260,10 @@ public/assets/
 ### Card layer stack (code renders in this order)
 
 ```
-Layer 0 (z-index 0) — card-bg PNG           → your Figma background
-Layer 1 (z-index 1) — player photo PNG      → sourced from VCT broadcasts/social
-Layer 2 (z-index 2) — stat-bg PNG           → your Figma bottom panel
-Layer 3 (z-index 3) — all text and dynamic elements → code only, reads from cards.json
+Layer 0 (z-index 0) - card-bg PNG           → your Figma background
+Layer 1 (z-index 1) - player photo PNG      → sourced from VCT broadcasts/social
+Layer 2 (z-index 2) - stat-bg PNG           → your Figma bottom panel
+Layer 3 (z-index 3) - all text and dynamic elements → code only, reads from cards.json
 ```
 
 ### What code renders (Layer 3)
@@ -275,7 +275,7 @@ Layer 3 (z-index 3) — all text and dynamic elements → code only, reads from 
 - Player name (uppercase, centered)
 - Stat row: AIM / POS / ABL / MNT / SYN
 - Org logo image (bottom right, dynamic per org)
-- Edition text (top right, Prestige and Iconic only — replaces org name in that position)
+- Edition text (top right, Prestige and Iconic only - replaces org name in that position)
 
 ### Card dimensions in code
 
@@ -291,7 +291,7 @@ No border-radius, no overflow:hidden on the container. Card shape is defined ent
 - Source from official VCT broadcast screenshots, team social media (Twitter/X, Instagram), VCT Flickr
 - Export at minimum 200×200px
 - Prestige cards use actual event photos (e.g. forsakeN lifting the trophy at Champs 2023)
-- No circular crop needed in Figma — code does not apply border-radius to photos
+- No circular crop needed in Figma - code does not apply border-radius to photos
 
 ### Flag library
 
@@ -319,7 +319,7 @@ Every new player gets a starter deck of fixed Silver cards on first login.
 - Prestige: time-limited drop only, not in standard packs
 - Iconic: never in packs
 
-### Trading (phase 3 — what-if feature)
+### Trading (phase 3 - what-if feature)
 
 The full trading ecosystem (player-to-player card trading, market pricing) is deferred to phase 3. The economy needs to be stable before introducing player-to-player variables.
 
@@ -327,10 +327,10 @@ The full trading ecosystem (player-to-player card trading, market pricing) is de
 
 ## 9. Retention and progression
 
-- **Campaign** — single player story matches vs scripted AI teams (phase 2)
-- **Ranked ladder** — seasonal resets, matchmaking by team power rating (phase 3)
-- **New card drops** — tied to real VCT event calendar
-- **Seasonal meta shifts** — map pool follows real VCT rotations, agent balance is independent from Valorant patches unless a major rework occurs
+- **Campaign** - single player story matches vs scripted AI teams (phase 2)
+- **Ranked ladder** - seasonal resets, matchmaking by team power rating (phase 3)
+- **New card drops** - tied to real VCT event calendar
+- **Seasonal meta shifts** - map pool follows real VCT rotations, agent balance is independent from Valorant patches unless a major rework occurs
 
 ---
 
@@ -400,7 +400,7 @@ Column order: `id, player, org, region, nationality, tier, edition, rating, role
 
 ## 11. Phase plan
 
-### Phase 1 — Proof of loop (current)
+### Phase 1 - Proof of loop (current)
 
 **In scope:**
 - 30 cards (Silver and Gold, Pacific + Americas + EMEA)
@@ -421,7 +421,7 @@ Column order: `id, player, org, region, nationality, tier, edition, rating, role
 - Coach card
 - Trading
 
-### Phase 2 — Full single player
+### Phase 2 - Full single player
 
 - All 5 maps with unique zone layouts
 - All 4 regions, full card roster (~100 cards)
@@ -431,7 +431,7 @@ Column order: `id, player, org, region, nationality, tier, edition, rating, role
 - Coach card slot
 - Agent ban/pick phase per map
 
-### Phase 3 — Live game (show Riot)
+### Phase 3 - Live game (show Riot)
 
 - PvP matchmaking
 - Ranked ladder with seasonal resets

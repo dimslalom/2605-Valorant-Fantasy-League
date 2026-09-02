@@ -400,20 +400,20 @@ def hair_flood_mask(
 
     Measured against a real donor (skuba, a mullet draping onto the shoulder):
     the pixels were INSIDE the parsed crop the whole way down, but the parser
-    itself called much of the dark strand "cloth" rather than "hair" — an
+    itself called much of the dark strand "cloth" rather than "hair" - an
     ambiguous, low-resolution texture right where the crop's detail is
     thinnest. A single bad label there is enough to bake a hair-shaped smudge
     straight into the jersey plate, and no amount of dilating a
     correctly-labelled region fixes a region that was never labelled hair to
     begin with.
 
-    Region-grow from a scalp anchor — near the crown, where classification is
-    reliable — through 8-connected pixels, ignoring the per-pixel label from
+    Region-grow from a scalp anchor - near the crown, where classification is
+    reliable - through 8-connected pixels, ignoring the per-pixel label from
     there on: this only cares what the hair actually looks like, not what one
     uncertain patch downstream was called.
 
     Each step compares a candidate against the neighbour that is ADMITTING it,
-    not just the original scalp colour — a single strand runs from lit crown
+    not just the original scalp colour - a single strand runs from lit crown
     to shadowed shoulder, and skuba's mullet measured a 48-unit drift end to
     end, past a fixed global threshold tight enough to reject a white jersey a
     few pixels away.
@@ -421,7 +421,7 @@ def hair_flood_mask(
     Local-only tolerance was tried first and is NOT safe alone: fabric has its
     own soft shading gradient, and on skuba's white jersey the walk drifted
     step by step through it and erased almost the entire plate. Every step
-    must also stay within a wider cap of the ORIGINAL seed colour — loose
+    must also stay within a wider cap of the ORIGINAL seed colour - loose
     enough to cross a strand's natural lighting range, tight enough that a
     long smooth ramp across fabric still gets stopped partway rather than
     reaching solid cloth.
@@ -466,10 +466,10 @@ def hair_flood_mask(
                     queue.append((ny, nx))
 
     # Mop-up: a few of the darkest, most deeply-shadowed pixels at a strand's
-    # frayed end can still sit just past seed_cap_sq — tightened specifically
+    # frayed end can still sit just past seed_cap_sq - tightened specifically
     # to stop the walk from bleeding into the jersey's own shading gradient.
     # Within a small halo of pixels the walk DID confirm, proximity itself is
-    # strong evidence, which a colour-only rule far from the seed can't use —
+    # strong evidence, which a colour-only rule far from the seed can't use -
     # so allow a looser tolerance there without loosening it everywhere.
     halo = np.array(
         Image.fromarray((visited * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(31))
@@ -596,20 +596,20 @@ def grey_head(alpha: Image.Image) -> Image.Image:
     )
 
 
-# One real donor, shared by every no-photo org — the exact same treatment as
+# One real donor, shared by every no-photo org - the exact same treatment as
 # the grey heads: a real garment, desaturated, not a drawn shape. A previous
 # version picked a DIFFERENT real donor per org and only stripped its colour,
 # which still read as "that team's kit, recoloured." Reusing one fixed donor
 # for everyone removes that: no org's neutral kit is any other org's actual
 # jersey. GREY_DONORS already vets this exact photo as clean and reliable.
-NEUTRAL_JERSEY_DONOR = GREY_DONORS[3]  # "boaster" — narrow, clean-pose plate
+NEUTRAL_JERSEY_DONOR = GREY_DONORS[3]  # "boaster" - narrow, clean-pose plate
 
 
 def grey_jersey_template(parser: "FaceParser") -> Image.Image:
     """boaster's real jersey, head and neck removed, colour stripped.
 
-    Reuses the same plate-building path as a real per-org kit — geometry,
-    semantic parse, hair-flood cleanup — so it inherits every fix that applies
+    Reuses the same plate-building path as a real per-org kit - geometry,
+    semantic parse, hair-flood cleanup - so it inherits every fix that applies
     there. The only extra step is greying it out afterward, the same
     grayscale-and-colorize treatment grey_head() applies to a real head.
     """
@@ -627,13 +627,13 @@ def grey_jersey_template(parser: "FaceParser") -> Image.Image:
     neutral.putalpha(alpha)
 
     # Suppress the donor's own sponsor print while keeping real folds and
-    # light — a shared donor is still a real, printed jersey underneath, and a
+    # light - a shared donor is still a real, printed jersey underneath, and a
     # grey Fnatic wordmark is still recognisably a Fnatic wordmark. Blur the
     # WHOLE garment (the kit's own alpha as the mask), not just a chest patch:
     # boaster's print reaches the collar and both sleeves, past where a
     # narrow central rectangle would ever reach. A blur this size erases fine
     # print detail while leaving the coarse, large-scale fold shading that
-    # makes it read as real fabric rather than a flat fill — the same
+    # makes it read as real fabric rather than a flat fill - the same
     # principle grey_head() uses for a face.
     rgb = neutral.convert("RGB")
     blurred = rgb.filter(ImageFilter.GaussianBlur(22))
@@ -962,7 +962,7 @@ def build(args: argparse.Namespace) -> int:
         kit_slug = slug(org)
         kit_path = KITS_DIR / f"{kit_slug}.png"
         previous = old_kits.get(org)
-        # A neutral-tagged record isn't a resolved real kit — it's an org with
+        # A neutral-tagged record isn't a resolved real kit - it's an org with
         # no photo wearing the shared placeholder. Always fall through so the
         # dedicated neutral-kit handling below can decide freshly whether that
         # placeholder itself needs regenerating, instead of this generic
@@ -1048,7 +1048,7 @@ def build(args: argparse.Namespace) -> int:
                 }
             )
 
-    # Orgs with no source photo share ONE real jersey, greyed out — the same
+    # Orgs with no source photo share ONE real jersey, greyed out - the same
     # treatment the grey heads get, not a drawn shape and not a per-org
     # borrowed kit. Every no-photo org points at the identical file.
     missing_orgs = sorted(

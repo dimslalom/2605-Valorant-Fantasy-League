@@ -73,7 +73,7 @@
   cursor: pointer;
 }
 
-/* The border tint is a supporting cue only — the focus ring itself comes from
+/* The border tint is a supporting cue only - the focus ring itself comes from
    the global :focus-visible rule. A border-colour change alone is ~3.6:1 here
    and reads as nothing to anyone who can't separate the hue. */
 .stratSelect:focus-visible {
@@ -82,7 +82,7 @@
 
 /* The card table: flat sunken surface with a sharp bracket border and a
    faint diagonal weave texture standing in for the felt, rather than a
-   photorealistic gradient/glow — kept in the same flat, cut-and-layered
+   photorealistic gradient/glow - kept in the same flat, cut-and-layered
    language as the rest of the shell. */
 .feltTable {
   background: var(--bg-sunken);

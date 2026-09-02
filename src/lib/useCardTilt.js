@@ -1,52 +1,146 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { prefersReducedMotion } from './useReducedMotion';
+import { seededRestAngle } from './cardPhysics';
 
-// Pointer-driven 3D tilt. Writes CSS vars (--rx, --ry, --gx, --gy, --glare)
-// straight onto the target node inside a rAF — no React re-render per move.
-// The consuming CSS decides what the vars mean, so any card layout works.
-function motionDisabled() {
-  // Tilt is pointer-only by nature, so the coarse-pointer check stays local;
-  // the reduced-motion half is the shared one.
-  return prefersReducedMotion() || window.matchMedia('(hover: none)').matches;
+const SPRING = 260;
+const DAMPING = 24;
+const MAX_TILT = 12;
+const MAX_ROLL = 12;
+
+function coarsePointer() {
+  return typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
 }
 
-export default function useCardTilt({ maxTilt = 3, disabled = false } = {}) {
+export default function useCardTilt({ disabled = false, seed } = {}) {
   const tiltRef = useRef(null);
-  const frame = useRef(0);
+  const frameRef = useRef(0);
+  const previousTimeRef = useRef(0);
+  const samplesRef = useRef([]);
+  const rollTimerRef = useRef(0);
+  const stateRef = useRef({ rx: 0, ry: 0, rz: 0, lift: 0, scale: 1, vx: 0, vy: 0, vz: 0, vl: 0, vs: 0 });
+  const targetRef = useRef({ rx: 0, ry: 0, rz: 0, lift: 0, scale: 1 });
 
-  const onPointerMove = useCallback((e) => {
-    if (disabled || motionDisabled()) return;
+  const write = useCallback(() => {
     const node = tiltRef.current;
     if (!node) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const fx = (e.clientX - rect.left) / rect.width - 0.5;  // −0.5 .. 0.5
-    const fy = (e.clientY - rect.top) / rect.height - 0.5;
-    cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => {
-      node.style.setProperty('--rx', `${(-fy * maxTilt * 2).toFixed(2)}deg`);
-      node.style.setProperty('--ry', `${(fx * maxTilt * 2).toFixed(2)}deg`);
-      // unitless pointer fractions — layers multiply these into their own
-      // lateral parallax shift (--shift) in CSS
-      node.style.setProperty('--mx', fx.toFixed(3));
-      node.style.setProperty('--my', fy.toFixed(3));
-      node.style.setProperty('--gx', `${((fx + 0.5) * 100).toFixed(1)}%`);
-      node.style.setProperty('--gy', `${((fy + 0.5) * 100).toFixed(1)}%`);
-      node.style.setProperty('--glare', '1');
-    });
-  }, [maxTilt, disabled]);
+    const value = stateRef.current;
+    node.style.setProperty('--rx', `${value.rx.toFixed(2)}deg`);
+    node.style.setProperty('--ry', `${value.ry.toFixed(2)}deg`);
+    node.style.setProperty('--rz', `${value.rz.toFixed(2)}deg`);
+    node.style.setProperty('--lift', `${value.lift.toFixed(2)}px`);
+    node.style.setProperty('--card-scale', value.scale.toFixed(3));
+    node.style.setProperty('--ambient-opacity', Math.min(1, Math.abs(value.lift) / 28).toFixed(2));
+  }, []);
+
+  const animateToTarget = useCallback(() => {
+    if (frameRef.current || prefersReducedMotion()) {
+      if (prefersReducedMotion()) {
+        Object.assign(stateRef.current, targetRef.current, { vx: 0, vy: 0, vz: 0, vl: 0, vs: 0 });
+        write();
+      }
+      return;
+    }
+    previousTimeRef.current = performance.now();
+    const tick = (now) => {
+      const dt = Math.min((now - previousTimeRef.current) / 1000, 0.032);
+      previousTimeRef.current = now;
+      const state = stateRef.current;
+      const target = targetRef.current;
+      const channels = [['rx', 'vx'], ['ry', 'vy'], ['rz', 'vz'], ['lift', 'vl'], ['scale', 'vs']];
+      let moving = false;
+      for (const [position, velocity] of channels) {
+        const acceleration = SPRING * (target[position] - state[position]) - DAMPING * state[velocity];
+        state[velocity] += acceleration * dt;
+        state[position] += state[velocity] * dt;
+        if (Math.abs(target[position] - state[position]) > 0.01 || Math.abs(state[velocity]) > 0.02) moving = true;
+        else { state[position] = target[position]; state[velocity] = 0; }
+      }
+      write();
+      if (moving) frameRef.current = requestAnimationFrame(tick);
+      else frameRef.current = 0;
+    };
+    frameRef.current = requestAnimationFrame(tick);
+  }, [write]);
+
+  const setElevation = useCallback((lift, scale) => {
+    targetRef.current.lift = lift;
+    targetRef.current.scale = scale;
+    animateToTarget();
+  }, [animateToTarget]);
+
+  const onPointerMove = useCallback((event) => {
+    if (disabled || coarsePointer() || prefersReducedMotion()) return;
+    const node = tiltRef.current;
+    if (!node) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    let fx = (event.clientX - rect.left) / rect.width - 0.5;
+    let fy = (event.clientY - rect.top) / rect.height - 0.5;
+    const radial = Math.hypot(fx, fy) / Math.SQRT1_2;
+    if (radial < 0.05) { fx = 0; fy = 0; }
+
+    const now = performance.now();
+    const samples = samplesRef.current;
+    samples.push({ x: event.clientX, at: now });
+    while (samples.length > 3 || samples[0]?.at < now - 50) samples.shift();
+    const first = samples[0];
+    const velocityX = first && now > first.at ? (event.clientX - first.x) / (now - first.at) : 0;
+
+    targetRef.current.rx = -fy * MAX_TILT * 2;
+    targetRef.current.ry = fx * MAX_TILT * 2;
+    targetRef.current.rz = Math.max(-MAX_ROLL, Math.min(MAX_ROLL, -velocityX * 8));
+    node.style.setProperty('--mx', fx.toFixed(3));
+    node.style.setProperty('--my', fy.toFixed(3));
+    node.style.setProperty('--mouse-x', `${((fx + 0.5) * 100).toFixed(2)}%`);
+    node.style.setProperty('--mouse-y', `${((fy + 0.5) * 100).toFixed(2)}%`);
+    node.style.setProperty('--glare', '1');
+    animateToTarget();
+    clearTimeout(rollTimerRef.current);
+    rollTimerRef.current = setTimeout(() => {
+      targetRef.current.rz = 0;
+      animateToTarget();
+    }, 50);
+  }, [animateToTarget, disabled]);
+
+  const onPointerEnter = useCallback(() => {
+    if (disabled || coarsePointer()) return;
+    setElevation(-16, 1.04);
+  }, [disabled, setElevation]);
+
+  const onPointerDown = useCallback(() => {
+    if (disabled || coarsePointer()) return;
+    setElevation(-28, 1.08);
+  }, [disabled, setElevation]);
+
+  const onPointerUp = useCallback(() => {
+    if (disabled || coarsePointer()) return;
+    setElevation(-16, 1.04);
+  }, [disabled, setElevation]);
 
   const onPointerLeave = useCallback(() => {
     const node = tiltRef.current;
-    if (!node) return;
-    cancelAnimationFrame(frame.current);
-    node.style.setProperty('--rx', '0deg');
-    node.style.setProperty('--ry', '0deg');
-    node.style.setProperty('--mx', '0');
-    node.style.setProperty('--my', '0');
-    node.style.setProperty('--glare', '0');
-  }, []);
+    clearTimeout(rollTimerRef.current);
+    samplesRef.current = [];
+    Object.assign(targetRef.current, { rx: 0, ry: 0, rz: 0, lift: 0, scale: 1 });
+    if (node) {
+      node.style.setProperty('--mx', '0');
+      node.style.setProperty('--my', '0');
+      node.style.setProperty('--mouse-x', '50%');
+      node.style.setProperty('--mouse-y', '50%');
+      node.style.setProperty('--glare', '0');
+    }
+    animateToTarget();
+  }, [animateToTarget]);
 
-  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+  const onFocus = useCallback(() => !disabled && setElevation(-16, 1.04), [disabled, setElevation]);
+  const onBlur = useCallback(() => onPointerLeave(), [onPointerLeave]);
 
-  return { tiltRef, onPointerMove, onPointerLeave };
+  useEffect(() => {
+    tiltRef.current?.style.setProperty('--rest-rotate', `${seededRestAngle(seed)}deg`);
+    return () => {
+      clearTimeout(rollTimerRef.current);
+      cancelAnimationFrame(frameRef.current);
+    };
+  }, [seed]);
+
+  return { tiltRef, onPointerMove, onPointerEnter, onPointerDown, onPointerUp, onPointerLeave, onFocus, onBlur };
 }

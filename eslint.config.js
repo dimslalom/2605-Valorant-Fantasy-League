@@ -24,7 +24,7 @@ export default defineConfig([
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    // Build/sync scripts run in Node, not the browser — without this they were
+    // Build/sync scripts run in Node, not the browser - without this they were
     // linted against browser globals and every `process` reference errored.
     files: ['scripts/**/*.js'],
     languageOptions: { globals: globals.node },

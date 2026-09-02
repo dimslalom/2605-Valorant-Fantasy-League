@@ -28,7 +28,7 @@
           "src/components/SquadSheet.module.css"
         ],
         "createdAt": "2026-08-28T04:03:15.219Z",
-        "reason": "matches CardFocusOverlay.module.css .close button's identical 16px glyph size — same close-icon pattern, not new drift"
+        "reason": "matches CardFocusOverlay.module.css .close button's identical 16px glyph size - same close-icon pattern, not new drift"
       },
       {
         "rule": "design-system-color",
@@ -37,7 +37,7 @@
           "src/components/SquadSheet.module.css"
         ],
         "createdAt": "2026-08-28T07:20:11.826Z",
-        "reason": "mask-image gradient opacity stop, not a paint color — mask only reads alpha here; identical to the existing .squadHero mask-image in PerfectRun.module.css"
+        "reason": "mask-image gradient opacity stop, not a paint color - mask only reads alpha here; identical to the existing .squadHero mask-image in PerfectRun.module.css"
       },
       {
         "rule": "design-system-font-size",
@@ -46,7 +46,7 @@
           "src/components/SquadSheet.module.css"
         ],
         "createdAt": "2026-08-28T08:13:41.318Z",
-        "reason": "mobile-only .faceRole shrink to fit the 150px card face — below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
+        "reason": "mobile-only .faceRole shrink to fit the 150px card face - below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
       },
       {
         "rule": "design-system-font-size",
@@ -55,7 +55,7 @@
           "src/components/SquadSheet.module.css"
         ],
         "createdAt": "2026-08-28T08:13:41.370Z",
-        "reason": "mobile-only .facePlayer shrink to fit the 150px card face — below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
+        "reason": "mobile-only .facePlayer shrink to fit the 150px card face - below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
       },
       {
         "rule": "design-system-font-size",
@@ -64,7 +64,7 @@
           "src/components/SquadSheet.module.css"
         ],
         "createdAt": "2026-08-28T08:13:41.421Z",
-        "reason": "mobile-only .faceStat shrink to fit a 5-item stat row inside the 150px card face — below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
+        "reason": "mobile-only .faceStat shrink to fit a 5-item stat row inside the 150px card face - below --fs-micro (11px), the smallest ramp step, which doesn't fit this width"
       },
       {
         "rule": "side-tab",
@@ -82,6 +82,69 @@
         ],
         "createdAt": "2026-08-31T09:15:48.156Z",
         "reason": "matches the pre-existing .chipIgl badge text size (8px) this mobile IGL-plate rule replaces at the same breakpoint"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:42.816Z",
+        "reason": "shadow-silhouette black (contactShadow/ambientShadow), alpha-masked to the card art; shadows are conventionally raw black, not a themed surface color"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(225,235,245,.42)",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:42.872Z",
+        "reason": "silver-tier card glare tint - a foil/material color for the card art's own tilt highlight, not a UI surface color"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(255,242,185,.7)",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:42.923Z",
+        "reason": "gold-tier card glare tint - same foil-highlight category as the silver-tier glare, not a UI surface color"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(0, 0, 0, 0.55)",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:42.976Z",
+        "reason": "hard offset drop-shadow on the specialty chip (comic/poster shadow language), not a themed surface color"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(0, 0, 0, 0.5)",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:43.029Z",
+        "reason": "same hard offset drop-shadow language as the specialty chip, on the spec tooltip"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(255,255,255,.9)",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:43.084Z",
+        "reason": "card-flip flash highlight streak, a motion effect literal not a themed surface color"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "46px",
+        "files": [
+          "src/components/PlayerCard.module.css"
+        ],
+        "createdAt": "2026-09-02T12:25:43.139Z",
+        "reason": "the card's own rating numeral - a poster/graphic register matching the card's other inline oversized numerals (68/38/28px in PlayerCard.jsx), not UI body type"
       }
     ]
   }

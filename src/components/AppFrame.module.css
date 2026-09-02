@@ -10,7 +10,7 @@
 
 .frame {
   /* Reserves the rail. On mobile the rail becomes a top bar, so the
-     reservation flips axis — see the media query below. */
+     reservation flips axis - see the media query below. */
   margin-left: calc(var(--rail-size) + var(--safe-l));
   margin-right: var(--safe-r);
 

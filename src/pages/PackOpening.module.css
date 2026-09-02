@@ -1,5 +1,5 @@
 /* Shell, frame and status strip come from AppFrame + StatusStrip. The pack
-   itself (tear + reveal strip) is PackRip/PackTear — this module only owns
+   itself (tear + reveal strip) is PackRip/PackTear - this module only owns
    the page's own layout and the "open another" affordance below it. */
 
 .content {

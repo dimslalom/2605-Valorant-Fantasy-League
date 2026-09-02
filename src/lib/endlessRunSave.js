@@ -6,7 +6,7 @@
 // with. A run is written only at quiescent phase boundaries.
 //
 // Two rules govern the format:
-//   1. Never serialize a card object — store ids and rehydrate from cards.json.
+//   1. Never serialize a card object - store ids and rehydrate from cards.json.
 //      A run is a set of deltas against the card data, not a copy of it.
 //   2. Never throw on load. A corrupt or unreadable run is discarded and the
 //      player is offered a fresh start; their records blob is untouched.
@@ -57,6 +57,7 @@ export function serializeEndlessRun(run) {
 
     squadName: run.squadName,
     tourIndex: run.tourIndex,
+    yearsCompleted: run.yearsCompleted ?? 0,
     season: run.season,
 
     squad: {
@@ -87,7 +88,7 @@ export function serializeEndlessRun(run) {
 
 /**
  * Bring an on-disk blob up to the current version. Returns null for anything
- * unrecognisable — callers treat that as "no saved run".
+ * unrecognisable - callers treat that as "no saved run".
  */
 export function migrateEndlessRun(json) {
   if (!json || typeof json !== 'object') return null;
@@ -144,6 +145,7 @@ export function hydrateEndlessRun(json, cards) {
 
       squadName: migrated.squadName,
       tourIndex: migrated.tourIndex ?? 0,
+      yearsCompleted: migrated.yearsCompleted ?? Math.floor((migrated.tourIndex ?? 0) / 3),
       season: migrated.season ?? [],
 
       squad: {
@@ -176,7 +178,7 @@ export function hydrateEndlessRun(json, cards) {
 // ── storage ─────────────────────────────────────────────────────────────────
 
 /**
- * A tiny companion record so the menu can offer "Resume — Year 4 · Ascension"
+ * A tiny companion record so the menu can offer "Resume - Year 4 · Ascension"
  * without parsing the full run.
  */
 export function endlessRunMeta(run) {

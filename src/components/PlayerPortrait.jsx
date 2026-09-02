@@ -1,8 +1,9 @@
 import kits from '../data/kits.json';
 import { assetPath } from '../lib/utils';
 import styles from './PlayerPortrait.module.css';
+import { PORTRAIT_PLACEHOLDER } from '../lib/portrait';
 
-const PLACEHOLDER = '/assets/players/placeholder.png';
+const PLACEHOLDER = PORTRAIT_PLACEHOLDER;
 
 // Must match head_scale() in scripts/build_portraits.py. Matching neck widths
 // exactly wrecks head size when the two necks differ: measured ratios across
@@ -18,7 +19,7 @@ const PORTRAIT_H = 412;
 /**
  * A card's portrait.
  *
- * The untouched vlr.gg photo is the default and the common case — compositing
+ * The untouched vlr.gg photo is the default and the common case - compositing
  * only happens when the card is wearing someone else's kit, or has no photo of
  * its own to show:
  *
@@ -66,7 +67,7 @@ export default function PlayerPortrait({
         fetchPriority={fetchPriority}
         decoding="async"
         // Intrinsic size matters here: a lazy image with no dimensions collapses
-        // to zero height, never intersects the viewport, and so never loads —
+        // to zero height, never intersects the viewport, and so never loads -
         // which blanks every photo card. width/height give it an aspect ratio
         // before the bytes arrive, so lazy loading still works.
         width={PORTRAIT_W}
@@ -116,7 +117,7 @@ export default function PlayerPortrait({
         style={{ transform }}
         draggable={false}
       />
-      {/* same decoded image again, clipped to the collar down — drawing it in
+      {/* same decoded image again, clipped to the collar down - drawing it in
           FRONT of the neck is what makes a seam gap structurally impossible */}
       <img
         className={`${styles.layer} ${styles.kitFront}`}

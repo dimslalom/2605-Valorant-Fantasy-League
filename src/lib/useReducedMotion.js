@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 // One place to ask "should this move?". Previously re-implemented as a bare
-// matchMedia(...).matches read at seven call sites, none of which subscribed —
+// matchMedia(...).matches read at seven call sites, none of which subscribed -
 // so toggling the OS setting mid-session did nothing until the next remount.
 //
 // useSyncExternalStore keeps every consumer in step with the live media query
@@ -27,7 +27,7 @@ export default function useReducedMotion() {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-// Imperative escape hatch for code paths that run outside render — event
+// Imperative escape hatch for code paths that run outside render - event
 // handlers, timers, the tilt hook's pointermove. Prefer the hook in components.
 export function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia(QUERY).matches;

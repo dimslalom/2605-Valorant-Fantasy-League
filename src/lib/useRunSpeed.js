@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 
 // Persistent Normal/Fast/Instant preference for Gauntlet's auto-advance
-// pacing — a speedrunner sets this once instead of mashing skip on every
+// pacing - a speedrunner sets this once instead of mashing skip on every
 // timer, every run. Speed scales duration by a multiplier rather than
 // swapping in different fixed values, so it composes cleanly with
 // roundEvents.js's own `roundPacing(desc, opts)` seam (which already exists
-// for exactly this: a caller-supplied `delayFor` slowdown/speedup hook) —
+// for exactly this: a caller-supplied `delayFor` slowdown/speedup hook) -
 // the engine file itself is never touched.
 export const RUN_SPEEDS = ['normal', 'fast', 'instant'];
 
@@ -19,8 +19,16 @@ export function scaleDuration(ms, speed) {
   return Math.round(ms * speedMultiplier(speed));
 }
 
+// Some presentation states must remain readable even when an old browser
+// profile still carries the now-hidden "instant" preference. This keeps the
+// speed setting for the surrounding choreography while enforcing a semantic
+// floor for information-bearing holds such as the live round score.
+export function scaleDurationWithFloor(ms, speed, floorMs) {
+  return Math.max(floorMs, scaleDuration(ms, speed));
+}
+
 // `initial` / `onChange` let the caller own persistence (PerfectRun already
-// has a loadSaves/saveSaves pair keyed on its own localStorage blob — this
+// has a loadSaves/saveSaves pair keyed on its own localStorage blob - this
 // hook doesn't duplicate that storage concern, just the read/write moment).
 export default function useRunSpeed(initial = 'normal', onChange) {
   const [speed, setSpeedState] = useState(RUN_SPEEDS.includes(initial) ? initial : 'normal');

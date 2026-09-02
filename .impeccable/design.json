@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-08-28T00:00:00.000Z",
-  "title": "Design System: VFL — Valorant Fantasy League",
+  "title": "Design System: VFL - Valorant Fantasy League",
   "extensions": {
     "colorMeta": {
       "accent": { "role": "primary", "displayName": "Signal Red", "canonical": "#ff4655", "tonalRamp": ["#3a0509", "#570810", "#7a0d17", "#a8141f", "#d62838", "#ff4655", "#ff7d88", "#ffb3ba"] },
@@ -34,15 +34,15 @@
       "title": { "displayName": "Title", "purpose": "Sub-panel and modal titles." },
       "body": { "displayName": "Body", "purpose": "Running text, descriptions, rule copy." },
       "label": { "displayName": "Label", "purpose": "Field labels, kickers, roster row metadata." },
-      "micro": { "displayName": "Micro", "purpose": "Smallest step — non-interactive crumbs and tabular chip labels only." }
+      "micro": { "displayName": "Micro", "purpose": "Smallest step - non-interactive crumbs and tabular chip labels only." }
     },
     "shadows": [
       { "name": "card", "value": "5px 5px 0 rgba(0, 0, 0, 0.4)", "purpose": "Resting stamped/printed offset for card-like elements." },
-      { "name": "card-lifted", "value": "8px 8px 0 rgba(0, 0, 0, 0.5)", "purpose": "Hover/press step for the same elements — offset grows, never blurs." },
+      { "name": "card-lifted", "value": "8px 8px 0 rgba(0, 0, 0, 0.5)", "purpose": "Hover/press step for the same elements - offset grows, never blurs." },
       { "name": "overlay", "value": "0 12px 40px rgba(0, 0, 0, 0.6)", "purpose": "The one soft shadow in the system; separates a true overlay (modal/flyout) from the whole page." }
     ],
     "motion": [
-      { "name": "ease-out", "value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "purpose": "The house curve — default for entrances and state changes." },
+      { "name": "ease-out", "value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "purpose": "The house curve - default for entrances and state changes." },
       { "name": "ease-in", "value": "cubic-bezier(0.5, 0, 0.85, 0.4)", "purpose": "Exits only." },
       { "name": "ease-travel", "value": "cubic-bezier(0.5, 0, 0.2, 1)", "purpose": "Bracket travel path animation." }
     ],
@@ -112,7 +112,7 @@
   ],
   "narrative": {
     "northStar": "The Broadcast Overlay",
-    "overview": "VFL reads like the on-screen HUD of a Valorant broadcast, not like a consumer app skinned in red and black: status strips, bracket connectors, and stenciled mono labels sit directly on a near-black ground, and every surface behaves like a data readout rather than a decorative card. The system is deliberately cold and blunt — controls feel like hardware switches, not soft affordances. There is one accent color, and it is spent on the single most important thing on any given screen: the active nav item, the primary CTA, a live score.\n\nThe visual grammar is inherited from playvalorant.com and applied globally: sharp corners (mostly true right angles, with a small family of notched/cut corners reserved for interactive chrome), solid flat color fills, uppercase tabular-numeral type, and zero gradients or glows. Separation between regions comes from whitespace and filled surface blocks, never from decorative hairlines — a hairline only appears where it does real structural work (a strip's bottom edge, a table rule).\n\nDepth is cut-and-layered, not lit: elements stack as flat, notched silhouettes on top of one another, and where a shadow does appear it is a hard offset print (5px/5px, zero blur), never a soft ambient glow. Nothing in this system floats on light — it sits, printed, on the surface below it.",
+    "overview": "VFL reads like the on-screen HUD of a Valorant broadcast, not like a consumer app skinned in red and black: status strips, bracket connectors, and stenciled mono labels sit directly on a near-black ground, and every surface behaves like a data readout rather than a decorative card. The system is deliberately cold and blunt - controls feel like hardware switches, not soft affordances. There is one accent color, and it is spent on the single most important thing on any given screen: the active nav item, the primary CTA, a live score.\n\nThe visual grammar is inherited from playvalorant.com and applied globally: sharp corners (mostly true right angles, with a small family of notched/cut corners reserved for interactive chrome), solid flat color fills, uppercase tabular-numeral type, and zero gradients or glows. Separation between regions comes from whitespace and filled surface blocks, never from decorative hairlines - a hairline only appears where it does real structural work (a strip's bottom edge, a table rule).\n\nDepth is cut-and-layered, not lit: elements stack as flat, notched silhouettes on top of one another, and where a shadow does appear it is a hard offset print (5px/5px, zero blur), never a soft ambient glow. Nothing in this system floats on light - it sits, printed, on the surface below it.",
     "keyCharacteristics": [
       "One accent (--accent, #ff4655), spent sparingly on active/primary state only",
       "Flat fills over gradients; hard offset shadows over soft blur",
@@ -123,20 +123,20 @@
     ],
     "rules": [
       { "name": "The One Accent Rule", "body": "--accent marks exactly one thing per screen as primary or active. If two elements both want it, one of them is wrong.", "section": "colors" },
-      { "name": "The No-Glow Rule", "body": "No box-shadow blur radius beyond what a hard offset needs, no radial-gradient decoration, no filter: drop-shadow for ambiance. The one intentional exception is the PlayerCard glare layer, which simulates a physical foil card under light — a single, purpose-built effect, not a general pattern.", "section": "colors" },
-      { "name": "The Uppercase-Structural Rule", "body": "Uppercase + mono + wide tracking marks structural chrome (crumbs, kickers, nav tips, stat labels). Body copy and player names are never uppercased — that would flatten the one hierarchy signal the mono family provides.", "section": "typography" },
+      { "name": "The No-Glow Rule", "body": "No box-shadow blur radius beyond what a hard offset needs, no radial-gradient decoration, no filter: drop-shadow for ambiance. The one intentional exception is the PlayerCard glare layer, which simulates a physical foil card under light - a single, purpose-built effect, not a general pattern.", "section": "colors" },
+      { "name": "The Uppercase-Structural Rule", "body": "Uppercase + mono + wide tracking marks structural chrome (crumbs, kickers, nav tips, stat labels). Body copy and player names are never uppercased - that would flatten the one hierarchy signal the mono family provides.", "section": "typography" },
       { "name": "The Print-Not-Light Rule", "body": "A shadow's offset is fixed at 5px/5px (or its 8px/8px lifted step); blur only appears on --shadow-overlay, which is the sole soft-shadow token in the system and exists to separate a full overlay from the page, not to imply directional light on a component.", "section": "elevation" }
     ],
     "dos": [
       "Do spend --accent on exactly one primary/active element per view (The One Accent Rule).",
-      "Do use the notched clip-path cut on interactive chrome only — nav items, buttons, chips, tooltips.",
+      "Do use the notched clip-path cut on interactive chrome only - nav items, buttons, chips, tooltips.",
       "Do set font-variant-numeric: tabular-nums on any number that can change at runtime.",
       "Do honor the 44px/28px control-size floor (--tap-min / --tap-min-secondary) for every new interactive element.",
       "Do keep body copy and player names in normal case; reserve uppercase for structural/mono labels."
     ],
     "donts": [
       "Don't add a soft blurred box-shadow or radial-gradient glow outside the two named exceptions (--shadow-overlay, PlayerCard's glare layer).",
-      "Don't round a structural container's corners — true right angles only; the notch cut is reserved for interactive chrome.",
+      "Don't round a structural container's corners - true right angles only; the notch cut is reserved for interactive chrome.",
       "Don't introduce a second accent color. Gold and teal are status/sub-brand signals, not alternate accents.",
       "Don't use a decorative hairline; a border only appears where it does real structural work (a strip edge, a table rule, a bracket connector)."
     ]

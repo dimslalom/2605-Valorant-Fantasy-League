@@ -1,4 +1,4 @@
-// Player specialties — up to five per card, though only three exist today.
+// Player specialties - up to five per card, though only three exist today.
 // A specialty is a signature trait that grants a situational bonus in the sim.
 // Assignments are curated from VLR player reputations; One Trick additionally
 // picks up any player whose synced agent pool is a single agent.
@@ -41,7 +41,7 @@ export const SPECIALTY_ORDER = ['flex', 'flick', 'one_trick', 'mastermind', 'aur
 // Curated from VLR player reputations. Keys are lowercased player names; the
 // card's synced agent pool decides One Trick on top of this.
 const ASSIGN = {
-  // Flex — genuine multi-role players
+  // Flex - genuine multi-role players
   f0rsaken: ['flex', 'flick'],
   chronicle: ['flex'],
   nats: ['flex'],
@@ -51,7 +51,7 @@ const ASSIGN = {
   victor: ['flex', 'flick'],
   leo: ['flex'],
   trent: ['flex'],
-  // Flick — flick-heavy aimers who thrive against set opponents
+  // Flick - flick-heavy aimers who thrive against set opponents
   something: ['flick'],
   aspas: ['flick'],
   derke: ['flick'],
@@ -66,16 +66,16 @@ const ASSIGN = {
   purp0: ['flick'],
   zmjjkk: ['flick', 'aura'],
   mazino: ['flick'],
-  // One Trick — single-agent masters
+  // One Trick - single-agent masters
   jinggg: ['one_trick', 'flick'],
   kingg: ['one_trick'],
-  // Mastermind — elite in-game leaders
+  // Mastermind - elite in-game leaders
   boaster: ['mastermind'],
   fns: ['mastermind'],
   saadhak: ['mastermind'],
   runner: ['mastermind'],
   sscary: ['mastermind'],
-  // Aura — presence that rattles the other side
+  // Aura - presence that rattles the other side
   koalanoob: ['aura'],
 };
 

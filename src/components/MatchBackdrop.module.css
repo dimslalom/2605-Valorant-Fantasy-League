@@ -8,7 +8,7 @@
 }
 
 /* .visual is now an m.div: Framer Motion owns its scale (zoom) and y (shake)
-   as independent, composed motion values — see MatchBackdrop.jsx — so no
+   as independent, composed motion values - see MatchBackdrop.jsx - so no
    CSS transform/transition lives here any more. */
 .visual, .image, .scrim { position: absolute; inset: -2%; }
 
@@ -36,8 +36,16 @@
     radial-gradient(circle at 50% 42%, transparent 0%, rgba(3, 4, 7, 0.76) 82%);
 }
 
+.impactVignette {
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 4px var(--accent),inset 0 0 80px rgba(255,70,85,.46);
+}
+
 /* Calm (menu/draft/bracket) always renders zoom1 from PerfectRun.jsx, and
-   used to also drift — a slow ambient pan/scale breathing on top of that.
+   used to also drift - a slow ambient pan/scale breathing on top of that.
    Dropped: the bracket page is meant to read as pinned still at the calmest
    level, and a continuously drifting scale contradicted that even while the
    zoom *class* was correctly fixed at 1. */
@@ -52,7 +60,7 @@
 /* The shake (now FM-driven, see MatchBackdrop.jsx) deliberately stays a
    pure y nudge with no rotation: .visual is a full-viewport layer, so
    rotation around its own center reads far bigger here than the same angle
-   on an ordinary element — even a small one sweeps the corners noticeably,
+   on an ordinary element - even a small one sweeps the corners noticeably,
    and with the bottom third of the screen covered by the static score/
    roster UI, the visible motion would collect in the top two-thirds, reading
    as a pivot hinged at the bottom rather than a shake from center. A pure y

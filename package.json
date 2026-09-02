@@ -21,6 +21,7 @@
     "lint:multiplayer": "eslint src/engine/multiplayer.js src/pages/Multiplayer.jsx src/lib/multiplayerClient.js worker/index.js"
   },
   "dependencies": {
+    "flag-icons": "^7.5.0",
     "motion": "^12.43.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

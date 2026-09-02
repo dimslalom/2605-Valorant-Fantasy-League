@@ -32,7 +32,7 @@
   flex: none;
 }
 
-/* The page title. Rendered as an h1 so the page has a real heading — it was
+/* The page title. Rendered as an h1 so the page has a real heading - it was
    previously a decorative span, leaving every page headingless. */
 .crumb {
   margin: 0;
@@ -59,7 +59,7 @@
     --strip-top: var(--rail-size);
     padding: 0 var(--sp-4);
   }
-  /* The count is the first thing to go — the crumb names the page. */
+  /* The count is the first thing to go - the crumb names the page. */
   .count {
     display: none;
   }

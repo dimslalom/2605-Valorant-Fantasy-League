@@ -9,7 +9,7 @@ import allCards from '../data/cards.json';
 import styles from './PackOpening.module.css';
 
 // A standalone preview of the pack-open moment shared by every mode (Perfect
-// Run's draft/pack-swap, Multiplayer's draft/consolation) — this page just
+// Run's draft/pack-swap, Multiplayer's draft/consolation) - this page just
 // deals a throwaway five-card pack through the same PackRip/PackTear that
 // gameplay uses, non-interactively, so there's something to look at with no
 // run or lobby behind it.

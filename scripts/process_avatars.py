@@ -3,7 +3,7 @@
 Reads scripts/.cache/avatars/manifest.json ({playerId: outputFilename})
 written by vlr-to-json.js, removes the background with rembg, trims the
 transparent border, and places the cutout bottom-anchored and horizontally
-centered on a 400x412 transparent canvas — matching the hand-made card art.
+centered on a 400x412 transparent canvas - matching the hand-made card art.
 
 Outputs go to public/assets/players/. Existing files are never overwritten,
 so manual art is safe.
@@ -29,7 +29,7 @@ OUT_DIR = SCRIPT_DIR.parent / "public" / "assets" / "players"
 
 def _looks_like_placeholder(cutout) -> bool:
     """vlr.gg sometimes serves a generic grey silhouette as a player's
-    "photo" instead of a real one, under a normal-looking owcdn.net URL —
+    "photo" instead of a real one, under a normal-looking owcdn.net URL -
     so it isn't caught by the /base/ph/ URL filter. A real photo has
     meaningfully varied color across skin/hair/jersey; a flat silhouette
     doesn't, so sample the opaque region and check the spread."""
@@ -72,12 +72,12 @@ def main() -> int:
         from PIL import Image
         from rembg import remove, new_session
     except ImportError as err:
-        print(f"missing dependency: {err.name} — run: pip3 install -r scripts/requirements.txt")
+        print(f"missing dependency: {err.name} - run: pip3 install -r scripts/requirements.txt")
         return 1
 
     manifest_path = CACHE_DIR / "manifest.json"
     if not manifest_path.exists():
-        print(f"no manifest at {manifest_path} — run `npm run sync-vlr` first")
+        print(f"no manifest at {manifest_path} - run `npm run sync-vlr` first")
         return 1
 
     # values are either "file.png" or {"file": "...", "style": "icon"}
@@ -137,7 +137,7 @@ def main() -> int:
             cutout = cutout.resize(new_size, Image.LANCZOS)
 
             # Bottom-anchor, then push down by SUBJECT_DROP_PX so the card
-            # frames the subject the same way the hand-made art does — the
+            # frames the subject the same way the hand-made art does - the
             # feet/torso that fall below the canvas are simply clipped by
             # paste() rather than shrinking the whole cutout to fit.
             canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
@@ -147,7 +147,7 @@ def main() -> int:
             canvas.save(out)
             done += 1
             print(f"  + {out_name}")
-        except Exception as err:  # noqa: BLE001 — one bad image must not kill the batch
+        except Exception as err:  # noqa: BLE001 - one bad image must not kill the batch
             print(f"  ! {out_name}: {err}")
             failed += 1
 

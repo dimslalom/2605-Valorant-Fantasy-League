@@ -6,23 +6,20 @@ import { cardSpring, DUR, EASE } from '../lib/motion';
 import SpecialtyIcon from './SpecialtyIcon';
 import PlayerPortrait from './PlayerPortrait';
 import CountryFlag from './CountryFlag';
+import { playUiSound } from '../lib/gameAudio';
 import styles from './PlayerCard.module.css';
+import { STAGE_LABEL } from '../engine/endless/career';
+import { STAT_KEYS, STAT_LABELS, STAT_LABELS_FULL } from '../data/statFields';
 
 const CARD_W = 400;
 const CARD_H = 580;
 
-const STAT_KEYS   = ['aim', 'positioning', 'ability', 'mentality', 'synergy'];
-const STAT_LABELS = { aim: 'AIM', positioning: 'POS', ability: 'ABL', mentality: 'MNT', synergy: 'SYN' };
-const STAT_LABELS_FULL = {
-  aim: 'Aim', positioning: 'Positioning', ability: 'Ability', mentality: 'Mentality', synergy: 'Synergy',
-};
-
 const PLANE = {
   bg:    { '--z': '0px',   '--shift': '0px' },
-  photo: { '--z': '22px',  '--shift': '6px' },
-  top:   { '--z': '45px',  '--shift': '14px' }, // stat bg, text, logos
-  glare: { '--z': '55px',  '--shift': '0px' },
-  spec:  { '--z': '64px',  '--shift': '18px' }, // specialty rail, pops forward
+  photo: { '--z': '11px',  '--shift': '6px' },
+  top:   { '--z': '22px',  '--shift': '14px' }, // stat bg, text, logos
+  glare: { '--z': '27px',  '--shift': '0px' },
+  spec:  { '--z': '32px',  '--shift': '18px' }, // specialty rail, pops forward
 };
 
 // Specialty chip frame color tracks the card's tier metal.
@@ -44,13 +41,16 @@ export default function PlayerCard({
   kit,
   portraitLoading = 'lazy',
   portraitFetchPriority = 'auto',
-  // Opt-in shared-layout id (R2 — spring physics, PlayerCard only; see
+  // Opt-in shared-layout id (R2 - spring physics, PlayerCard only; see
   // src/lib/motion.js). Two call sites currently claim a given card's id at
-  // once (a dock chip and CardFocusOverlay) — the one-owner rule is the
+  // once (a dock chip and CardFocusOverlay) - the one-owner rule is the
   // caller's job: whichever mount currently isn't "the" visible instance of
   // that card must pass layoutId={undefined}, or Framer Motion has two
   // elements racing to own the same shared-layout animation.
   layoutId,
+  // Career signals from the endless engine (cardSignals). Absent everywhere
+  // else, so every other surface renders exactly as it did before.
+  signals = null,
 }) {
   const textColor  = cardTextColor(card.palette);
   const mutedColor = textColor + 'aa';
@@ -60,28 +60,47 @@ export default function PlayerCard({
   const specialties = getCardSpecialties(card);
   const specColor = SPEC_COLOR[card.palette] ?? SPEC_COLOR.gold;
 
-  const { tiltRef, onPointerMove, onPointerLeave } = useCardTilt({ disabled: !tilt });
+  const {
+    tiltRef,
+    onPointerMove,
+    onPointerEnter,
+    onPointerDown,
+    onPointerUp,
+    onPointerLeave,
+    onFocus,
+    onBlur,
+  } = useCardTilt({ disabled: !tilt, seed: card.id });
+  const activate = onClick ? () => {
+    playUiSound(flippable ? 'flip' : 'select');
+    onClick();
+  } : undefined;
 
   return (
     <m.div
+      className={styles.cardRoot}
       layoutId={layoutId}
       // `layout` stays on the spring (the layoutId morph between the dock,
-      // overlay, and draft strip); `default` covers whileTap's `scale` — a
+      // overlay, and draft strip); `default` covers whileTap's `scale` - a
       // separate, sharp press-confirm distinct from the continuous pointer
       // tilt in useCardTilt.js, which lives on the nested `.tilt` div below
       // and so never fights this one for the same `transform`.
       transition={{ layout: cardSpring, default: { duration: DUR.micro, ease: EASE.out } }}
       whileTap={onClick ? { scale: 0.97 } : undefined}
       style={{ width: CARD_W * displayScale, height: CARD_H * displayScale, flexShrink: 0 }}
-      onClick={onClick}
+      onClick={activate}
       onPointerMove={onPointerMove}
+      onPointerEnter={(event) => { onPointerEnter(event); if (onClick) playUiSound('hover'); }}
+      onPointerDown={(event) => { onPointerDown(event); if (onClick) playUiSound('lift'); }}
+      onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
+      onFocus={onFocus}
+      onBlur={onBlur}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
-        onClick();
+        activate();
       } : undefined}
     >
       <div
@@ -96,15 +115,29 @@ export default function PlayerCard({
         <div
           ref={tiltRef}
           className={[styles.tilt, onClick ? styles.clickable : ''].join(' ')}
+          data-palette={card.palette}
+          data-tier={card.tier}
           style={{
             fontFamily: "'Familjen Grotesk', sans-serif",
             '--spec': specColor,
-            boxShadow: selected
-              ? `0 0 0 ${Math.round(3 / displayScale)}px #ffffff, 0 0 0 ${Math.round(6 / displayScale)}px rgba(255,255,255,0.4)`
-              : undefined,
           }}
+          data-selected={selected ? 'true' : undefined}
         >
-          <div className={styles.flip} style={{ '--flip': flipped ? '180deg' : '0deg' }}>
+          {/* These silhouettes use the card art's alpha instead of a box
+              shadow, so Safari cannot expose a translucent rectangular
+              compositor tile around cut-corner/transparent card artwork. */}
+          <span
+            className={styles.contactShadow}
+            style={{ WebkitMaskImage: `url(${bgSrc})`, maskImage: `url(${bgSrc})` }}
+            aria-hidden="true"
+          />
+          <span
+            className={styles.ambientShadow}
+            style={{ WebkitMaskImage: `url(${bgSrc})`, maskImage: `url(${bgSrc})` }}
+            aria-hidden="true"
+          />
+          {selected && <span className={styles.selectionCorners} aria-hidden="true" />}
+          <div className={styles.flip} data-flipped={flipped ? 'true' : 'false'} style={{ '--flip': flipped ? '180deg' : '0deg' }}>
 
             {/* ── FRONT FACE ── */}
             <div className={`${styles.face} ${styles.faceFront}`}>
@@ -119,6 +152,15 @@ export default function PlayerCard({
                 fetchPriority={portraitFetchPriority}
               />
 
+              <img
+                className={styles.layerStatBg}
+                style={PLANE.top}
+                src={assetPath(`/assets/stat-bg/${card.palette}-stat-bg.png`)}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
+
               <div className={styles.layerText} style={PLANE.top}>
                 <div className={styles.topLeft}>
                   <span style={{ fontSize: 68, fontWeight: 700, color: textColor, lineHeight: 1 }}>
@@ -130,15 +172,33 @@ export default function PlayerCard({
                   <CountryFlag code={card.nationality} style={{ width: 46, height: 34, borderRadius: 2 }} />
                 </div>
 
-                {showEditionTop && (
+                {(showEditionTop || signals) && (
                   <div className={styles.topRight}>
-                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textAlign: 'right', maxWidth: 70, color: textColor, lineHeight: 1.3 }}>
-                      {card.edition}
-                    </span>
+                    {showEditionTop && (
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textAlign: 'right', maxWidth: 70, color: textColor, lineHeight: 1.3 }}>
+                        {card.edition}
+                      </span>
+                    )}
+                    {/* Where this player is in their career, and which way
+                        they are going. Shown as a chip and a mark, the same
+                        register as the role abbreviation and the flag - data
+                        on the card, not a sentence somewhere else. */}
+                    {signals && (
+                      <span className={styles.stageMark} data-stage={signals.stage} style={{ color: textColor }}>
+                        {signals.trend !== 0 && (
+                          <i
+                            className={styles.trend}
+                            data-dir={signals.trend > 0 ? 'up' : 'down'}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {STAGE_LABEL[signals.stage]}
+                      </span>
+                    )}
                   </div>
                 )}
 
-                {/* Specialties rail — cut-corner icon frames down the left
+                {/* Specialties rail - cut-corner icon frames down the left
                     edge, spilling half off the card, floated forward in 3D. */}
                 {specialties.length > 0 && (
                   <div className={styles.specialtiesRail} style={{ ...PLANE.spec, '--spec': specColor }} aria-label="Player specialties">

@@ -4,6 +4,7 @@ import cards from '../src/data/cards.json' with { type: 'json' };
 import {
   buildBracket,
   eligibleOrgs,
+  makeSeason,
   mulberry32,
   restoreRng,
   rngState,
@@ -149,5 +150,61 @@ test('bracket construction stays deterministic for a given seed', () => {
   assert.deepEqual(
     buildBracket(mulberry32(2026), cards, picked, player, 'champions'),
     buildBracket(mulberry32(2026), cards, picked, player, 'champions'),
+  );
+});
+
+// ── resume fidelity ─────────────────────────────────────────────────────────
+// The endless autosave stores the rng state at the manage screen and does NOT
+// serialize the bracket. That is only sound if restoring the generator and
+// re-running the draw reproduces the same tournament, so pin it.
+
+test('restoring the rng regenerates a byte-identical tournament', () => {
+  const roster = cards.filter(card => !card.org).slice(0, 5);
+  const picked = new Set(roster.map(c => c.id));
+  const player = () => ({
+    id: 'player', tag: 'YOU', name: 'GAUNTLET', roster, iglId: roster[0].id,
+    power: teamPower(roster, roster[0].id).power, isPlayer: true,
+  });
+
+  const rng = mulberry32(0x5eed);
+  // Burn the draft's worth of calls so the save point is mid-stream, not at
+  // a seed boundary - the realistic case.
+  for (let i = 0; i < 213; i++) rng();
+
+  const saved = rngState(rng);
+  const live = buildBracket(rng, cards, picked, player(), 'masters');
+
+  // A reload: the run comes back from disk with only that integer.
+  const resumed = buildBracket(restoreRng(saved), cards, picked, player(), 'masters');
+
+  assert.deepEqual(resumed, live);
+});
+
+test('a resumed run continues the same schedule, not a fresh one', () => {
+  const rng = mulberry32(31337);
+  makeSeason(rng);                      // year 1, already played
+  const saved = rngState(rng);
+
+  const live = makeSeason(rng);         // year 2, drawn before the reload
+  const resumed = makeSeason(restoreRng(saved));
+
+  assert.deepEqual(resumed, live);
+  assert.equal(new Set(resumed.map(e => e.city)).size, 3);
+});
+
+test('the save point survives a JSON round trip, as it does on disk', () => {
+  const roster = cards.filter(card => !card.org).slice(0, 5);
+  const picked = new Set(roster.map(c => c.id));
+  const player = {
+    id: 'player', tag: 'YOU', name: 'GAUNTLET', roster, iglId: roster[0].id,
+    power: teamPower(roster, roster[0].id).power, isPlayer: true,
+  };
+  const rng = mulberry32(99);
+  for (let i = 0; i < 40; i++) rng();
+
+  const onDisk = JSON.parse(JSON.stringify({ rngState: rngState(rng) }));
+  assert.deepEqual(
+    buildBracket(restoreRng(onDisk.rngState), cards, picked, player, 'champions'),
+    buildBracket(rng, cards, picked, player, 'champions'),
   );
 });

@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'motion/react';
 import { DUR, EASE, STAGGER, eliminationFlash } from '../lib/motion';
 import ModeRail from '../components/ModeRail';
 import PlayerCard from '../components/PlayerCard';
 import PlayerPortrait from '../components/PlayerPortrait';
+import { hasRealPortrait } from '../lib/portrait';
 import CardFocusOverlay from '../components/CardFocusOverlay';
 import PhaseTransition from '../components/PhaseTransition';
 import TacticalButton from '../components/TacticalButton';
@@ -16,9 +17,32 @@ import PackRip from '../components/PackRip';
 import allCards from '../data/cards.json';
 import { assetPath, countryName } from '../lib/utils';
 import useSkippableTimeline from '../lib/useSkippableTimeline';
-import useRunSpeed, { scaleDuration } from '../lib/useRunSpeed';
+import useRunSpeed, { scaleDuration, scaleDurationWithFloor } from '../lib/useRunSpeed';
 import useReducedMotion from '../lib/useReducedMotion';
+import useScrollLean from '../lib/useScrollLean';
+import { playUiSound } from '../lib/gameAudio';
+import { buildRoundCascade } from '../lib/matchCascade';
 import { loadPerfectRunSaves as loadSaves, savePerfectRunSaves as saveSaves } from '../lib/perfectRunSaves';
+import {
+  cardsRevision, clearEndlessRun, loadEndlessRun, readEndlessRunMeta, saveEndlessRun,
+} from '../lib/endlessRunSave';
+import {
+  MAX_REPUTATION, PROMOTE_AT, RELEGATE_AT, STARTING_TIER, TIER_META, eventPoints,
+  placementFor, reputationDelta, reputationRankProgress, slotUnlockAt, slotsFor, yearEndMovement,
+} from '../engine/endless/ladder';
+import { buildEndlessBracket, endlessFieldPool, endlessPlayerPower } from '../engine/endless/field';
+import {
+  SOFT_WEIGHT, cardSignals, effectiveRoster, emptyDev, isLegendEligible, softResidual,
+  tickCareerYear, tickFatigue,
+} from '../engine/endless/career';
+import { bondChemistry, decayIdleBonds, pruneBonds, tickBondsAfterEvent } from '../engine/endless/bonds';
+import { rollYouthProspect } from '../engine/endless/academy';
+import { tickWorldYear } from '../engine/endless/world';
+import {
+  applyPrestige, canPrestige, canSign, maxSignableRating, packPool,
+  rollNpcSignings, rollPoachOffer, signingCost, signingTargets,
+} from '../engine/endless/market';
+import { describeNews, newsKit, pushNews } from '../engine/endless/news';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
   rollNationality, draftChoices, teamPower, samplePack,
@@ -28,7 +52,7 @@ import {
   evaluateEndless,
   eligibleNationalPools, buildCpuNationalTeam, nationalChallengeTier,
   buildNationalBracket, resolveTournamentToChampion, updateEncRecords,
-  teamSimulationPower,
+  teamSimulationPower, rngState, restoreRng,
 } from '../engine/perfectRun';
 import {
   getClientId, submitDailyScore, fetchDailyLeaderboard, fetchOverallLeaderboard,
@@ -45,6 +69,10 @@ function newRunSeed(mode) {
   return mode === 'daily' ? todaySeed() : (Date.now() & 0xffffffff);
 }
 const TRAVEL_MS = 600;
+// A committed score needs longer on screen than the engine's 150ms minimum
+// pacing. Specialty chips keep their requested 140ms cadence, then each new
+// round number holds long enough to be read before the next cascade begins.
+const ROUND_SCORE_HOLD_MS = 240;
 // Stable empty-Set default so BracketCell's `pendingArrivalIds?.has(...)`
 // check never needs a fresh Set() on every render of every non-traveling cell.
 const EMPTY_TEAM_ID_SET = new Set();
@@ -59,6 +87,10 @@ function drawFanCards() {
   return shuffled.slice(0, 3);
 }
 
+// Phases where the squad is the player's to arrange, so promoting an IGL is
+// a legitimate action rather than a mid-animation jump.
+const IGL_PHASES = new Set(['manage', 'run', 'result', 'pack']);
+
 export default function PerfectRun() {
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
@@ -69,6 +101,17 @@ export default function PerfectRun() {
   const [squadName, setSquadName] = useState('');
   const [fanCards] = useState(drawFanCards);
   const rng = useRef(null);
+  // Set at the year boundary (settleYear), consumed when the player actually
+  // leaves that year's manage screen (nextTournament) — see the comment
+  // there for why NPC signings are deferred to that moment.
+  const pendingNpcSigningsRef = useRef(null);
+  // The seed and run id belong to the saved run, not to a render; keeping
+  // them in refs means an autosave can identify the run it is writing.
+  // The run's seed. State rather than a ref because career signals are
+  // derived from it during render, and a ref read on the render path is not
+  // something React can track.
+  const [runSeed, setRunSeed] = useState(null);
+  const runIdRef = useRef(null);
 
   // leaderboard panel (menu)
   const [panelOpen, setPanelOpen] = useState(false);
@@ -83,11 +126,50 @@ export default function PerfectRun() {
   const [packs, setPacks] = useState(3);
   const [ripId, setRipId] = useState(0); // bumped per roll, keys the pack-rip
 
-  // review — the leftmost dock slot is always the IGL, so there's no
-  // separate stored choice: dragging a card into position 0 (SquadDock's
-  // chip-swap) or tapping a face on SquadHero both just reorder `picks`,
-  // and this recomputes from wherever that reorder landed.
-  const iglId = picks[0]?.id ?? null;
+  // The IGL is an explicit choice that DEFAULTS to the leftmost dock slot.
+  // Dragging a card into position 0 still promotes it, so the existing
+  // gesture is unchanged - but the choice now survives a reorder, which it
+  // has to once endless unlocks bench slots and "slot 0" stops meaning
+  // anything. The fallback also guarantees this can never point at a card
+  // that has left the squad.
+
+  // Circuit standing: which of the three tiers the squad currently competes
+  // in, plus the points banked toward this year's promotion/relegation call.
+  // Endless only - every other mode leaves this untouched.
+  const [standing, setStanding] = useState(() => ({
+    tier: STARTING_TIER, tierPoints: 0, seasonPlacements: [],
+  }));
+  const [reputation, setReputation] = useState(0);
+  // Per-player development and per-pair chemistry bonds. Sparse by design:
+  // only players who have actually deviated from their card carry an entry.
+  const [dev, setDev] = useState({});
+  const [bonds, setBonds] = useState({});
+  // What changed over the year just finished, shown once on the manage screen.
+  const [yearReport, setYearReport] = useState(null);
+  // This year's academy prospect: a real card whose career clock has been
+  // reset, so they develop on the prospect curve. The dev entry rides along
+  // and is applied only if the player actually signs them.
+  const [prospect, setProspect] = useState(null);
+  // Years actually settled. Derived state would read the OLD value on the
+  // manage screen where a year is settled but tourIndex has not advanced -
+  // announcing "slot 6 unlocked" beside a five-slot dock.
+  const [yearsCompleted, setYearsCompleted] = useState(0);
+  // Market state: who rivals have taken off the board, the one open approach
+  // for a player of yours, and the run's news feed.
+  const [signedIds, setSignedIds] = useState({});
+  const [poachOffer, setPoachOffer] = useState(null);
+  const [feed, setFeed] = useState([]);
+  // Fires once per release so SquadDock can animate the departing card and
+  // highlight the slot it left behind - a thing you SEE happen, not a
+  // sentence explaining that it happened. `token` changes every time even if
+  // `index` repeats (releasing twice in a row from the same trailing slot),
+  // so SquadDock's edge-triggered effect always re-fires.
+  const [releaseSignal, setReleaseSignal] = useState(null);
+  // Banked runs. Prestige is the voluntary anti-runaway lever: a solved run
+  // is worth more walked away from than farmed.
+  const [prestige, setPrestige] = useState({ level: 0, multiplier: 1, bankedScore: 0 });
+  // The most recent ladder movement, shown once on the manage screen.
+  const [ladderMove, setLadderMove] = useState(null);
 
   // season
   const [season, setSeason] = useState([]);          // [{kind,city,label} x3]
@@ -104,34 +186,49 @@ export default function PerfectRun() {
   const [maps, setMaps] = useState([]);                // map names for the player's series
   const [mapResults, setMapResults] = useState([]);    // finished {a,b,winA,mvp,map}
   // Holds the series' finished results between "series over" and the
-  // skippable pause before returning to the board — null when no series is
+  // skippable pause before returning to the board - null when no series is
   // waiting. A boolean-shaped active flag (`!== null`) rather than the array
   // itself, so useSkippableTimeline's effect (keyed on `active`) actually
   // retriggers series to series instead of staying permanently "active".
   const [pendingBoardReturn, setPendingBoardReturn] = useState(null);
-  // Speedrunner preference — Normal/Fast/Instant — persisted alongside the
+  // Speedrunner preference - Normal/Fast/Instant - persisted alongside the
   // run's other saves. Scales the three longest auto-advance pauses below;
   // round-to-round pacing itself still runs through roundEvents.js's own
   // `roundPacing(desc, opts)` seam, so the engine file is never touched.
-  // No menu control for it any more — the universal skip button (see
+  // No menu control for it any more - the universal skip button (see
   // `currentSkip` below) now covers the "let me go faster" need directly,
   // for every automatic sequence in the run, not just these three. The
   // preference itself (and its persistence) stays wired for a possible
   // future settings page rather than being ripped out.
-  const [runSpeed] = useRunSpeed(loadSaves().motionSpeed, (next) => {
-    const saves = loadSaves();
-    saves.motionSpeed = next;
-    saveSaves(saves);
+  // Records are read on the render path (the menu strip and the ENC panel),
+  // and this component re-renders ~24x per map while one is animating. Held
+  // in state and refreshed on write, rather than re-parsed from localStorage
+  // every frame. The lazy initializer means even the first read happens once.
+  const [saves, setSaves] = useState(loadSaves);
+  // The banked endless run, if any. Read from its own small companion key so
+  // the menu never parses the full run blob just to offer a resume.
+  const [savedRun, setSavedRun] = useState(readEndlessRunMeta);
+  // Records are mutated in place by the handlers below, so the copy is what
+  // actually re-renders anything reading `saves`.
+  const commitSaves = useCallback((next) => {
+    saveSaves(next);
+    setSaves({ ...next });
+  }, []);
+
+  const [runSpeed] = useRunSpeed(saves.motionSpeed, (next) => {
+    const updated = { ...loadSaves(), motionSpeed: next };
+    commitSaves(updated);
   });
   const [live, setLive] = useState(null);              // {a,b} while a map animates
   const [liveRound, setLiveRound] = useState(0);
   const [roundPulse, setRoundPulse] = useState(null);
-  // Which side just won the most recent round — 'A' (player) or 'B' (opp) —
+  const [roundTrigger, setRoundTrigger] = useState(null);
+  // Which side just won the most recent round - 'A' (player) or 'B' (opp) -
   // keyed so a repeat winner still re-flashes. The score digits key off
   // `key` to remount and replay a brief color flash toward --ink at rest.
   const [roundFlash, setRoundFlash] = useState(null);
   // Backdrop zoom is a persistent 1-3 state, not a pulse: it steps up when
-  // play gets tense and then STAYS there — it does not auto-revert after a
+  // play gets tense and then STAYS there - it does not auto-revert after a
   // round the way the old one-shot "surge" animation did. It only resets at
   // two points: a fresh series (playMatch) and back at the bracket board
   // (backToBoard), which must always read as the calmest, most zoomed-out
@@ -142,7 +239,7 @@ export default function PerfectRun() {
   const zoomLevelRef = useRef(1);
   // Picks which backdrop image shows. Bumped once when a series starts, and
   // again each time zoomLevel actually escalates (so at most twice more per
-  // series, since there are only two steps above 1) — tying image variety to
+  // series, since there are only two steps above 1) - tying image variety to
   // the same tension that drives the zoom, rather than a schedule no one
   // could see happening.
   const [backdropVariant, setBackdropVariant] = useState(0);
@@ -151,7 +248,7 @@ export default function PerfectRun() {
   const [packNat, setPackNat] = useState(null);
   const [packChoices, setPackChoices] = useState([]);
   // { card, targetId } once a pack card has been dragged onto a specific
-  // dock chip — the swap doesn't touch `picks` yet at that point, only once
+  // dock chip - the swap doesn't touch `picks` yet at that point, only once
   // it's confirmed (see confirmSwap/cancelSwap below). Picking is drag-only
   // here on purpose: a plain tap can't tell PackRip which existing roster
   // member it's meant to replace, only that a card was chosen.
@@ -177,7 +274,7 @@ export default function PerfectRun() {
   const travelInfo = useRef(null);
   // Team ids currently mid-flight to the next round. While a team's id is in
   // this set, its destination cell renders literal "TBD" instead of the real
-  // matchup — the traveling clone is what visually "delivers" the reveal, so
+  // matchup - the traveling clone is what visually "delivers" the reveal, so
   // the destination never flashes the answer before the clone carrying it
   // actually arrives. Cleared per-team as each clone's own animation finishes.
   const [pendingArrivalIds, setPendingArrivalIds] = useState(EMPTY_TEAM_ID_SET);
@@ -187,10 +284,45 @@ export default function PerfectRun() {
     clearInterval(revealTimer.current);
   }, []);
 
+  const cardsById = useMemo(() => new Map(allCards.map(card => [card.id, card])), []);
   const pickedIds = new Set(picks.map(p => p.id));
   const endless = runLength === 'endless';
-  const power = picks.length === ROSTER_SIZE
-    ? teamPower(picks, iglId)
+
+  // Career signals for any card, in endless only. Every surface that shows a
+  // player reads from here, so the card, the market and the focus overlay can
+  // never disagree about who someone is.
+  const signalsFor = useCallback(
+    card => (endless && card ? cardSignals(runSeed, card, dev[card.id]) : null),
+    [endless, dev, runSeed],
+  );
+
+
+  // Bench slots unlock as years complete. The leftmost five always start -
+  // the dock's existing drag-to-reorder therefore doubles as "pick your
+  // five", with no second gesture to learn - and anyone past them is rested.
+  const slots = endless ? slotsFor(yearsCompleted) : ROSTER_SIZE;
+  const starters = useMemo(() => picks.slice(0, ROSTER_SIZE), [picks]);
+  const benched = useMemo(() => picks.slice(ROSTER_SIZE), [picks]);
+
+  // In endless the game plays with the DEVELOPED starters: drift, role changes
+  // and fatigue are baked into the cards before they reach any engine call, so
+  // every existing formula (role coverage, countrymen, specialties, MVP
+  // weighting) applies to developed players unchanged.
+  const squad = useMemo(
+    () => (endless ? effectiveRoster(starters, dev) : starters),
+    [endless, starters, dev],
+  );
+
+  // The leftmost slot IS the IGL - a position, not a flag stuck onto whichever
+  // card happened to get picked. The dock renders that slot as a single red
+  // nameplate, so the armband is something you SEE in the layout rather than a
+  // label floating over someone's art. Moving a card to slot 1 is the only way
+  // to change caller, which keeps one source of truth.
+  const iglId = starters[0]?.id ?? null;
+  const power = squad.length === ROSTER_SIZE
+    ? teamPower(squad, iglId, endless
+      ? { extra: bondChemistry(bonds, squad), soft: softResidual(squad) * SOFT_WEIGHT }
+      : {})
     : null;
   const nationalPools = useMemo(() => eligibleNationalPools(allCards), []);
   const nationalOptions = useMemo(() => {
@@ -211,6 +343,18 @@ export default function PerfectRun() {
   function startRun(selectedMode, length = 'season') {
     const seed = newRunSeed(selectedMode);
     rng.current = mulberry32(seed);
+    setRunSeed(seed);
+    runIdRef.current = `run-${seed}`;
+    // Starting a run replaces whatever was banked; only one endless run is
+    // ever resumable, so leaving the old one on disk would be a lie.
+    if (length === 'endless') clearEndlessRun();
+    setSavedRun(null);
+    setStanding({ tier: STARTING_TIER, tierPoints: 0, seasonPlacements: [] });
+    setReputation(0);
+    setLadderMove(null);
+    setDev({}); setBonds({}); setYearReport(null); setProspect(null); setYearsCompleted(0);
+    setSignedIds({}); setPoachOffer(null); setFeed([]);
+    setPrestige({ level: 0, multiplier: 1, bankedScore: 0 });
     setMode(selectedMode);
     setRunLength(length);
     setSquadName('');
@@ -220,7 +364,7 @@ export default function PerfectRun() {
     setSeason(openingSeason);
     setTourIndex(0); setTourResults([]); setCurrentResult(null); setSeasonResult(null);
     setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
-    setMaps([]); setMapResults([]); setLive(null); setLiveRound(0); setRoundPulse(null); setRoundFlash(null); setBackdropVariant(0);
+    setMaps([]); setMapResults([]); setLive(null); setLiveRound(0); setRoundPulse(null); setRoundTrigger(null); setRoundFlash(null); setBackdropVariant(0);
     setZoomLevel(1); zoomLevelRef.current = 1;
     setPendingBoardReturn(null);
     setPendingArrivalIds(EMPTY_TEAM_ID_SET);
@@ -285,7 +429,7 @@ export default function PerfectRun() {
     }
   }
 
-  // Dock-chip drag-to-swap. Safe to apply directly to local state — and
+  // Dock-chip drag-to-swap. Safe to apply directly to local state - and
   // load-bearing now, not just cosmetic: the leftmost slot (index 0) is
   // always the IGL (see `iglId` above), so swapping a card into or out of
   // position 0 is how you change who leads the team, including mid-season
@@ -318,11 +462,15 @@ export default function PerfectRun() {
     // it silently drops the IGL's chemistry and Mastermind roll.
     const playerTeam = {
       id: 'player', tag: 'YOU', name: squadName, logo: null,
-      roster: picks, iglId, power: power.power, isPlayer: true,
+      roster: squad, iglId, power: power.power, isPlayer: true,
     };
     const t = mode === 'enc'
       ? buildNationalBracket(rng.current, allCards, selectedNation, picks, iglId)
-      : buildBracket(rng.current, allCards, pickedIds, playerTeam, def.kind);
+      : endless
+        // The circuit tier picks the field, and every entrant gets a form
+        // roll - so the ladder, not a hidden handicap, is the difficulty.
+        ? buildEndlessBracket(rng.current, allCards, pickedIds, playerTeam, standing.tier, { kind: def.kind, dev })
+        : buildBracket(rng.current, allCards, pickedIds, playerTeam, def.kind);
     if (mode === 'enc') {
       for (const team of Object.values(t.teams)) team.name = countryName(team.nationality);
       // A top-30 seed receives a preliminary bye. Resolve those two matches
@@ -341,7 +489,7 @@ export default function PerfectRun() {
     setPhase('run');
   }
 
-  // Intro splash auto-advances into the bracket draw — skippable (Space,
+  // Intro splash auto-advances into the bracket draw - skippable (Space,
   // Enter, or a click on the hint) and scaled by the run-speed preference.
   // useSkippableTimeline's own useReducedMotion subscription replaces the
   // ad hoc reduceMotion() read here, so toggling the OS setting mid-splash
@@ -366,6 +514,7 @@ export default function PerfectRun() {
     setMapResults([]);
     setLiveRound(0);
     setRoundPulse(null);
+    setRoundTrigger(null);
     setRoundFlash(null);
     setBackdropVariant(v => v + 1); // this series' baseline backdrop
     setZoomLevel(1); zoomLevelRef.current = 1; // every series starts calm
@@ -385,9 +534,14 @@ export default function PerfectRun() {
     const lostSoFar = resultsSoFar.length - wonSoFar;
     if (wonSoFar >= needed || lostSoFar >= needed) return;
 
-    const playerMatchPower = mode === 'enc' ? teamSimulationPower(tour.teams.player) : power.power;
+    // ENC freezes the player's power at bracket time; endless recomputes it
+    // from live power so promoting a new IGL mid-tournament still lands,
+    // while the tournament's form roll still applies.
+    const playerMatchPower = mode === 'enc'
+      ? teamSimulationPower(tour.teams.player)
+      : endless ? endlessPlayerPower(tour, power.power) : power.power;
     const result = simMap(
-      rng.current, playerMatchPower, teamSimulationPower(opp), picks, opp.roster,
+      rng.current, playerMatchPower, teamSimulationPower(opp), squad, opp.roster,
       0,
       mode === 'enc' ? (tour.teams.player?.iglId ?? iglId) : iglId,
       opp.iglId ?? null,
@@ -399,6 +553,7 @@ export default function PerfectRun() {
 
     function finishMap() {
       matchSkipRef.current = null;
+      setRoundTrigger(null);
       setLive(null);
       const updated = [...resultsSoFar, { ...result, map: mapName }];
       setMapResults(updated);
@@ -409,21 +564,21 @@ export default function PerfectRun() {
         animTimer.current = setTimeout(() => playNextMap(seriesMaps, updated), 650);
       } else {
         // Handed off to the seriesEndTimeline below (skippable, run-speed
-        // scaled) rather than a bare setTimeout — pendingBoardReturn flipping
+        // scaled) rather than a bare setTimeout - pendingBoardReturn flipping
         // null -> array is what that hook's `active` flag keys off.
         setPendingBoardReturn(updated);
       }
     }
 
-    function revealRound(index) {
-      const desc = describeRound(result.rounds, index);
-      if (!desc) return;
+    function commitRound(desc, index) {
+      setRoundTrigger(null);
       setLive({ a: desc.a, b: desc.b });
       setLiveRound(desc.round);
       setRoundFlash(previous => ({ key: (previous?.key ?? 0) + 1, side: desc.winner }));
+      playUiSound('score');
       if (roundSignificance(desc) === 'significant') {
         // Zoom is a persistent state, so this only ever steps UP within a
-        // match — never resets itself after a round the way a pulse would.
+        // match - never resets itself after a round the way a pulse would.
         // A close finish holds isMatchPoint true for several rounds in a
         // row, so most of those land here with nothing to do; only the
         // round that actually clears the next threshold changes anything.
@@ -433,19 +588,61 @@ export default function PerfectRun() {
           setZoomLevel(nextZoom);
           setBackdropVariant(v => v + 1); // fresh imagery as tension escalates
         }
-        if (desc.isOvertime || desc.isStreakBreak) {
-          setRoundPulse(previous => ({ key: (previous?.key ?? 0) + 1, kind: 'shake' }));
+        if (desc.isMapPoint || desc.isOvertime || desc.isStreakBreak) {
+          const amplitude = desc.isMapPoint ? 5 : 1.5;
+          setRoundPulse(previous => ({ key: (previous?.key ?? 0) + 1, kind: 'shake', amplitude }));
+          if (desc.isMapPoint) playUiSound('impact');
         }
       }
 
+      // Reduced motion removes spatial choreography, not reading time. The
+      // floor also prevents a stale per-browser Instant preference from
+      // making Safari race through scores while a fresh Chrome profile uses
+      // Normal speed.
+      const hold = scaleDurationWithFloor(
+        Math.max(roundPacing(desc), ROUND_SCORE_HOLD_MS),
+        runSpeed,
+        ROUND_SCORE_HOLD_MS,
+      );
       if (index >= result.rounds.length - 1) {
         // Hold the deciding round for one beat so the counter visibly reaches
         // the final number before the row turns into a completed map.
-        animTimer.current = setTimeout(finishMap, roundPacing(desc));
+        animTimer.current = setTimeout(finishMap, hold);
         return;
       }
 
-      animTimer.current = setTimeout(() => revealRound(index + 1), roundPacing(desc));
+      animTimer.current = setTimeout(() => revealRound(index + 1), hold);
+    }
+
+    function revealRound(index) {
+      const desc = describeRound(result.rounds, index);
+      if (!desc) return;
+      const triggers = buildRoundCascade({
+        rosterA: squad,
+        rosterB: opp.roster,
+        iglA: mode === 'enc' ? (tour.teams.player?.iglId ?? iglId) : iglId,
+        iglB: opp.iglId ?? null,
+        winner: desc.winner,
+      });
+      const triggerDelay = reducedMotion ? 0 : scaleDuration(140, runSpeed);
+      if (!triggers.length || triggerDelay === 0) {
+        commitRound(desc, index);
+        return;
+      }
+
+      let cursor = 0;
+      function showNextTrigger() {
+        if (cursor >= triggers.length) {
+          commitRound(desc, index);
+          return;
+        }
+        const trigger = triggers[cursor];
+        cursor += 1;
+        setRoundTrigger(previous => ({ ...trigger, key: (previous?.key ?? 0) + 1 }));
+        playUiSound('specialty');
+        animTimer.current = setTimeout(showNextTrigger, triggerDelay);
+      }
+      showNextTrigger();
     }
 
     matchSkipRef.current = finishMap;
@@ -453,7 +650,7 @@ export default function PerfectRun() {
   }
 
   // Cancels whatever round-reveal step is pending and jumps straight to the
-  // current map's already-fully-computed result — simMap runs the whole map
+  // current map's already-fully-computed result - simMap runs the whole map
   // upfront, the reveal is purely presentational, so nothing here is a
   // shortcut past unknown outcomes.
   function skipMatch() {
@@ -473,7 +670,7 @@ export default function PerfectRun() {
       stage: round.label, opp: opp.name,
       mapsWon: wonMaps, mapsLost: lostMaps, roundDiff, won,
       score: results.map(r => `${r.a}-${r.b}`).join('  '),
-      // Only maps the player's own side actually took — an opponent's MVP
+      // Only maps the player's own side actually took - an opponent's MVP
       // isn't a squad-report stat. Feeds the manage screen's tournament
       // report (most MVPs) after the tournament ends.
       mvpIds: results.filter(r => r.winA).map(r => r.mvp.id),
@@ -496,7 +693,7 @@ export default function PerfectRun() {
       setRevealCount(shown);
       if (shown >= npcCount) {
         clearInterval(revealTimer.current);
-        // boardCompleteTimeline (below) owns the pause into `advance()` now —
+        // boardCompleteTimeline (below) owns the pause into `advance()` now -
         // skippable and run-speed scaled, keyed off boardState === 'complete'.
         setBoardState('complete');
       }
@@ -529,7 +726,7 @@ export default function PerfectRun() {
     travelThenNextRound();
   }
 
-  // Skippable pause between a finished series and the board reveal —
+  // Skippable pause between a finished series and the board reveal -
   // pendingBoardReturn carries the just-played results across the wait.
   // Reset to null on fire so the boolean `active` flag actually toggles
   // false -> true again for the *next* series (an array reference alone
@@ -553,7 +750,7 @@ export default function PerfectRun() {
   });
 
   // Whichever of the run's three long auto-advance pauses is currently live
-  // — intro splash, series-end pause, or board-complete pause — drives one
+  // - intro splash, series-end pause, or board-complete pause - drives one
   // shared skip hint. They're mutually exclusive by construction (distinct
   // phase/boardState/pendingBoardReturn conditions), so at most one is ever
   // truthy.
@@ -562,7 +759,7 @@ export default function PerfectRun() {
       : boardState === 'complete' ? boardCompleteTimeline
         : null;
 
-  // One shared skip affordance for every automatic sequence in the run —
+  // One shared skip affordance for every automatic sequence in the run -
   // not just the three duration-based pauses above, but the live match
   // round-reveal (`live !== null`) and the bracket travel flight
   // (`boardState === 'travel'`) too. All four are mutually exclusive by
@@ -586,7 +783,10 @@ export default function PerfectRun() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The selected skip callback only reads animation refs when the key event
+    // fires; retaining it for render is intentional and does not dereference
+    // those refs here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/refs
   }, [currentSkip?.skip]);
 
   // Generate stable destination rows, then fly every winner forward while
@@ -603,22 +803,22 @@ export default function PerfectRun() {
     travelInfo.current = { moves };
     // nextBracketRound already placed every winner into the new round's real
     // matchups, but the UI shouldn't show that answer until each winner's
-    // clone actually arrives — this is what keeps the destination on "TBD"
+    // clone actually arrives - this is what keeps the destination on "TBD"
     // for the moves still mid-flight. Keyed by "toKey:teamId", not bare
     // teamId: a winner's id is ALSO sitting in its OLD round's cell (the
-    // match it just won, still on screen one column back) — a bare-id Set
+    // match it just won, still on screen one column back) - a bare-id Set
     // would mask that already-decided source cell too, since the same id
     // legitimately appears in both places. The composite key only ever
     // matches the one destination slot a given move is actually flying to.
     setPendingArrivalIds(new Set(moves.map(move => `${move.toKey}:${move.teamId}`)));
     // Real bug this masked until now: revealCount carries the PREVIOUS
     // round's NPC-reveal progress (e.g. 7, from a Round-of-16 cycle). Left
-    // unreset, the new round's own isRevealed() check — npcMatches.indexOf(m)
-    // < revealCount — is satisfied for every match in a smaller round (a
+    // unreset, the new round's own isRevealed() check - npcMatches.indexOf(m)
+    // < revealCount - is satisfied for every match in a smaller round (a
     // Quarterfinal has only ~4), so every destination cell picked up
     // .revealed styling the instant travel started, one frame before its
-    // row's own text ever changed. That combination — dressed as "revealed"
-    // while its text still said TBD — is what actually read as "the TBD
+    // row's own text ever changed. That combination - dressed as "revealed"
+    // while its text still said TBD - is what actually read as "the TBD
     // animating": two mismatched visual changes landing apart instead of
     // one clean swap when the traveling clone lands.
     setRevealCount(0);
@@ -655,11 +855,11 @@ export default function PerfectRun() {
       const x0 = a.left - cRect.left, y0 = a.top - cRect.top;
       const x1 = b.left - cRect.left, y1 = b.top - cRect.top;
       // The clone keeps its won/lost border for the whole flight rather than
-      // going neutral — it's carrying forward the result that just earned
+      // going neutral - it's carrying forward the result that just earned
       // this team the trip, so the color travels with it instead of cutting
       // out. The destination itself stays on "TBD" throughout (driven by
       // pendingArrivalIds, not a visibility hide) and only the clone ever
-      // sits at that position mid-flight — nothing to hide there.
+      // sits at that position mid-flight - nothing to hide there.
       const clone = fromRow.cloneNode(true);
       clone.classList.add(styles.travelClone);
       const cloneScore = clone.querySelector('[data-bracket-score]');
@@ -677,7 +877,7 @@ export default function PerfectRun() {
       ], { duration: travelDuration, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' });
       runningAnimations.push(animation);
       return animation.finished.then(() => {
-        // This clone has landed — reveal its real matchup at the
+        // This clone has landed - reveal its real matchup at the
         // destination. Other still-in-flight moves keep their own keys in
         // the set until their own clone lands, independently.
         const arrivalKey = `${move.toKey}:${move.teamId}`;
@@ -699,7 +899,7 @@ export default function PerfectRun() {
       setPendingArrivalIds(EMPTY_TEAM_ID_SET);
       finish();
     };
-    // Skipping just runs the same cleanup early — the in-flight clones get
+    // Skipping just runs the same cleanup early - the in-flight clones get
     // torn down and any WAAPI animation still finishing on them lands on an
     // already-removed node, harmless. Their .finished callbacks racing in
     // after are already guarded (see the `prev.has` check above).
@@ -745,16 +945,56 @@ export default function PerfectRun() {
       mapsWonTotal: finishedSeries.reduce((s, x) => s + x.mapsWon, 0),
       mapsLostTotal: finishedSeries.reduce((s, x) => s + x.mapsLost, 0),
       igl: picks.find(p => p.id === iglId) ?? null,
+      tier: endless ? standing.tier : null,
+      placement: endless ? placementFor(finishRound, champion) : null,
     };
     setTourResults(rs => [...rs, result]);
+
+    // Endless: an event played together builds the squad's per-pair bonds and
+    // costs everyone who started some freshness. Both are per-EVENT; careers
+    // tick once a year, where the change is legible as a report.
+    if (endless) {
+      const starterIds = starters.map(p => p.id);
+      setBonds(prev => {
+        const grown = tickBondsAfterEvent(prev, starterIds).bonds;
+        // Nobody sat out at a five-man squad, so decay is a no-op today; it
+        // starts mattering the moment bench slots unlock.
+        return pruneBonds(decayIdleBonds(grown, starterIds).bonds, starterIds);
+      });
+      setDev(prev => {
+        const next = { ...prev };
+        // Both ends of the load band: whoever played loses freshness, whoever
+        // sat recovers but starts going stale. This is what stops a deep
+        // bench from being a straight upgrade.
+        for (const p of starters) {
+          next[p.id] = tickFatigue(next[p.id] ?? emptyDev(p), { started: true });
+        }
+        for (const p of benched) {
+          next[p.id] = tickFatigue(next[p.id] ?? emptyDev(p), { started: false });
+        }
+        return next;
+      });
+    }
+
+    // Endless: every finish moves you toward promotion or relegation, and
+    // pays reputation weighted by how hard the tier was.
+    if (endless) {
+      const placement = placementFor(finishRound, champion);
+      setStanding(st => ({
+        ...st,
+        tierPoints: st.tierPoints + eventPoints(placement),
+        seasonPlacements: [...st.seasonPlacements, placement],
+      }));
+      setReputation(r => Math.min(MAX_REPUTATION, r + reputationDelta(standing.tier, placement)));
+    }
     setCurrentResult(result);
     if (champion) setPacks(p => p + 1);
     if (mode === 'enc') {
-      const saves = loadSaves();
-      saves.enc = updateEncRecords(saves.enc, {
+      const record = loadSaves();
+      record.enc = updateEncRecords(record.enc, {
         series: finishedSeries, champion, mapsLost: evalT.mapsLost, finishRound,
       });
-      saveSaves(saves);
+      commitSaves(record);
       setPhase('enc_result');
     } else {
       setPhase('result');
@@ -764,46 +1004,263 @@ export default function PerfectRun() {
   function continueFromResult() {
     const isLast = !endless && tourIndex >= season.length - 1;
     if (isLast) { finishSeason(); return; }
+    // A year is three events. Settle it HERE, as its last event resolves,
+    // rather than on the way into the next one - otherwise the development
+    // report and the promotion notice would both land on a manage screen the
+    // player only reaches a whole tournament later.
+    if (endless && (tourIndex + 1) % 3 === 0) settleYear();
     setPhase('manage');
+  }
+
+  function settleYear() {
+    const year = Math.floor(tourIndex / 3) + 1;
+    setYearsCompleted(year);
+    advanceCareers(year, slotUnlockAt(year));
+    // A development path that does not depend on winning: even a run with no
+    // titles and no packs gets one prospect a year.
+    setProspect(rollYouthProspect(rng.current, allCards, pickedIds, runSeed));
+
+    // Development lands now, but the market's NPC signings are deliberately
+    // held back — see nextTournament, where they actually fire once the
+    // player leaves this year's manage screen. That gives the player the
+    // whole year's free-agent pool to shop before rivals react to whatever
+    // is left, rather than always shopping in NPCs' leftovers.
+    const tierPool = endlessFieldPool(allCards, pickedIds, standing.tier, dev);
+    pendingNpcSigningsRef.current = tierPool;
+
+    const offer = rollPoachOffer(rng.current, {
+      squad, dev, reputation, pool: tierPool, signedIds,
+    });
+    setPoachOffer(offer);
+
+    const items = [];
+    if (offer) items.push({ kind: 'poach', ...offer });
+    const move = yearEndMovement(standing.tier, standing.tierPoints);
+    if (move.movement !== 'hold') {
+      items.push({ kind: move.movement, tierLabel: TIER_META[move.tier].label });
+    }
+    setFeed(current => pushNews(current, items, { year, event: tourIndex }));
+
+    setLadderMove(move.movement === 'hold' ? null : { ...move, from: standing.tier, year });
+    setStanding({ tier: move.tier, tierPoints: 0, seasonPlacements: [] });
   }
 
   function finishSeason() {
     const result = endless ? evaluateEndless(tourResults) : evaluateSeason(tourResults);
     setSeasonResult(result);
 
-    const saves = loadSaves();
+    const record = loadSaves();
     // Endless scores grow without bound, so they get their own best and
     // never mix with the fixed-season record.
     if (endless) {
-      saves.endlessV2 ??= { bestScore: 0, bestYears: 0 };
-      saves.endlessV2.bestScore = Math.max(saves.endlessV2.bestScore ?? 0, result.score);
-      saves.endlessV2.bestYears = Math.max(saves.endlessV2.bestYears ?? 0, result.completedYears ?? 0);
+      record.endlessV3 ??= { bestScore: 0, bestYears: 0, bestTier: 0, bestPrestige: 0, titlesByTier: [0, 0, 0] };
+      record.endlessV3.bestScore = Math.max(record.endlessV3.bestScore ?? 0, result.score);
+      record.endlessV3.bestYears = Math.max(record.endlessV3.bestYears ?? 0, result.completedYears ?? 0);
     }
-    else saves.bestScore = Math.max(saves.bestScore ?? 0, result.score);
-    saves.badges ??= {};
+    else record.bestScore = Math.max(record.bestScore ?? 0, result.score);
+    record.badges ??= {};
     for (const tr of tourResults) {
       if (!tr.champion) continue;
       const key = tr.kind === 'champions' ? 'champions' : 'masters';
-      saves.badges[key] = (saves.badges[key] ?? 0) + 1;
+      record.badges[key] = (record.badges[key] ?? 0) + 1;
     }
     const completedYearResults = endless ? result.years.slice(0, result.completedYears) : [result];
     const grandSlams = completedYearResults.filter(year => year.grandSlam).length;
     const perfectSeasons = completedYearResults.filter(year => year.perfectSeason).length;
-    if (grandSlams) saves.badges.grand_slam = (saves.badges.grand_slam ?? 0) + grandSlams;
-    if (perfectSeasons) saves.badges.perfect_season = (saves.badges.perfect_season ?? 0) + perfectSeasons;
+    if (grandSlams) record.badges.grand_slam = (record.badges.grand_slam ?? 0) + grandSlams;
+    if (perfectSeasons) record.badges.perfect_season = (record.badges.perfect_season ?? 0) + perfectSeasons;
     if (mode === 'daily') {
-      saves.dailyScores ??= {};
+      record.dailyScores ??= {};
       const k = dateKey();
-      saves.dailyScores[k] = Math.max(saves.dailyScores[k] ?? 0, result.score);
+      record.dailyScores[k] = Math.max(record.dailyScores[k] ?? 0, result.score);
       // Shared board entry; the server's UNIQUE(date, client) is the real
       // once-per-day gate. Fire-and-forget: offline just means no submit.
       void submitDailyScore({ date: k, squadName, score: result.score });
     }
-    saveSaves(saves);
+    commitSaves(record);
+    // The run is over: its autosave must not outlive it, or the menu would
+    // offer to resume a finished run.
+    clearEndlessRun();
+    setSavedRun(null);
     setPhase('over');
   }
 
+  // One year of careers. Ticked at the year boundary rather than per event:
+  // cheaper, and it gives the manage screen a single readable "here is what
+  // the year did to your squad" report instead of a trickle of noise.
+  function advanceCareers(year, unlock) {
+    const titles = tourResults.filter(r => r.champion).length;
+    const changes = [];
+    // Computed OUTSIDE the state updater on purpose. This advances the run's
+    // rng and accumulates a report, so it must run exactly once - a functional
+    // updater is invoked twice under StrictMode, which would double-advance
+    // the generator and duplicate every line of the report.
+    const next = { ...dev };
+    {
+      for (const card of picks) {
+        const current = next[card.id] ?? emptyDev(card);
+        const before = current.d ?? 0;
+        const result = tickCareerYear(rng.current, runSeed, card, current, {
+          year,
+          // Years this player has been on the squad, which is what continuity
+          // rewards. Bonds and continuity are two views of the same idea:
+          // keeping people together pays.
+          yearsAtOrg: (current.cy ?? 0) + 1,
+          rested: current.idle ?? 0,
+          cohesion: bondChemistry(bonds, picks).total,
+        });
+        let updated = result.dev;
+        // A player who has won enough with you stops declining for good.
+        if (isLegendEligible(updated, titles)) {
+          updated = { ...updated, lg: 1 };
+          changes.push({ id: card.id, player: card.player, kind: 'legend', n: 0 });
+        }
+        next[card.id] = updated;
+        const delta = (updated.d ?? 0) - before;
+        if (delta !== 0) {
+          changes.push({ id: card.id, player: card.player, kind: delta > 0 ? 'growth' : 'decline', n: delta });
+        }
+      }
+    }
+    // The world ages too. Ticking the tier the player actually competes in
+    // keeps the field genuinely different by year six without putting every
+    // org in the game into the save.
+    const withWorld = tickWorldYear(
+      rng.current, runSeed,
+      endlessFieldPool(allCards, pickedIds, standing.tier, next),
+      next, { year },
+    );
+
+    setDev(withWorld);
+    setYearReport({ year, changes, unlock });
+  }
+
+  // ── Endless autosave / resume ────────────────────────────────────────────
+  //
+  // The manage screen is the run's quiescent point: the last tournament is
+  // banked, the next bracket has not been drawn, and no animation owns the
+  // rng. Snapshotting the generator state HERE is what makes resume exact -
+  // restoring it and re-running beginBracket regenerates the identical
+  // tournament, so the bracket never has to be serialized at all. Quitting
+  // mid-tournament therefore costs you that tournament, not the run.
+  function snapshotRun() {
+    return {
+      runId: runIdRef.current,
+      createdAt: runSeed,
+      seed: runSeed,
+      rngState: rngState(rng.current),
+      cardsRev: cardsRevision(allCards),
+      squadName,
+      tourIndex,
+      yearsCompleted,
+      season,
+      squad: { slots, roster: picks, starters, iglId },
+      packs,
+      reputation,
+      standing,
+      prestige,
+      world: { ladder: [[], [], []], orgs: {}, signedIds: {} },
+      dev,
+      bonds,
+      market: { signedIds, poachOffer, prospect },
+      feed,
+      yearSummaries: [],
+      tourResults,
+      active: null,
+      // Computed here rather than read from the memoized render-time value:
+      // snapshotRun runs from effects and handlers that are declared above
+      // that memo, and depending on it is a use-before-declare.
+      score: evaluateEndless(tourResults).score,
+    };
+  }
+
+  useEffect(() => {
+    // Writing to storage is exactly what an effect is for; this synchronizes
+    // React state out to an external system rather than back into React.
+    // Guarding on a FULL squad would stop saving exactly when the run gets
+    // interesting: a player poached away leaves four until you replace him.
+    if (!endless || phase !== 'manage' || !picks.length) return;
+    saveEndlessRun(snapshotRun());
+    // Every piece of persisted run state has to be listed, or a change that
+    // touches only one of them (refusing an approach spends reputation and
+    // appends to the feed, and nothing else) would never reach disk.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    endless, phase, tourIndex, yearsCompleted, packs, iglId, picks, tourResults,
+    reputation, standing, prestige, dev, bonds, signedIds, poachOffer, prospect, feed,
+  ]);
+
+  function resumeEndlessRun() {
+    const saved = loadEndlessRun(allCards);
+    if (!saved) { clearEndlessRun(); setSavedRun(null); return; }
+
+    setRunSeed(saved.seed);
+    runIdRef.current = saved.runId;
+    rng.current = restoreRng(saved.rngState);
+
+    setMode('solo');
+    setRunLength('endless');
+    setSquadName(saved.squadName);
+    setPicks(saved.squad.roster);
+    setPacks(saved.packs);
+    setProspect(saved.market?.prospect ?? null);
+    setSignedIds(saved.market?.signedIds ?? {});
+    setPoachOffer(saved.market?.poachOffer ?? null);
+    setPrestige(saved.prestige ?? { level: 0, multiplier: 1, bankedScore: 0 });
+    setFeed(saved.feed ?? []);
+    setStanding(saved.standing);
+    setReputation(saved.reputation);
+    setYearsCompleted(saved.yearsCompleted ?? Math.floor((saved.tourIndex ?? 0) / 3));
+    setDev(saved.dev ?? {});
+    setBonds(saved.bonds ?? {});
+    setYearReport(null);
+    setLadderMove(null);
+    setSeason(saved.season);
+    setTourIndex(saved.tourIndex);
+    setTourResults(saved.tourResults);
+    setCurrentResult(null);
+    setSeasonResult(null);
+
+    // Everything below is per-tournament presentation, rebuilt by the next
+    // beginBracket - the same reset startRun performs.
+    setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
+    setMaps([]); setMapResults([]); setLive(null); setLiveRound(0);
+    setRoundPulse(null); setRoundFlash(null); setBackdropVariant(0);
+    setZoomLevel(1); zoomLevelRef.current = 1;
+    setPendingBoardReturn(null);
+    setPendingArrivalIds(EMPTY_TEAM_ID_SET);
+    setPackNat(null); setPackChoices([]); setPendingSwap(null);
+    setNat(null); setChoices([]); setSelectedNation(null);
+    historyRef.current = [];
+    clearTimeout(animTimer.current);
+    clearInterval(revealTimer.current);
+    seriesActive.current = false;
+    setPanelOpen(false);
+    setSavedRun(null);
+    setPhase('manage');
+  }
+
   function nextTournament() {
+    // A poach is a decision, not a notification. Without this guard a club
+    // with too little reputation could leave the offer sitting in the inbox
+    // forever and advance anyway, effectively keeping the player for free.
+    if (poachOffer) return;
+
+    // Same year-boundary check settleYear used to decide to run at all —
+    // tourIndex hasn't incremented yet, so this still identifies "the
+    // manage screen I'm leaving right now was this year's." Firing here,
+    // rather than when the year started, is what gives the player first
+    // pick of the free-agent pool before rivals sign from what's left.
+    if (endless && (tourIndex + 1) % 3 === 0 && pendingNpcSigningsRef.current) {
+      const signings = rollNpcSignings(rng.current, {
+        pool: pendingNpcSigningsRef.current, cards: allCards,
+        squadIds: pickedIds, signedIds, world: { orgs: {} },
+      });
+      setSignedIds(signings.signedIds);
+      setFeed(current => pushNews(current, signings.news, { year: yearsCompleted, event: tourIndex }));
+      pendingNpcSigningsRef.current = null;
+    }
+
     const next = tourIndex + 1;
     if (endless && next >= season.length) {
       setSeason(s => [...s, ...makeSeason(rng.current)]);
@@ -822,14 +1279,16 @@ export default function PerfectRun() {
       setPackChoices(draftChoices(allCards, rolled, ids));
     } else {
       setPackNat(null);
-      setPackChoices(samplePack(rng.current, allCards, ids));
+      // Rivals have taken players off the board since the draft - a pack can
+      // only ever offer someone who is actually available.
+      setPackChoices(samplePack(rng.current, endless ? packPool(allCards, ids, signedIds) : allCards, ids));
     }
     setPendingSwap(null);
     setRipId(id => id + 1);
   }
 
   // Spends one banked pack, opening it right away. Committed the instant
-  // it's opened — declining the swap afterward still costs the pack, same
+  // it's opened - declining the swap afterward still costs the pack, same
   // as a draft reroll spends its pack whether or not you like what you see.
   function openPack() {
     if (packs <= 0) return;
@@ -838,16 +1297,103 @@ export default function PerfectRun() {
     setPhase('pack');
   }
 
-  // In-place replacement (same index) — if the outgoing card was the
+  // In-place replacement (same index) - if the outgoing card was the
   // leftmost/IGL slot, the incoming one lands there too and just inherits
   // the title, no separate reassignment needed.
   function confirmSwap() {
     if (!pendingSwap) return;
     const { card: incoming, targetId } = pendingSwap;
-    const next = picks.map(p => (p.id === targetId ? incoming : p));
+    // With an open bench slot the card joins the squad instead of displacing
+    // someone - that is the whole point of unlocking depth.
+    const next = targetId === null
+      ? [...picks, incoming]
+      : picks.map(p => (p.id === targetId ? incoming : p));
     setPicks(next);
     setPendingSwap(null);
     setPhase('manage');
+  }
+
+  // Promote a squad member to IGL without disturbing the dock order. Free and
+  // available mid-tournament by design - solo re-reads `power` every map, so
+  // a change takes effect on the next map played.
+  // True when the squad has an unlocked slot standing empty.
+  function hasOpenSlot() {
+    return endless && picks.length < slots;
+  }
+
+  function signToOpenSlot(card) {
+    if (!hasOpenSlot() || !card) return;
+    setPendingSwap({ card, targetId: null });
+  }
+
+  // Refusing spends standing; letting them go pays packs. Either way the
+  // squad you built has a price, which is the point.
+  function resolvePoach(accept) {
+    if (!poachOffer) return;
+    const card = picks.find(p => p.id === poachOffer.cardId);
+    if (!card) { setPoachOffer(null); return; }
+
+    if (accept) {
+      // Removing this card shifts every later slot down by one, so the slot
+      // that ends up empty is always the trailing one - same expression
+      // `newSlotIndex` uses for a freshly unlocked slot below.
+      setReleaseSignal({ index: picks.length - 1, token: Date.now() });
+      setPicks(prev => prev.filter(p => p.id !== card.id));
+      setBonds(prev => pruneBonds(prev, picks.filter(p => p.id !== card.id).map(p => p.id)));
+      setPacks(p => p + poachOffer.releaseFee);
+      setSignedIds(prev => ({ ...prev, [card.id]: poachOffer.orgId }));
+      setFeed(cur => pushNews(cur, [{ kind: 'departure', player: card.player, orgId: poachOffer.orgId, orgName: poachOffer.orgName, cardId: card.id }], { year: yearsCompleted, event: tourIndex }));
+    } else {
+      setReputation(r => Math.max(0, r - poachOffer.holdCost));
+      setFeed(cur => pushNews(cur, [{ kind: 'held', player: card.player, orgName: poachOffer.orgName }], { year: yearsCompleted, event: tourIndex }));
+    }
+    setPoachOffer(null);
+  }
+
+  function signTarget(card) {
+    const cost = signingCost(card);
+    if (!canSign(card, { packs, reputation, roster: squad }).ok) return;
+    setPacks(p => p - cost);
+    setPackNat(null);
+    setPackChoices([card]);
+    setRipId(id => id + 1);
+    setPendingSwap(null);
+    setFeed(cur => pushNews(cur, [{ kind: 'signed', player: card.player, cardId: card.id }], { year: yearsCompleted, event: tourIndex }));
+    setPhase('pack');
+  }
+
+  function doPrestige() {
+    const titles = tourResults.filter(r => r.champion).length;
+    if (!canPrestige({ tier: standing.tier, titles, prestige }).ok) return;
+    setPrestige(applyPrestige(prestige, evaluateEndless(tourResults).score));
+    finishSeason();
+  }
+
+  function signProspect() {
+    if (!prospect) return;
+    const card = allCards.find(c => c.id === prospect.cardId);
+    if (!card) return;
+    setDev(prev => ({ ...prev, [card.id]: prospect.dev }));
+    setPackNat(null);
+    setPackChoices([card]);
+    setRipId(id => id + 1);
+    setPendingSwap(null);
+    setProspect(null);
+    setPhase('pack');
+  }
+
+  // Promoting a caller MOVES them to the leftmost slot, because that slot is
+  // what "IGL" means here. Free and available mid-tournament by design - solo
+  // re-reads `power` every map, so it lands on the next map played.
+  function chooseIgl(cardId) {
+    setPicks(prev => {
+      const index = prev.findIndex(p => p.id === cardId);
+      if (index <= 0) return prev;
+      const next = [...prev];
+      const [card] = next.splice(index, 1);
+      next.unshift(card);
+      return next;
+    });
   }
 
   function cancelSwap() {
@@ -856,7 +1402,6 @@ export default function PerfectRun() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const saves = loadSaves();
   const todayBest = saves.dailyScores?.[dateKey()];
   const dailyPlayed = todayBest != null;
   const titleCount = (saves.badges?.masters ?? 0) + (saves.badges?.champions ?? 0);
@@ -882,12 +1427,11 @@ export default function PerfectRun() {
   // owns the primary gameplay actions so the player always acts in one place.
   const barActions = (() => {
     switch (phase) {
+      // Rerolling now lives on the dock's own pack badge (see SquadDock's
+      // onOpenPack below) - clicking the pack IS the reroll, no separate
+      // labeled button competing for the same bottom row.
       case 'draft':
-        return mode === 'enc' ? [] : [{
-          key: 'reroll', kind: 'secondary', onClick: reroll,
-          disabled: packs <= 0,
-          label: `Reroll ${nat ? 'nation' : 'pack'} (${packs})`,
-        }];
+        return [];
       case 'run':
         return view === 'board' && boardState === 'pairings'
           ? [{ key: 'play', kind: 'primary', onClick: playMatch, label: 'Play your match →' }]
@@ -901,21 +1445,33 @@ export default function PerfectRun() {
           ...(endless ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
         ];
       case 'manage': {
-        // No dedicated IGL-review step anymore — the leftmost dock slot
+        // No dedicated IGL-review step anymore - the leftmost dock slot
         // always has someone in it the instant the roster's full, and this
         // same screen (chemistry + portraits) is also the very first stop
         // after drafting, before any tournament has a result to report on.
         const preSeason = !currentResult;
+        const mustResolvePoach = endless && Boolean(poachOffer);
         return [
           {
             key: 'next', kind: 'primary',
+            // Replacing a departed player is the cost of losing one; the
+            // market, a pack and the academy are all sitting on this screen.
+            disabled: mustResolvePoach || (endless && starters.length < ROSTER_SIZE),
             onClick: preSeason ? () => setPhase('intro') : nextTournament,
-            label: preSeason
+            label: mustResolvePoach
+              ? 'Resolve poach offer'
+              : preSeason
               ? `Enter ${season[0]?.label ?? 'the season'}`
               : endless && tourIndex % 3 === 2
                 ? `Start Year ${Math.floor(tourIndex / 3) + 2}`
                 : `On to ${season[tourIndex + 1]?.city}`,
           },
+          // Offered only where it is earned: at the top of the ladder, with
+          // titles behind you. Banking beats farming a solved run.
+          ...(endless && !preSeason
+            && canPrestige({ tier: standing.tier, titles: tourResults.filter(r => r.champion).length, prestige }).ok
+            ? [{ key: 'prestige', kind: 'secondary', onClick: doPrestige, label: `Prestige ×${(prestige.multiplier + 0.5).toFixed(1)}` }]
+            : []),
           ...(endless && !preSeason ? [{ key: 'end', kind: 'secondary', onClick: finishSeason, label: 'End run' }] : []),
         ];
       }
@@ -934,12 +1490,15 @@ export default function PerfectRun() {
   })();
 
   // Space also fires whatever the bar's single primary action is (Continue,
-  // On to X, Play your match →) — everywhere skip doesn't already own the
+  // On to X, Play your match →) - everywhere skip doesn't already own the
   // key. Skipped while focus sits on something that already handles
   // Space/Enter itself (a button, a link) or is mid-typing (the squad name
-  // field) — this is a global convenience shortcut, not a replacement for
+  // field) - this is a global convenience shortcut, not a replacement for
   // normal keyboard activation of whatever's actually focused.
   const primaryBarAction = barActions.find(a => a.kind === 'primary' && !a.disabled);
+  // currentSkip carries event callbacks that may read animation refs later;
+  // coercing the object here does not invoke them.
+  // eslint-disable-next-line react-hooks/refs
   const hasSkip = Boolean(currentSkip);
   const primaryOnClick = primaryBarAction?.onClick;
   useEffect(() => {
@@ -957,6 +1516,10 @@ export default function PerfectRun() {
 
   const barVisible = ['draft', 'intro', 'run', 'result', 'manage', 'pack'].includes(phase)
     && !(phase === 'run' && view === 'match');
+  // The dock IS the squad, everywhere in the loop. It only stands down inside
+  // a match, where the broadcast plate already lists both rosters and a second
+  // copy of your five would just compete with it.
+  const dockInBar = barVisible;
   const drawerRoster = picks;
   const latestMap = mapResults.at(-1) ?? null;
   const stageScore = live ?? latestMap ?? { a: 0, b: 0 };
@@ -988,6 +1551,7 @@ export default function PerfectRun() {
           styles.page,
           phase === 'menu' ? styles.menuPage : '',
           phase === 'run' && view === 'match' ? styles.matchPage : '',
+          phase === 'draft' ? styles.draftPage : '',
         ].join(' ')}>
 
       <AnimatePresence mode="wait">
@@ -1005,6 +1569,18 @@ export default function PerfectRun() {
           <div className={hub.body}>
             <div className={styles.menuStack}>
               <div className={`${styles.menuModes} ${styles.rise} ${styles.riseB}`}>
+                {savedRun && (
+                  <button className={`${styles.modeBtn} ${styles.resumeTile}`} onClick={resumeEndlessRun}>
+                    <span className={styles.modeBtnName}>
+                      Resume Run
+                      <span className={styles.modeBtnFlag}>{savedRun.squadName}</span>
+                    </span>
+                    <span className={styles.resumeMeta}>
+                      <span>Year <b>{savedRun.year}</b></span>
+                      <span>Score <b>{savedRun.score.toLocaleString()}</b></span>
+                    </span>
+                  </button>
+                )}
                 <div className={`${styles.modeBtn} ${styles.modeSplit}`}>
                   <span className={styles.modeBtnName}>Solo Run</span>
                   <span className={styles.modeSplitActions}>
@@ -1041,8 +1617,8 @@ export default function PerfectRun() {
 
               <div className={`${hub.meta} ${styles.recordStrip} ${styles.rise} ${styles.riseC}`}>
                 <span>Best <b><CountUp value={saves.bestScore ?? 0} /></b></span>
-                <span>Endless <b><CountUp value={saves.endlessV2?.bestScore ?? 0} /></b></span>
-                <span>Years <b><CountUp value={saves.endlessV2?.bestYears ?? 0} /></b></span>
+                <span>Endless <b><CountUp value={saves.endlessV3?.bestScore ?? 0} /></b></span>
+                <span>Years <b><CountUp value={saves.endlessV3?.bestYears ?? 0} /></b></span>
                 <span>Titles <b><CountUp value={titleCount} /></b></span>
                 <span>Slams <b><CountUp value={saves.badges?.grand_slam ?? 0} /></b></span>
                 <span>Perfect <b><CountUp value={saves.badges?.perfect_season ?? 0} /></b></span>
@@ -1117,7 +1693,7 @@ export default function PerfectRun() {
 
       {phase === 'draft' && (
         <PhaseTransition phaseKey="draft">
-        <section>
+        <section className={styles.draftStage}>
           <DraftLane
             nation={nat}
             choices={choices}
@@ -1125,6 +1701,8 @@ export default function PerfectRun() {
             interactive
             onPick={pickPlayer}
             label={mode === 'enc' ? `Build the ${countryName(selectedNation)} roster` : undefined}
+            displayScale={0.65}
+            packScale={1.3}
           />
         </section>
         </PhaseTransition>
@@ -1164,7 +1742,7 @@ export default function PerfectRun() {
         <PhaseTransition phaseKey="run:match">
         <section className={styles.broadcast}>
           <div className={styles.castHeroes} aria-hidden="true">
-            <HeroBand roster={picks} side="left" />
+            <HeroBand roster={squad} side="left" />
             <HeroBand roster={opp.roster} side="right" />
           </div>
 
@@ -1174,10 +1752,8 @@ export default function PerfectRun() {
               Power {power.power.toFixed(1)}
               {mode === 'enc' && <FormBadge label={tour.teams.player.formLabel} />}
             </span>
-            {picks.map(p => (
-              <span key={p.id} className={styles.castPlayer}>
-                {p.player}{p.id === iglId ? ' (IGL)' : ''} · {p.rating}
-              </span>
+            {squad.map(p => (
+              <CastPlayer key={p.id} card={p} isIgl={p.id === iglId} trigger={roundTrigger?.side === 'A' && roundTrigger.cardId === p.id ? roundTrigger : null} />
             ))}
           </div>
 
@@ -1187,10 +1763,10 @@ export default function PerfectRun() {
                 ? (mapsWon >= needed ? 'Series won' : 'Series lost')
                 : `Live · ${maps[mapResults.length]}`}
             </span>
-            <div className={styles.castScore}>
+            <div className={styles.castScore} data-specialty-active={roundTrigger ? 'true' : undefined}>
               <span className={styles.castSeries}>Series {mapsWon}–{mapsLost}</span>
               {/* Flashes the round-winner's color (--accent for the player,
-                  --opponent for them) and settles back to --ink — the
+                  --opponent for them) and settles back to --ink - the
                   smallest change that makes "who just won that round"
                   unmistakable without a bespoke banner. Keying on
                   roundFlash.key remounts the span so a repeat winner still
@@ -1199,9 +1775,18 @@ export default function PerfectRun() {
               <m.span
                 key={roundFlash?.key ?? 'idle'}
                 className={styles.castBig}
-                initial={roundFlash ? { color: roundFlash.side === 'A' ? 'var(--accent)' : 'var(--opponent)' } : false}
-                animate={{ color: 'var(--ink)' }}
-                transition={{ duration: DUR.hero }}
+                initial={roundFlash ? {
+                  color: roundFlash.side === 'A' ? 'var(--accent)' : 'var(--opponent)',
+                  opacity: 0.72,
+                  y: reducedMotion ? 0 : (roundFlash.side === 'A' ? -7 : 7),
+                } : false}
+                animate={{ color: 'var(--ink)', opacity: 1, y: 0 }}
+                transition={{
+                  duration: reducedMotion
+                    ? DUR.micro
+                    : Math.max(DUR.micro, scaleDuration(DUR.enter * 1000, runSpeed) / 1000),
+                  ease: EASE.out,
+                }}
               >
                 {stageScore.a}–{stageScore.b}
               </m.span>
@@ -1237,9 +1822,7 @@ export default function PerfectRun() {
               {mode === 'enc' && <FormBadge label={opp.formLabel} />}
             </span>
             {opp.roster.map(p => (
-              <span key={p.id} className={styles.castPlayer}>
-                {p.player}{p.id === opp.iglId ? ' (IGL)' : ''} · {p.rating}
-              </span>
+              <CastPlayer key={p.id} card={p} isIgl={p.id === opp.iglId} trigger={roundTrigger?.side === 'B' && roundTrigger.cardId === p.id ? roundTrigger : null} />
             ))}
           </div>
         </section>
@@ -1271,24 +1854,102 @@ export default function PerfectRun() {
 
       {phase === 'manage' && def && (
         <PhaseTransition phaseKey="manage">
-        <section className={[styles.between, styles.manageScreen].join(' ')}>
-          <span className={styles.introMarker}>
-            {!currentResult ? 'Squad ready' : currentResult.champion ? 'Squad locked in' : 'Regroup'}
-          </span>
-          <h2 className={styles.betweenTitle}>
+        <section className={[styles.between, styles.desk].join(' ')}>
+          {/* The heading carries its own weight - no kicker above it. What
+              used to be a marker line is now the standing strip, which says
+              the same thing with data. */}
+          <h2 className={styles.deskTitle}>
             {!currentResult ? 'Take the field' : currentResult.champion ? 'Champions stay together' : 'Back to the drawing board'}
           </h2>
-          {mode === 'enc' && power?.lines.some(line => String(line.label).startsWith('Missing:')) && (
-            <p className={styles.roleWarning}>This lineup is missing role coverage. You can still enter, but chemistry will reduce its power.</p>
+
+          {/* Only Circuit standing + the decision inbox pair with the feed —
+              that's the empty space the sidebar is actually filling. Sticky
+              only works right when its own column is the SHORT one: sizing
+              this pair's row to their own height (not the whole desk's,
+              which runs on through the market and season strip below) is
+              what stops the sidebar from later floating on top of/past
+              content it was never meant to sit beside. */}
+          {endless && (
+            <div className={styles.deskTopRow}>
+              <div className={styles.deskTop}>
+                <CircuitPanel
+                  tier={standing.tier}
+                  tierPoints={standing.tierPoints}
+                  reputation={reputation}
+                  eventInYear={(tourIndex % 3) + 1}
+                  year={Math.floor(tourIndex / 3) + 1}
+                  move={ladderMove}
+                />
+
+                {/* ── Decisions, first and always. A worklist that empties:
+                      once nothing here wants an answer, the column is simply
+                      gone and the screen becomes reference material. ── */}
+                {(poachOffer || prospect) && (
+                  <div className={styles.inbox}>
+                    <PoachOffer
+                      offer={poachOffer}
+                      card={poachOffer ? picks.find(p => p.id === poachOffer.cardId) : null}
+                      signals={poachOffer ? signalsFor(picks.find(p => p.id === poachOffer.cardId)) : null}
+                      reputation={reputation}
+                      onResolve={resolvePoach}
+                      onInspect={setFocusCard}
+                    />
+                    {prospect && (
+                      <ProspectOffer
+                        card={cardsById.get(prospect.cardId)}
+                        signals={cardSignals(runSeed, cardsById.get(prospect.cardId), prospect.dev)}
+                        onSign={signProspect}
+                        onDecline={() => setProspect(null)}
+                        onInspect={setFocusCard}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* These are left-column reports, with the same outer width
+                    as the academy frame. Keeping them inside this wrapper
+                    also gives the circuit feed the intended sticky runway:
+                    it releases only when the full-width market begins. */}
+                {power && <ChemPanel power={power} />}
+                <SquadReport report={yearReport} squad={squad} />
+              </div>
+
+              {/* This wrapper is the feed's actual sticky containing block,
+                  so it must let go before the full-width market below. */}
+              <aside className={styles.deskSide}>
+                <NewsFeed feed={feed} cardsById={cardsById} />
+              </aside>
+            </div>
           )}
-          {power && <ChemPanel power={power} />}
-          {/* Newest first — `tourResults` accumulates in chronological order
-              as each tournament resolves, currentResult already being its
-              own last entry. */}
-          <div className={styles.tourReportList}>
-            {[...tourResults].reverse().map((result, i) => (
-              <TournamentReport key={`${tourResults.length - 1 - i}-${result.label}`} result={result} />
-            ))}
+
+          {/* The transfer market is the first screen-wide region. It sits
+              outside .deskTopRow, which is the exact point where the sticky
+              circuit feed must release. */}
+          <div className={styles.deskRest}>
+            {mode === 'enc' && power?.lines.some(line => String(line.label).startsWith('Missing:')) && (
+              <p className={styles.deskWarning}>This lineup is missing role coverage. You can still enter, but chemistry will reduce its power.</p>
+            )}
+
+            {!endless && power && <ChemPanel power={power} />}
+
+            {endless && (
+              <TransferMarket
+                targets={signingTargets(allCards, { squadIds: pickedIds, signedIds, reputation, roster: squad, limit: 9 })}
+                packs={packs}
+                ceiling={maxSignableRating(reputation, squad)}
+                onSign={signTarget}
+                onInspect={setFocusCard}
+                signalsFor={signalsFor}
+              />
+            )}
+
+            {/* The year as three slots rather than a growing pile of cards. */}
+            <SeasonStrip
+              results={tourResults}
+              season={season}
+              tourIndex={tourIndex}
+              endless={endless}
+            />
           </div>
         </section>
         </PhaseTransition>
@@ -1297,8 +1958,11 @@ export default function PerfectRun() {
       {phase === 'pack' && (
         <PhaseTransition phaseKey="pack">
         <PackPhase
+          key={ripId}
           nat={packNat}
           choices={packChoices}
+          openSlot={hasOpenSlot()}
+          onSign={signToOpenSlot}
           ripId={ripId}
           picks={picks}
           pendingSwap={pendingSwap}
@@ -1323,50 +1987,54 @@ export default function PerfectRun() {
       )}
       </AnimatePresence>
 
+      {/* Rendering the callback as a prop does not invoke or dereference it. */}
+      {/* eslint-disable-next-line react-hooks/refs */}
       {currentSkip && (
         <SkipHint onSkip={currentSkip.skip} progress={currentSkip.progress} />
       )}
       </main>
       </div>
 
-      {/* Fixed chrome, not scrolling page content — a sibling of SquadBar,
-          entirely outside AnimatePresence/PhaseTransition above, so no
-          Framer Motion ancestor's clip-path wipe can trap it into the wrong
-          containing block for position: fixed (see .manageFaces). Purely
-          decorative here (no onPick), the roster's already reachable via
-          the dock chips right below it. */}
-      {phase === 'manage' && (
-        <div className={styles.manageFaces} aria-hidden="true">
-          <SquadHero picks={picks} iglId={iglId} />
-        </div>
-      )}
-
       {barVisible && (
         <SquadBar
-          dock={(
+          dock={dockInBar ? (
             <SquadDock
               roster={drawerRoster}
-              size={ROSTER_SIZE}
+              size={endless ? slots : ROSTER_SIZE}
+              starterCount={endless && slots > ROSTER_SIZE ? ROSTER_SIZE : null}
+              // Only while the year's report is up - the mark is for the
+              // moment the slot appears, not a permanent decoration.
+              newSlotIndex={endless && yearReport?.unlock ? picks.length : null}
+              releaseSignal={endless ? releaseSignal : null}
+              dev={endless ? dev : null}
+              // Bigger where the squad is the subject of the screen.
+              scale={phase === 'manage' ? 'large' : 'normal'}
               iglId={iglId}
               squadName={squadName}
               onFocusCard={setFocusCard}
               focusCardId={focusCard?.id ?? null}
-              packs={packs}
-              // Only wired up while the manage screen owns the "open a
-              // pack" action — the pack badge stays a visible readout on
-              // every other phase (draft, run, result…) but forcing phase
-              // to 'pack' from, say, mid-match would be a broken jump, not
-              // a shortcut.
-              onOpenPack={phase === 'manage' ? openPack : null}
               onSwap={swapPicks}
             />
-          )}
+          ) : null}
+          packs={packs}
+          // Only wired up on the phases that have a real pack-spending
+          // action right now - the pack badge stays a visible readout
+          // everywhere else (run, result…) but forcing phase to 'pack'
+          // from, say, mid-match would be a broken jump, not a shortcut.
+          // On the draft screen, clicking it IS the reroll - the same
+          // currency, spent the same way, so it reuses the badge instead of
+          // a separate labeled button. ENC's draft has no packs to spend,
+          // so it stays inert there.
+          onOpenPack={phase === 'manage' ? openPack : phase === 'draft' && mode !== 'enc' ? reroll : null}
+          packActionLabel={phase === 'draft' ? `Reroll ${nat ? 'nation' : 'pack'}` : 'Open a pack'}
+          large={phase === 'manage'}
         >
           {/* action.onClick (playMatch, reroll, etc.) is passed by reference
               here, never called; whatever refs those functions touch
               internally are only actually read once the button fires,
               inside the event handler React's own docs name as the
               sanctioned place for it. */}
+          {/* eslint-disable-next-line react-hooks/refs */}
           {barActions.map(action => (
             <TacticalButton
               key={action.key}
@@ -1381,48 +2049,63 @@ export default function PerfectRun() {
       )}
 
       {/* Clicking a dock chip opens it full size (and flippable) rather than
-          firing the phase's action blind — the action moves into the overlay,
+          firing the phase's action blind - the action moves into the overlay,
           where you can actually read the card you're acting on. */}
       <CardFocusOverlay
         card={focusCard}
         onClose={() => setFocusCard(null)}
+        // Promoting a caller is deliberately free and available mid-run:
+        // solo re-reads team power every map, so the swap lands on the next
+        // map played. Offered only for cards actually on the squad, and only
+        // on the phases where the roster is yours to arrange.
+        action={
+          focusCard && IGL_PHASES.has(phase) && picks.some(p => p.id === focusCard.id)
+            ? { label: focusCard.id === iglId ? 'Is your IGL' : 'Make IGL', disabled: focusCard.id === iglId }
+            : null
+        }
+        onAction={() => chooseIgl(focusCard?.id)}
+        signals={signalsFor(focusCard)}
       />
     </div>
     </>
   );
 }
 
-// ── Squad hero: the drafted five as overlapping cut-out photos, dealt in
-//    one at a time. Purely decorative — shown on the manage screen, in front
-//    of the chemistry/tournament report. IGL is a position (leftmost dock
-//    slot, reassigned there by drag-to-swap), not something picked here. ──
-
-function SquadHero({ picks, iglId }) {
-  // Every card has a portrait now — a photo-less one composites a grey head
-  // onto its org's kit, exactly as its card does. Filtering on `photo` used to
-  // drop those players out of the lineup entirely, so a squad with two
-  // photo-less picks silently showed three faces.
-  const mid = (picks.length - 1) / 2;
+// One team's five as overlapping cut-out photos - the broadcast match view
+// runs two of these, mirrored, flanking the score plate.
+// One roster row on the broadcast plate. The faces behind the plate are a
+// backdrop wash at 16% opacity - deliberately unreadable - so during a match
+// you could not actually tell who was playing. This puts the portrait on the
+// name, which is what a broadcast lower-third does and what makes a squad
+// recognisable across a long run.
+function CastPlayer({ card, isIgl, trigger = null }) {
   return (
-    <div className={styles.squadHero} aria-hidden="true">
-      {picks.map((card, i) => (
-        <div
-          key={card.id}
-          className={styles.heroFace}
-          style={{ '--i': i, zIndex: Math.round(10 - Math.abs(i - mid)) }}
-        >
-          <PlayerPortrait card={card} fluid loading="lazy" />
-          {card.id === iglId && <span className={styles.squadIgl}>IGL</span>}
-        </div>
-      ))}
-    </div>
+    <span className={styles.castPlayer} data-triggered={trigger ? 'true' : undefined}>
+      <span className={styles.castPlayerFace} aria-hidden="true">
+        {hasRealPortrait(card)
+          ? <PlayerPortrait card={card} fluid loading="lazy" />
+          // A third of the pool has no cutout. Their initial is at least
+          // per-player and legible at this size, where the grey silhouette
+          // just reads as a failed image.
+          : <span className={styles.castPlayerInitial}>{card.player.slice(0, 2)}</span>}
+      </span>
+      <span className={styles.castPlayerName}>
+        {card.player}
+        {isIgl && <b className={styles.castIglTag}>IGL</b>}
+      </span>
+      <span className={styles.castPlayerRating}>{card.rating}</span>
+      {trigger && (
+        <span key={trigger.key} className={styles.castTrigger} aria-hidden="true">
+          <b>{trigger.label}</b>
+          <i>{trigger.detail}</i>
+        </span>
+      )}
+    </span>
   );
 }
 
-// One team's five as overlapping cut-out photos — the broadcast match view
-// runs two of these, mirrored, flanking the score plate.
 function HeroBand({ roster, side }) {
-  // No photo filter — see SquadHero. Dropping photo-less players here left one
+  // No photo filter - see SquadHero. Dropping photo-less players here left one
   // side of the broadcast plate with fewer faces than the other.
   const list = roster.slice(0, ROSTER_SIZE);
   const mid = (list.length - 1) / 2;
@@ -1544,7 +2227,7 @@ function Bracket({ tour, currentRoundKey, isRevealed, squadName, pendingArrivalI
         hidePlayer={hideCurrentPlayer && isCurrent}
         squadName={squadName}
         // BracketCell checks pendingArrivalIds by "thisCellKey:teamId", not
-        // bare teamId — a winner's id also already sits in its OLD round's
+        // bare teamId - a winner's id also already sits in its OLD round's
         // cell (the match it just won, still on screen one column back), so
         // a bare-id check would mask that already-decided source cell too.
         // Passing this cell's own key lets BracketCell match only its own
@@ -1630,7 +2313,7 @@ function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArri
   const a = tour.teams[match.a];
   const b = tour.teams[match.b];
   // A team mid-flight to this slot (see travelThenNextRound/pendingArrivalIds)
-  // renders as TBD here too — data-team-id stays put either way so the travel
+  // renders as TBD here too - data-team-id stays put either way so the travel
   // effect's querySelector still finds this exact row to measure and animate
   // toward. The traveling clone is what visually delivers the reveal; this
   // cell only shows the real matchup once that clone has actually landed.
@@ -1685,7 +2368,7 @@ function EncResult({ result, tour, saves, squadName, onReplay, onMenu }) {
         </m.p>
       )}
       <div className={styles.encRecordStrip}>
-        <span>Best finish <b>{saves?.bestFinish ?? '—'}</b></span>
+        <span>Best finish <b>{saves?.bestFinish ?? '-'}</b></span>
         <span>Titles <b>{saves?.titles ?? 0}</b></span>
         <span>Flawless <b>{saves?.flawless ?? 0}</b></span>
       </div>
@@ -1722,7 +2405,7 @@ function TournamentResult({ result, runningScore, endless }) {
       ) : (
         // Elimination is one of R3's four rationed triggers: a single
         // authored glitch that settles into a desaturated hold, not a pulse
-        // that snaps back — the run is actually over, so the color stays
+        // that snaps back - the run is actually over, so the color stays
         // drained rather than recovering.
         <m.h2 className={styles.overFail} animate={eliminationFlash.animate}>
           {`Out in the ${result.finishRound}`}
@@ -1764,16 +2447,24 @@ function TournamentResult({ result, runningScore, endless }) {
 
 // ── Squad pack: pick one, swap one ───────────────────────────────────────────
 
-function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConfirm, onCancel }) {
+function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConfirm, onCancel, onSign, openSlot }) {
   const outgoing = pendingSwap ? picks.find(p => p.id === pendingSwap.targetId) : null;
   const [keyboardCard, setKeyboardCard] = useState(null);
-  useEffect(() => {
-    if (pendingSwap) setKeyboardCard(null);
-  }, [pendingSwap, ripId]);
 
   function choosePackCard(card, targetId) {
-    if (targetId) onDropSwap(card, targetId);
+    if (targetId) {
+      setKeyboardCard(null);
+      onDropSwap(card, targetId);
+    }
     else setKeyboardCard(card);
+  }
+
+  function startKeyboardSwap(targetId) {
+    if (!keyboardCard) return;
+    const incoming = keyboardCard;
+    setKeyboardCard(null);
+    if (targetId == null) onSign(incoming);
+    else onDropSwap(incoming, targetId);
   }
 
   return (
@@ -1782,7 +2473,7 @@ function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConf
         <span className={styles.stageLabel}>Open pack</span>
       </div>
 
-      {/* Always mounted, just hidden — conditionally rendering this in and
+      {/* Always mounted, just hidden - conditionally rendering this in and
           out of the tree instead would remount PackRip/PackTear every time
           Cancel clears `pendingSwap`, replaying the whole tear-open
           animation from scratch instead of snapping straight back to the
@@ -1797,32 +2488,41 @@ function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConf
           dropTarget="chip"
           clickable
         />
-        <p className={styles.swapHint}>Drag a card into the dock, or select it and choose a player below.</p>
+        <p className={styles.swapHint}>
+          {openSlot
+            ? 'You have an open squad slot - select a card to sign it, or drag one onto a player to replace them.'
+            : 'Drag a card into the dock, or select it and choose a player below.'}
+        </p>
         {keyboardCard && (
           <div className={styles.keyboardSwap} role="group" aria-label={`Choose who ${keyboardCard.player} replaces`}>
-            <b>Replace with {keyboardCard.player}</b>
-            {picks.map(card => <button type="button" key={card.id} onClick={() => onDropSwap(keyboardCard, card.id)}>{card.player}</button>)}
+            <b>{openSlot ? `Sign ${keyboardCard.player}` : `Replace with ${keyboardCard.player}`}</b>
+            {openSlot && (
+              <button type="button" onClick={() => startKeyboardSwap(null)}>Take the open slot</button>
+            )}
+            {picks.map(card => <button type="button" key={card.id} onClick={() => startKeyboardSwap(card.id)}>{card.player}</button>)}
             <button type="button" onClick={() => setKeyboardCard(null)}>Cancel</button>
           </div>
         )}
       </div>
 
-      {pendingSwap && outgoing && (
+      {pendingSwap && (outgoing || pendingSwap.targetId === null) && (
         <div className={styles.swapArea}>
           <div className={styles.swapConfirm}>
             <div className={styles.swapIncoming}>
               <span className={styles.stripLabel}>Incoming</span>
               <PlayerCard card={pendingSwap.card} displayScale={0.42} />
             </div>
-            <span className={styles.swapArrow} aria-hidden="true">→</span>
-            <div className={styles.swapOutgoing}>
-              <span className={styles.stripLabel}>Leaving</span>
-              <PlayerCard card={outgoing} displayScale={0.42} />
-            </div>
+            {outgoing && <span className={styles.swapArrow} aria-hidden="true">→</span>}
+            {outgoing && (
+              <div className={styles.swapOutgoing}>
+                <span className={styles.stripLabel}>Leaving</span>
+                <PlayerCard card={outgoing} displayScale={0.42} />
+              </div>
+            )}
           </div>
           <div className={styles.swapConfirmActions}>
             <TacticalButton className={styles.secondary} onClick={onCancel}>Cancel</TacticalButton>
-            <TacticalButton className={styles.primary} onClick={onConfirm}>Confirm swap</TacticalButton>
+            <TacticalButton className={styles.primary} onClick={onConfirm}>{outgoing ? 'Confirm swap' : 'Sign player'}</TacticalButton>
           </div>
         </div>
       )}
@@ -1946,33 +2646,421 @@ function LeaderboardPanel({ tab, onTab, data, todayBest }) {
 
 // ── Shared bits ──────────────────────────────────────────────────────────────
 
+// Where the squad sits on the three-tier circuit, and what this year's
+// results are doing about it. The ladder is the difficulty curve, so it has
+// to be readable at a glance rather than inferred from who you keep drawing.
+// What the year did to the squad. Development is invisible by design while
+// it happens - this is the one place it is stated plainly, once, so a player
+// can see that keeping a core together is paying off rather than having to
+// infer it from a slowly moving power number.
+// The academy's yearly offer. A raw, cheap card whose value is entirely in
+// front of them - the counterweight to a pack economy that only pays winners.
+// A rival has made an approach. Deliberately a blocking decision at the top
+// of the manage screen rather than a line in the feed: the whole point of the
+// mechanic is that dominance costs you something, and a cost you can scroll
+// past is not a cost.
+// The year as three slots. A long run produced dozens of report cards; this
+// says the same thing in one line and keeps the detail one tap away.
+// Power and the reasons for it. Reading material rather than something you
+// manipulate - the squad itself lives in the dock, where you can move it.
 function ChemPanel({ power }) {
+  const chemSign = power.chem > 0 ? 'up' : power.chem < 0 ? 'down' : 'flat';
   return (
-    <div className={styles.chemPanel}>
-      <div className={styles.chemTotal}>
-        <span>Team power</span>
-        <b>{power.power.toFixed(1)}</b>
-        <small>avg rating {power.base.toFixed(1)}, chemistry {power.chem >= 0 ? '+' : ''}{power.chem}</small>
+    <div className={styles.chem}>
+      <div className={styles.chemHead}>
+        <b className={styles.chemTotal}>{power.power.toFixed(1)}</b>
+        <span className={styles.chemLabel}>
+          Team power
+          <i>avg {power.base.toFixed(1)}</i>
+        </span>
+        {/* Chemistry as a badge with its own arrow, not a number folded into
+            a sentence - the direction is the thing to notice at a glance. */}
+        <span className={styles.chemBadge} data-sign={chemSign}>
+          <span className={styles.chemBadgeArrow} aria-hidden="true">
+            {chemSign === 'up' ? '▲' : chemSign === 'down' ? '▼' : '–'}
+          </span>
+          {Math.abs(power.chem)}
+        </span>
       </div>
-      <ul className={styles.chemLines}>
-        {power.lines.map((l, i) => (
-          <li key={i}>
-            <span>{l.label}</span>
-            <b className={String(l.value).startsWith('-') ? styles.neg : styles.pos}>
-              {typeof l.value === 'number' && l.value > 0 ? `+${l.value}` : l.value}
-            </b>
-          </li>
-        ))}
+      {power.lines?.length > 0 && (
+        <ul className={styles.chemList}>
+          {power.lines.map(line => (
+            <li key={line.label}>
+              <span>{line.label}</span>
+              <b data-sign={String(line.value).startsWith('-') ? 'down' : 'up'}>{line.value}</b>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SeasonStrip({ results, season, tourIndex, endless }) {
+  const [openIndex, setOpenIndex] = useState(null);
+  const yearIndex = endless ? Math.floor(tourIndex / 3) : 0;
+  const thisYear = results.slice(yearIndex * 3, yearIndex * 3 + 3);
+  const events = (endless ? season.slice(yearIndex * 3, yearIndex * 3 + 3) : season).slice(0, 3);
+  if (!events.length) return null;
+
+  return (
+    <div className={styles.season}>
+      <span className={styles.seasonLabel}>{endless ? `Year ${yearIndex + 1}` : 'Season'}</span>
+      <ol className={styles.seasonList}>
+        {events.map((event, i) => {
+          const played = thisYear[i];
+          const state = played ? (played.champion ? 'won' : 'played') : i === tourIndex % 3 ? 'next' : 'upcoming';
+          const Tag = played ? 'button' : 'div';
+          return (
+            <li key={event.label}>
+              <Tag
+                type={played ? 'button' : undefined}
+                className={styles.seasonSlot}
+                data-state={state}
+                data-open={openIndex === i ? 'true' : undefined}
+                onClick={played ? () => setOpenIndex(openIndex === i ? null : i) : undefined}
+              >
+                <span className={styles.seasonCity}>{event.city || event.label}</span>
+                <span className={styles.seasonResult}>
+                  {played ? (played.champion ? 'Champion' : played.finishRound) : state === 'next' ? 'Next' : '-'}
+                </span>
+              </Tag>
+            </li>
+          );
+        })}
+      </ol>
+      {/* Detail stays one tap away rather than stacked on the page. */}
+      {openIndex != null && thisYear[openIndex] && (
+        <TournamentReport result={thisYear[openIndex]} />
+      )}
+    </div>
+  );
+}
+
+function PoachOffer({ offer, card, signals, reputation, onResolve, onInspect }) {
+  if (!offer || !card) return null;
+  const canHold = reputation >= offer.holdCost;
+  const short = offer.holdCost - reputation;
+  return (
+    <div className={styles.poach}>
+      <button
+        type="button"
+        className={styles.poachCard}
+        onClick={() => onInspect(card)}
+        aria-label={`Inspect ${card.player}`}
+      >
+        <PlayerCard card={card} displayScale={0.32} tilt={false} signals={signals} />
+      </button>
+      <span className={styles.poachBody}>
+        <b className={styles.poachName}>{offer.orgName} want {offer.player}</b>
+        {/* Cost as badges, not a sentence — a rep tag and a pack-icon tag,
+            same idiom the market's own sign price and chemistry badge use. */}
+        <span className={styles.poachTerms}>
+          <span className={styles.poachTerm} data-ok={canHold ? 'true' : 'false'}>
+            <b>{offer.holdCost}</b>
+            <small>REP to refuse</small>
+          </span>
+          <span className={styles.poachTerm}>
+            <img className={styles.poachTermIcon} src={assetPath('/assets/brand/gauntlet-icon.webp')} alt="" aria-hidden="true" />
+            <b>+{offer.releaseFee}</b>
+            <small>to release</small>
+          </span>
+        </span>
+      </span>
+      <span className={styles.poachActions}>
+        <span className={styles.poachRefuse}>
+          <TacticalButton className={styles.secondary} disabled={!canHold} onClick={() => onResolve(false)}>
+            Refuse
+          </TacticalButton>
+          {/* The button alone doesn't say WHY it's greyed out — this does,
+              instead of making the player go do the subtraction themselves
+              against the badge above. */}
+          {!canHold && <span className={styles.poachShort}>Need {short} more rep</span>}
+        </span>
+        <TacticalButton className={styles.primary} onClick={() => onResolve(true)}>
+          Let him go
+        </TacticalButton>
+      </span>
+    </div>
+  );
+}
+
+// Bleeds an element out to the frame's actual edges - the mode rail on the
+// left, the safe-area inset on the right - regardless of how it's nested.
+// `.desk`'s content column is independently width-capped AND centered
+// inside `.page`'s own padding, so which one ends up narrower (and by how
+// much) depends on viewport width; duplicating that math in CSS would mean
+// two competing centering formulas fighting for the right answer. Measuring
+// the live gap instead sidesteps that entirely. Purely visual - an inline
+// width/margin layered on top of the flow position the element already has
+// - so it still reserves its own height normally; nothing downstream in
+// `.desk` has to account for it stepping out of flow.
+function useFrameBleed(ref) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    function measure() {
+      // Reset first: last run's own margin/width would otherwise be baked
+      // into this run's measured rect.
+      el.style.marginLeft = '0px';
+      el.style.width = '';
+      const rect = el.getBoundingClientRect();
+      const root = getComputedStyle(document.documentElement);
+      const railSize = parseFloat(root.getPropertyValue('--rail-size')) || 0;
+      const safeL = parseFloat(root.getPropertyValue('--safe-l')) || 0;
+      const safeR = parseFloat(root.getPropertyValue('--safe-r')) || 0;
+      // Mirrors PerfectRun.module.css's own `.frame` breakpoint: the rail
+      // becomes a top bar under 680px, so it stops reserving left space.
+      const mobile = window.matchMedia('(max-width: 680px)').matches;
+      const frameLeft = mobile ? safeL : railSize + safeL;
+      const frameWidth = window.innerWidth - frameLeft - safeR;
+      el.style.marginLeft = `${frameLeft - rect.left}px`;
+      el.style.width = `${frameWidth}px`;
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [ref]);
+}
+
+// Spend packs on a NAMED player instead of a gamble. Reputation decides who
+// will even take the call, which is what stops it being a shop.
+function TransferMarket({ targets, packs, ceiling, onSign, onInspect, signalsFor }) {
+  const marketRef = useRef(null);
+  useFrameBleed(marketRef);
+
+  // A plain vertical wheel gesture (a mouse, not a trackpad) does nothing on
+  // an overflow-x shelf - there's no vertical room to scroll. Redirect that
+  // delta into horizontal motion so the shelf reacts to scrolling either way.
+  const listRef = useRef(null);
+  useScrollLean(listRef);
+  const onWheel = useCallback((event) => {
+    const el = listRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    el.scrollLeft += event.deltaY;
+    event.preventDefault();
+  }, []);
+
+  return (
+    <div className={styles.market} ref={marketRef}>
+      <div className={styles.marketHeadRow}>
+        <span className={styles.marketHead}>Transfer market</span>
+        <span className={styles.marketMeta}>
+          <img className={styles.marketPackIcon} src={assetPath('/assets/brand/gauntlet-icon.webp')} alt="" aria-hidden="true" />
+          <b>{packs}</b> · up to {ceiling}
+        </span>
+      </div>
+      {targets.length === 0 ? (
+        <p className={styles.marketEmpty}>Nobody in reach is available.</p>
+      ) : (
+        // The real card, not a summary of one. Rating, role, nationality, the
+        // five stats, specialties and career stage are all already drawn on
+        // it - restating any of them beside it would be telling. Everyone
+        // your club could plausibly attract shows up here, not just who you
+        // can afford this instant - a shop window, not a receipt: seeing a
+        // name and knowing you're 2 packs short is the point, not a reason
+        // to hide it.
+        <ul className={styles.marketList} ref={listRef} onWheel={onWheel}>
+          {targets.map(card => {
+            const cost = signingCost(card);
+            const affordable = packs >= cost;
+            return (
+              <li key={card.id} className={styles.marketPick}>
+                <div className={styles.marketCard}>
+                  <PlayerCard
+                    card={card}
+                    displayScale={0.34}
+                    onClick={() => onInspect(card)}
+                    signals={signalsFor(card)}
+                  />
+                </div>
+                {/* Cost as a pack icon with the count on it, not the words
+                    "N packs" - same idiom as the dock's own pack badge.
+                    Disabled (not hidden) when short on packs, so the target
+                    stays visible as something to save toward. */}
+                <TacticalButton
+                  className={styles.secondary}
+                  onClick={() => onSign(card)}
+                  disabled={!affordable}
+                  aria-label={affordable
+                    ? `Sign for ${cost} pack${cost === 1 ? '' : 's'}`
+                    : `Need ${cost} packs, have ${packs}`}
+                >
+                  <span className={styles.marketCost} aria-hidden="true">
+                    <img className={styles.marketCostIcon} src={assetPath('/assets/brand/gauntlet-icon.webp')} alt="" />
+                    <b>{cost}</b>
+                  </span>
+                </TacticalButton>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// Everything that happened while you were not looking. Transfers render the
+// player in their NEW kit - the portrait compositor already supports it, and
+// seeing your man in someone else's shirt is the whole emotional payload.
+function NewsFeed({ feed, cardsById }) {
+  if (!feed?.length) return null;
+  return (
+    <div className={styles.news}>
+      <span className={styles.newsHead}>Around the circuit</span>
+      <ul className={styles.newsList}>
+        {feed.slice(0, 8).map((item, i) => {
+          const { title, note } = describeNews(item);
+          const card = item.cardId ? cardsById.get(item.cardId) : null;
+          const kit = newsKit(item);
+          return (
+            <li key={`${item.y}-${item.t}-${i}`} className={styles.newsRow}>
+              {card ? (
+                <span className={styles.castPlayerFace} aria-hidden="true">
+                  {hasRealPortrait(card)
+                    ? <PlayerPortrait card={card} kit={kit ?? undefined} fluid loading="lazy" />
+                    : <span className={styles.castPlayerInitial}>{card.player.slice(0, 2)}</span>}
+                </span>
+              ) : (
+                <span className={styles.newsDot} aria-hidden="true" />
+              )}
+              <span className={styles.newsTitle}>{title}</span>
+              <span className={styles.newsNote}>{note}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
 
-// The manage screen's backdrop: a flat stat readout for the tournament that
-// just ended, in the same label/big-number/breakdown-rows language ChemPanel
-// already uses on the review screen — not a fresh "card of stats" template.
-// Sits behind SquadHero's portraits (lower z-index, same section), so it
-// reads as the report the squad is standing in front of, not a separate box.
+function ProspectOffer({ card, signals, onSign, onDecline, onInspect }) {
+  if (!card) return null;
+  return (
+    <div className={styles.prospect}>
+      {/* No copy about "years of growth ahead" - the card carries an age, a
+          PROSPECT chip and a headroom bar, which is the same claim made in
+          data the player can check. */}
+      <button
+        type="button"
+        className={styles.prospectCard}
+        onClick={() => onInspect(card)}
+        aria-label={`Inspect ${card.player}`}
+      >
+        <PlayerCard card={card} displayScale={0.38} tilt={false} signals={signals} />
+      </button>
+      <span className={styles.prospectSide}>
+        <span className={styles.prospectHead}>From the academy</span>
+      </span>
+      <span className={styles.prospectActions}>
+        <TacticalButton className={styles.primary} onClick={onSign}>Sign free</TacticalButton>
+        <TacticalButton className={styles.secondary} onClick={onDecline}>Pass</TacticalButton>
+      </span>
+    </div>
+  );
+}
+
+function SquadReport({ report, squad }) {
+  if (!report?.changes?.length) return null;
+  const byId = new Map(squad.map(card => [card.id, card]));
+  const order = { legend: 0, growth: 1, decline: 2 };
+  const changes = [...report.changes].sort(
+    (a, b) => order[a.kind] - order[b.kind] || Math.abs(b.n) - Math.abs(a.n),
+  );
+
+  return (
+    <div className={styles.squadReport}>
+      <span className={styles.squadReportHead}>Year {report.year} · Squad development</span>
+
+      <ul className={styles.squadReportList}>
+        {changes.map(change => {
+          const card = byId.get(change.id);
+          return (
+            <li key={`${change.id}-${change.kind}`} className={styles.squadReportRow} data-kind={change.kind}>
+              <span className={styles.castPlayerFace} aria-hidden="true">
+                {card && hasRealPortrait(card)
+                  ? <PlayerPortrait card={card} fluid loading="lazy" />
+                  : <span className={styles.castPlayerInitial}>{change.player.slice(0, 2)}</span>}
+              </span>
+              <span className={styles.squadReportName}>{change.player}</span>
+              <span className={styles.squadReportNote}>
+                {change.kind === 'legend' ? 'Became a legend - no longer declines'
+                  : change.kind === 'growth' ? 'Improving' : 'Slipping'}
+              </span>
+              <span className={styles.squadReportDelta}>
+                {change.kind === 'legend' ? '★' : `${change.n > 0 ? '+' : ''}${change.n}`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function CircuitPanel({ tier, tierPoints, reputation, eventInYear, year, move }) {
+  const { rank, next, pct: repPct } = reputationRankProgress(reputation);
+  // Position on a track running from the relegation line to the promotion
+  // line, so "how close am I to dropping" is a distance, not a number.
+  const span = PROMOTE_AT - RELEGATE_AT;
+  const pct = Math.max(0, Math.min(1, (tierPoints - RELEGATE_AT) / span)) * 100;
+
+  return (
+    <div className={styles.circuit}>
+      <div className={styles.circuitHead}>
+        <h3 className={styles.circuitTitle}>Circuit standing</h3>
+        <span className={styles.circuitWhen}>Y{year} · E{eventInYear}/3</span>
+      </div>
+
+      {/* Reputation as a badge with its own meter, not a label glued to a
+          number - the rank IS the read, and how close the next one is
+          should be a bar you glance at, not arithmetic you do. */}
+      <div className={styles.circuitRank}>
+        <span className={styles.circuitRankBadge} data-rank={rank.key}>{rank.label}</span>
+        <div
+          className={styles.circuitRankTrack}
+          role="img"
+          aria-label={`${reputation} reputation${next ? `; ${next.label} at ${next.min}` : ' - highest rank reached'}`}
+        >
+          <span className={styles.circuitRankFill} style={{ width: `${repPct}%` }} />
+        </div>
+        <span className={styles.circuitRankValue}>{reputation}</span>
+      </div>
+
+      <ol className={styles.circuitTiers}>
+        {TIER_META.map((meta, i) => (
+          <li
+            key={meta.key}
+            className={styles.circuitTier}
+            data-state={i === tier ? 'current' : i < tier ? 'below' : 'above'}
+          >
+            {meta.label}
+          </li>
+        ))}
+      </ol>
+
+      {move && (
+        <p className={styles.circuitMove} data-move={move.movement}>
+          {move.movement === 'promote'
+            ? `Promoted to ${TIER_META[move.tier].label} after year ${move.year}.`
+            : `Relegated to ${TIER_META[move.tier].label} after year ${move.year}.`}
+        </p>
+      )}
+
+      <div className={styles.circuitTrack} role="img"
+        aria-label={`${tierPoints} circuit points; promotion at ${PROMOTE_AT}, relegation at ${RELEGATE_AT}`}>
+        <span className={styles.circuitFill} style={{ width: `${pct}%` }} />
+        <span className={styles.circuitPin} style={{ left: `${pct}%` }} />
+      </div>
+      <div className={styles.circuitScale}>
+        <span data-edge="drop">Relegation</span>
+        <span data-edge="rise">Promotion</span>
+      </div>
+    </div>
+  );
+}
+
 function TournamentReport({ result }) {
   if (!result) return null;
   const topMvp = result.mvpBoard?.[0];
@@ -1999,7 +3087,7 @@ function TournamentReport({ result }) {
 
 // ── Draft lane: header + pack rip + horizontal choice strip + picks ─────────
 
-function DraftLane({ nation, choices, ripId, interactive, onPick, label, dropTarget, clickable }) {
+function DraftLane({ nation, choices, ripId, interactive, onPick, label, dropTarget, clickable, displayScale = 0.5, packScale = 1 }) {
   return (
     <PackRip
       ripId={ripId}
@@ -2009,7 +3097,8 @@ function DraftLane({ nation, choices, ripId, interactive, onPick, label, dropTar
       interactive={interactive}
       onPick={onPick}
       headerLabel={label}
-      displayScale={0.5}
+      displayScale={displayScale}
+      packScale={packScale}
       dropTarget={dropTarget}
       clickable={clickable}
     />
@@ -2039,11 +3128,11 @@ function CountUp({ value }) {
   return <>{n}</>;
 }
 
-// The shared skip affordance for every automatic sequence in the run — the
+// The shared skip affordance for every automatic sequence in the run - the
 // three duration-based pauses (intro splash, series-end, board-complete),
 // the live match round-reveal, and the bracket travel flight. `progress`
 // (1 -> 0, a draining bar) only exists for the duration-based ones; the
-// other two are indeterminate, so the button renders alone — deliberately
+// other two are indeterminate, so the button renders alone - deliberately
 // the smaller of the two looks, since those two already have their own
 // clear motion (a scoreline ticking, a team flying across the bracket) to
 // read as "this is still going," where the button's only job is offering

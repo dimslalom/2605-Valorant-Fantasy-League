@@ -2,7 +2,7 @@
    icon tiles, accent fill for the current mode, hover label flyout.
 
    On mobile the rail becomes a top bar and the labels come out from behind the
-   hover flyout and sit next to the icons — a hover tooltip is unreachable with
+   hover flyout and sit next to the icons - a hover tooltip is unreachable with
    a finger, and hiding it outright left the nav as three unlabelled glyphs. */
 .rail {
   position: fixed;

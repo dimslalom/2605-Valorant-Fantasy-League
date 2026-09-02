@@ -1,7 +1,7 @@
 import { m } from 'motion/react';
 import { DUR, EASE } from '../lib/motion';
 
-// The upgraded press feedback for the run's decisive action buttons — Play
+// The upgraded press feedback for the run's decisive action buttons - Play
 // your match, Continue, Reroll, and their Multiplayer equivalents (advance
 // match, Skip pack, Done shopping, Return to lobby, Start game). Every OTHER
 // button in the app still gets the global CSS `:active` press defined once in

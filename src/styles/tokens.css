@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------------
-   VFL design tokens — the single source of truth.
+   VFL design tokens - the single source of truth.
 
    Direction (inherited from the Gauntlet sheet, now global):
    playvalorant.com. Sharp corners, solid color blocks, one accent, uppercase
@@ -18,7 +18,7 @@
 
   /* --- Surface ---------------------------------------------------------- */
   --bg: #0d0f17;            /* page ground */
-  --bg-deep: #0b0d14;       /* status strips, rail — recedes behind the page */
+  --bg-deep: #0b0d14;       /* status strips, rail - recedes behind the page */
   --bg-sunken: #090d16;     /* wells the page sits on top of */
   --surface: #161b29;       /* data row surface */
   --surface-hi: #1e2435;    /* hover / emphasis surface */
@@ -116,7 +116,7 @@
      On mobile the rail is a top bar, so it costs no horizontal space. */
   --frame-inset: var(--rail-size);
 
-  /* Safe-area passthrough — pages read these instead of env() directly so a
+  /* Safe-area passthrough - pages read these instead of env() directly so a
      non-notched browser still gets a sane value. */
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
@@ -137,6 +137,11 @@
   --ease-travel: cubic-bezier(0.5, 0, 0.2, 1);  /* bracket travel path */
 
   --stagger: 40ms;
+  --pack-stagger: 65ms;
+  --pack-wave-period: 3200ms;
+  --pack-wave-start: 600ms;
+  --pack-impact-delay: 360ms;
+  --flip-flash-delay: 250ms;
 
   /* --- Elevation -------------------------------------------------------- */
   /* Two families only. Hard-offset reads as a printed card; soft reads as a

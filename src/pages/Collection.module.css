@@ -1,8 +1,8 @@
-/* Player Library — left icon mode-rail, top status strip, beveled filter chips,
+/* Player Library - left icon mode-rail, top status strip, beveled filter chips,
    card grid or list view, and bottom result strip. Shared VALORANT tokens:
    sharp corners, one accent, uppercase monospace micro-labels, filled surfaces. */
 
-/* The shell, frame and status strip now come from AppFrame / StatusStrip —
+/* The shell, frame and status strip now come from AppFrame / StatusStrip -
    this file only styles what is specific to the Library. */
 
 .viewToggle {
@@ -24,7 +24,7 @@
   justify-content: center;
   border-radius: 3px;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background-color var(--dur-micro), color var(--dur-micro);
 }
 
 .iconToggleBtn:hover {
@@ -91,7 +91,7 @@
   gap: 4px;
 }
 .chip {
-  /* Was 6px/11px padding on a 10.5px line — about 22px tall. Filter chips are
+  /* Was 6px/11px padding on a 10.5px line - about 22px tall. Filter chips are
      a primary, repeatedly-hit control, so they take the full 44px floor. */
   min-height: var(--tap-min);
   padding: 0 var(--sp-3);
@@ -293,7 +293,7 @@
   color: var(--ink);
   border: 1px solid var(--line);
   /* Sits inside a table row, so it takes the secondary 28px floor rather than
-     the full 44 — the row itself is the primary target. */
+     the full 44 - the row itself is the primary target. */
   min-height: var(--tap-min-secondary);
   padding: 0 var(--sp-3);
   display: inline-flex;

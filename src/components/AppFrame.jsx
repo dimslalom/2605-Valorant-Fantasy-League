@@ -3,7 +3,7 @@ import styles from './AppFrame.module.css';
 
 // Mounts the mode rail and reserves space for it, once. Pages used to render
 // <ModeRail /> themselves and re-declare `.frame { margin-left: 56px }` in
-// their own stylesheet — five copies of a number that had to match the rail's
+// their own stylesheet - five copies of a number that had to match the rail's
 // width by hand.
 //
 // The iOS viewport fixes (100dvh, safe-area insets) live here too, so a page

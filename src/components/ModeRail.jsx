@@ -45,16 +45,16 @@ export default function ModeRail() {
             key={item.to}
             to={item.to}
             // The label lives in a span that is visually hidden at the
-            // narrowest widths, so the link needs its own accessible name —
+            // narrowest widths, so the link needs its own accessible name -
             // without it the mobile nav is three unnamed glyphs.
             aria-label={item.label}
             className={({ isActive }) => [styles.item, isActive ? styles.active : ''].join(' ')}
           >
             {/* The tile itself (this anchor) keeps its notched clip-path and
-                tap-target size completely static — only the glyph inside
+                tap-target size completely static - only the glyph inside
                 presses/lifts, so the HUD frame never distorts. An anchor has
                 no built-in press feedback the way index.css's global
-                `button:active` rule provides for every <button> — this is
+                `button:active` rule provides for every <button> - this is
                 the one place in the app that needs its own. */}
             <m.span
               className={styles.press}

@@ -15,7 +15,7 @@ export function countryName(iso2) {
   return regionNames.of(iso2.toUpperCase()) ?? iso2;
 }
 
-// VCT competitive regions — distinct from the ISO country codes above
+// VCT competitive regions - distinct from the ISO country codes above
 const REGION_NAMES = {
   EMEA: 'Europe, Middle East & Africa',
 };
@@ -42,7 +42,7 @@ const PLACEHOLDER_PHOTO = '/assets/players/placeholder.png';
 /**
  * Image for a small, single-layer thumbnail (dense list rows, roster strips).
  *
- * The real vlr.gg photo wins — a bare head cutout is not "a normal picture of
+ * The real vlr.gg photo wins - a bare head cutout is not "a normal picture of
  * the player". The head is only a fallback for cards that have no photo, where
  * it beats showing nothing. Full kit compositing is PlayerPortrait's job; at
  * thumbnail size it isn't worth the extra layers.

@@ -3,7 +3,7 @@ import styles from './StatusStrip.module.css';
 // The page's identity row: mark, title, and an optional count or controls.
 //
 // `crumb` renders as the page's <h1>. Every page previously carried its title
-// in a decorative <span>, so no page had a heading at all — screen-reader users
+// in a decorative <span>, so no page had a heading at all - screen-reader users
 // got a document outline with nothing in it.
 export default function StatusStrip({ crumb, count, children }) {
   return (

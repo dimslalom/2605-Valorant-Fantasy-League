@@ -11,11 +11,11 @@ import styles from './SquadSheet.module.css';
 
 // The squad tab: the same photo band as the review screen's IGL pick (faces
 // rising from the bottom, shadowed background), reused as the one place to
-// see — and sometimes act on — the roster. Held-Tab peek, the SQUAD button,
+// see - and sometimes act on - the roster. Held-Tab peek, the SQUAD button,
 // or pinned open by whichever phase needs a card picked.
 //
-// The band itself stays photos only — that's still the right call, see below
-// — but hovering (or, on touch, tapping) a face now raises a real PlayerCard
+// The band itself stays photos only - that's still the right call, see below
+// - but hovering (or, on touch, tapping) a face now raises a real PlayerCard
 // above the sheet, the same trick SquadDock already uses for its own chips.
 // That's what actually answers "which one has the numbers I want": stamping
 // a bespoke stat readout onto an overlapping, 260px-wide portrait never would
@@ -23,7 +23,7 @@ import styles from './SquadSheet.module.css';
 //
 // action: {
 //   prompt, dismissible, skip?,
-//   pickable?: false,       // prompt/pin only — the pick happens elsewhere
+//   pickable?: false,       // prompt/pin only - the pick happens elsewhere
 //                           // (e.g. SquadHero's own clickable faces)
 //   onPick(card), isEligible?(card),  // required unless pickable: false
 //   confirmPrompt?(card),    // touch step 2 wording; defaults to
@@ -75,7 +75,7 @@ export default function SquadSheet({
     if (previewId) setPreviewId(null);
   }
 
-  // Clears any live preview/arm before actually closing — covers every
+  // Clears any live preview/arm before actually closing - covers every
   // user-driven dismiss (Escape, the close button, the backdrop). A phase
   // moving on from under the sheet is covered separately, by the actionKey
   // reset above (the action's identity changes at the same time).
@@ -179,7 +179,7 @@ export default function SquadSheet({
                   // ring pulse on top of the existing scale-up, so "tap again
                   // to confirm" reads as a distinct event rather than just a
                   // bigger photo. Color/shadow only (no scale/transform here
-                  // — that's already the CSS .faceArmed rule's job), so it
+                  // - that's already the CSS .faceArmed rule's job), so it
                   // stays legible under reduced motion too.
                   animate={armed ? { boxShadow: ['0 0 0 0px transparent', '0 0 0 6px var(--accent-soft)', '0 0 0 0px transparent'] } : { boxShadow: '0 0 0 0px transparent' }}
                   transition={armed ? { duration: DUR.hero, ease: EASE.out } : { duration: 0 }}

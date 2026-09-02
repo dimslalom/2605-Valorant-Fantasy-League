@@ -6,7 +6,7 @@
    draw lines are the playoff bracket connectors, where the line IS the data. */
 
 .shell {
-  /* Tokens come from the global :root in styles/tokens.css — this used to
+  /* Tokens come from the global :root in styles/tokens.css - this used to
      redeclare its own copy (the exact anti-pattern tokens.css's own header
      now warns against) under --surface/--surface-hi/--line aliases. */
   min-height: 100%;
@@ -22,7 +22,7 @@
   z-index: 1;
   margin-left: calc(var(--rail-size) + var(--safe-l));
   margin-right: var(--safe-r);
-  /* dvh, not vh — see AppFrame. */
+  /* dvh, not vh - see AppFrame. */
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -45,6 +45,33 @@
   max-width: none;
   min-height: 100dvh;
   padding: 0;
+}
+
+/* The draft/unboxing screen used to sit at the top of `.page` with the rest
+   of the viewport just... blank behind the fixed dock. Stretching `.page`
+   to `.frame`'s full height and centering the pack-rip inside it turns that
+   dead space into stage room for the one thing happening on this screen. */
+.draftPage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+/* PhaseTransition's own wrapper div sits between `.draftPage` and
+   `.draftStage` - it needs to pass the flex height through, not just sit at
+   its content size. */
+.draftPage > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.draftStage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
 }
 
 /* Same page-level gutters as Multiplayer Lock In (var(--sp-8) top/sides),
@@ -107,7 +134,7 @@
 
 /* ── Skip hint: the shared skippable-timeline affordance (intro splash,
    series-end pause, board-complete pause, live match reveal, bracket
-   travel). A screen-wide bar pinned to the very top — broadcast-HUD chrome
+   travel). A screen-wide bar pinned to the very top - broadcast-HUD chrome
    (a live-progress line, the kind a stream overlay would draw), not a
    floating pill fighting for space with the dock below. The track itself is
    inert (pointer-events: none) so it never blocks the page underneath it;
@@ -133,7 +160,7 @@
 .skipFill {
   height: 100%;
   background: var(--accent);
-  /* Indeterminate cases (match reveal, bracket travel) pass no --progress —
+  /* Indeterminate cases (match reveal, bracket travel) pass no --progress -
      defaulting to 1 draws a plain full bar instead of a draining one, since
      there's no known duration to count down. */
   transform: scaleX(var(--progress, 1));
@@ -200,7 +227,7 @@
   border: none;
   color: var(--ink);
   text-align: left;
-  /* Card Table hard shadow (no clip-path here — it would clip the offset). */
+  /* Card Table hard shadow (no clip-path here - it would clip the offset). */
   box-shadow: var(--shadow-card);
 }
 /* red fill sweep on hover, playvalorant style */
@@ -264,6 +291,35 @@
 }
 .modeSplitAction:hover { background: var(--accent); color: #fff; }
 
+/* ── Resume tile: a banked endless run, offered above the mode list ── */
+/* Framed the way the ENC tile below is framed - a full thin border in the
+   tile's own accent, never a one-sided edge tab - so "a run in progress"
+   reads as a variant of the same component rather than a different one. */
+.resumeTile {
+  align-items: center;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.resumeMeta {
+  /* Above the tile's sweeping ::before fill. */
+  position: relative;
+  display: flex;
+  gap: var(--sp-4);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.resumeMeta b { color: var(--ink); font-weight: 700; }
+.resumeTile:hover .resumeMeta { color: var(--accent-ink); }
+.resumeTile:hover .resumeMeta b { color: #fff; }
+
 /* ── ENC event tile: gold-framed national-teams event ── */
 .encTile { border: 1px solid var(--gold-dim); }
 .encTile::before { background: var(--gold); }
@@ -307,7 +363,7 @@
   color: var(--faint);
 }
 
-/* Persistent Normal/Fast/Instant pace preference — a speedrunner sets this
+/* Persistent Normal/Fast/Instant pace preference - a speedrunner sets this
    once instead of skipping every auto-advance pause by hand, every run. */
 .speedRow {
   display: flex;
@@ -350,7 +406,7 @@
 }
 
 /* The sliding fill (see PerfectRun.jsx's shared layoutId) sits behind the
-   label text, not as a background-color swap on the button itself — that's
+   label text, not as a background-color swap on the button itself - that's
    what lets it physically travel between Normal/Fast/Instant instead of
    just popping into place on whichever one is clicked. */
 .speedPill {
@@ -1079,7 +1135,7 @@
 .manageScreen {
   position: relative;
   /* Clears the fixed dock (see .withBar .page) AND the fixed roster band
-     that now floats above it — otherwise the report list's last card would
+     that now floats above it - otherwise the report list's last card would
      scroll in underneath both and read as cut off. Generous on purpose: the
      rising portraits themselves bleed further up out of their own box, so
      exact pixel-matching their true visual top isn't the goal here, just
@@ -1087,16 +1143,16 @@
   padding-bottom: 460px;
 }
 
-/* ── Manage screen roster: fixed chrome, not scrolling page content —
+/* ── Manage screen roster: fixed chrome, not scrolling page content -
       rendered as a sibling of SquadBar (outside AnimatePresence/PhaseTransition
       entirely, see PerfectRun.jsx), the same way the dock itself is, so a
       Framer Motion ancestor's `clip-path` wipe can never end up trapping it
       into the wrong containing block for `position: fixed`. Sits right above
-      the dock — `bottom` adds the dock's own `bottom` offset to its measured
+      the dock - `bottom` adds the dock's own `bottom` offset to its measured
       rendered height (its `.inner`'s 116px min-height is a floor, not the
       real height once the IGL slot's own overshoot and the pack badge are
       accounted for; 132px covers the actual ~127px with a few px of clean
-      seam left over) — and shares its z-index exactly, so the two read as
+      seam left over) - and shares its z-index exactly, so the two read as
       one continuous piece of chrome while the team-power panel and report
       history behind both remain normal, fully interactive/readable page
       content underneath. */
@@ -1189,7 +1245,7 @@
 .swapConfirmActions { display: flex; gap: 12px; }
 .swapHint { font-size: 13px; color: var(--muted); max-width: 220px; text-align: center; margin: 0 auto 24px; }
 
-/* ── IGL tag — sits on a squadHero face (manage screen); the face itself
+/* ── IGL tag - sits on a squadHero face (manage screen); the face itself
       already carries position: relative. ── */
 .squadIgl {
   position: absolute;
@@ -1209,7 +1265,7 @@
       into the page so it reads as a broadcast intro plate. ── */
 .squadHero {
   position: relative;
-  /* Bleeds to the frame, not the viewport — see --frame-inset. */
+  /* Bleeds to the frame, not the viewport - see --frame-inset. */
   width: calc(100vw - var(--frame-inset));
   margin-left: calc(50% - (100vw - var(--frame-inset)) / 2);
   height: 300px;
@@ -1240,7 +1296,7 @@
 .heroFace > div {
   display: block;
   width: 100%;
-  height: auto;  /* see .castFace — the width/height attributes must not pin height */
+  height: auto;  /* see .castFace - the width/height attributes must not pin height */
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.6));
 }
 
@@ -1305,7 +1361,7 @@
   /* Required: the portrait <img> carries width/height attributes (they give
      lazy-loaded images an intrinsic ratio so they can't collapse to zero).
      Without height:auto the attribute wins and every photographed player
-     renders a fixed 412px tall — five times its neighbours. */
+     renders a fixed 412px tall - five times its neighbours. */
   height: auto;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.6));
 }
@@ -1375,7 +1431,128 @@
   margin-bottom: 4px;
 }
 .castSideRight .castPower { justify-content: flex-end; }
-.castPlayer { font-size: 13px; color: var(--muted); }
+/* Broadcast roster row: portrait, name, rating. The face is what makes a
+   squad recognisable during a match - the band behind the plate is a 16%
+   backdrop wash and was never legible as identification. */
+.castPlayer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.castPlayer[data-triggered="true"] {
+  animation: specialtyCardPulse var(--dur-transform) var(--ease-out);
+}
+.castTrigger {
+  position: absolute;
+  left: 38px;
+  bottom: calc(100% - 2px);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  white-space: nowrap;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 700 9px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: .06em;
+  pointer-events: none;
+  animation: specialtyChip var(--dur-transform) var(--ease-out) both;
+}
+.castTrigger i { font-style: normal; opacity: .76; }
+.castSideRight .castTrigger { left: auto; right: 38px; }
+.castScore[data-specialty-active="true"] {
+  animation: specialtyThreshold 80ms steps(2, end);
+}
+@keyframes specialtyCardPulse {
+  0%, 100% { transform: translateY(0); }
+  32% { transform: translateY(-10px); }
+}
+@keyframes specialtyChip {
+  from { opacity: 0; transform: translateY(5px); }
+  35% { opacity: 1; }
+  to { opacity: 0; transform: translateY(-12px); }
+}
+@keyframes specialtyThreshold {
+  0%, 100% { transform: translateX(0); }
+  33% { transform: translateX(-1.5px); }
+  66% { transform: translateX(1.5px); }
+}
+/* The right-hand team reads inward, mirroring the plate's text alignment. */
+.castSideRight .castPlayer { flex-direction: row-reverse; }
+
+.castPlayerFace {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 34px;
+  overflow: hidden;
+  background: var(--surface-hi);
+}
+
+/* The composite is a full head-and-shoulders card plane, so it is scaled up
+   and pinned to the top of the box to crop down to just the head. */
+.castPlayerFace > img,
+.castPlayerFace > div {
+  display: block;
+  width: 100%;
+  height: auto;   /* see .castFace - width/height attrs must not pin height */
+  transform: scale(1.5);
+  transform-origin: top center;
+}
+
+.castPlayerInitial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.castPlayerName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.castIglTag {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.castPlayerRating {
+  flex-shrink: 0;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .castPlayer[data-triggered="true"], .castTrigger, .castScore[data-specialty-active="true"] { animation:none; }
+  .castPlayer[data-triggered="true"] { outline:2px solid var(--accent); outline-offset:2px; }
+}
 
 .castMaps { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
 .castMapRow {
@@ -1427,7 +1604,7 @@
       also colors losses. PackRip/PackTear now live in their own CSS modules
       (moved out to de-duplicate against Multiplayer.jsx's identical markup),
       so their recolored bits (.laneLabel, PackTear's foil fallback fill)
-      can't be reached by a same-module descendant selector anymore —
+      can't be reached by a same-module descendant selector anymore -
       bridged via custom properties instead, each consumed with a non-ENC
       fallback in its own module. ── */
 .encTheme {
@@ -1451,7 +1628,7 @@
 .encTheme .bracketCell.playerMatch .bracketTeam { background: var(--gold-soft); }
 
 .encResult { padding-bottom: 54px; }
-.encResult > h1 { margin: 10px 0; font-size: clamp(34px, 6vw, 72px); text-transform: uppercase; }
+.encResult > h1 { margin: 10px 0; font-size: clamp(38px, 7vw, 84px); text-transform: uppercase; }
 .encRecordStrip {
   display: flex;
   gap: 28px;
@@ -1463,7 +1640,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
-.encRecordStrip b { margin-left: 7px; color: var(--gold); font-size: 18px; }
+.encRecordStrip b { margin-left: 7px; color: var(--gold); font-size: 15px; }
 
 /* ── Leaderboard panel (menu) ── */
 .boardToggle {
@@ -1562,7 +1739,7 @@
 .boardScore { font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ── Bottom bar clearance: the squad dock + phase actions live in the
-      shared SquadBar component (src/components/SquadBar.module.css) now —
+      shared SquadBar component (src/components/SquadBar.module.css) now -
       this page only needs to reserve room for it under the scrollable
       content. ── */
 .withBar .page { padding-bottom: 158px; }
@@ -1606,11 +1783,14 @@
   .castSide { padding: 12px; }
   .castSideLeft { grid-area: left; }
   .castSideRight { grid-area: right; }
-  .castTeamName { font-size: 14px; }
+  .castTeamName { font-size: 15px; }
   .castTeamName img { width: 24px; height: 24px; }
-  .castBig { font-size: 46px; }
   .castPower { font-size: 10px; }
-  .castPlayer { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  /* The row is a flex line now, so the ellipsis belongs on the name, not the
+     row; the portrait shrinks with it so five rows still fit a phone plate. */
+  .castPlayer { overflow: hidden; font-size: 10px; }
+  .castPlayerFace { width: 24px; height: 27px; }
+  .castPlayerRating { font-size: 10px; }
   .castMapRow { padding: 6px 8px; gap: 7px; }
   .castMapMvp { display: none; }
   .castMapRow { grid-template-columns: 1fr auto; }
@@ -1652,8 +1832,1034 @@
   .countryGrid { grid-template-columns: 1fr; }
   .swapArea { gap: 24px; }
   .modeSplit { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .resumeTile { flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
   .modeSplitActions { width: 100%; }
   .modeSplitAction { flex: 1; }
   .boardPanel { max-width: none; }
   .withBar .page { padding-bottom: 174px; }
 }
+
+/* ── Circuit standing: the three-tier ladder, and this year's movement ── */
+/* The ladder IS the difficulty curve, so where you sit and how close you are
+   to moving has to read at a glance. Flat surfaces and a single accent, in
+   keeping with the rest of the between-rounds chrome. */
+.circuit {
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.circuitHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+}
+
+/* A real heading now - the panel's title, not a mono label indistinguishable
+   from the values sitting next to it. */
+.circuitTitle {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.circuitWhen {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  background: var(--surface-hi);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Rank badge + its own meter, replacing the flat "Label 0" readout - how
+   close the next rank is becomes a bar, not a subtraction the player has to
+   do in their head. */
+.circuitRank {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.circuitRankBadge {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  background: var(--surface-hi);
+  color: var(--ink);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+/* The two ranks that mean rival orgs are actually calling - same accent the
+   rest of the chrome reserves for "this matters now". */
+.circuitRankBadge[data-rank='elite'],
+.circuitRankBadge[data-rank='dynasty'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.circuitRankTrack {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  background: var(--surface-hi);
+}
+
+.circuitRankFill {
+  display: block;
+  height: 100%;
+  background: var(--accent-soft);
+}
+
+.circuitRankValue {
+  flex-shrink: 0;
+  min-width: 2.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Three equal segments: the whole ladder is always visible, so promotion and
+   relegation are both legible as destinations rather than surprises. */
+.circuitTiers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin: 0 0 var(--sp-2);
+  padding: 0;
+  list-style: none;
+}
+
+.circuitTier {
+  padding: var(--sp-2) var(--sp-1);
+  background: var(--surface-hi);
+  color: var(--muted);
+  text-align: center;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.circuitTier[data-state='current'] { background: var(--accent); color: var(--accent-ink); }
+/* Tiers already climbed stay lit but quiet - progress you keep. */
+.circuitTier[data-state='below'] { color: var(--ink); }
+
+.circuitMove {
+  margin: 0 0 var(--sp-2);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.circuitMove[data-move='relegate'] { color: var(--muted); }
+
+.circuitTrack {
+  position: relative;
+  height: 6px;
+  background: var(--surface-hi);
+}
+
+.circuitFill {
+  display: block;
+  height: 100%;
+  background: var(--accent-soft);
+}
+
+.circuitPin {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--accent);
+  transform: translateX(-1px);
+}
+
+.circuitScale {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.circuitScale [data-edge='rise'] { color: var(--ink); }
+
+@media (max-width: 680px) {
+  .circuitScale { letter-spacing: 0.08em; }
+  .circuitTier { letter-spacing: 0.06em; }
+  /* The year/event crumb is repeated by the intro splash; drop it here
+     rather than let three mono labels wrap on a phone. */
+  .circuitWhen { display: none; }
+}
+
+/* ── Squad development report: what the year did to your players ── */
+.squadReport {
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.squadReportHead {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.squadReportList { margin: 0; padding: 0; list-style: none; }
+
+.squadReportRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+}
+
+.squadReportName { color: var(--ink); font-size: 13px; }
+
+.squadReportNote {
+  flex: 1;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.squadReportDelta {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* Growth and legend read as gains; decline stays quiet rather than alarming -
+   a fading veteran is a story, not an error state. */
+.squadReportRow[data-kind='growth'] .squadReportDelta,
+.squadReportRow[data-kind='legend'] .squadReportDelta { color: var(--accent); }
+
+
+/* ── Academy prospect ── */
+/* The card does the talking: it already carries age, a PROSPECT chip and a
+   headroom bar, so nothing here needs to claim the player has a future. */
+.prospect,
+.poach {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* The one panel that is asking a question, framed so it reads as such. */
+.poach {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  box-shadow: none;
+}
+
+.prospectCard,
+.poachCard,
+.marketCard {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.prospectSide,
+.poachBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.prospectHead {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.poachName { font-size: 15px; color: var(--ink); }
+
+/* The terms as two badges, not a sentence spelling them out — same idiom
+   the transfer market's sign price and the chemistry panel's badge use:
+   a number reads as a number when it's tagged, not embedded in a phrase. */
+.poachTerms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.poachTerm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: var(--surface-hi);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+.poachTerm b { font-weight: 700; }
+.poachTerm small {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.poachTerm[data-ok='false'] { background: var(--surface-alt); color: var(--faint); }
+.poachTerm[data-ok='false'] small { color: var(--faint); }
+.poachTermIcon { width: 12px; height: 17px; object-fit: cover; display: block; }
+
+.prospectActions,
+.poachActions { display: flex; align-items: flex-start; gap: var(--sp-2); }
+
+/* Why the button next to it is greyed out, spelled out in place instead of
+   making the player subtract the two badges above themselves. */
+.poachRefuse { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.poachShort {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* ── Transfer market ──
+   No surface/shadow and no width cap: unlike the news card beside it, this
+   shelf fills the full desk column - it's the widest thing on the manage
+   screen, not another boxed card. */
+.market {
+  width: 100%;
+  padding: var(--sp-3);
+}
+
+.news {
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.marketHeadRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.marketHead,
+.marketMeta,
+.newsHead {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.marketMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.marketMeta b { color: var(--ink); }
+.marketPackIcon { width: 14px; height: 20px; object-fit: cover; display: block; }
+.newsHead { display: block; margin-bottom: var(--sp-2); }
+.marketEmpty { margin: 0; font-size: 12px; color: var(--muted); }
+
+/* Cost as a pack icon plus the count, on the sign button - replacing the
+   words "N packs" the same way the dock's own pack badge reads icon + digit
+   instead of a sentence. */
+.marketCost { display: inline-flex; align-items: center; gap: 4px; }
+.marketCostIcon { width: 12px; height: 17px; object-fit: cover; display: block; }
+.marketCost b { font-variant-numeric: tabular-nums; }
+
+/* Cards in a row that scrolls rather than wraps - the shortlist is a shelf
+   you look along, and wrapping would make its length feel like a wall.
+   overflow-x: auto forces overflow-y to auto too (the CSS spec won't leave
+   one axis truly `visible` next to a scrollable one), so anything that
+   moves past the card's own box - hover tilt/lift, the focus ring, the
+   scroll lean below - gets guillotined at the list's edge unless there's
+   slack to move into. The extra padding is that slack: sized to the
+   biggest bleed (a leaned, hover-lifted card), not the card itself, with a
+   matching negative margin so it doesn't also push the row's own layout
+   around. */
+.marketList {
+  display: flex;
+  gap: var(--sp-3);
+  margin: -36px 0 0;
+  padding: 36px 12px var(--sp-2);
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-bracket) transparent;
+  /* Now that the shelf runs the full frame width, a card sitting at the
+     scroll boundary gets cut off mid-card rather than ending on whitespace
+     like the old boxed-in version did - masking the horizontal edges reads
+     as "more to scroll to" instead of a hard clip. Vertical is untouched
+     (the gradient only varies left-to-right), so the hover lift/focus ring
+     slack above still shows in full. */
+  -webkit-mask-image: linear-gradient(to right, transparent, black var(--sp-10), black calc(100% - var(--sp-10)), transparent);
+  mask-image: linear-gradient(to right, transparent, black var(--sp-10), black calc(100% - var(--sp-10)), transparent);
+}
+
+.marketPick {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+/* The scroll lean (see useScrollLean) tips the card from its base, like it's
+   set down on a shelf rather than floating at its own center. */
+.marketCard {
+  transform: rotate(var(--lean, 0deg));
+  transform-origin: 50% 100%;
+}
+
+/* ── News feed ── */
+.newsList { margin: 0; padding: 0; list-style: none; }
+
+.newsRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+}
+
+.newsTitle { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); }
+
+.newsNote {
+  flex-shrink: 0;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.newsDot {
+  flex-shrink: 0;
+  width: 30px;
+  height: 34px;
+  background: var(--surface-hi);
+}
+
+@media (max-width: 680px) {
+  /* Card and copy stay side by side; the actions drop to their own full-width
+     row so a button never has to wrap its own label. */
+  .prospect,
+  .poach {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+  .prospectActions,
+  .poachActions { grid-column: 1 / -1; }
+  .prospectActions > *,
+  .poachActions > * { flex: 1; }
+  .poachRefuse > button { width: 100%; }
+  .newsNote { display: none; }
+}
+
+/* ── Squad development report: what the year did to your players ── */
+.squadReport {
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.squadReportHead {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.squadReportList { margin: 0; padding: 0; list-style: none; }
+
+.squadReportRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) 0;
+}
+
+.squadReportName { color: var(--ink); font-size: 13px; }
+
+.squadReportNote {
+  flex: 1;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.squadReportDelta {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+/* Growth and legend read as gains; decline stays quiet rather than alarming -
+   a fading veteran is a story, not an error state. */
+.squadReportRow[data-kind='growth'] .squadReportDelta,
+.squadReportRow[data-kind='legend'] .squadReportDelta { color: var(--accent); }
+
+
+/* ── Academy prospect offer ── */
+.prospect {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.prospectFace {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 50px;
+  overflow: hidden;
+  background: var(--surface-hi);
+}
+.prospectFace > img,
+.prospectFace > div {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scale(1.5);
+  transform-origin: top center;
+}
+
+.prospectBody { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+
+.prospectHead {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.prospectName { font-size: 15px; color: var(--ink); }
+.prospectNote { font-size: 12px; color: var(--muted); }
+
+.prospectActions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+
+@media (max-width: 680px) {
+  .prospect { flex-wrap: wrap; }
+  .prospectActions { width: 100%; }
+}
+
+.manageScreen[data-dense='true'] { padding-bottom: 190px; }
+
+/* ── Poach offer: a rival has come for one of yours ── */
+/* Framed in accent, the way the resume tile is, because it is the one thing
+   on the screen that is actually asking you a question. */
+.poach {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-3);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+}
+
+.poachFace {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 50px;
+  overflow: hidden;
+  background: var(--surface-hi);
+}
+.poachFace > img,
+.poachFace > div {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: scale(1.5);
+  transform-origin: top center;
+}
+
+.poachBody { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+
+.poachHead {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.poachName { font-size: 15px; color: var(--ink); }
+.poachNote { font-size: 12px; color: var(--muted); }
+.poachActions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+
+/* ── The desk ──────────────────────────────────────────────────────────────
+   Between-tournaments is a manager's desk, not a results page. It is laid
+   out for the fullest case (endless) and simply has fewer regions in the
+   modes that carry less.
+
+   Two rules shape it. Decisions come first and disappear when answered, so
+   the top of the screen is a worklist rather than a dashboard. And the squad
+   lives HERE rather than in the bottom bar - the dock's chips morph up into
+   it on arrival, which is the screen's one authored moment. */
+
+.desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-content: start;
+  width: min(100%, var(--content-max));
+  margin: 0 auto;
+  /* Clears the fixed dock, which is taller on this screen because the squad
+     is the subject here and its cards are drawn larger. Measured against the
+     bar's own height rather than guessed. */
+  padding-bottom: 250px;
+}
+
+/* A separate grid is the sticky feed's containing block. Keeping this pair
+   in its own wrapper makes the feed release at the end of Circuit/decisions,
+   before the full-width market begins. */
+.deskTopRow {
+  display: grid;
+  grid-template-columns: minmax(0, 620px) minmax(280px, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+  min-width: 0;
+}
+
+/* Everything before the screen-wide market occupies this left rail: Circuit,
+   decisions, team power and squad development. All four share the academy
+   frame's exact 620px outer width through the grid track itself. */
+.deskTop {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* The feed stays beside every left-column report, then its containing wrapper
+   ends immediately before the market and forces it back into normal flow. */
+.deskSide {
+  position: sticky;
+  top: var(--sp-5);
+  min-width: 0;
+  align-self: start;
+}
+
+/* Screen-wide content begins here, after the sticky pair. */
+.deskRest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+.deskTitle {
+  margin: 0;
+  grid-column: 1 / -1;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+
+/* Below the point a real two-column layout stops paying for itself, the pair
+   stacks and the feed returns to normal document flow. */
+@media (max-width: 900px) {
+  .deskTopRow { grid-template-columns: minmax(0, 1fr); }
+  .deskSide { position: static; }
+}
+
+.deskWarning {
+  margin: 0;
+  padding: var(--sp-3);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Decisions. Present only while something wants an answer. */
+.inbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ── Squad, absorbed from the dock ── */
+.squadDesk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.squadDeskHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+}
+
+.squadDeskLabel {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.squadDeskPower {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.squadDeskPower b { font-size: 22px; color: var(--ink); letter-spacing: -0.01em; }
+.squadDeskPower i { font-style: normal; color: var(--faint); }
+
+.squadDeskPacks {
+  margin-left: auto;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  background: var(--surface-alt);
+  color: var(--ink);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.squadDeskPacks:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
+.squadDeskPacks:disabled { color: var(--faint); cursor: default; }
+
+/* The reasons behind the power number, beside the squad they describe. */
+.squadDeskChem {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2px var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.squadDeskChem li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+.squadDeskChem b { font-variant-numeric: tabular-nums; }
+.squadDeskChem b[data-sign='up'] { color: var(--win); }
+.squadDeskChem b[data-sign='down'] { color: var(--accent); }
+
+.squadDeskRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.squadDeskCell { position: relative; }
+
+/* Rested players read quieter without disappearing - you still need to see
+   who is available to field. */
+.squadDeskCell[data-benched='true'] { filter: saturate(0.3) brightness(0.68); }
+
+.squadDeskCard {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.squadDeskIgl {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  padding: 2px 6px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+/* Load as a bar: empty means under-used, full means burning out. */
+.fatigue {
+  position: absolute;
+  inset: auto 0 -6px 0;
+  height: 3px;
+  background: var(--surface-hi);
+}
+.fatigue::after {
+  content: '';
+  display: block;
+  width: var(--load);
+  height: 100%;
+  background: var(--muted);
+}
+.fatigue[data-high='true']::after { background: var(--accent); }
+
+.squadDeskOpen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  min-height: 128px;
+  border: 1px dashed var(--line-bracket);
+  color: var(--faint);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* The one authored moment: a slot that has just opened arrives rather than
+   simply being there. */
+.squadDeskOpen[data-new='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: slotArrive 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes slotArrive {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Season strip ── */
+.season {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.seasonLabel {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.seasonList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seasonSlot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--sp-3);
+  border: none;
+  background: var(--surface);
+  color: var(--muted);
+  text-align: left;
+  font: inherit;
+}
+
+button.seasonSlot { cursor: pointer; }
+button.seasonSlot:hover { background: var(--surface-hi); }
+.seasonSlot[data-state='won'] { background: var(--accent); color: var(--accent-ink); }
+.seasonSlot[data-state='next'] { background: var(--surface-hi); color: var(--ink); }
+.seasonSlot[data-open='true'] { outline: 1px solid var(--accent); }
+
+.seasonCity {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: currentColor;
+}
+
+.seasonResult {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+@media (max-width: 680px) {
+  .deskTitle { font-size: 28px; }
+  .desk { gap: var(--sp-4); padding-bottom: 210px; }
+  .squadDesk { padding: var(--sp-3); }
+  .squadDeskHead { flex-wrap: wrap; }
+  .seasonList { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .squadDeskOpen[data-new='true'] { animation: none; }
+}
+
+/* ── Team power and the reasons for it ── */
+/* Reading material: the squad itself lives in the dock, where you can move
+   it. This is the arithmetic behind the number, and nothing else. */
+.chem {
+  display: grid;
+  gap: var(--sp-3);
+  width: 100%;
+  max-width: 620px;
+  padding: var(--sp-4);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.chemHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+/* Chemistry's direction, as a colored tag with its own arrow - the thing
+   "chemistry -7" used to make you read is now the thing you see. */
+.chemBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  align-self: center;
+  padding: 3px 8px;
+  background: var(--surface-hi);
+  color: var(--muted);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+.chemBadge[data-sign='up'] { color: var(--win); }
+.chemBadge[data-sign='down'] { color: var(--accent); }
+.chemBadgeArrow { font-size: 10px; }
+
+.chemTotal {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.chemLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.chemLabel i { font-style: normal; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+.chemList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2px var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chemList li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+.chemList b { font-variant-numeric: tabular-nums; }
+.chemList b[data-sign='up'] { color: var(--win); }
+.chemList b[data-sign='down'] { color: var(--accent); }

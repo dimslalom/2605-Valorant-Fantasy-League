@@ -13,7 +13,7 @@ import { getCardSpecialties } from '../data/specialties.js';
 // ── Seeded RNG ───────────────────────────────────────────────────────────────
 
 // The generator's entire state is the single uint32 `a`, and the first thing
-// next() does is advance it — so mulberry32(rngState(r)) resumes r's stream
+// next() does is advance it - so mulberry32(rngState(r)) resumes r's stream
 // exactly. That is what makes an endless run resumable across a reload
 // without replaying it. The arithmetic is untouched, so every seeded stream
 // (the daily seed included) is bit-identical to before `state` existed.
@@ -54,7 +54,7 @@ export function todaySeed() {
   return hashSeed(`vfl-daily-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
 }
 
-function pickN(rng, arr, n) {
+export function pickN(rng, arr, n) {
   const pool = [...arr];
   const out = [];
   while (out.length < n && pool.length) {
@@ -180,7 +180,11 @@ export function specialtyDuelBonus(rng, rosterA, rosterB, iglAId = null) {
   return delta;
 }
 
-export function teamChemistry(roster, iglId) {
+// `opts.extra` ({ total, lines }) lets a caller fold in chemistry the engine
+// itself knows nothing about - endless passes its per-pair bonds through it.
+// Defaulting to {} keeps every existing call byte-identical, which is pinned
+// by a regression test, so Daily / ENC / Multiplayer are untouched.
+export function teamChemistry(roster, iglId, opts = {}) {
   const lines = [];
   let chem = 0;
 
@@ -217,7 +221,7 @@ export function teamChemistry(roster, iglId) {
     }
   }
 
-  // One Trick: mastered a single agent — pays off only when nobody else on
+  // One Trick: mastered a single agent - pays off only when nobody else on
   // the squad plays that agent.
   for (const p of roster) {
     if (!hasSpecialty(p, 'one_trick')) continue;
@@ -283,6 +287,11 @@ export function teamChemistry(roster, iglId) {
     }
   }
 
+  if (opts.extra?.total) {
+    chem += opts.extra.total;
+    lines.push(...(opts.extra.lines ?? []));
+  }
+
   return { total: chem, lines };
 }
 
@@ -300,10 +309,15 @@ function stintsOverlap(a = [], b = []) {
   return false;
 }
 
-export function teamPower(roster, iglId) {
+// `opts.soft` is a flat power addend, used by endless for the soft-stat
+// residual. It is computed by the caller rather than here so the engine never
+// has to import the endless modules (and cannot form an import cycle with
+// them). Absent, this is exactly the old two-argument function.
+export function teamPower(roster, iglId, opts = {}) {
   const base = roster.reduce((s, p) => s + p.rating, 0) / roster.length;
-  const chem = teamChemistry(roster, iglId);
-  return { base, chem: chem.total, power: base + chem.total * 0.6, lines: chem.lines };
+  const chem = teamChemistry(roster, iglId, opts);
+  const soft = opts.soft ?? 0;
+  return { base, chem: chem.total, soft, power: base + chem.total * 0.6 + soft, lines: chem.lines };
 }
 
 function strongestIgl(roster) {
@@ -480,10 +494,6 @@ export const ROUND_META = {
 
 // Standard 16-seed bracket order (0-based seed indices) so higher seeds cannot
 // meet early and each winner feeds the adjacent match in the next round.
-const SEED_ORDER = [
-  [0, 15], [7, 8], [3, 12], [4, 11], [1, 14], [6, 9], [2, 13], [5, 10],
-];
-
 // Every org that can still field five undrafted players; its best five by
 // rating, strongest orgs first.
 //
@@ -491,7 +501,7 @@ const SEED_ORDER = [
 // the old rule dropped the entire org if any one of its players had been
 // drafted, so a five-org draft silently deleted five teams from the opponent
 // pool. Orgs with no depth (only 41 of 159 carry a sixth player) still fall
-// out on their own once they can't field five — which is the rule players
+// out on their own once they can't field five - which is the rule players
 // actually expect.
 export function eligibleOrgs(cards, pickedIds) {
   const byOrg = {};
@@ -562,7 +572,10 @@ function shuffleSeedPots(rng, slots, potSize = 8) {
   return out;
 }
 
-function tournamentForm(rng) {
+// A clamped Gaussian tournament-form roll, sigma 5, bounded +/-8. Shared by
+// ENC and by endless: it is the single mechanism that stops a bracket from
+// being decided entirely by roster quality before a map is played.
+export function tournamentForm(rng) {
   const u1 = Math.max(rng(), Number.EPSILON);
   const u2 = rng();
   const normal = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
@@ -653,25 +666,50 @@ export function buildNationalBracket(rng, cards, playerNationality, playerRoster
 // power (so a tier-2 giant-killer can sneak in); Champions takes exactly the
 // top 15, the strongest possible field. The player is seeded by power with the
 // rest, so a strong squad earns a kinder opening seed.
+// Seed already-chosen teams into a single-elimination bracket. Split out of
+// buildBracket so endless can choose its own field (by circuit tier, with
+// form applied) without duplicating the seeding rules.
+//
+// The field size is read from the entrant list and must be a power of two.
+// seedOrder(16) reproduces the old hardcoded SEED_ORDER exactly, so the
+// sixteen-team path is unchanged; smaller fields let the lower circuits run
+// shorter events, where a title is three series away rather than four.
+export function buildBracketFromTeams(entrants, kind) {
+  const all = [...entrants].sort((a, b) => b.power - a.power);
+  const size = all.length;
+  const roundKeys = mainRoundKeys(size);
+  const key = roundKeys[0];
+  const meta = ROUND_META[key];
+
+  const teams = {};
+  for (const team of all) teams[team.id] = team;
+
+  const order = seedOrder(size); // 1-indexed seeds in bracket order
+  const matches = [];
+  for (let i = 0; i < size; i += 2) {
+    matches.push(makeMatch(all[order[i] - 1].id, all[order[i + 1] - 1].id, meta.bestOf));
+  }
+
+  return {
+    kind, teams,
+    seeds: all.map(team => team.id), // index = seed - 1
+    rounds: [{ key, label: meta.label, bestOf: meta.bestOf, matches }],
+    roundIdx: 0,
+    roundKeys,
+    // The bracket renderer lays out rows from mainSize; without it an
+    // eight-team field would still reserve sixteen teams' worth of slots and
+    // draw empty TBD cells under the real matches.
+    mainSize: size,
+  };
+}
+
 export function buildBracket(rng, cards, pickedIds, playerTeam, kind) {
   const pool = eligibleOrgs(cards, pickedIds);
   const npcs = kind === 'champions'
     ? pool.slice(0, 15)
     : pickN(rng, pool.slice(0, 30), 15);
 
-  const all = [playerTeam, ...npcs].sort((a, b) => b.power - a.power);
-  const teams = {};
-  for (const team of all) teams[team.id] = team;
-
-  const matches = SEED_ORDER.map(([i, j]) =>
-    makeMatch(all[i].id, all[j].id, ROUND_META.r16.bestOf));
-
-  return {
-    kind, teams,
-    seeds: all.map(team => team.id), // index = seed - 1
-    rounds: [{ key: 'r16', label: ROUND_META.r16.label, bestOf: ROUND_META.r16.bestOf, matches }],
-    roundIdx: 0,
-  };
+  return buildBracketFromTeams([playerTeam, ...npcs], kind);
 }
 
 // Pair the winners of the current round into the next. Bracket order means the

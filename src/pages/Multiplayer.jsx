@@ -17,6 +17,7 @@ import useReducedMotion from '../lib/useReducedMotion';
 import styles from './Multiplayer.module.css';
 import hub from '../styles/hub.module.css';
 import soloStyles from './PerfectRun.module.css';
+import { describeNews } from '../engine/endless/news';
 
 const cardMap = new Map(cards.map(card => [card.id, card]));
 // Stable empty-Set default so MultiplayerBracketCell's pending-arrival check
@@ -173,7 +174,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
   const offers = snapshot?.phase === 'draft' ? snapshot.draft?.offers : snapshot?.consolation?.offers;
   const active = snapshot?.competitors.find(player => player.id === activeId);
 
-  // My squad, always — regardless of whose turn it is. The draft/consolation
+  // My squad, always - regardless of whose turn it is. The draft/consolation
   // stage shows whoever is currently opening a pack (often not me); the dock
   // is a fixed "this is you", visible from the first pick through the
   // season's final standings.
@@ -184,7 +185,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
   // Consolation swaps reuse the same squad selection surface as IGL choice.
   const consolationSelected = snapshot?.phase === 'consolation' && activeId === myId && Boolean(snapshot.consolation?.selectedCardId);
 
-  // Shaped for the SquadSheet contract — clicking an eligible card fires the
+  // Shaped for the SquadSheet contract - clicking an eligible card fires the
   // pick directly, no separate per-card button needed.
   const squadAction = snapshot?.phase === 'igl_select' && me
     ? {
@@ -204,7 +205,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
       : null;
 
   // Same three phase actions, shaped for the single-card focus overlay
-  // (opened from a dock chip) instead — a button rather than a bare click,
+  // (opened from a dock chip) instead - a button rather than a bare click,
   // matching the overlay's existing action/onAction contract.
   function chipActionLabel(card) {
     if (snapshot?.phase === 'igl_select' && me) {
@@ -262,7 +263,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
         <div><span className={styles.kicker}>Private lobby</span><h1>{snapshot.code}</h1></div>
         <div className={styles.meta}><b>{snapshot.settings.gameLength}</b>{snapshot.season && <span>Year {snapshot.season.year} · Tournament {snapshot.season.eventIndex + 1}/3</span>}<span>{snapshot.settings.unboxing === 'enc' ? 'National' : 'Normal'} packs</span><span>{snapshot.competitors.length}/16 squads</span></div>
       </header>
-      {connectionStatus !== 'connected' && <p className={styles.connection} role="status">{connectionStatus === 'failed' ? 'Connection failed — retrying automatically. Commands are paused.' : 'Reconnecting — commands are paused until the lobby is back online.'}</p>}
+      {connectionStatus !== 'connected' && <p className={styles.connection} role="status">{connectionStatus === 'failed' ? 'Connection failed - retrying automatically. Commands are paused.' : 'Reconnecting - commands are paused until the lobby is back online.'}</p>}
       {error && <p className={styles.error}>{error}</p>}
 
       {snapshot.phase === 'lobby' && (
@@ -309,6 +310,8 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
           {snapshot.settings.gameLength === 'endless' && isHost && <button className={styles.endless} onClick={() => send('end_endless')}>End run after this tournament</button>}
         </section>
       )}
+
+      {snapshot.settings.gameLength === 'endless' && <CircuitFeed world={snapshot.world} />}
 
       {snapshot.phase === 'season_over' && <Standings snapshot={snapshot} isHost={isHost} send={send} />}
       {snapshot.phase === 'match_ready' && !animationEvent && snapshot.pendingTransition && <TimerBar label="Play match" waitingLabel="Match starts" pending={snapshot.pendingTransition} serverNow={snapshot.serverNow} isHost={isHost} onAdvance={() => send('advance_early')} />}
@@ -358,13 +361,38 @@ function RosterList({ snapshot, isHost, myId, send }) {
   return <div className={styles.rosterList}>{snapshot.competitors.map((player, index) => <div key={player.id} className={styles.rosterRow}><span>{index + 1}</span><b>{player.squadName}{player.id === myId ? ' · YOU' : ''}</b><i className={player.connected ? styles.online : styles.offline}>{player.connected ? 'online' : 'offline'}</i>{player.id === snapshot.hostId && <em>HOST</em>}{isHost && player.id !== myId && snapshot.phase === 'lobby' && <button onClick={() => send('kick_player', { competitorId: player.id })}>Remove</button>}</div>)}</div>;
 }
 
+// The lobby's shared world, as news. There is one card pool and one
+// development map here, so this feed is the same for every competitor - a
+// rival's signing takes that player off YOUR board too, and seeing it is what
+// makes the pool feel contested rather than merely random.
+function CircuitFeed({ world }) {
+  const items = world?.feed ?? [];
+  if (!items.length) return null;
+  return (
+    <section className={styles.circuitFeed}>
+      <span className={styles.circuitFeedHead}>Around the circuit · Year {world.year}</span>
+      <ul className={styles.circuitFeedList}>
+        {items.slice(0, 6).map((item, i) => {
+          const { title, note } = describeNews(item);
+          return (
+            <li key={`${item.y}-${item.t}-${i}`} className={styles.circuitFeedRow}>
+              <span className={styles.circuitFeedTitle}>{title}</span>
+              <span className={styles.circuitFeedNote}>{note}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function Standings({ snapshot, isHost, send }) {
   const rows = Object.values(snapshot.season.standings).sort((a, b) => b.score - a.score || b.titles - a.titles);
   return (
     <section className={styles.standings}>
       <span className={styles.kicker}>Season complete</span>
       <h1>Final standings</h1>
-      {/* Parity with Gauntlet's TournamentResult history rows — same
+      {/* Parity with Gauntlet's TournamentResult history rows - same
           tokenized entrance and stagger, snapping the final order into
           place one row at a time instead of dumping the whole table at
           once. */}
@@ -411,11 +439,11 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
   const overlayRef = useRef(null);
   const wrapRef = useRef(null);
   const reducedMotion = useReducedMotion();
-  // "destinationSlot:teamId" pairs currently mid-flight — that exact
+  // "destinationSlot:teamId" pairs currently mid-flight - that exact
   // destination cell renders "TBD" until its own clone lands, same idiom as
   // Gauntlet's solo bracket. Keyed by slot+team, not bare team id: a
   // winner's id also already sits in its OLD round's cell (the match it
-  // just won, still on screen one column back) — a bare-id Set would mask
+  // just won, still on screen one column back) - a bare-id Set would mask
   // that already-decided source cell too, since the same id legitimately
   // appears in both places.
   const [pendingArrivalIds, setPendingArrivalIds] = useState(EMPTY_TEAM_ID_SET);
@@ -528,7 +556,7 @@ function MultiplayerBracketCell({ tournament, match, pendingArrivalIds = EMPTY_T
   }
   const revealed = Boolean(match.winner);
   // A team mid-flight to this slot renders as TBD until its own clone lands
-  // — data-team-id stays put either way so the travel effect's querySelector
+  // - data-team-id stays put either way so the travel effect's querySelector
   // still finds this row to measure and animate toward. Checked as
   // "thisCellKey:teamId", not bare teamId: a winner's id also already sits
   // in its OLD round's cell one column back (the match it just won), and a

@@ -3,21 +3,21 @@ import useReducedMotion from './useReducedMotion';
 
 // A cancellable auto-advance.
 //
-// The run used to advance itself with bare setTimeout calls — 1900ms after the
-// intro splash, 2200ms after a board completes, 1700ms after a series ends —
+// The run used to advance itself with bare setTimeout calls - 1900ms after the
+// intro splash, 2200ms after a board completes, 1700ms after a series ends -
 // with no countdown and no way out. A player sees each of those dozens of times
 // per run. Two HIG rules apply directly:
 //
 //   "Let people cancel motion. As much as possible, don't make people wait for
 //    an animation to complete before they can do anything, especially if they
-//    have to experience the animation more than once."          — Motion
+//    have to experience the animation more than once."          - Motion
 //   "Minimize use of time-boxed interface elements... Prefer dismissing views
-//    with an explicit action."                    — Accessibility > Cognitive
+//    with an explicit action."                    - Accessibility > Cognitive
 //
 // So every auto-advance goes through here: it reports `remaining` so the UI can
 // show the wait, and `skip` so the player can end it. Under Reduce Motion the
 // wait collapses to `reducedDuration` (0 by default) and the phase advances at
-// once. Timers are cleared on unmount — the discipline the run loop already
+// once. Timers are cleared on unmount - the discipline the run loop already
 // had, now shared.
 //
 //   const { progress, seconds, skip } = useSkippableTimeline({

@@ -1,8 +1,8 @@
 /* Same footprint PackRip's old shake-and-tear pack occupied, so swapping the
    effect didn't need to touch .strip's layout math. `.packWrap` is the only
-   3D context — nothing outside it needs its own perspective. */
-/* Sized to the pack art's own native ratio (595x842 — Card-Front/Inside/Top
-   are all exported at that canvas), not a round 200x290 — that mismatch
+   3D context - nothing outside it needs its own perspective. */
+/* Sized to the pack art's own native ratio (595x842 - Card-Front/Inside/Top
+   are all exported at that canvas), not a round 200x290 - that mismatch
    (0.69 vs the art's 0.71) was forcing `object-fit: cover` to crop a couple
    px off each side. Matching the box to the art's ratio means cover never
    has anything left to crop. */
@@ -10,8 +10,11 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 200px;
-  height: 283px;
+  /* --pack-scale is set by PackRip on the .strip ancestor - 1 (this size)
+     for every caller except the ones that opt into a bigger unboxing
+     moment. */
+  width: calc(200px * var(--pack-scale, 1));
+  height: calc(283px * var(--pack-scale, 1));
   flex-shrink: 0;
   perspective: 1000px;
   transform-style: preserve-3d;
@@ -23,14 +26,14 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  /* contain, not cover — belt-and-suspenders alongside the ratio-matched
+  /* contain, not cover - belt-and-suspenders alongside the ratio-matched
      box above: if a future re-export drifts even slightly off 595x842,
      this letterboxes instead of silently cropping the art again. */
   object-fit: contain;
 }
 .layerInside {
   z-index: 10;
-  /* The one fully-opaque layer in the stack — Front and Top both carry real
+  /* The one fully-opaque layer in the stack - Front and Top both carry real
      transparent regions (the torn notch, the rest of the top foil) that are
      meant to show this through, so only Inside gets a solid fallback fill;
      giving Front/Top one too would paint a flat box behind their real
@@ -42,7 +45,7 @@
   pointer-events: none;
 }
 
-/* Top-anchored, NOT inset:0/height:100% like the other two layers — the top
+/* Top-anchored, NOT inset:0/height:100% like the other two layers - the top
    foil is a short torn-off flap, not a full card face. Stretching it to the
    pack's full height forced its `transform-origin: bottom right` pivot down
    into empty canvas far below the actual visible art, which is why the tear
@@ -78,5 +81,5 @@
 }
 
 @media (max-width: 680px) {
-  .packWrap { width: 160px; height: 226px; }
+  .packWrap { width: calc(160px * var(--pack-scale, 1)); height: calc(226px * var(--pack-scale, 1)); }
 }

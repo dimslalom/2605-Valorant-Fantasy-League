@@ -1,4 +1,4 @@
-/* Extracted from PerfectRun.module.css / duplicated Multiplayer.jsx markup —
+/* Extracted from PerfectRun.module.css / duplicated Multiplayer.jsx markup -
    one pack-rip lane shared by every draft/consolation screen in the app. */
 
 .lane {
@@ -67,19 +67,88 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  height: 336px;
+  /* --pack-scale (set by PackRip.jsx) scales this alongside the pack art and
+     the revealed cards, so the headroom around them stays proportional. */
+  height: calc(336px * var(--pack-scale, 1));
+  /* Overflow-y stays hidden (no vertical scrollbar wanted), but each card's
+     own hover tilt (PlayerCard's default) lifts and scales up - without
+     slack above it, that lift gets guillotined at this box's own edge the
+     instant a card tilts toward you. The extra top padding is that slack,
+     with a matching negative margin so it doesn't also push the next
+     element in the page down. */
+  margin-top: -22px;
   margin-bottom: 26px;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
-  padding: 6px 24px 10px;
+  padding: 28px 24px 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--surface-hi) transparent;
+  /* Side edge fade: the row reads as a shelf that continues past what's
+     visible, not a hard-cropped list - same cue horizontal carousels use
+     everywhere. Applied to the scroll container itself so it fades exactly
+     what's actually clipped by it. */
+  mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 40px, black calc(100% - 40px), transparent);
 }
 .strip::-webkit-scrollbar { height: 10px; }
 .strip::-webkit-scrollbar-track { background: transparent; }
 .strip::-webkit-scrollbar-thumb { background: var(--surface-hi); }
 .strip::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+.idleCard {
+  position: relative;
+  display: block;
+  /* --lean comes from useScrollLean on .strip (see PackRip.jsx) and inherits
+     straight down to every card here - added to, not replacing, each
+     card's own fan angle. */
+  transform: rotate(calc(var(--fan-angle, 0deg) + var(--lean, 0deg)));
+  animation: packFloat var(--pack-wave-period) ease-in-out var(--wave-delay, var(--pack-wave-start)) infinite;
+}
+.impactCard {
+  animation:
+    rarityJolt var(--dur-micro) steps(2, end) var(--pack-impact-delay) 1,
+    packFloat var(--pack-wave-period) ease-in-out var(--wave-delay, var(--pack-wave-start)) infinite;
+}
+.impactCard::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: 12;
+  pointer-events: none;
+  border: 2px solid transparent;
+  border-image: linear-gradient(110deg, #fff, var(--gold), #fff) 1;
+  opacity: 0;
+  animation: edgeFlash var(--dur-micro) linear var(--pack-impact-delay) 1;
+}
+.stripCards:has(.impactCard) {
+  animation: packStageJolt var(--dur-micro) steps(2, end) var(--pack-impact-delay) 1;
+}
+
+@keyframes packFloat {
+  0%,100% { transform:translateY(0) rotate(calc(var(--fan-angle,0deg) + var(--lean, 0deg))); }
+  50% { transform:translateY(-3px) rotate(calc(var(--fan-angle,0deg) + var(--lean, 0deg))); }
+}
+@keyframes rarityJolt {
+  0%, 32%, 66%, 100% { transform: translateX(0) rotate(calc(var(--fan-angle, 0deg) + var(--lean, 0deg))); }
+  33%, 49% { transform: translateX(-3px) rotate(calc(var(--fan-angle, 0deg) + var(--lean, 0deg))); }
+  50%, 65% { transform: translateX(3px) rotate(calc(var(--fan-angle, 0deg) + var(--lean, 0deg))); }
+}
+@keyframes packStageJolt {
+  0%, 100% { transform: translateX(0); }
+  34% { transform: translateX(-3px); }
+  67% { transform: translateX(3px); }
+}
+@keyframes edgeFlash {
+  0% { opacity: 0; }
+  18%, 45% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idleCard,.impactCard,.stripCards:has(.impactCard) { animation:none; transform:none; }
+  .impactCard::after { animation:none; opacity:1; border-color:var(--gold); border-image:none; }
+}
 
 /* Full-width row centered as a group when it fits; `safe center` falls back
    to start alignment when a big ENC nation roster overflows, so the first
@@ -104,9 +173,9 @@
 }
 
 /* The pack's own opening moment now lives in PackTear (drag-to-tear 3D foil
-   peel) — it owns its footprint and reduced-motion branch itself. */
+   peel) - it owns its footprint and reduced-motion branch itself. */
 
 @media (max-width: 680px) {
-  .strip { height: 260px; }
+  .strip { height: calc(260px * var(--pack-scale, 1)); }
   .draftBar { align-items: flex-start; }
 }

@@ -8,6 +8,10 @@ import {
   simNpcMatch,
   teamPower,
 } from './perfectRun.js';
+import { effectiveCard, emptyDev, tickCareerYear } from './endless/career.js';
+import { bondChemistry, pruneBonds, tickBondsAfterEvent } from './endless/bonds.js';
+import { rollNpcSignings } from './endless/market.js';
+import { pushNews } from './endless/news.js';
 
 export const MAX_COMPETITORS = 16;
 export const MAX_SPECTATORS = 32;
@@ -55,8 +59,13 @@ export function createLobbyState({ code, hostId, squadName, settings, seed, now 
     hostMigrationAt: null,
     competitors: [{
       id: hostId, squadName: name, joinedAt: now, connected: false,
-      rosterIds: [], iglId: null,
+      rosterIds: [], iglId: null, bonds: {},
     }],
+    // ONE living world for the whole lobby. `dev` is keyed by card id, and
+    // the card pool is shared, so a player another squad developed - or an
+    // org that faded - is the same for everyone. That is what makes this a
+    // shared world rather than parallel private ones.
+    world: { dev: {}, signedIds: {}, feed: [], year: 0 },
     spectators: [],
     draftedCardIds: [],
     processedCommandIds: [],
@@ -79,7 +88,13 @@ export function migrateLobbyState(state) {
   state.rulesVersion = RULES_VERSION;
   state.endEndlessRequested ??= false;
   state.migrationPending ??= null;
+  state.world ??= { dev: {}, signedIds: {}, feed: [], year: 0 };
+  state.world.dev ??= {};
+  state.world.signedIds ??= {};
+  state.world.feed ??= [];
+  state.world.year ??= 0;
   for (const competitor of state.competitors ?? []) {
+    competitor.bonds ??= {};
     delete competitor.eliminated;
     delete competitor.lives;
     delete competitor.credits;
@@ -128,7 +143,7 @@ export function addCompetitor(state, { id, squadName, now }) {
   }
   state.competitors.push({
     id, squadName: name, joinedAt: now, connected: false,
-    rosterIds: [], iglId: null,
+    rosterIds: [], iglId: null, bonds: {},
   });
   touch(state, now);
 }
@@ -295,11 +310,15 @@ export function makeSnakeOrder(seatOrder, rounds = 5) {
 }
 
 export function buildMultiplayerBracket(state, cards, kind) {
-  const humanTeams = state.competitors.map(player => makeHumanTeam(player, cards));
+  const world = state.world ?? { dev: {}, signedIds: {} };
+  const humanTeams = state.competitors.map(player => makeHumanTeam(player, cards, world));
   const drafted = new Set(state.draftedCardIds);
   const byOrg = {};
-  for (const card of cards) {
-    if (!card.org || drafted.has(card.id)) continue;
+  for (const raw of cards) {
+    // A card a rival signed is off the board for the NPC field too - there is
+    // one pool, and every claim on it is visible to everyone.
+    if (!raw.org || drafted.has(raw.id) || world.signedIds?.[raw.id]) continue;
+    const card = world.dev?.[raw.id] ? effectiveCard(raw, world.dev[raw.id]) : raw;
     (byOrg[card.org] ??= []).push(card);
   }
   const eligible = Object.entries(byOrg)
@@ -355,7 +374,11 @@ function startDraft(state, cards, now) {
 }
 
 function dealDraftOffer(state, cards, now) {
-  const available = cards.filter(card => !state.draftedCardIds.includes(card.id));
+  // A card a rival org signed this year is gone from everyone's pack, the
+  // same way a card another squad drafted already is.
+  const available = cards.filter(card => (
+    !state.draftedCardIds.includes(card.id) && !state.world?.signedIds?.[card.id]
+  ));
   if (!available.length) throw new GameError('cards_exhausted', 'No cards remain.');
   if (state.settings.unboxing === 'normal') {
     state.draft.nation = null;
@@ -530,9 +553,15 @@ function finishTournament(state, cards, now, events) {
     championId,
   });
   for (const row of Object.values(state.season.standings)) row.score = row.titles * 500 + row.matchWins * 100 + row.mapsWon * 20 - row.mapsLost;
+  // Every squad that played this event grows its own chemistry.
+  for (const competitor of state.competitors) {
+    competitor.bonds = tickBondsAfterEvent(competitor.bonds ?? {}, competitor.rosterIds).bonds;
+  }
+
   const finalYearEvent = state.season.eventIndex === 2;
   if (finalYearEvent) {
     completeYear(state);
+    if (state.settings.gameLength === 'endless') tickSharedWorld(state, cards);
     if (state.settings.gameLength === 'year' || state.endEndlessRequested) {
       state.phase = 'season_over';
       state.pendingTransition = null;
@@ -581,6 +610,9 @@ function chooseSwap(state, actorId, replaceCardId, cards, now, events) {
   const index = competitor.rosterIds.indexOf(replaceCardId);
   if (index < 0) throw new GameError('invalid_card', 'Choose a card from your squad to replace.');
   competitor.rosterIds[index] = selected;
+  // The departing player takes their chemistry with them; a bond is with a
+  // person, not a slot.
+  competitor.bonds = pruneBonds(competitor.bonds ?? {}, competitor.rosterIds);
   state.draftedCardIds = state.draftedCardIds.filter(id => id !== replaceCardId);
   state.draftedCardIds.push(selected);
   if (competitor.iglId === replaceCardId) competitor.iglId = bestIgl(competitor.rosterIds, cards);
@@ -616,6 +648,72 @@ function snapshotYearStart(state) {
     titles: row.titles,
     mapsLost: row.mapsLost,
   }]));
+}
+
+// One year of the shared world.
+//
+// Every drafted card develops in ONE dev map, so a player on a rival's squad
+// ages the same way yours does and everyone reads the same numbers. NPC orgs
+// develop and sign from the same free pool, so the field is genuinely shared
+// rather than mirrored per competitor.
+//
+// Uses nextRandom(state), never a local generator: the server is the
+// authority and the whole run has to stay replayable from (seed, counter).
+function tickSharedWorld(state, cards) {
+  const world = state.world;
+  const rng = () => nextRandom(state);
+  const year = (world.year ?? 0) + 1;
+  world.year = year;
+
+  const drafted = new Set(state.draftedCardIds);
+  const news = [];
+
+  // Careers: every card any squad owns.
+  for (const card of cards) {
+    if (!drafted.has(card.id)) continue;
+    const current = world.dev[card.id] ?? emptyDev(card);
+    const before = current.d ?? 0;
+    const { dev } = tickCareerYear(rng, state.seed, card, current, {
+      year,
+      yearsAtOrg: (current.cy ?? 0) + 1,
+      rested: 0,
+      cohesion: 0,
+    });
+    world.dev[card.id] = dev;
+    if ((dev.d ?? 0) !== before) {
+      news.push({ kind: (dev.d ?? 0) > before ? 'growth' : 'decline', cardId: card.id, player: card.player, n: (dev.d ?? 0) - before });
+    }
+  }
+
+  // The market: rival orgs sign from the pool everyone is drawing from.
+  const pool = npcPoolForSignings(state, cards);
+  if (pool.length) {
+    const signings = rollNpcSignings(rng, {
+      pool, cards, world, squadIds: drafted, signedIds: world.signedIds,
+    });
+    world.signedIds = signings.signedIds;
+    news.push(...signings.news);
+  }
+
+  world.feed = pushNews(world.feed, news.slice(0, 12), { year, event: state.season?.eventIndex ?? 0 });
+}
+
+/** Org-shaped rows for the market, drawn from what is still unclaimed. */
+function npcPoolForSignings(state, cards) {
+  const drafted = new Set(state.draftedCardIds);
+  const byOrg = {};
+  for (const card of cards) {
+    if (!card.org || drafted.has(card.id) || state.world.signedIds?.[card.id]) continue;
+    (byOrg[card.org] ??= []).push(card);
+  }
+  return Object.entries(byOrg)
+    .filter(([, roster]) => roster.length >= 5)
+    .map(([org, roster]) => {
+      const top = [...roster].sort(cardSort).slice(0, 5);
+      return { id: org, name: top[0].org_name ?? org, roster: top };
+    })
+    .sort((a, b) => b.roster[0].rating - a.roster[0].rating)
+    .slice(0, 24);
 }
 
 function completeYear(state) {
@@ -677,9 +775,17 @@ function makeMatch(a, b, roundKey, index) {
   };
 }
 
-function makeHumanTeam(competitor, cards) {
-  const roster = competitor.rosterIds.map(id => cardById(cards, id));
-  const power = teamPower(roster, competitor.iglId).power;
+function makeHumanTeam(competitor, cards, world = null) {
+  // Developed cards, plus this squad's OWN per-pair bonds. Development is
+  // shared (one world, one card pool); chemistry is private, because it is a
+  // property of who has played together HERE.
+  const dev = world?.dev ?? {};
+  const roster = competitor.rosterIds
+    .map(id => cardById(cards, id))
+    .map(card => (dev[card.id] ? effectiveCard(card, dev[card.id]) : card));
+  const power = teamPower(roster, competitor.iglId, {
+    extra: bondChemistry(competitor.bonds ?? {}, roster),
+  }).power;
   return {
     id: competitor.id, name: competitor.squadName, tag: competitor.squadName.slice(0, 8).toUpperCase(),
     logo: null, rosterIds: competitor.rosterIds, roster,

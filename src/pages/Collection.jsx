@@ -251,7 +251,7 @@ export default function Collection() {
         )}
 
         {/* Announced so a filter change is perceivable without watching the
-            grid — the result count is the only feedback the search gives. */}
+            grid - the result count is the only feedback the search gives. */}
         <div className={styles.footStrip} role="status" aria-live="polite">
           <span>{anyFilter ? 'Filters active' : 'All players'}</span>
           <span className={styles.footCount}>

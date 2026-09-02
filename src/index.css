@@ -47,7 +47,7 @@ img {
    Every control in the app gets hover, press, focus and disabled treatment
    from here, so a new button is correct before anyone styles it. Per the HIG:
    "A virtual control feels unresponsive without a visual and physical press
-   state" — and on touch :hover never fires, so :active is the only feedback
+   state" - and on touch :hover never fires, so :active is the only feedback
    a finger ever gets.
 
    Opt out of the press transform with [data-no-press] where a component owns
@@ -87,7 +87,7 @@ button:disabled {
 }
 
 /* Suppress the UA ring only where :focus-visible is supported and has already
-   taken over — never leave a control with no indicator. */
+   taken over - never leave a control with no indicator. */
 :focus:not(:focus-visible) {
   outline: none;
 }
@@ -116,11 +116,11 @@ input, select, textarea {
 
    Catch-all, replacing the hand-maintained per-selector allow-lists that had
    already drifted out of date. Animations are neutralised rather than removed
-   so animation-fill-mode: both still applies its end state — killing them
+   so animation-fill-mode: both still applies its end state - killing them
    outright would leave `both`-filled elements stuck at opacity 0.
 
    HIG: "Replacing transitions in x-, y-, and z-axes with fades to avoid
-   motion" — components that need a fade under this setting opt in themselves.
+   motion" - components that need a fade under this setting opt in themselves.
 --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

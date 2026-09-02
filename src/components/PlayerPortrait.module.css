@@ -9,7 +9,7 @@
 }
 
 /* Same composite, sized as a share of its container instead of the card's
-   fixed plane — used by the hero/broadcast bands, where faces are a
+   fixed plane - used by the hero/broadcast bands, where faces are a
    percentage of the band width. The aspect ratio keeps the box in the
    portrait's native proportions so the percentage transforms stay true. */
 .fluid {

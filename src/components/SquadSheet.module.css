@@ -1,4 +1,4 @@
-/* The squad tab: the same language as the review screen's IGL pick — large
+/* The squad tab: the same language as the review screen's IGL pick - large
    portraits rising from the bottom, masked to a soft shadowed fade, no card
    chrome. Minimal on purpose: this is a glance-and-go surface, not a second
    copy of the collection screen. */
@@ -24,7 +24,7 @@
   padding: 0 24px calc(132px + var(--safe-b));
 }
 
-/* A real PlayerCard, raised above the whole sheet on hover/tap — the same
+/* A real PlayerCard, raised above the whole sheet on hover/tap - the same
    trick as SquadDock's .chipPreview. Anchored to .sheet (not a single face)
    because the band below is overflow:hidden with a mask-image fade that
    would clip and dissolve a child positioned inside it; popping into the
@@ -151,7 +151,7 @@
   animation-delay: calc(var(--i) * 70ms);
 }
 /* Both the plain-photo (<img>) and composited (<div>) portrait paths, sized
-   explicitly — a bare photo's HTML width/height attributes (400x412) would
+   explicitly - a bare photo's HTML width/height attributes (400x412) would
    otherwise win over the global `img { max-width: 100% }` reset and stretch
    the image to fill this box instead of scaling it proportionally. Same
    fix as .heroFace's identical pair of rules. */

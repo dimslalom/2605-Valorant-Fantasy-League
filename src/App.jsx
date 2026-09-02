@@ -22,7 +22,7 @@ export default function App() {
           only neutralises CSS transitions/animations, and Framer Motion
           animates via WAAPI + inline styles, neither of which it touches. */}
       <MotionConfig reducedMotion="user">
-        {/* LayoutGroup at the root so layoutId survives createPortal — React
+        {/* LayoutGroup at the root so layoutId survives createPortal - React
             context flows through a portal even though the DOM node doesn't,
             which the dock/sheet/overlay card morphs depend on. */}
         <LayoutGroup>

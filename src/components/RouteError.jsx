@@ -6,7 +6,7 @@ import styles from './RouteError.module.css';
 
 // Shared shell for the two ways a route can fail to render something useful:
 // an unknown path, and a component that threw. Both used to produce a blank
-// page — there was no `*` route and no error boundary.
+// page - there was no `*` route and no error boundary.
 function Fallback({ crumb, title, body, detail }) {
   return (
     <AppFrame>
@@ -48,7 +48,7 @@ export default class RouteErrorBoundary extends Component {
       <Fallback
         crumb="Error"
         title="Something broke on this screen"
-        body="The rest of the app is still fine — head back and try again."
+        body="The rest of the app is still fine - head back and try again."
         // Shown because this is a game people self-host and debug; it is the
         // message only, never a stack.
         detail={this.state.error?.message}

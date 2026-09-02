@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { speedMultiplier, scaleDuration, RUN_SPEEDS } from '../src/lib/useRunSpeed.js';
+import { speedMultiplier, scaleDuration, scaleDurationWithFloor, RUN_SPEEDS } from '../src/lib/useRunSpeed.js';
 
 test('RUN_SPEEDS lists the three supported preferences', () => {
   assert.deepEqual(RUN_SPEEDS, ['normal', 'fast', 'instant']);
@@ -22,4 +22,11 @@ test('scaleDuration applies the multiplier and rounds to a whole ms', () => {
   assert.equal(scaleDuration(2200, 'instant'), 0);
   assert.equal(scaleDuration(2000, 'fast'), 900); // 2000 * 0.45
   assert.equal(Number.isInteger(scaleDuration(1701, 'fast')), true);
+});
+
+test('readability floors survive Fast, Instant, and stale browser preferences', () => {
+  assert.equal(scaleDurationWithFloor(240, 'normal', 240), 240);
+  assert.equal(scaleDurationWithFloor(240, 'fast', 240), 240);
+  assert.equal(scaleDurationWithFloor(240, 'instant', 240), 240);
+  assert.equal(scaleDurationWithFloor(800, 'fast', 240), 360);
 });
