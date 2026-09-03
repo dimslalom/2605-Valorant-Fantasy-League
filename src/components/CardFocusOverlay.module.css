@@ -11,148 +11,181 @@
   backdrop-filter: blur(8px);
 }
 
-.focusContainer {
+/* The card is the page: it sits alone in the middle at near-native size,
+   and everything it cannot say about itself hangs off it on leader lines.
+   The stage is sized to the card so the callouts can be placed against its
+   own edges rather than against the viewport. */
+.focusStage {
   display: flex;
-  align-items: flex-start;
-  gap: 32px;
-  max-width: 90vw;
+  justify-content: center;
+  max-width: 96vw;
 }
 
-.cardColumn {
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
+.cardAnchor {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--card-w);
+  height: var(--card-h);
+  --lead: 44px;
+  --callout-w: 230px;
 }
 
-/* The details page proper: everything the card art only implies, read top
-   to bottom instead of requiring a flip. One bordered column rather than
-   the card/career-panel/sidebar row this used to be - a details PAGE, not
-   three separate cards floating beside the art. */
-.detailPanel {
-  width: 340px;
-  max-height: 82vh;
-  background: var(--bg-deep);
-  border: 1px solid var(--line);
-  padding: 22px;
+.callout {
+  position: absolute;
+  top: var(--at);
+  width: var(--callout-w);
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  overflow-y: auto;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  gap: 7px;
+  transition: opacity var(--dur-hover) var(--ease-out);
 }
 
-.detailHead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Flipped, the card is giving its own full account and the leaders are
+   pointing at marks that have turned away - they step back rather than
+   keep insisting. */
+.cardAnchor[data-flipped='true'] .callout { opacity: .4; }
+
+.callout[data-side='left'] {
+  right: calc(100% + var(--lead));
+  align-items: flex-end;
+  text-align: right;
 }
 
-.detailRating {
-  flex-shrink: 0;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
+.callout[data-side='right'] {
+  left: calc(100% + var(--lead));
+}
+
+/* The hairline that does the pointing, plus the mark where it lands. It
+   fades toward the card so the line reads as an annotation rather than a
+   connector between two equal things. */
+.leader {
+  position: absolute;
+  top: 8px;
+  width: var(--lead);
+  height: 1px;
+}
+
+.callout[data-side='left'] .leader {
+  left: 100%;
+  background: linear-gradient(to right, var(--gold), color-mix(in srgb, var(--gold) 25%, transparent));
+}
+
+.callout[data-side='right'] .leader {
+  right: 100%;
+  background: linear-gradient(to left, var(--gold), color-mix(in srgb, var(--gold) 25%, transparent));
+}
+
+.leader::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+.callout[data-side='left'] .leader::after { right: -2px; }
+.callout[data-side='right'] .leader::after { left: -2px; }
+
+.calloutTitle {
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--gold);
-  font-variant-numeric: tabular-nums;
 }
 
-.detailHeadText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.detailName {
-  font-size: 22px;
+.calloutLead {
+  font-size: 17px;
   font-weight: 700;
+  line-height: 1.15;
   color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.detailSub {
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 700;
+.calloutNote {
+  font: 700 11px/1.3 ui-monospace, Menlo, monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.detailSection {
+.specLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.callout[data-side='left'] .specLine { flex-direction: row-reverse; }
+
+.specText {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-
-.sectionTitle {
-  font: 700 11px/1 ui-monospace, Menlo, monospace;
-  letter-spacing: 0.16em;
-  color: var(--gold);
-  text-transform: uppercase;
-}
-
-.noSpecs {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.specCardsList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.specDetailCard {
-  background: var(--surface-flyout);
-  border: 1px solid var(--line);
-  padding: 14px 16px;
-  /* Sharp bevel instead of a coloured rule - matches the cut corner language
-     used everywhere else (ModeRail items, search fields, chips) rather than
-     inventing a new "accent bar" idiom for just this one card. */
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-}
-
-.specHeader {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 3px;
 }
 
 .specBadgeIcon {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
   background: var(--surface-flyout);
   border: 1.5px solid var(--gold);
-  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--gold);
-  flex-shrink: 0;
 }
 
 .specName {
-  font: 700 14px/1 ui-monospace, Menlo, monospace;
+  font: 700 12px/1 ui-monospace, Menlo, monospace;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink);
 }
 
 .specDesc {
-  font-size: 12.5px;
-  color: var(--muted);
-  line-height: 1.5;
   margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* No room for a margin of annotations: they become a list under the card,
+   keeping the mark but dropping the line that no longer points anywhere.
+   The scroll lives on the backdrop, never on the box around the card: a
+   scroll container clips on BOTH axes, and a card that lifts and rotates
+   under the pointer immediately runs into that invisible edge. */
+@media (max-width: 960px), (max-height: 620px) {
+  .backdrop {
+    justify-content: flex-start;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 72px 0 28px;
+  }
+  .focusStage { padding: 0 16px; }
+  .cardAnchor {
+    width: auto;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .callout {
+    position: static;
+    width: min(320px, 100%);
+    align-items: flex-start;
+    text-align: left;
+  }
+  .callout[data-side='left'] { align-items: flex-start; text-align: left; }
+  .callout[data-side='left'] .specLine { flex-direction: row; }
+  .leader { display: none; }
+  .calloutTitle {
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+    width: 100%;
+  }
 }
 
 /* Notched square rather than a circle - the system has no circular chrome
@@ -210,27 +243,13 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 680px) {
-  .focusContainer {
-    flex-direction: column;
-    align-items: center;
-  }
-  .cardColumn {
-    position: static;
-  }
-  .detailPanel {
-    width: 100%;
-    max-width: 320px;
-    max-height: 60vh;
-  }
-}
-
 /* ── Career: age, stage, and headroom as space rather than prose ── */
 .careerTop {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
 }
 
 .careerStage,
@@ -262,6 +281,7 @@
    hatched extension beyond it. A veteran simply has none. */
 .careerBar {
   position: relative;
+  width: 100%;
   height: 8px;
   background: var(--surface-hi);
 }
@@ -286,6 +306,7 @@
 
 .careerScale {
   display: flex;
+  width: 100%;
   align-items: baseline;
   gap: 10px;
   font-family: ui-monospace, Menlo, monospace;
@@ -300,82 +321,3 @@
 .careerDrift { margin-left: auto; }
 .careerDrift[data-dir='up'] { color: var(--win); }
 .careerDrift[data-dir='down'] { color: var(--accent); }
-
-/* ── Performance: the five stats as bars with their numbers, not a glance
-   at the card art - same track/fill idiom as the career bar above. ── */
-.statList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.statRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.statLabel {
-  width: 78px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.statTrack {
-  flex: 1;
-  height: 6px;
-  background: var(--surface-hi);
-}
-
-.statFill {
-  height: 100%;
-  background: var(--ink);
-}
-
-.statValue {
-  width: 24px;
-  flex-shrink: 0;
-  text-align: right;
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Profile: tier, nationality, region, league, agents - the meta that
-   otherwise only lived on the flip side. ── */
-.metaGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.metaItemWide { grid-column: 1 / -1; }
-
-.metaItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.metaLabel {
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
-
-.metaValue {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-  text-transform: capitalize;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}

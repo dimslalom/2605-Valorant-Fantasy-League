@@ -1,9 +1,11 @@
 .dock {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
   min-width: 0;
 }
+.dock[data-locked='true'] .chips { filter:saturate(.88); }
 
 /* The name may truncate; the pack badge is a control and must not. */
 .dock > .meta { flex-shrink: 0; }
@@ -75,12 +77,52 @@
   opacity:.6;
   translate:0 -24px;
 }
-.chip[data-drop-active="true"]::after {
-  content:'';
+.chip[data-card-active='true'] {
+  z-index:18;
+  translate:0 calc(-.55 * var(--chip-lift, 0px));
+}
+.chipOutline {
   position:absolute;
   inset:-4px;
-  border:2px solid var(--accent);
+  z-index:12;
+  width:calc(100% + 8px);
+  height:calc(100% + 8px);
+  overflow:visible;
+  fill:none;
+  stroke:transparent;
+  stroke-width:5;
+  vector-effect:non-scaling-stroke;
+  stroke-linejoin:miter;
   pointer-events:none;
+}
+.chip[data-card-active='true'] .chipOutline {
+  stroke:var(--gold);
+  animation:activeCardBeat 700ms var(--ease-out) both;
+}
+.chip[data-fatigued='true'] > :first-child {
+  filter:saturate(.72) contrast(.94);
+}
+/* ::after, not ::before: the IGL plate below already owns ::before, and an
+   IGL who is also fatigued had both rules cascading onto the same
+   pseudo-element - the plate kept this one's 5px height and collapsed into a
+   red splinter above the card with its label sliced off.
+   Inset into the art, too. The card silhouette cuts a chevron out of its own
+   bottom corners, so a full-width strip 3px off the chip's box floated in
+   the cut-away as loose dashes either side of the card. */
+.chip[data-fatigued='true']::after {
+  content:'';
+  position:absolute;
+  left:12%;
+  right:12%;
+  bottom:6%;
+  height:4px;
+  z-index:12;
+  background:repeating-linear-gradient(90deg,var(--accent) 0 8px,transparent 8px 12px);
+  pointer-events:none;
+}
+@keyframes activeCardBeat { from { opacity:0; transform:scale(.92); } 45% { opacity:1; } to { opacity:.55; transform:none; } }
+.chip[data-drop-active="true"] .chipOutline {
+  stroke:var(--accent);
   animation:dropWarning var(--dur-hero) ease-in-out infinite alternate;
 }
 .chip:has(+ .chip[data-drop-active="true"]) { translate:-18px 0; }
@@ -118,6 +160,7 @@
   inset: -15px -3px -3px -3px;
   z-index: -1;
   background: var(--accent);
+  clip-path: polygon(0 6.9%, 50% 0, 100% 6.9%, 100% 93.1%, 50% 100%, 0 93.1%);
   color: var(--accent-ink);
   display: flex;
   align-items: flex-start;
@@ -127,12 +170,8 @@
   letter-spacing: 0.1em;
 }
 .chip[data-igl-stamp="true"] { animation:iglStamp var(--dur-hero) var(--ease-out); }
-.chip[data-igl-stamp="true"]::after {
-  content:'';
-  position:absolute;
-  inset:-8px;
-  border:2px solid var(--accent);
-  pointer-events:none;
+.chip[data-igl-stamp="true"] .chipOutline {
+  stroke:var(--accent);
   animation:iglShockwave var(--dur-hero) var(--ease-out) both;
 }
 @keyframes iglStamp {
@@ -300,7 +339,7 @@
   .chip, .chip:hover + .chip, .chip:has(+ .chip:hover), .chipEmpty { transition: none; }
   .chipPreview { animation: none; }
   .chip[data-drop-active="true"],.chip:has(+ .chip[data-drop-active="true"]),.chip[data-drop-active="true"] + .chip { translate:none; }
-  .chip[data-drop-active="true"]::after,.chip[data-igl-stamp="true"],.chip[data-igl-stamp="true"]::after { animation:none; }
+  .chip[data-drop-active="true"] .chipOutline,.chip[data-igl-stamp="true"],.chip[data-igl-stamp="true"] .chipOutline { animation:none; }
   /* Belt-and-suspenders alongside useCardTilt's own prefersReducedMotion()
      check - same guard PlayerCard's `.tilt` uses. */
   .chipEmptyTilt { transform: none !important; }

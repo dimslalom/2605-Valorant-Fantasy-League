@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { m, AnimatePresence } from 'motion/react';
 import { DUR, EASE, STAGGER, eliminationFlash } from '../lib/motion';
@@ -12,6 +13,9 @@ import TacticalButton from '../components/TacticalButton';
 import CountryFlag from '../components/CountryFlag';
 import SquadBar from '../components/SquadBar';
 import SquadDock from '../components/SquadDock';
+import {
+  MapCard, MapDealTable, MapPatchTable, RewardTable, TacticCard, TacticTable,
+} from '../components/SeriesCardTable';
 import MatchBackdrop from '../components/MatchBackdrop';
 import PackRip from '../components/PackRip';
 import allCards from '../data/cards.json';
@@ -32,7 +36,7 @@ import {
 } from '../engine/endless/ladder';
 import { buildEndlessBracket, endlessFieldPool, endlessPlayerPower } from '../engine/endless/field';
 import {
-  SOFT_WEIGHT, cardSignals, effectiveRoster, emptyDev, isLegendEligible, softResidual,
+  SOFT_WEIGHT, cardSignals, effectiveRoster, emptyDev, isClubIconEligible, softResidual,
   tickCareerYear, tickFatigue,
 } from '../engine/endless/career';
 import { bondChemistry, decayIdleBonds, pruneBonds, tickBondsAfterEvent } from '../engine/endless/bonds';
@@ -43,6 +47,12 @@ import {
   rollNpcSignings, rollPoachOffer, signingCost, signingTargets,
 } from '../engine/endless/market';
 import { describeNews, newsKit, pushNews } from '../engine/endless/news';
+import {
+  ENDLESS_POWER_DIVISOR, TACTIC_HAND_MAX, changedMapCards, chooseNpcMap, createTacticInstance,
+  consumeTactic, gainMapMastery, mapActivation, mapCardsForYear, npcTactic, npcTacticChoices,
+  refillTacticHand, rivalMapMastery, tacticActivation,
+  tacticBooster, tacticClash,
+} from '../engine/endless/seriesCards';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
   rollNationality, draftChoices, teamPower, samplePack,
@@ -77,6 +87,75 @@ const ROUND_SCORE_HOLD_MS = 240;
 // check never needs a fresh Set() on every render of every non-traveling cell.
 const EMPTY_TEAM_ID_SET = new Set();
 
+// Scouting deals the opponent's five as cards, at the size the dock uses for
+// a squad chip - big enough to read a name and a rating, small enough that
+// five of them clear a bracket column.
+const SCOUT_SCALE = 0.22;
+const SCOUT_CARD_W = 400 * SCOUT_SCALE;
+const SCOUT_CARD_H = 580 * SCOUT_SCALE;
+const SCOUT_OVERLAP = 18; // px each card is dealt over the one before it
+const SCOUT_GAP = 12;     // px between the spread and the row that opened it
+const SCOUT_EDGE = 10;    // px the spread keeps clear of the viewport
+
+// Resolve an off-screen Endless round with the same cards the player sees:
+// seed decides first pick, both squads pick for roster fit, IGLs generate two
+// contextual calls, and the same soft counter triangle modifies the map. The
+// data is intentionally not stored on the bracket - the result is the durable
+// state, while each map's preparation is consumed as it is played.
+function resolveEndlessNpcMatches(tour, rng, runSeed, year, yearMapByName) {
+  const stage = currentRound(tour);
+  for (const match of stage.matches) {
+    if (match.winner) continue;
+    const teamA = tour.teams[match.a];
+    const teamB = tour.teams[match.b];
+    const dealt = pickMaps(rng, match.bestOf).map(name => yearMapByName.get(name));
+    const masteryA = Object.fromEntries(dealt.map(map => [map.name, rivalMapMastery(runSeed, teamA.id, map.name, year)]));
+    const masteryB = Object.fromEntries(dealt.map(map => [map.name, rivalMapMastery(runSeed, teamB.id, map.name, year)]));
+    const aPicksFirst = seedOf(tour, teamA.id) < seedOf(tour, teamB.id);
+    const firstTeam = aPicksFirst ? teamA : teamB;
+    const secondTeam = aPicksFirst ? teamB : teamA;
+    const firstMastery = aPicksFirst ? masteryA : masteryB;
+    const secondMastery = aPicksFirst ? masteryB : masteryA;
+    const firstPick = chooseNpcMap(dealt, firstTeam.roster, firstMastery);
+    const secondPick = chooseNpcMap(dealt.filter(map => map.id !== firstPick.id), secondTeam.roster, secondMastery);
+    const maps = [firstPick, secondPick, ...dealt.filter(map => map.id !== firstPick.id && map.id !== secondPick.id)];
+    const needed = Math.ceil(match.bestOf / 2);
+    const played = [];
+    let scoreA = 0;
+    let scoreB = 0;
+
+    for (const map of maps) {
+      if (scoreA >= needed || scoreB >= needed) break;
+      const mapA = mapActivation(teamA.roster, map, masteryA[map.name]);
+      const mapB = mapActivation(teamB.roster, map, masteryB[map.name]);
+      const cardA = npcTactic(rng, teamA.roster, map);
+      const cardB = npcTactic(rng, teamB.roster, map);
+      const tacticA = tacticActivation(cardA, teamA.roster, mapA);
+      const tacticB = tacticActivation(cardB, teamB.roster, mapB);
+      const clash = tacticClash(tacticA, tacticB);
+      const result = simMap(
+        rng,
+        teamSimulationPower(teamA) + mapA.bonus + tacticA.bonus + clash.player,
+        teamSimulationPower(teamB) + mapB.bonus + tacticB.bonus + clash.opponent,
+        teamA.roster,
+        teamB.roster,
+        0,
+        teamA.iglId ?? null,
+        teamB.iglId ?? null,
+        { powerDivisor: ENDLESS_POWER_DIVISOR },
+      );
+      played.push({ map: map.name, a: result.a, b: result.b });
+      if (result.winA) scoreA += 1;
+      else scoreB += 1;
+    }
+
+    match.maps = played;
+    match.scoreA = scoreA;
+    match.scoreB = scoreB;
+    match.winner = scoreA > scoreB ? teamA.id : teamB.id;
+  }
+}
+
 const FAN_POOL = allCards.filter(card => card.photo !== '/assets/players/placeholder.png');
 function drawFanCards() {
   const shuffled = [...FAN_POOL];
@@ -86,10 +165,6 @@ function drawFanCards() {
   }
   return shuffled.slice(0, 3);
 }
-
-// Phases where the squad is the player's to arrange, so promoting an IGL is
-// a legitimate action rather than a mid-animation jump.
-const IGL_PHASES = new Set(['manage', 'run', 'result', 'pack']);
 
 export default function PerfectRun() {
   const navigate = useNavigate();
@@ -180,11 +255,24 @@ export default function PerfectRun() {
 
   // tournament
   const [tour, setTour] = useState(null);
-  const [view, setView] = useState('board');           // board | match
+  const [view, setView] = useState('board');           // board | maps | tactic | match | reward
   const [boardState, setBoardState] = useState('pairings'); // pairings | revealing | complete | travel
   const [revealCount, setRevealCount] = useState(0);
   const [maps, setMaps] = useState([]);                // map names for the player's series
   const [mapResults, setMapResults] = useState([]);    // finished {a,b,winA,mvp,map}
+  // Series preparation is made of physical card states rather than modal
+  // forms: a dealt map hand, a persistent five-slot tactic hand, and the
+  // single map currently waiting for a tactic commitment.
+  const [seriesPlan, setSeriesPlan] = useState(null);
+  const [activeMapIndex, setActiveMapIndex] = useState(0);
+  const [tacticHand, setTacticHand] = useState([]);
+  const [opponentTacticHand, setOpponentTacticHand] = useState([]);
+  const [tacticReveal, setTacticReveal] = useState(null);
+  const [mapMastery, setMapMastery] = useState({});
+  const [pendingReward, setPendingReward] = useState(null);
+  const [rewardStep, setRewardStep] = useState('packs');
+  const [tacticOffers, setTacticOffers] = useState([]);
+  const [pendingTactic, setPendingTactic] = useState(null);
   // Holds the series' finished results between "series over" and the
   // skippable pause before returning to the board - null when no series is
   // waiting. A boolean-shaped active flag (`!== null`) rather than the array
@@ -287,6 +375,15 @@ export default function PerfectRun() {
   const cardsById = useMemo(() => new Map(allCards.map(card => [card.id, card])), []);
   const pickedIds = new Set(picks.map(p => p.id));
   const endless = runLength === 'endless';
+  const currentYear = Math.floor(tourIndex / 3) + 1;
+  const yearMapCards = useMemo(
+    () => mapCardsForYear(runSeed ?? 0, currentYear),
+    [runSeed, currentYear],
+  );
+  const yearMapByName = useMemo(
+    () => new Map(yearMapCards.map(card => [card.name, card])),
+    [yearMapCards],
+  );
 
   // Career signals for any card, in endless only. Every surface that shows a
   // player reads from here, so the card, the market and the focus overlay can
@@ -340,7 +437,10 @@ export default function PerfectRun() {
 
   // ── Draft flow ────────────────────────────────────────────────────────────
 
-  function startRun(selectedMode, length = 'season') {
+  // `length` is effectively 'endless' for every mode the menu offers - the
+  // Nations Cup is the one fixed-length event left, and it passes 'season'
+  // explicitly.
+  function startRun(selectedMode, length = 'endless') {
     const seed = newRunSeed(selectedMode);
     rng.current = mulberry32(seed);
     setRunSeed(seed);
@@ -354,6 +454,9 @@ export default function PerfectRun() {
     setLadderMove(null);
     setDev({}); setBonds({}); setYearReport(null); setProspect(null); setYearsCompleted(0);
     setSignedIds({}); setPoachOffer(null); setFeed([]);
+    setTacticHand([]); setMapMastery({}); setSeriesPlan(null); setActiveMapIndex(0);
+    setOpponentTacticHand([]); setTacticReveal(null); setPendingReward(null); setRewardStep('packs');
+    setTacticOffers([]); setPendingTactic(null);
     setPrestige({ level: 0, multiplier: 1, bankedScore: 0 });
     setMode(selectedMode);
     setRunLength(length);
@@ -509,17 +612,110 @@ export default function PerfectRun() {
   function playMatch() {
     if (seriesActive.current) return;
     seriesActive.current = true;
-    const seriesMaps = pickMaps(rng.current, round.bestOf);
-    setMaps(seriesMaps);
     setMapResults([]);
+    setSeriesPlan(null);
+    setActiveMapIndex(0);
+    setOpponentTacticHand([]);
+    setTacticReveal(null);
     setLiveRound(0);
     setRoundPulse(null);
     setRoundTrigger(null);
     setRoundFlash(null);
     setBackdropVariant(v => v + 1); // this series' baseline backdrop
     setZoomLevel(1); zoomLevelRef.current = 1; // every series starts calm
+
+    // The legacy modes keep their existing instant entrance. Endless locks
+    // the dock here and deals the series as cards before any simulation can
+    // start; the state itself is the explanation.
+    if (endless) {
+      const dealt = pickMaps(rng.current, round.bestOf).map(name => yearMapByName.get(name));
+      const higherSeedIsPlayer = seedOf(tour, 'player') < seedOf(tour, opp.id);
+      const opponentMastery = Object.fromEntries(dealt.map(card => [
+        card.name, rivalMapMastery(runSeed, opp.id, card.name, currentYear),
+      ]));
+      const opponentPick = higherSeedIsPlayer ? null : chooseNpcMap(dealt, opp.roster, opponentMastery)?.id;
+      setSeriesPlan({ dealt, higherSeedIsPlayer, playerPick: null, opponentPick, opponentMastery, order: null });
+      setMaps([]);
+      setView('maps');
+      return;
+    }
+
+    const seriesMaps = pickMaps(rng.current, round.bestOf);
+    setMaps(seriesMaps);
     setView('match');
-    animTimer.current = setTimeout(() => playNextMap(seriesMaps, []), 350);
+    animTimer.current = setTimeout(() => playNextMap(seriesMaps, [], null, tacticHand), 350);
+  }
+
+  function chooseSeriesMap(card) {
+    if (!seriesPlan || seriesPlan.playerPick) return;
+    let opponentPick = seriesPlan.opponentPick;
+    if (!opponentPick) {
+      const remaining = seriesPlan.dealt.filter(map => map.id !== card.id);
+      opponentPick = chooseNpcMap(remaining, opp.roster, seriesPlan.opponentMastery)?.id;
+    }
+    const leading = seriesPlan.higherSeedIsPlayer
+      ? [card.id, opponentPick]
+      : [opponentPick, card.id];
+    const order = [
+      ...leading,
+      ...seriesPlan.dealt.map(map => map.id).filter(id => !leading.includes(id)),
+    ];
+    const seriesMaps = order.map(id => seriesPlan.dealt.find(map => map.id === id).name);
+    setSeriesPlan(current => ({ ...current, playerPick: card.id, opponentPick, order }));
+    setMaps(seriesMaps);
+    animTimer.current = setTimeout(
+      () => prepareTacticForMap(seriesMaps, 0, tacticHand),
+      reducedMotion ? 160 : 720,
+    );
+  }
+
+  function prepareTacticForMap(seriesMaps, index, currentHand) {
+    const map = yearMapByName.get(seriesMaps[index]);
+    const replenished = refillTacticHand(rng.current, currentHand, { roster: squad, map });
+    const opponentChoices = npcTacticChoices(rng.current, opp.roster, map);
+    setTacticHand(replenished);
+    setOpponentTacticHand(opponentChoices);
+    setActiveMapIndex(index);
+    setTacticReveal(null);
+    setView('tactic');
+  }
+
+  function commitTactic(instance) {
+    if (tacticReveal || !instance) return;
+    const map = yearMapByName.get(maps[activeMapIndex]);
+    const opponentCard = opponentTacticHand[0] ?? npcTactic(rng.current, opp.roster, map);
+    const playerMap = mapActivation(squad, map, mapMastery[map.name] ?? 0);
+    const opponentMap = mapActivation(
+      opp.roster, map, rivalMapMastery(runSeed, opp.id, map.name, currentYear),
+    );
+    const playerTactic = tacticActivation(instance, squad, playerMap);
+    const opponentTactic = tacticActivation(opponentCard, opp.roster, opponentMap);
+    const clash = tacticClash(playerTactic, opponentTactic);
+    const remainingHand = consumeTactic(tacticHand, instance.uid);
+    const edge = clash.player > clash.opponent ? 'player'
+      : clash.opponent > clash.player ? 'opponent' : 'even';
+    const preparation = {
+      map,
+      playerCard: instance,
+      opponentCard,
+      playerBonus: playerMap.bonus + playerTactic.bonus + clash.player,
+      opponentBonus: opponentMap.bonus + opponentTactic.bonus + clash.opponent,
+      playerActiveIds: [...new Set([...playerMap.activeIds, ...playerTactic.activeIds])],
+      opponentActiveIds: [...new Set([...opponentMap.activeIds, ...opponentTactic.activeIds])],
+    };
+    setTacticHand(remainingHand);
+    setTacticReveal({
+      player: instance,
+      opponent: opponentCard,
+      edge,
+      activeIds: preparation.playerActiveIds,
+      opponentActiveIds: preparation.opponentActiveIds,
+    });
+    playUiSound('specialty');
+    animTimer.current = setTimeout(() => {
+      setView('match');
+      playNextMap(maps, mapResults, preparation, remainingHand);
+    }, reducedMotion ? 240 : 950);
   }
 
   // ── Player series (match view, auto-plays map to map) ────────────────────
@@ -529,7 +725,7 @@ export default function PerfectRun() {
   const mapsLost = mapResults.length - mapsWon;
   const seriesOver = mapsWon >= needed || mapsLost >= needed;
 
-  function playNextMap(seriesMaps, resultsSoFar) {
+  function playNextMap(seriesMaps, resultsSoFar, preparation = null, remainingHand = tacticHand) {
     const wonSoFar = resultsSoFar.filter(r => r.winA).length;
     const lostSoFar = resultsSoFar.length - wonSoFar;
     if (wonSoFar >= needed || lostSoFar >= needed) return;
@@ -540,13 +736,17 @@ export default function PerfectRun() {
     const playerMatchPower = mode === 'enc'
       ? teamSimulationPower(tour.teams.player)
       : endless ? endlessPlayerPower(tour, power.power) : power.power;
+    const mapName = seriesMaps[resultsSoFar.length];
     const result = simMap(
-      rng.current, playerMatchPower, teamSimulationPower(opp), squad, opp.roster,
+      rng.current,
+      playerMatchPower + (preparation?.playerBonus ?? 0),
+      teamSimulationPower(opp) + (preparation?.opponentBonus ?? 0),
+      squad, opp.roster,
       0,
       mode === 'enc' ? (tour.teams.player?.iglId ?? iglId) : iglId,
       opp.iglId ?? null,
+      { powerDivisor: endless ? ENDLESS_POWER_DIVISOR : undefined },
     );
-    const mapName = seriesMaps[resultsSoFar.length];
 
     setLive({ a: 0, b: 0 });
     setLiveRound(0);
@@ -557,16 +757,35 @@ export default function PerfectRun() {
       setLive(null);
       const updated = [...resultsSoFar, { ...result, map: mapName }];
       setMapResults(updated);
+      if (endless) setMapMastery(previous => gainMapMastery(previous, mapName));
 
       const wonNow = updated.filter(r => r.winA).length;
       const lostNow = updated.length - wonNow;
       if (wonNow < needed && lostNow < needed) {
-        animTimer.current = setTimeout(() => playNextMap(seriesMaps, updated), 650);
+        if (endless) {
+          animTimer.current = setTimeout(
+            () => prepareTacticForMap(seriesMaps, updated.length, remainingHand),
+            650,
+          );
+        } else {
+          animTimer.current = setTimeout(() => playNextMap(seriesMaps, updated, null, remainingHand), 650);
+        }
       } else {
-        // Handed off to the seriesEndTimeline below (skippable, run-speed
-        // scaled) rather than a bare setTimeout - pendingBoardReturn flipping
-        // null -> array is what that hook's `active` flag keys off.
-        setPendingBoardReturn(updated);
+        if (endless && wonNow >= needed) {
+          // A series win pays now. The final pays twice; a grand-final loss
+          // has already banked every earlier win instead of deleting a run's
+          // consumed tactics at the last hurdle.
+          setPendingReward({ results: updated, remaining: round.key === 'final' ? 2 : 1 });
+          setRewardStep('packs');
+          setTacticOffers([]);
+          setPendingTactic(null);
+          setView('reward');
+        } else {
+          // Handed off to the seriesEndTimeline below (skippable, run-speed
+          // scaled) rather than a bare setTimeout - pendingBoardReturn flipping
+          // null -> array is what that hook's `active` flag keys off.
+          setPendingBoardReturn(updated);
+        }
       }
     }
 
@@ -660,6 +879,54 @@ export default function PerfectRun() {
     fn?.();
   }
 
+  function finishRewardPick(nextHand = tacticHand) {
+    if (!pendingReward) return;
+    const remaining = pendingReward.remaining - 1;
+    setTacticHand(nextHand);
+    setPendingTactic(null);
+    setTacticOffers([]);
+    if (remaining > 0) {
+      setPendingReward(current => ({ ...current, remaining }));
+      setRewardStep('packs');
+      return;
+    }
+    const results = pendingReward.results;
+    setPendingReward(null);
+    setRewardStep('packs');
+    setView('match');
+    setPendingBoardReturn(results);
+  }
+
+  function chooseRewardPack(kind) {
+    if (kind === 'player') {
+      setPacks(value => value + 1);
+      playUiSound('drop');
+      finishRewardPick();
+      return;
+    }
+    setTacticOffers(tacticBooster(rng.current, 3));
+    setRewardStep('tactics');
+    playUiSound('lift');
+  }
+
+  function chooseRewardTactic(card) {
+    if (!card) return;
+    if (tacticHand.length < TACTIC_HAND_MAX) {
+      finishRewardPick([...tacticHand, card]);
+      playUiSound('drop');
+      return;
+    }
+    setPendingTactic(card);
+    setRewardStep('replace');
+  }
+
+  function replaceRewardTactic(outgoing) {
+    if (!pendingTactic || !outgoing) return;
+    const next = tacticHand.map(card => card.uid === outgoing.uid ? pendingTactic : card);
+    playUiSound('drop');
+    finishRewardPick(next);
+  }
+
   function backToBoard(results) {
     const wonMaps = results.filter(r => r.winA).length;
     const lostMaps = results.length - wonMaps;
@@ -679,7 +946,8 @@ export default function PerfectRun() {
     historyRef.current = nextHistory;
 
     setPlayerResult(tour, results, won);
-    resolveNpcMatches(tour, rng.current);
+    if (endless) resolveEndlessNpcMatches(tour, rng.current, runSeed, currentYear, yearMapByName);
+    else resolveNpcMatches(tour, rng.current);
     setTour({ ...tour });
 
     const npcCount = round.matches.filter(m => !m.isPlayerMatch).length;
@@ -950,6 +1218,19 @@ export default function PerfectRun() {
     };
     setTourResults(rs => [...rs, result]);
 
+    if (endless && champion) {
+      const starterIds = new Set(starters.map(card => card.id));
+      setDev(previous => {
+        const next = { ...previous };
+        for (const card of picks) {
+          if (!starterIds.has(card.id)) continue;
+          const current = next[card.id] ?? emptyDev(card);
+          next[card.id] = { ...current, tw: (current.tw ?? 0) + 1 };
+        }
+        return next;
+      });
+    }
+
     // Endless: an event played together builds the squad's per-pair bonds and
     // costs everyone who started some freshness. Both are per-EVENT; careers
     // tick once a year, where the change is legible as a report.
@@ -988,7 +1269,9 @@ export default function PerfectRun() {
       setReputation(r => Math.min(MAX_REPUTATION, r + reputationDelta(standing.tier, placement)));
     }
     setCurrentResult(result);
-    if (champion) setPacks(p => p + 1);
+    // Endless has already paid each series immediately through the reward
+    // table; legacy modes retain their one-pack title reward.
+    if (champion && !endless) setPacks(p => p + 1);
     if (mode === 'enc') {
       const record = loadSaves();
       record.enc = updateEncRecords(record.enc, {
@@ -1089,8 +1372,8 @@ export default function PerfectRun() {
   // cheaper, and it gives the manage screen a single readable "here is what
   // the year did to your squad" report instead of a trickle of noise.
   function advanceCareers(year, unlock) {
-    const titles = tourResults.filter(r => r.champion).length;
     const changes = [];
+    const signatureTactics = [];
     // Computed OUTSIDE the state updater on purpose. This advances the run's
     // rng and accumulates a report, so it must run exactly once - a functional
     // updater is invoked twice under StrictMode, which would double-advance
@@ -1110,10 +1393,13 @@ export default function PerfectRun() {
           cohesion: bondChemistry(bonds, picks).total,
         });
         let updated = result.dev;
-        // A player who has won enough with you stops declining for good.
-        if (isLegendEligible(updated, titles)) {
-          updated = { ...updated, lg: 1 };
-          changes.push({ id: card.id, player: card.player, kind: 'legend', n: 0 });
+        // Legacy is individual and visible: only title maps this card actually
+        // started count. It earns loyalty, retirement protection and a
+        // signature tactic, but never makes performance immortal.
+        if (isClubIconEligible(updated)) {
+          updated = { ...updated, fi: 1 };
+          changes.push({ id: card.id, player: card.player, kind: 'club_icon', n: 0 });
+          signatureTactics.push(createTacticInstance(rng.current, 'calling', 'owned'));
         }
         next[card.id] = updated;
         const delta = (updated.d ?? 0) - before;
@@ -1132,6 +1418,9 @@ export default function PerfectRun() {
     );
 
     setDev(withWorld);
+    if (signatureTactics.length) {
+      setTacticHand(hand => [...hand, ...signatureTactics].slice(0, TACTIC_HAND_MAX));
+    }
     setYearReport({ year, changes, unlock });
   }
 
@@ -1159,10 +1448,10 @@ export default function PerfectRun() {
       reputation,
       standing,
       prestige,
-      world: { ladder: [[], [], []], orgs: {}, signedIds: {} },
+      world: { ladder: [[], [], []], orgs: {}, signedIds: {}, playerMapMastery: mapMastery },
       dev,
       bonds,
-      market: { signedIds, poachOffer, prospect },
+      market: { signedIds, poachOffer, prospect, tacticHand },
       feed,
       yearSummaries: [],
       tourResults,
@@ -1188,6 +1477,7 @@ export default function PerfectRun() {
   }, [
     endless, phase, tourIndex, yearsCompleted, packs, iglId, picks, tourResults,
     reputation, standing, prestige, dev, bonds, signedIds, poachOffer, prospect, feed,
+    tacticHand, mapMastery,
   ]);
 
   function resumeEndlessRun() {
@@ -1204,6 +1494,8 @@ export default function PerfectRun() {
     setPicks(saved.squad.roster);
     setPacks(saved.packs);
     setProspect(saved.market?.prospect ?? null);
+    setTacticHand(saved.market?.tacticHand ?? []);
+    setMapMastery(saved.world?.playerMapMastery ?? {});
     setSignedIds(saved.market?.signedIds ?? {});
     setPoachOffer(saved.market?.poachOffer ?? null);
     setPrestige(saved.prestige ?? { level: 0, multiplier: 1, bankedScore: 0 });
@@ -1225,6 +1517,8 @@ export default function PerfectRun() {
     // beginBracket - the same reset startRun performs.
     setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
     setMaps([]); setMapResults([]); setLive(null); setLiveRound(0);
+    setSeriesPlan(null); setActiveMapIndex(0); setOpponentTacticHand([]); setTacticReveal(null);
+    setPendingReward(null); setRewardStep('packs'); setTacticOffers([]); setPendingTactic(null);
     setRoundPulse(null); setRoundFlash(null); setBackdropVariant(0);
     setZoomLevel(1); zoomLevelRef.current = 1;
     setPendingBoardReturn(null);
@@ -1405,6 +1699,15 @@ export default function PerfectRun() {
   const todayBest = saves.dailyScores?.[dateKey()];
   const dailyPlayed = todayBest != null;
   const titleCount = (saves.badges?.masters ?? 0) + (saves.badges?.champions ?? 0);
+  // The landing strip shows a record only once it exists, so a first visit is
+  // type and one button rather than a row of zeroes.
+  const records = [
+    { label: 'Best', value: saves.endlessV3?.bestScore ?? 0 },
+    { label: 'Years', value: saves.endlessV3?.bestYears ?? 0 },
+    { label: 'Titles', value: titleCount },
+    { label: 'Slams', value: saves.badges?.grand_slam ?? 0 },
+    { label: 'Perfect', value: saves.badges?.perfect_season ?? 0 },
+  ].filter(record => record.value > 0);
 
   // Open the leaderboard panel and lazy-fetch the tab once per menu visit.
   function openBoard(tab) {
@@ -1521,6 +1824,21 @@ export default function PerfectRun() {
   // copy of your five would just compete with it.
   const dockInBar = barVisible;
   const drawerRoster = picks;
+  const canArrangeLineup = phase === 'run' && view === 'board' && boardState === 'pairings';
+  const activePreparationMap = phase === 'run' && view === 'tactic'
+    ? yearMapByName.get(maps[activeMapIndex]) : null;
+  const activeDockIds = activePreparationMap
+    ? (tacticReveal?.activeIds
+      ?? mapActivation(squad, activePreparationMap, mapMastery[activePreparationMap.name] ?? 0).activeIds)
+    : [];
+  const activeOpponentIds = activePreparationMap && opp
+    ? (tacticReveal?.opponentActiveIds
+      ?? mapActivation(
+        opp.roster,
+        activePreparationMap,
+        rivalMapMastery(runSeed, opp.id, activePreparationMap.name, currentYear),
+      ).activeIds)
+    : [];
   const latestMap = mapResults.at(-1) ?? null;
   const stageScore = live ?? latestMap ?? { a: 0, b: 0 };
 
@@ -1557,98 +1875,100 @@ export default function PerfectRun() {
       <AnimatePresence mode="wait">
       {phase === 'menu' && (
         <PhaseTransition phaseKey="menu">
-        <div className={hub.column}>
-          <div className={`${hub.title} ${styles.rise}`}>
+        <div className={styles.landing}>
+          {/* Atmosphere only. The fan sits behind the menu at full size and
+              never takes a pointer, so the centre column reads first. */}
+          <div className={styles.landingFan} aria-hidden="true">
+            {fanCards.map(card => (
+              <div key={card.id} className={styles.fanCard}>
+                <PlayerCard card={card} displayScale={0.62} portraitLoading="eager" portraitFetchPriority="high" />
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.landingInner}>
             <img
-              className={hub.logotype}
+              className={`${hub.logotype} ${styles.landingLogo} ${styles.rise}`}
               src={assetPath('/assets/brand/gauntlet-logotype.webp')}
               alt="VCT Gauntlet"
             />
-          </div>
+            <p className={`${styles.landingTag} ${styles.rise} ${styles.riseB}`}>
+              Draft a squad. Keep it alive year after year.
+            </p>
 
-          <div className={hub.body}>
-            <div className={styles.menuStack}>
-              <div className={`${styles.menuModes} ${styles.rise} ${styles.riseB}`}>
-                {savedRun && (
-                  <button className={`${styles.modeBtn} ${styles.resumeTile}`} onClick={resumeEndlessRun}>
-                    <span className={styles.modeBtnName}>
-                      Resume Run
-                      <span className={styles.modeBtnFlag}>{savedRun.squadName}</span>
-                    </span>
-                    <span className={styles.resumeMeta}>
-                      <span>Year <b>{savedRun.year}</b></span>
-                      <span>Score <b>{savedRun.score.toLocaleString()}</b></span>
-                    </span>
-                  </button>
-                )}
-                <div className={`${styles.modeBtn} ${styles.modeSplit}`}>
-                  <span className={styles.modeBtnName}>Solo Run</span>
-                  <span className={styles.modeSplitActions}>
-                    <button className={styles.modeSplitAction} onClick={() => startRun('solo', 'season')}>
-                      One Season
-                    </button>
-                    <button className={styles.modeSplitAction} onClick={() => startRun('solo', 'endless')}>
-                      Endless
-                    </button>
-                  </span>
-                </div>
-                {dailyPlayed ? (
-                  <button className={styles.modeBtn} onClick={() => openBoard('today')}>
-                    <span className={styles.modeBtnName}>
-                      Daily Challenge
-                      <span className={styles.modeBtnFlag}>Played</span>
+            <div className={`${styles.landingPlayGroup} ${styles.rise} ${styles.riseB}`}>
+              {savedRun ? (
+                <>
+                  <button
+                    className={styles.landingPlay}
+                    onClick={resumeEndlessRun}
+                    aria-label={`Resume run: ${savedRun.squadName}, year ${savedRun.year}, score ${savedRun.score.toLocaleString()}`}
+                  >
+                    <b>Resume run</b>
+                    <span className={styles.landingPlayMeta}>
+                      {savedRun.squadName} · Year {savedRun.year} · {savedRun.score.toLocaleString()}
                     </span>
                   </button>
-                ) : (
-                  <button className={styles.modeBtn} onClick={() => startRun('daily')}>
-                    <span className={styles.modeBtnName}>Daily Challenge</span>
+                  <button className={styles.landingRestart} onClick={() => startRun('solo', 'endless')}>
+                    Start a new run
                   </button>
-                )}
-                <button className={`${styles.modeBtn} ${styles.encTile}`} onClick={() => startRun('enc')}>
-                  <span className={styles.modeBtnName}>
-                    <span className={styles.encMark} aria-hidden="true">ENC</span>
-                    Esports Nations Cup
-                  </span>
+                </>
+              ) : (
+                <button
+                  className={styles.landingPlay}
+                  onClick={() => startRun('solo', 'endless')}
+                  aria-label="Start an endless run"
+                >
+                  <b>Start a run</b>
+                  <span className={styles.landingPlayMeta}>Endless</span>
                 </button>
-                <button className={styles.modeBtn} onClick={() => navigate('/multiplayer')}>
-                  <span className={styles.modeBtnName}>Multiplayer</span>
-                </button>
-              </div>
-
-              <div className={`${hub.meta} ${styles.recordStrip} ${styles.rise} ${styles.riseC}`}>
-                <span>Best <b><CountUp value={saves.bestScore ?? 0} /></b></span>
-                <span>Endless <b><CountUp value={saves.endlessV3?.bestScore ?? 0} /></b></span>
-                <span>Years <b><CountUp value={saves.endlessV3?.bestYears ?? 0} /></b></span>
-                <span>Titles <b><CountUp value={titleCount} /></b></span>
-                <span>Slams <b><CountUp value={saves.badges?.grand_slam ?? 0} /></b></span>
-                <span>Perfect <b><CountUp value={saves.badges?.perfect_season ?? 0} /></b></span>
-                <button className={styles.boardToggle} onClick={() => (panelOpen ? setPanelOpen(false) : openBoard('today'))}>
-                  {panelOpen ? 'Hide leaderboard' : 'Leaderboard'}
-                </button>
-              </div>
-
-              {panelOpen && (
-                <LeaderboardPanel
-                  tab={boardTab}
-                  onTab={openBoard}
-                  data={boardData}
-                  todayBest={todayBest}
-                />
               )}
             </div>
 
-            <div className={`${styles.menuFan} ${styles.fanIn}`} aria-hidden="true">
-              {fanCards.map(card => (
-                <div key={card.id} className={styles.fanCard}>
-                  <PlayerCard card={card} displayScale={0.52} portraitLoading="eager" portraitFetchPriority="high" />
-                </div>
-              ))}
-            </div>
-          </div>
+            <nav className={`${styles.landingLinks} ${styles.rise} ${styles.riseC}`} aria-label="Other modes">
+              {dailyPlayed ? (
+                <button onClick={() => openBoard('today')}>
+                  Daily<i>played</i>
+                </button>
+              ) : (
+                <button onClick={() => startRun('daily', 'endless')}>Daily</button>
+              )}
+              <button className={styles.landingLinkEnc} onClick={() => startRun('enc', 'season')}>Nations Cup</button>
+              <button onClick={() => navigate('/multiplayer')}>Multiplayer</button>
+            </nav>
 
-          <p className={styles.disclaimer}>
-            Ratings are approximations tuned for game balance, not official VCT statistics.
-          </p>
+            {/* A first run shows nothing here at all - an empty page of zeroes
+                is the worst thing a landing screen can lead with. */}
+            {records.length > 0 && (
+              <div className={`${styles.landingRecords} ${styles.rise} ${styles.riseC}`}>
+                {records.map(record => (
+                  <span key={record.label}>
+                    {record.label} <b><CountUp value={record.value} /></b>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <button
+              className={`${styles.landingBoardToggle} ${styles.rise} ${styles.riseC}`}
+              onClick={() => (panelOpen ? setPanelOpen(false) : openBoard('today'))}
+            >
+              {panelOpen ? 'Hide leaderboard' : 'Leaderboard'}
+            </button>
+
+            {panelOpen && (
+              <LeaderboardPanel
+                tab={boardTab}
+                onTab={openBoard}
+                data={boardData}
+                todayBest={todayBest}
+              />
+            )}
+
+            <p className={styles.landingDisclaimer}>
+              Ratings are approximations tuned for game balance, not official VCT statistics.
+            </p>
+          </div>
         </div>
         </PhaseTransition>
       )}
@@ -1734,7 +2054,54 @@ export default function PerfectRun() {
           registerCell={(k, el) => { if (el) cellRefs.current[k] = el; }}
           bracketRef={bracketRef}
           overlayRef={overlayRef}
+          onInspect={setFocusCard}
         />
+        </PhaseTransition>
+      )}
+
+      {phase === 'run' && view === 'maps' && seriesPlan && opp && (
+        <PhaseTransition phaseKey="run:maps">
+          <MapDealTable
+            maps={seriesPlan.dealt}
+            playerPick={seriesPlan.playerPick}
+            opponentPick={seriesPlan.opponentPick}
+            selectableIds={seriesPlan.playerPick
+              ? new Set()
+              : new Set(seriesPlan.dealt
+                .filter(card => card.id !== seriesPlan.opponentPick)
+                .map(card => card.id))}
+            onPick={chooseSeriesMap}
+            mastery={mapMastery}
+            opponent={opp}
+          />
+        </PhaseTransition>
+      )}
+
+      {phase === 'run' && view === 'tactic' && maps[activeMapIndex] && (
+        <PhaseTransition phaseKey={`run:tactic:${activeMapIndex}`}>
+          <TacticTable
+            map={yearMapByName.get(maps[activeMapIndex])}
+            hand={tacticHand}
+            opponentHand={opponentTacticHand}
+            opponent={opp}
+            opponentActiveIds={activeOpponentIds}
+            onPlay={commitTactic}
+            reveal={tacticReveal}
+          />
+        </PhaseTransition>
+      )}
+
+      {phase === 'run' && view === 'reward' && pendingReward && (
+        <PhaseTransition phaseKey={`run:reward:${pendingReward.remaining}:${rewardStep}`}>
+          <RewardTable
+            step={rewardStep}
+            tacticOffers={tacticOffers}
+            tacticHand={tacticHand}
+            pendingTactic={pendingTactic}
+            onChoosePack={chooseRewardPack}
+            onChooseTactic={chooseRewardTactic}
+            onReplace={replaceRewardTactic}
+          />
         </PhaseTransition>
       )}
 
@@ -1748,16 +2115,21 @@ export default function PerfectRun() {
 
           <div className={`${styles.castSide} ${styles.castSideLeft}`}>
             <span className={styles.castTeamName}>{squadName}</span>
-            <span className={styles.castPower}>
-              Power {power.power.toFixed(1)}
-              {mode === 'enc' && <FormBadge label={tour.teams.player.formLabel} />}
-            </span>
+            {mode === 'enc' && <span className={styles.castPower}><FormBadge label={tour.teams.player.formLabel} /></span>}
             {squad.map(p => (
               <CastPlayer key={p.id} card={p} isIgl={p.id === iglId} trigger={roundTrigger?.side === 'A' && roundTrigger.cardId === p.id ? roundTrigger : null} />
             ))}
           </div>
 
           <div className={styles.castCentre} aria-live="polite">
+            {endless && tacticReveal && yearMapByName.get(maps[mapResults.length]) && (
+              <div className={styles.liveCardRail} aria-label="Cards active on this map">
+                <MapCard card={yearMapByName.get(maps[mapResults.length])} compact />
+                <TacticCard instance={tacticReveal.player} selected disabled compact />
+                <span className={styles.liveCardClash} data-edge={tacticReveal.edge}>×</span>
+                <TacticCard instance={tacticReveal.opponent} selected disabled compact />
+              </div>
+            )}
             <span className={styles.liveTag}>
               {seriesOver
                 ? (mapsWon >= needed ? 'Series won' : 'Series lost')
@@ -1817,10 +2189,7 @@ export default function PerfectRun() {
               {opp.name}
               {opp.logo && <img src={assetPath(opp.logo)} alt="" />}
             </span>
-            <span className={styles.castPower}>
-              Power {opp.power.toFixed(1)}
-              {mode === 'enc' && <FormBadge label={opp.formLabel} />}
-            </span>
+            {mode === 'enc' && <span className={styles.castPower}><FormBadge label={opp.formLabel} /></span>}
             {opp.roster.map(p => (
               <CastPlayer key={p.id} card={p} isIgl={p.id === opp.iglId} trigger={roundTrigger?.side === 'B' && roundTrigger.cardId === p.id ? roundTrigger : null} />
             ))}
@@ -1846,7 +2215,7 @@ export default function PerfectRun() {
           tour={tour}
           saves={saves.enc}
           squadName={squadName}
-          onReplay={() => startRun('enc')}
+          onReplay={() => startRun('enc', 'season')}
           onMenu={() => setPhase('menu')}
         />
         </PhaseTransition>
@@ -1912,6 +2281,9 @@ export default function PerfectRun() {
                     it releases only when the full-width market begins. */}
                 {power && <ChemPanel power={power} />}
                 <SquadReport report={yearReport} squad={squad} />
+                {yearReport && (
+                  <MapPatchTable cards={changedMapCards(runSeed, yearReport.year + 1)} />
+                )}
               </div>
 
               {/* This wrapper is the feed's actual sticky containing block,
@@ -2013,7 +2385,9 @@ export default function PerfectRun() {
               squadName={squadName}
               onFocusCard={setFocusCard}
               focusCardId={focusCard?.id ?? null}
-              onSwap={swapPicks}
+              onSwap={canArrangeLineup ? swapPicks : null}
+              locked={phase === 'run' && !canArrangeLineup}
+              activeIds={activeDockIds}
             />
           ) : null}
           packs={packs}
@@ -2059,7 +2433,7 @@ export default function PerfectRun() {
         // map played. Offered only for cards actually on the squad, and only
         // on the phases where the roster is yours to arrange.
         action={
-          focusCard && IGL_PHASES.has(phase) && picks.some(p => p.id === focusCard.id)
+          focusCard && canArrangeLineup && picks.some(p => p.id === focusCard.id)
             ? { label: focusCard.id === iglId ? 'Is your IGL' : 'Make IGL', disabled: focusCard.id === iglId }
             : null
         }
@@ -2154,7 +2528,7 @@ function CountryPicker({ options, onChoose }) {
 
 // ── Board: the current stage as a live bracket ───────────────────────────────
 
-function Board({ tour, round, boardState, revealCount, outcome, squadName, pendingArrivalIds, registerCell, bracketRef, overlayRef }) {
+function Board({ tour, round, boardState, revealCount, outcome, squadName, pendingArrivalIds, registerCell, bracketRef, overlayRef, onInspect }) {
   const npcMatches = round.matches.filter(m => !m.isPlayerMatch);
   const isRevealed = (m) => {
     if (m.isPlayerMatch) return !!m.winner;
@@ -2194,6 +2568,7 @@ function Board({ tour, round, boardState, revealCount, outcome, squadName, pendi
           bracketRef={bracketRef}
           overlayRef={overlayRef}
           hideCurrentPlayer={false}
+          onInspect={onInspect}
       />
     </section>
   );
@@ -2208,7 +2583,7 @@ function FormBadge({ label, prefix }) {
   );
 }
 
-function Bracket({ tour, currentRoundKey, isRevealed, squadName, pendingArrivalIds, registerCell, bracketRef, overlayRef, hideCurrentPlayer }) {
+function Bracket({ tour, currentRoundKey, isRevealed, squadName, pendingArrivalIds, registerCell, bracketRef, overlayRef, hideCurrentPlayer, onInspect }) {
   const preliminary = tour.rounds.find(round => round.key === 'preliminary');
   const keys = tour.roundKeys ?? ['r16', 'quarter', 'semi', 'final'];
   const baseMatches = (tour.mainSize ?? 16) / 2;
@@ -2236,6 +2611,8 @@ function Bracket({ tour, currentRoundKey, isRevealed, squadName, pendingArrivalI
         pendingArrivalIds={pendingArrivalIds}
         cellKey={key}
         cellRef={el => registerCell(key, el)}
+        scoutable={isCurrent && m?.isPlayerMatch && !m?.winner}
+        onInspect={onInspect}
       />
     );
   };
@@ -2301,7 +2678,42 @@ function Bracket({ tour, currentRoundKey, isRevealed, squadName, pendingArrivalI
   );
 }
 
-function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArrivalIds = EMPTY_TEAM_ID_SET, cellKey, cellRef }) {
+function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArrivalIds = EMPTY_TEAM_ID_SET, cellKey, cellRef, scoutable = false, onInspect }) {
+  // The spread is measured against the viewport and portalled to the body:
+  // the bracket scrolls (`overflow-x: auto` makes its other axis scrollable
+  // too), so a spread positioned inside a row is cropped by that box the
+  // moment the row sits near its top edge. Anchoring to the row's rect also
+  // lets it flip below when there is no room above.
+  const [scout, setScout] = useState(null);
+
+  const closeScout = useCallback(() => setScout(null), []);
+
+  useEffect(() => {
+    if (!scout) return undefined;
+    const onKey = event => { if (event.key === 'Escape') closeScout(); };
+    window.addEventListener('scroll', closeScout, true);
+    window.addEventListener('resize', closeScout);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('scroll', closeScout, true);
+      window.removeEventListener('resize', closeScout);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [scout, closeScout]);
+
+  const toggleScout = (team, element) => {
+    if (scout?.teamId === team.id) { closeScout(); return; }
+    const rect = element.getBoundingClientRect();
+    const count = team.roster.length;
+    const width = count * SCOUT_CARD_W - Math.max(0, count - 1) * SCOUT_OVERLAP;
+    const above = rect.top - SCOUT_CARD_H - SCOUT_GAP > SCOUT_EDGE;
+    const rightmost = Math.max(SCOUT_EDGE, window.innerWidth - width - SCOUT_EDGE);
+    setScout({
+      teamId: team.id,
+      left: Math.min(Math.max(rect.left, SCOUT_EDGE), rightmost),
+      top: above ? rect.top - SCOUT_GAP - SCOUT_CARD_H : rect.bottom + SCOUT_GAP,
+    });
+  };
   if (!match) {
     return (
       <div className={styles.bracketCell} ref={cellRef}>
@@ -2322,10 +2734,21 @@ function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArri
   // won), and a bare-id check would mask that already-decided cell too.
   const row = (team, score, isWinner, isLoser) => {
     const pending = pendingArrivalIds.has(`${cellKey}:${team.id}`);
+    const canScout = scoutable && !team.isPlayer && !pending;
     return (
       <div
         className={[styles.bracketTeam, isWinner ? styles.cellWon : '', isLoser ? styles.cellLost : '', team.isPlayer ? styles.bracketYou : '', hidePlayer && team.isPlayer ? styles.roundHidden : ''].join(' ')}
         data-team-id={team.id}
+        data-scoutable={canScout ? 'true' : undefined}
+        role={canScout ? 'button' : undefined}
+        tabIndex={canScout ? 0 : undefined}
+        onClick={canScout ? event => toggleScout(team, event.currentTarget) : undefined}
+        onKeyDown={canScout ? event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleScout(team, event.currentTarget);
+          }
+        } : undefined}
       >
         {pending ? (
           <span className={styles.cellTag}>TBD</span>
@@ -2340,6 +2763,25 @@ function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArri
             </span>
             <span className={styles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
           </>
+        )}
+        {canScout && scout?.teamId === team.id && createPortal(
+          // The roster deals itself out as the cards themselves, unframed -
+          // a panel around them would only repeat the bracket row's own edge.
+          // Portals keep bubbling through the React tree, so a click in here
+          // would otherwise reach the row's own toggle and shut the spread.
+          <div className={styles.scoutSpread} style={{ left: scout.left, top: scout.top }} onClick={event => event.stopPropagation()}>
+            {team.roster.map(card => (
+              <span key={card.id} className={styles.scoutCard} title={card.player}>
+                <PlayerCard
+                  card={card}
+                  displayScale={SCOUT_SCALE}
+                  canDrag={false}
+                  onClick={onInspect ? () => { closeScout(); onInspect(card); } : undefined}
+                />
+              </span>
+            ))}
+          </div>,
+          document.body,
         )}
       </div>
     );
@@ -2964,7 +3406,7 @@ function ProspectOffer({ card, signals, onSign, onDecline, onInspect }) {
 function SquadReport({ report, squad }) {
   if (!report?.changes?.length) return null;
   const byId = new Map(squad.map(card => [card.id, card]));
-  const order = { legend: 0, growth: 1, decline: 2 };
+  const order = { club_icon: 0, legend: 0, growth: 1, decline: 2 };
   const changes = [...report.changes].sort(
     (a, b) => order[a.kind] - order[b.kind] || Math.abs(b.n) - Math.abs(a.n),
   );
@@ -2985,11 +3427,14 @@ function SquadReport({ report, squad }) {
               </span>
               <span className={styles.squadReportName}>{change.player}</span>
               <span className={styles.squadReportNote}>
-                {change.kind === 'legend' ? 'Became a legend - no longer declines'
+                {change.kind === 'club_icon' ? 'Club Icon'
+                  : change.kind === 'legend' ? 'Legend'
                   : change.kind === 'growth' ? 'Improving' : 'Slipping'}
               </span>
               <span className={styles.squadReportDelta}>
-                {change.kind === 'legend' ? '★' : `${change.n > 0 ? '+' : ''}${change.n}`}
+                {change.kind === 'club_icon' ? '★⌁'
+                  : change.kind === 'legend' ? '★'
+                    : `${change.n > 0 ? '+' : ''}${change.n}`}
               </span>
             </li>
           );

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { m } from 'motion/react';
 import { roleAbbr, cardTextColor, countryName, regionFullName, assetPath } from '../lib/utils';
 import useCardTilt from '../lib/useCardTilt';
@@ -41,6 +42,10 @@ export default function PlayerCard({
   kit,
   portraitLoading = 'lazy',
   portraitFetchPriority = 'auto',
+  // Outside a real drop surface, cards can still be picked up and will
+  // spring back to their origin. SquadDock and PackRip opt out because their
+  // parent wrappers already own purposeful drag gestures.
+  canDrag = true,
   // Opt-in shared-layout id (R2 - spring physics, PlayerCard only; see
   // src/lib/motion.js). Two call sites currently claim a given card's id at
   // once (a dock chip and CardFocusOverlay) - the one-owner rule is the
@@ -52,6 +57,14 @@ export default function PlayerCard({
   // else, so every other surface renders exactly as it did before.
   signals = null,
 }) {
+  // Latched the first time this card is turned, so the return flip animates
+  // while a card that mounts face-up plays nothing - every card in the game
+  // mounts unflipped, and they must not all deal themselves a flip-back.
+  // Adjusted during render rather than in an effect: React re-runs this
+  // component before committing, so the flip and the latch land together.
+  const [turned, setTurned] = useState(false);
+  if (flipped && !turned) setTurned(true);
+
   const textColor  = cardTextColor(card.palette);
   const mutedColor = textColor + 'aa';
   const showEditionTop = card.tier === 'prestige' || card.tier === 'iconic';
@@ -86,6 +99,11 @@ export default function PlayerCard({
       // and so never fights this one for the same `transform`.
       transition={{ layout: cardSpring, default: { duration: DUR.micro, ease: EASE.out } }}
       whileTap={onClick ? { scale: 0.97 } : undefined}
+      drag={canDrag}
+      dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
+      dragElastic={0.2}
+      dragMomentum={false}
+      whileDrag={{ zIndex: 50 }}
       style={{ width: CARD_W * displayScale, height: CARD_H * displayScale, flexShrink: 0 }}
       onClick={activate}
       onPointerMove={onPointerMove}
@@ -117,6 +135,7 @@ export default function PlayerCard({
           className={[styles.tilt, onClick ? styles.clickable : ''].join(' ')}
           data-palette={card.palette}
           data-tier={card.tier}
+          data-flipped={flipped ? 'true' : turned ? 'back' : undefined}
           style={{
             fontFamily: "'Familjen Grotesk', sans-serif",
             '--spec': specColor,
@@ -137,7 +156,11 @@ export default function PlayerCard({
             aria-hidden="true"
           />
           {selected && <span className={styles.selectionCorners} aria-hidden="true" />}
-          <div className={styles.flip} data-flipped={flipped ? 'true' : 'false'} style={{ '--flip': flipped ? '180deg' : '0deg' }}>
+          <div
+            className={styles.flip}
+            data-flipped={flipped ? 'true' : turned ? 'back' : 'false'}
+            style={{ '--flip': flipped ? '180deg' : '0deg' }}
+          >
 
             {/* ── FRONT FACE ── */}
             <div className={`${styles.face} ${styles.faceFront}`}>

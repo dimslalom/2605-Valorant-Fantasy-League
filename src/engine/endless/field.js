@@ -24,6 +24,7 @@ import {
 } from '../perfectRun.js';
 import { TIER_FIELD_SIZE, tierPools } from './ladder.js';
 import { developCards } from './world.js';
+import { ENDLESS_POWER_DIVISOR } from './seriesCards.js';
 
 export const FIELD_SIZE = 16;
 
@@ -83,5 +84,6 @@ export function buildEndlessBracket(rng, cards, pickedIds, playerTeam, tier, opt
   tour.tier = tier;
   tour.fieldAverage = fieldAverage;
   tour.compression = compression;
+  tour.powerDivisor = ENDLESS_POWER_DIVISOR;
   return tour;
 }

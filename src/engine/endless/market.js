@@ -141,7 +141,8 @@ export function poachInterest({ card, dev, reputation }) {
   const quality = (card.rating - POACH_MIN_RATING) / 18;      // 0..~1
   const restless = Math.min(1, (dev?.idle ?? 0) / 3);          // benched too long
   const shielded = Math.min(0.6, reputation / 1000);           // standing protects
-  return Math.max(0, (quality * 0.6 + restless * 0.6) * (1 - shielded));
+  const loyalty = dev?.fi ? 0.6 : 1;
+  return Math.max(0, (quality * 0.6 + restless * 0.6) * (1 - shielded) * loyalty);
 }
 
 /**

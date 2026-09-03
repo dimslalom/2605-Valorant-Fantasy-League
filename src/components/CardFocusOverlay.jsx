@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { m, AnimatePresence } from 'motion/react';
 import PlayerCard from './PlayerCard';
-import CountryFlag from './CountryFlag';
 import { getCardSpecialties } from '../data/specialties';
-import { STAT_KEYS, STAT_LABELS_FULL } from '../data/statFields';
 import SpecialtyIcon from './SpecialtyIcon';
 import { fadeIn } from '../lib/motion';
 import { countryName, regionFullName } from '../lib/utils';
@@ -14,7 +12,18 @@ import { STAGE_LABEL } from '../engine/endless/career';
 
 const LEAGUE_LABEL = { t2: 'Challengers', icon: 'Icons', vct: 'VCT' };
 
+const CARD_W = 400;
 const CARD_H = 580;
+
+// Where each callout's leader touches the card, as a share of the card's
+// height. These are the marks themselves, measured off the card face: the
+// rating sits at 8%, the flag at 28%, the specialty rail around the middle
+// and the club crest in the stat panel at 92%. The line points at the thing
+// it is talking about, so it has to follow the art.
+const AT_RATING = '9%';
+const AT_ORIGIN = '28%';
+const AT_SPECIALTIES = '46%';
+const AT_CLUB = '89%';
 
 // `action` (optional) is the caller's per-card action - { label, disabled },
 // fired through `onAction` - rendered as a primary button so the player commits
@@ -25,6 +34,12 @@ const RATING_FLOOR = 50;
 const RATING_TOP = 99;
 const pct = rating => ((rating - RATING_FLOOR) / (RATING_TOP - RATING_FLOOR)) * 100;
 const capitalize = str => str.charAt(0).toUpperCase() + str.slice(1);
+
+function cardScale() {
+  const { innerWidth: w, innerHeight: h } = window;
+  if (w <= 960 || h <= 620) return Math.min(0.62, (h * 0.46) / CARD_H, (w * 0.8) / CARD_W);
+  return Math.min(0.95, (h * 0.72) / CARD_H, (w * 0.42) / CARD_W);
+}
 
 export default function CardFocusOverlay({ card, onClose, action = null, onAction, signals = null }) {
   const [flipped, setFlipped] = useState(false);
@@ -72,10 +87,11 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card]);
 
-  // Capped well under native size - this is a details page with a card on
-  // it, not a full-screen card. 0.68 tops out around 394px tall; the vh
-  // factor still shrinks it further on short viewports.
-  const scale = card ? Math.min(0.68, (window.innerHeight * 0.6) / CARD_H) : 0;
+  // The card IS the page here, so it runs near native size rather than
+  // sharing the room with a panel. Once the annotations lose their margins
+  // and stack underneath (the same 960px the stylesheet switches at), the
+  // card has to give most of the screen back to them instead.
+  const scale = card ? cardScale() : 0;
   const specialties = card ? getCardSpecialties(card) : [];
 
   // AnimatePresence owns the mount/unmount here (rather than the caller
@@ -99,8 +115,17 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
         >
           <button ref={closeRef} className={styles.close} onClick={requestClose} aria-label="Close">✕</button>
 
-          <div className={styles.focusContainer} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.cardColumn}>
+          <div
+            className={styles.focusStage}
+            style={{ '--card-w': `${CARD_W * scale}px`, '--card-h': `${CARD_H * scale}px` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* The card is the page. Nothing here repeats what the art
+                already says - the five stats, the agents and the org crest
+                are on the card and its back. These are the things a card
+                cannot tell you, each on a leader line pointing at the mark
+                it explains. */}
+            <div className={styles.cardAnchor} data-flipped={flipped ? 'true' : undefined}>
               <PlayerCard
                 card={card}
                 layoutId={releasingId === card.id ? undefined : `card-${card.id}`}
@@ -109,32 +134,9 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
                 flipped={flipped}
                 onClick={() => setFlipped((f) => !f)}
               />
-            </div>
 
-            {/* The detail panel: everything the card itself only implies -
-                full stat values instead of glanceable bars, the org/league/
-                nationality profile normally only on the flip side, career
-                headroom, and specialties - read top to bottom instead of
-                requiring a flip or a squint at the card art. */}
-            <div className={styles.detailPanel}>
-              <div className={styles.detailHead}>
-                <span className={styles.detailRating}>{card.rating}</span>
-                <div className={styles.detailHeadText}>
-                  <span className={styles.detailName}>{card.player}</span>
-                  <span className={styles.detailSub}>
-                    {card.org_name ?? card.org} · {card.role}
-                  </span>
-                </div>
-                <CountryFlag code={card.nationality} style={{ width: 30, height: 22 }} />
-              </div>
-
-              {/* Career panel - the numbers behind a player's future, shown
-                  rather than described. Age and current rating are stated;
-                  headroom is the unfilled part of the bar, so "room to grow"
-                  is literally visible space instead of a sentence about it. */}
-              {signals && (
-                <div className={styles.detailSection}>
-                  <span className={styles.sectionTitle}>Career</span>
+              {signals ? (
+                <Callout side="left" at={AT_RATING} title="Career">
                   <div className={styles.careerTop}>
                     <span className={styles.careerStage} data-stage={signals.stage}>
                       {signals.trend !== 0 && (
@@ -144,7 +146,6 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
                     </span>
                     <span className={styles.careerAge}>Age <b>{signals.age}</b></span>
                   </div>
-
                   <div
                     className={styles.careerBar}
                     role="img"
@@ -167,73 +168,37 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
                       </span>
                     )}
                   </div>
-                </div>
+                </Callout>
+              ) : (
+                <Callout side="left" at={AT_RATING} title="Rated">
+                  <span className={styles.calloutLead}>{card.rating}</span>
+                  <span className={styles.calloutNote}>{capitalize(card.tier)} tier</span>
+                </Callout>
               )}
 
-              {/* Full stat readout - the same five values the card itself
-                  shows, but as bars with their numbers, not a glance. */}
-              <div className={styles.detailSection}>
-                <span className={styles.sectionTitle}>Performance</span>
-                <div className={styles.statList}>
-                  {STAT_KEYS.map(key => (
-                    <div key={key} className={styles.statRow}>
-                      <span className={styles.statLabel}>{STAT_LABELS_FULL[key]}</span>
-                      <div className={styles.statTrack}>
-                        <div className={styles.statFill} style={{ width: `${card.stats[key]}%` }} />
-                      </div>
-                      <span className={styles.statValue}>{card.stats[key]}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Callout side="right" at={AT_CLUB} title="Club">
+                <span className={styles.calloutLead}>{card.org_name ?? card.org}</span>
+                <span className={styles.calloutNote}>{LEAGUE_LABEL[card.league] ?? card.league}</span>
+              </Callout>
 
-              {/* Profile - the meta that lived only on the flip side before:
-                  tier, nationality, league, agents. */}
-              <div className={styles.detailSection}>
-                <span className={styles.sectionTitle}>Profile</span>
-                <div className={styles.metaGrid}>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Tier</span>
-                    <span className={styles.metaValue}>{card.tier}</span>
-                  </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Nationality</span>
-                    <span className={styles.metaValue}>{countryName(card.nationality)}</span>
-                  </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Region</span>
-                    <span className={styles.metaValue}>{regionFullName(card.region)}</span>
-                  </div>
-                  <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>League</span>
-                    <span className={styles.metaValue}>{LEAGUE_LABEL[card.league] ?? card.league}</span>
-                  </div>
-                  <div className={`${styles.metaItem} ${styles.metaItemWide}`}>
-                    <span className={styles.metaLabel}>Agents</span>
-                    <span className={styles.metaValue}>{(card.agents ?? []).map(capitalize).join(', ') || 'Unknown'}</span>
-                  </div>
-                </div>
-              </div>
+              <Callout side="left" at={AT_ORIGIN} title="Origin">
+                <span className={styles.calloutLead}>{countryName(card.nationality)}</span>
+                <span className={styles.calloutNote}>{regionFullName(card.region)}</span>
+              </Callout>
 
-              {/* Specialties */}
-              <div className={styles.detailSection}>
-                <span className={styles.sectionTitle}>Specialties</span>
+              <Callout side="right" at={AT_SPECIALTIES} title="Specialties">
                 {specialties.length === 0 ? (
-                  <p className={styles.noSpecs}>No active specialties</p>
-                ) : (
-                  <div className={styles.specCardsList}>
-                    {specialties.map(spec => (
-                      <div key={spec.key} className={styles.specDetailCard}>
-                        <div className={styles.specHeader}>
-                          <span className={styles.specBadgeIcon}><SpecialtyIcon spec={spec.key} size="64%" /></span>
-                          <span className={styles.specName}>{spec.name}</span>
-                        </div>
-                        <p className={styles.specDesc}>{spec.desc}</p>
-                      </div>
-                    ))}
+                  <span className={styles.calloutNote}>None active</span>
+                ) : specialties.map(spec => (
+                  <div key={spec.key} className={styles.specLine}>
+                    <span className={styles.specBadgeIcon}><SpecialtyIcon spec={spec.key} size="64%" /></span>
+                    <div className={styles.specText}>
+                      <b className={styles.specName}>{spec.name}</b>
+                      <p className={styles.specDesc}>{spec.desc}</p>
+                    </div>
                   </div>
-                )}
-              </div>
+                ))}
+              </Callout>
             </div>
           </div>
 
@@ -247,11 +212,24 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
                 {action.label}
               </button>
             )}
-            <p className={styles.hint}>click card to flip · esc to close</p>
+            <p className={styles.hint}>click card to flip for the full sheet · esc to close</p>
           </div>
         </m.div>
       )}
     </AnimatePresence>,
     document.body
+  );
+}
+
+// One annotation: a hairline out to a mark on the card, a label, and the
+// thing the mark does not say on its own. `at` is where the leader meets
+// the card, as a share of its height.
+function Callout({ side, at, title, children }) {
+  return (
+    <div className={styles.callout} data-side={side} style={{ '--at': at }}>
+      <span className={styles.leader} aria-hidden="true" />
+      <span className={styles.calloutTitle}>{title}</span>
+      {children}
+    </div>
   );
 }

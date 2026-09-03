@@ -72,6 +72,7 @@ export function careerAge(seed, card, dev) {
 
 export function careerStage(seed, card, dev) {
   if (dev?.lg) return 'legend';
+  if (dev?.fi) return 'club_icon';
   const age = careerAge(seed, card, dev);
   if (age < 21) return 'prospect';
   if (age <= 25) return 'prime';
@@ -194,6 +195,12 @@ export function isLegendEligible(dev, titlesWithYou) {
   return !dev?.lg && titlesWithYou >= LEGEND_TITLES;
 }
 
+// New Endless runs earn legacy individually: only maps actually started in
+// title runs count. Unlike the legacy `lg` flag this never freezes decline.
+export function isClubIconEligible(dev) {
+  return !dev?.fi && (dev?.tw ?? 0) >= LEGEND_TITLES;
+}
+
 /**
  * Advance one player by a year.
  *
@@ -210,6 +217,7 @@ export function tickCareerYear(rng, seed, card, dev, ctx = {}) {
   if (stage === 'prospect') base = 2.2 * (room / 40);
   else if (stage === 'prime') base = 0.4;
   else if (stage === 'legend') base = 0;
+  else if (stage === 'club_icon') base = -(1.0 + 0.22 * Math.min(age - 25, DECLINE_AGE_CAP));
   else base = -(1.4 + 0.35 * Math.min(age - 25, DECLINE_AGE_CAP));
 
   // The four anti-decline mechanics, all multiplicative on decline only.
@@ -246,7 +254,7 @@ export function tickCareerYear(rng, seed, card, dev, ctx = {}) {
   };
   if (stage === 'prospect') { nudge('a', 2); nudge('s', 1); }
   else if (stage === 'prime') { nudge('m', 1); nudge('s', 1); }
-  else if (stage === 'veteran') {
+  else if (stage === 'veteran' || stage === 'club_icon') {
     nudge('a', -1);                                   // the body goes first
     nudge('m', 2);                                    // the head keeps growing
     nudge('s', Math.min(2, ctx.yearsAtOrg ?? 0));     // continuity pays here
@@ -311,5 +319,5 @@ export function cardSignals(seed, card, dev = null) {
 }
 
 export const STAGE_LABEL = {
-  prospect: 'Prospect', prime: 'Prime', veteran: 'Veteran', legend: 'Legend',
+  prospect: 'Prospect', prime: 'Prime', veteran: 'Veteran', legend: 'Legend', club_icon: 'Club Icon',
 };

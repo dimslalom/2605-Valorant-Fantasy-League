@@ -74,15 +74,11 @@
   min-height: 0;
 }
 
-/* Same page-level gutters as Multiplayer Lock In (var(--sp-8) top/sides),
-   one shared margin rhythm for the two top-level hub pages. Bottom stays
-   tighter than Multiplayer's, which needs extra clearance for its fixed
-   timer dock; this page has no fixed bottom furniture. */
+/* The landing is the one screen that is not a content column: full bleed
+   with no gutters of its own, so the backdrop fan reaches the window edges. */
 .menuPage {
-  /* Full width with gutters. The content column comes from the shared
-     hub .column, so both hub screens resolve to the same width. */
   max-width: none;
-  padding: var(--sp-8) var(--sp-12) var(--sp-6);
+  padding: 0;
 }
 
 /* ── Shared "Card Table" primitives (from VFL Wireframes t3 unified system).
@@ -194,174 +190,6 @@
   .skipHint { top: calc(var(--rail-size) + var(--safe-t)); }
 }
 
-/* Main menu. Layout skeleton lives in styles/hub.module.css; this file only
-   styles what is specific to the mode list, the card fan and the records. */
-
-/* Column one of the hub body: the mode list, records and leaderboard. */
-.menuStack {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.menuModes {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.modeBtn {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 20px;
-  width: 100%;
-  /* Thinned from 22px vertical. With the sub-labels gone there's nothing
-     that needs the extra breathing room, and the whole menu now fits one
-     screen with no scroll. */
-  padding: 13px 18px;
-  background: var(--surface);
-  border: none;
-  color: var(--ink);
-  text-align: left;
-  /* Card Table hard shadow (no clip-path here - it would clip the offset). */
-  box-shadow: var(--shadow-card);
-}
-/* red fill sweep on hover, playvalorant style */
-.modeBtn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.modeBtn:hover::before, .modeBtn:focus-visible::before { transform: scaleX(1); }
-.modeBtn > * { position: relative; transition: color 0.16s, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
-
-.modeBtnName {
-  font-size: 20px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.modeBtn:hover .modeBtnName { color: #fff; transform: translateX(8px); }
-
-/* Compact status marker sitting inline with the name (e.g. "Played").
-   replaces the old second-line caption so state is still visible without
-   adding a row. */
-.modeBtnFlag {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  padding: 3px 7px;
-  background: rgba(255, 255, 255, 0.06);
-}
-.modeBtn:hover .modeBtnFlag { color: var(--accent-ink); }
-
-/* ── Solo Run split tile: one surface, two start actions ── */
-/* A div (not a button) so the red sweep pseudo-element stays off; the two
-   inner actions carry their own hover fill instead. */
-.modeSplit { cursor: default; align-items: center; }
-.modeSplit::before { content: none; }
-
-.modeSplitActions { display: flex; gap: 4px; }
-
-.modeSplitAction {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border: none;
-  background: var(--surface-hi);
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: background 0.12s, color 0.12s;
-}
-.modeSplitAction:hover { background: var(--accent); color: #fff; }
-
-/* ── Resume tile: a banked endless run, offered above the mode list ── */
-/* Framed the way the ENC tile below is framed - a full thin border in the
-   tile's own accent, never a one-sided edge tab - so "a run in progress"
-   reads as a variant of the same component rather than a different one. */
-.resumeTile {
-  align-items: center;
-  border: 1px solid var(--accent);
-  background: var(--accent-soft);
-}
-
-.resumeMeta {
-  /* Above the tile's sweeping ::before fill. */
-  position: relative;
-  display: flex;
-  gap: var(--sp-4);
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.resumeMeta b { color: var(--ink); font-weight: 700; }
-.resumeTile:hover .resumeMeta { color: var(--accent-ink); }
-.resumeTile:hover .resumeMeta b { color: #fff; }
-
-/* ── ENC event tile: gold-framed national-teams event ── */
-.encTile { border: 1px solid var(--gold-dim); }
-.encTile::before { background: var(--gold); }
-.encTile:hover .modeBtnName { color: var(--gold-ink); }
-.encTile:hover .modeBtnFlag { color: var(--gold-dim); }
-
-/* Placeholder event mark: swap this block for the real ENC logo img later */
-.encMark {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--gold-ink);
-  background: var(--gold);
-  padding: 3px 9px;
-  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-}
-.encTile:hover .encMark { background: var(--gold-ink); color: var(--gold); }
-
-.recordStrip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 34px;
-  margin-top: 20px;
-}
-.recordStrip > span {
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-.recordStrip b {
-  color: var(--ink);
-  font-size: 15px;
-  margin-left: 7px;
-  font-variant-numeric: tabular-nums;
-}
-
-.disclaimer {
-  margin-top: 18px;
-  font-size: 11px;
-  color: var(--faint);
-}
 
 /* Persistent Normal/Fast/Instant pace preference - a speedrunner sets this
    once instead of skipping every auto-advance pause by hand, every run. */
@@ -420,44 +248,269 @@
   z-index: 1;
 }
 
-/* Card fan: real cards as key art, each with its own 3D tilt. Occupies
-   column two of the hub body and centres itself there. */
-.menuFan {
-  position: relative;
-  width: 340px;
-  height: 380px;
-  flex-shrink: 0;
-  place-self: center;
-}
-
-.fanCard {
-  position: absolute;
-  top: 30px;
-  left: 50%;
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.fanCard:nth-child(1) { transform: translateX(-50%) rotate(-9deg) translateX(-66px); }
-.fanCard:nth-child(2) { transform: translateX(-50%) rotate(7deg) translateX(70px); }
-.fanCard:nth-child(3) { transform: translateX(-50%); z-index: 2; }
-
-.menuFan:hover .fanCard:nth-child(1) { transform: translateX(-50%) rotate(-12deg) translateX(-96px); }
-.menuFan:hover .fanCard:nth-child(2) { transform: translateX(-50%) rotate(10deg) translateX(100px); }
-.menuFan:hover .fanCard:nth-child(3) { transform: translateX(-50%) translateY(-12px); }
-
 /* Staggered entrance. Applied by explicit class rather than nth-child so the
    order survives future changes to the markup. */
 .rise { animation: riseIn var(--dur-hero) var(--ease-out) both; }
 .riseB { animation-delay: 0.06s; }
 .riseC { animation-delay: 0.12s; }
-.fanIn { animation: fadeIn 0.6s 0.15s var(--ease-out) both; }
 
 @keyframes riseIn {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes fadeIn {
+@keyframes landingFanIn {
   from { opacity: 0; }
-  to   { opacity: 1; }
+  to   { opacity: .16; }
+}
+@keyframes landingFanInMobile {
+  from { opacity: 0; }
+  to   { opacity: .1; }
+}
+
+/* ── Landing (menu phase) ──────────────────────────────────────────────────
+   One centred column on a full-bleed field. The old menu was a two-column
+   hub - modes left, card fan right - which gave the first screen two equal
+   focal points and no obvious click. Here the fan drops behind as atmosphere
+   and a single primary action owns the centre. */
+.landing {
+  position: relative;
+  /* Sized off the viewport rather than stretched through the flex chain:
+     PhaseTransition wraps this in its own div, so a flex:1 here only fills
+     that wrapper's shrink-to-fit box. The rail is a side bar at this width
+     and takes no vertical room; the mobile block below subtracts the top bar. */
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-8) var(--sp-6) var(--sp-10);
+  overflow: hidden;
+}
+
+.landingFan {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  /* Its own fade, never the shared .rise/entrance animations: those animate
+     to opacity 1, and an animation's final value beats a normal declaration,
+     so sharing one silently resets the backdrop to full strength. */
+  animation: landingFanIn 0.7s 0.15s var(--ease-out) both;
+  /* Depth of field, not decoration: blurring and desaturating is what makes
+     these read as the room the menu is standing in rather than as content
+     competing with it. */
+  filter: saturate(.45) blur(1.5px);
+  /* One layer only. A second masking layer needs mask-composite, whose
+     WebKit spelling takes different keywords - get that wrong and the whole
+     mask is dropped and the cards come back at full strength. The ramp is
+     long and symmetrical so it reads as a vignette, not a vertical slice. */
+  -webkit-mask-image: linear-gradient(90deg, #000 0 10%, rgba(0,0,0,.5) 26%, transparent 42%, transparent 58%, rgba(0,0,0,.5) 74%, #000 90% 100%);
+  mask-image: linear-gradient(90deg, #000 0 10%, rgba(0,0,0,.5) 26%, transparent 42%, transparent 58%, rgba(0,0,0,.5) 74%, #000 90% 100%);
+}
+.landingFan .fanCard { position: absolute; top: 50%; left: 50%; transition: none; }
+.landingFan .fanCard:nth-child(1) { transform: translate(-50%, -50%) rotate(-10deg) translateX(-24vw); }
+.landingFan .fanCard:nth-child(2) { transform: translate(-50%, -50%) rotate(8deg) translateX(24vw); }
+.landingFan .fanCard:nth-child(3) { transform: translate(-50%, -38%) rotate(6deg) translateX(-31vw) scale(.9); }
+
+.landingInner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.landingLogo { margin: 0 auto; }
+
+.landingTag {
+  margin: var(--sp-4) 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.landingPlayGroup {
+  width: 100%;
+  margin-top: var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The one thing on the page that looks clickable at a glance. */
+.landingPlay {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 380px;
+  padding: 18px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  transition: transform var(--dur-transform) var(--ease-out), box-shadow var(--dur-transform) var(--ease-out);
+}
+.landingPlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateX(-105%) skewX(-18deg);
+  transition: transform 0.38s var(--ease-out);
+}
+.landingPlay > * { position: relative; }
+.landingPlay b {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.landingPlayMeta {
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+.landingPlay:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45); }
+.landingPlay:hover::before { transform: translateX(105%) skewX(-18deg); }
+.landingPlay:active { transform: translateY(1px); }
+.landingPlay:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+/* Deliberately a text action, not a third surface stacked under the primary:
+   it abandons a banked run, so it should read as the quieter path. The
+   underline is what keeps it legible as something clickable. */
+.landingRestart {
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: 700 11px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--line-bracket);
+  cursor: pointer;
+  transition: color var(--dur-hover), text-decoration-color var(--dur-hover);
+}
+.landingRestart:hover { color: var(--ink); text-decoration-color: var(--ink); }
+.landingRestart:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Everything that is not the main run. Quieter than the primary, but still
+   an actual button at rest: a surface, an edge and the same bevel. Hover-only
+   affordance reads as plain text until the pointer happens to land on it. */
+.landingLinks {
+  margin-top: var(--sp-7);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.landingLinks button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 17px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  transition: color var(--dur-hover), background var(--dur-hover), border-color var(--dur-hover);
+}
+/* --accent-ink / --gold-ink are for text ON those fills; these buttons keep
+   a dark surface on hover, so the edge carries the colour and the label
+   stays a normal-contrast ink. */
+.landingLinks button:hover {
+  color: var(--ink);
+  background: var(--surface-hi);
+  border-color: var(--accent);
+}
+.landingLinks button:active { background: var(--surface); }
+.landingLinks button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.landingLinks i {
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  padding: 3px 5px;
+  background: var(--surface-hi);
+}
+.landingLinks button:hover i { color: var(--muted); }
+.landingLinkEnc { border-color: var(--gold-dim) !important; color: var(--gold) !important; }
+.landingLinkEnc:hover { border-color: var(--gold) !important; color: var(--gold) !important; }
+
+.landingRecords {
+  margin-top: var(--sp-6);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 22px;
+}
+.landingRecords > span {
+  font-size: 10px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.landingRecords b {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.landingBoardToggle {
+  margin-top: var(--sp-5);
+  padding: 8px 13px;
+  border: 1px solid var(--line-bracket);
+  background: none;
+  color: var(--muted);
+  font: 700 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur-hover), border-color var(--dur-hover);
+}
+.landingBoardToggle:hover { color: var(--ink); border-color: var(--ink); }
+
+.landingDisclaimer {
+  margin: var(--sp-8) 0 0;
+  font-size: 10px;
+  color: var(--faint);
+  max-width: 40ch;
+}
+
+@media (max-width: 680px) {
+  .landing {
+    /* The rail is a top bar here, and .frame is pushed down by it. */
+    min-height: calc(100dvh - var(--rail-size) - var(--safe-t));
+    padding: var(--sp-6) var(--sp-4) var(--sp-8);
+  }
+  /* A phone has no room for a backdrop AND a legible column. Two cards,
+     pushed out until only their inner edges show, dimmer than desktop. */
+  .landingFan { animation-name: landingFanInMobile; }
+  .landingFan .fanCard:nth-child(1) { transform: translate(-50%, -50%) rotate(-10deg) translateX(-52vw); }
+  .landingFan .fanCard:nth-child(2) { transform: translate(-50%, -50%) rotate(8deg) translateX(52vw); }
+  .landingFan .fanCard:nth-child(3) { display: none; }
+  .landingTag { font-size: 11px; letter-spacing: 0.1em; }
+  .landingPlay b { font-size: 19px; }
+  .landingPlayMeta { font-size: 9px; letter-spacing: 0.1em; }
 }
 
 /* ── Draft ── */
@@ -678,40 +731,6 @@
   background: linear-gradient(to bottom, transparent 0%, rgba(13, 15, 23, 0.92) 48%, #0d0f17 76%);
 }
 
-.playButton {
-  position: relative;
-  overflow: hidden;
-  pointer-events: auto;
-  min-width: min(420px, calc(100vw - 36px));
-  padding: 19px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  font-size: 15px;
-  box-shadow: var(--shadow-overlay);
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.14s, box-shadow 0.18s;
-}
-.playButton::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.14);
-  transform: translateX(-105%) skewX(-18deg);
-  transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.playButton > * { position: relative; }
-.playButton b {
-  font-size: 21px;
-  line-height: 0;
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.playButton:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.42); }
-.playButton:hover::before { transform: translateX(105%) skewX(-18deg); }
-.playButton:hover b { transform: translateX(5px); }
-.playButton:active { transform: translateY(1px) scale(0.985); }
-.playButton:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
-
 /* ── Playoff bracket: four rounds in columns 1/3/5/7, connectors in 2/4/6.
       These lines are structural: they show who feeds which match. Feeders
       always sit at 25%/75% of a parent slot's span, so one connector shape
@@ -770,6 +789,7 @@
 }
 
 .bracketTeam {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -778,8 +798,46 @@
   font-weight: 700;
   background: var(--surface);
 }
+.bracketTeam[data-scoutable='true'] { cursor: pointer; }
+.bracketTeam[data-scoutable='true']::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-left: 2px;
+  border-right: 2px solid var(--opponent);
+  border-bottom: 2px solid var(--opponent);
+  transform: rotate(45deg);
+  transition: transform var(--dur-hover);
+}
+.bracketTeam[data-scoutable='true']:hover::after,
+.bracketTeam[data-scoutable='true']:focus-visible::after { transform: rotate(45deg) translate(2px,2px); }
+.scoutSpread {
+  /* Portalled to the body and placed from the row's own rect (see
+     BracketCell), so the bracket's scroll box can never crop it. */
+  position: fixed;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  /* The cards are the popup - nothing frames them, so they carry their own
+     separation from the bracket underneath. */
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, .7));
+  animation: scoutDeal var(--dur-enter) var(--ease-out) both;
+}
+.scoutCard + .scoutCard { margin-left: -18px; }
+/* Overlapped cards need a stacking order to lift out of, or the card being
+   hovered stays pinned under its neighbour. */
+.scoutCard { position: relative; transform-origin: 50% 100%; }
+.scoutCard:hover, .scoutCard:focus-within { z-index: 3; }
+.scoutCard:nth-child(1) { transform: rotate(-3deg) translateY(2px); }
+.scoutCard:nth-child(2) { transform: rotate(-1.5deg); }
+.scoutCard:nth-child(4) { transform: rotate(1.5deg); }
+.scoutCard:nth-child(5) { transform: rotate(3deg) translateY(2px); }
+@keyframes scoutDeal { from { opacity:0; transform:translateY(8px) rotate(-1deg); } to { opacity:1; transform:none; } }
 .bracketCell.playerMatch .bracketTeam { background: var(--accent-soft); }
-.bracketTeam img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+/* Direct child only: this is the row's own org logo, and a loose `img`
+   descendant selector also resizes every layer PNG of a card rendered
+   inside the row (the scouting spread's). */
+.bracketTeam > img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 .bracketYou { color: var(--accent); }
 
 .cellSeed {
@@ -1315,25 +1373,26 @@
 
 .castHeroes {
   position: absolute;
-  inset: auto 0 0;
-  z-index: 0;
-  height: min(64vh, 680px);
+  /* The lower edge follows the top of the two team plates. The portraits now
+     sit on that ledge instead of sinking behind the rows inside the plates. */
+  inset: 72px 28px 304px;
+  z-index: 3;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: flex-end;
-  overflow: hidden;
-  opacity: 0.16;
-  filter: saturate(0.45) contrast(1.08);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 76%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 76%, transparent 100%);
+  pointer-events: none;
 }
 
 .castBand {
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
+  width: min(28vw, 350px);
   min-width: 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0 82%, transparent 100%);
 }
+.castBandRight { justify-self: end; justify-content: flex-end; }
 
 /* Sized as a share of the band rather than in pixels, so five faces always
    fill their half of the plate exactly and can never spill past it.
@@ -1344,9 +1403,10 @@
    w = 26.3%, m = 3.95%. */
 .castFace {
   position: relative;
-  width: 26.3%;
-  margin: 0 -3.95%;
+  width: 32%;
+  margin: 0 -6%;
   flex-shrink: 0;
+  translate: 0 0;
   animation: heroIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i) * 80ms);
 }
@@ -1404,6 +1464,30 @@
   padding: 18px;
   text-align: center;
 }
+.liveCardRail {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  display: grid;
+  grid-template-columns: 82px 82px 20px 82px;
+  align-items: end;
+  gap: 6px;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .46));
+}
+.liveCardRail > button {
+  width: 82px;
+  min-width: 82px;
+}
+.liveCardRail > button:first-child { transform: rotate(-3deg); }
+.liveCardRail > button:last-child { transform: rotate(3deg); }
+.liveCardClash {
+  align-self: center;
+  color: var(--faint);
+  font: 800 20px/1 ui-monospace, Menlo, monospace;
+}
+.liveCardClash[data-edge="player"] { color: var(--accent); transform: translateX(-3px); }
+.liveCardClash[data-edge="opponent"] { color: var(--opponent); transform: translateX(3px); }
 .castScore { display: flex; flex-direction: column; align-items: center; }
 .castSeries, .castRound {
   color: var(--muted);
@@ -1743,14 +1827,18 @@
       this page only needs to reserve room for it under the scrollable
       content. ── */
 .withBar .page { padding-bottom: 158px; }
+.withBar .page:has([data-phase='maps']),
+.withBar .page:has([data-phase='tactics']),
+.withBar .page:has([data-phase='reward']) { padding-top: 0; padding-bottom: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .introTitle { animation: none; }
   .revealed { animation: none; }
-  .rise, .fanIn { animation: none; }
-  .modeBtn::before, .modeBtn > *, .fanCard { transition: none; }
+  .rise { animation: none; }
+  .landingFan { animation: none; opacity: .16; }
+  .landingPlay, .landingPlay::before { transition: none; }
+  .fanCard { transition: none; }
   .heroFace { animation: none; transition: none; }
-  .playButton, .playButton::before, .playButton b { transition: none; }
 }
 
 /* ── Mobile ── */
@@ -1771,7 +1859,14 @@
     gap: 8px;
     padding: 190px 10px max(12px, var(--safe-b));
   }
-  .castHeroes { height: 58%; opacity: 0.11; }
+  .castHeroes {
+    inset: 54px 8px auto;
+    height: 175px;
+    z-index: 3;
+    opacity: .72;
+  }
+  .castBand { width: 47vw; }
+  .castFace { width: 34%; margin-inline: -7%; }
   .castCentre, .castSide {
     position: relative;
     inset: auto;
@@ -1780,6 +1875,16 @@
     transform: none;
   }
   .castCentre { grid-area: centre; padding: 12px; }
+  .liveCardRail {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    grid-template-columns: 64px 64px 14px 64px;
+    justify-content: center;
+    margin: -78px auto 8px;
+    transform: none;
+  }
+  .liveCardRail > button { width: 64px; min-width: 64px; }
   .castSide { padding: 12px; }
   .castSideLeft { grid-area: left; }
   .castSideRight { grid-area: right; }
@@ -1794,17 +1899,6 @@
   .castMapRow { padding: 6px 8px; gap: 7px; }
   .castMapMvp { display: none; }
   .castMapRow { grid-template-columns: 1fr auto; }
-  /* Cards render 208x302 at displayScale 0.52 and the fan spreads +-70px,
-     so the band needs ~348 wide and ~350 tall to show them whole. The old
-     260px height cut every card off mid face. */
-  .menuFan {
-    order: -1;
-    width: 100%;
-    max-width: 360px;
-    height: 350px;
-    margin: 0 auto;
-  }
-  .modeBtn { flex-direction: column; align-items: flex-start; gap: 8px; }
   .scoreMain { grid-template-columns: 1fr; gap: 8px; text-align: left; }
   .teamB { justify-content: flex-start; text-align: left; }
   .bigScore { order: -1; }
@@ -1815,7 +1909,6 @@
   .nameForm button { grid-column: 1; grid-row: auto; }
   .nameCount { grid-column: 1; }
   .bracketCta { padding: 42px 18px 18px; min-height: 132px; }
-  .playButton { width: 100%; min-width: 0; }
   .bracket {
     grid-template-columns: 1fr;
     grid-template-rows: none;
@@ -1827,7 +1920,7 @@
   .conn { display: none; }
   .travelOverlay { display: none; }
   .preliminaryBlock { min-width: 0; }
-  .frame { margin-left: 0; margin-top: 48px; }
+  .frame { margin-left: 0; margin-top: 0; padding-top: 48px; }
   .preliminaryMatches { grid-template-columns: 1fr; }
   .countryGrid { grid-template-columns: 1fr; }
   .swapArea { gap: 24px; }
@@ -1837,6 +1930,9 @@
   .modeSplitAction { flex: 1; }
   .boardPanel { max-width: none; }
   .withBar .page { padding-bottom: 174px; }
+  .withBar .page:has([data-phase='maps']),
+  .withBar .page:has([data-phase='tactics']),
+  .withBar .page:has([data-phase='reward']) { padding-top: 0; padding-bottom: 0; }
 }
 
 /* ── Circuit standing: the three-tier ladder, and this year's movement ── */

@@ -406,11 +406,15 @@ export function pickMaps(rng, n) {
 
 // Simulate one map round-by-round. Returns the full round sequence so the UI
 // can animate it, plus the final score and a map MVP from the winning side.
-export function simMap(rng, powerA, powerB, rosterA, rosterB, bias = 0, iglA = null, iglB = null) {
+export function simMap(rng, powerA, powerB, rosterA, rosterB, bias = 0, iglA = null, iglB = null, opts = {}) {
   // Specialty swings are rolled once per map, before the round loop.
   const specA = specialtyDuelBonus(rng, rosterA, rosterB, iglA);
   const specB = specialtyDuelBonus(rng, rosterB, rosterA, iglB);
-  const p = 1 / (1 + Math.pow(10, ((powerB + specB) - (powerA + specA) - bias) / 25));
+  // Endless can widen this divisor so a roster advantage remains valuable
+  // without being multiplied into certainty across twenty-plus independent
+  // round rolls. Every legacy caller keeps the original curve by omission.
+  const divisor = opts.powerDivisor ?? 25;
+  const p = 1 / (1 + Math.pow(10, ((powerB + specB) - (powerA + specA) - bias) / divisor));
   const rounds = []; // 'A' | 'B'
   let a = 0, b = 0;
   while (true) {
@@ -436,14 +440,14 @@ export function simMap(rng, powerA, powerB, rosterA, rosterB, bias = 0, iglA = n
 }
 
 // Simulate a whole NPC series in one call (no animation data needed).
-export function simNpcMatch(rng, teamA, teamB, bestOf, bias = 0) {
+export function simNpcMatch(rng, teamA, teamB, bestOf, bias = 0, opts = {}) {
   const needed = Math.ceil(bestOf / 2);
   const maps = pickMaps(rng, bestOf);
   const played = [];
   let scoreA = 0, scoreB = 0;
   for (const map of maps) {
     if (scoreA >= needed || scoreB >= needed) break;
-    const r = simMap(rng, teamSimulationPower(teamA), teamSimulationPower(teamB), teamA.roster, teamB.roster, bias, teamA.iglId ?? null, teamB.iglId ?? null);
+    const r = simMap(rng, teamSimulationPower(teamA), teamSimulationPower(teamB), teamA.roster, teamB.roster, bias, teamA.iglId ?? null, teamB.iglId ?? null, opts);
     played.push({ map, a: r.a, b: r.b });
     if (r.winA) scoreA++; else scoreB++;
   }
@@ -770,7 +774,9 @@ export function resolveNpcMatches(t, rng) {
   const round = currentRound(t);
   for (const m of round.matches) {
     if (m.winner) continue;
-    const result = simNpcMatch(rng, t.teams[m.a], t.teams[m.b], m.bestOf);
+    const result = simNpcMatch(rng, t.teams[m.a], t.teams[m.b], m.bestOf, 0, {
+      powerDivisor: t.powerDivisor,
+    });
     m.maps = result.maps;
     m.scoreA = result.scoreA;
     m.scoreB = result.scoreB;

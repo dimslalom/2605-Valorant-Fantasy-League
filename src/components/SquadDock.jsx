@@ -68,6 +68,8 @@ export default function SquadDock({
   // resting dock stays clean, nothing about a card's condition is shown
   // until you're actually looking at it.
   dev = null,
+  locked = false,
+  activeIds = null,
   // 'large' on the manage screen, where the squad is the subject. Named
   // `scale`, not `size` - `size` already means the slot COUNT here.
   scale = 'normal',
@@ -121,7 +123,7 @@ export default function SquadDock({
   }, [releaseSignal]);
 
   return (
-    <div className={styles.dock} data-size={large ? 'large' : undefined}>
+    <div className={styles.dock} data-size={large ? 'large' : undefined} data-locked={locked ? 'true' : undefined}>
       <div
         className={styles.chips}
         style={{ '--chip-overlap': `${chipOverlap}px`, '--chip-lift': `${chipLift}px` }}
@@ -143,6 +145,7 @@ export default function SquadDock({
               isDragging={draggingId != null}
               onDragStateChange={(dragging) => setDraggingId(dragging ? card.id : null)}
               load={dev?.[card.id]?.f ?? 0}
+              active={activeIds?.includes(card.id)}
             />
           ) : (
             <EmptyChip
@@ -215,7 +218,7 @@ function EmptyChip({ chipScale, isNew, isAlert }) {
 // frame gap to fall out of sync in), and `draggedRef` explicitly swallows
 // the one trailing click a real drag produces.
 function DraggableChip({
-  card, iglId, stamped, benched, focusCardId, chipScale, onFocusCard, onSwap, hoveredId, setHoveredId, isDragging, onDragStateChange, load = 0,
+  card, iglId, stamped, benched, focusCardId, chipScale, onFocusCard, onSwap, hoveredId, setHoveredId, isDragging, onDragStateChange, load = 0, active = false,
 }) {
   const nodeRef = useRef(null);
   const dragRef = useRef(null); // { startX, startY, rect, moved }
@@ -323,7 +326,7 @@ function DraggableChip({
 
   function onClick() {
     if (draggedRef.current) { draggedRef.current = false; return; }
-    onFocusCard(card);
+    onFocusCard?.(card);
   }
 
   // Mount-only cleanup for the rare case this unmounts mid-drag (e.g. the
@@ -349,6 +352,8 @@ function DraggableChip({
       data-igl={card.id === iglId ? 'true' : undefined}
       data-igl-stamp={stamped ? 'true' : undefined}
       data-benched={benched ? 'true' : undefined}
+      data-card-active={active ? 'true' : undefined}
+      data-fatigued={load > 60 ? 'true' : undefined}
       style={{ opacity: ghostRect ? 0 : 1 }}
       onPointerDown={onPointerDown}
       onMouseEnter={() => setHoveredId(card.id)}
@@ -360,12 +365,17 @@ function DraggableChip({
         card={card}
         layoutId={focusCardId === card.id ? undefined : `card-${card.id}`}
         displayScale={chipScale}
-        onClick={onClick}
+        onClick={onFocusCard ? onClick : undefined}
+        canDrag={!onSwap}
       />
+
+      <svg className={styles.chipOutline} viewBox="0 0 400 580" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M2 41L200 2L398 41V539L200 578L2 539Z" />
+      </svg>
 
       {hoveredId === card.id && !isDragging && (
         <span className={styles.chipPreview} aria-hidden="true">
-          <PlayerCard card={card} displayScale={PREVIEW_SCALE} tilt={false} />
+          <PlayerCard card={card} displayScale={PREVIEW_SCALE} tilt={false} canDrag={false} />
           {/* Load, surfaced only here - the resting dock stays clean, and
               this is already the moment you're inspecting the player, not a
               permanent overlay on the card art itself. */}
@@ -396,7 +406,7 @@ function DraggableChip({
             rotate,
           }}
         >
-          <PlayerCard card={card} displayScale={CHIP_SCALE} tilt={false} />
+          <PlayerCard card={card} displayScale={CHIP_SCALE} tilt={false} canDrag={false} />
         </m.div>,
         document.body,
       )}

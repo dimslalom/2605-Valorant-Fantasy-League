@@ -114,7 +114,7 @@ export default function PackRip({
             ) : (
               <CardReveal key={card.id} card={card} index={Math.min(i, 10)} className={styles.stripCard}>
                 <span className={[styles.idleCard, card.rating > 80 || card.palette === 'icon' ? styles.impactCard : ''].join(' ')} style={{ '--fan-angle': `${choices.length === 5 ? (i - 2) * 1.5 : 0}deg`, '--wave-delay': `${600 + i * 90}ms` }}>
-                  <PlayerCard card={card} displayScale={displayScale} selected={selectedId === card.id} />
+                  <PlayerCard card={card} displayScale={displayScale} selected={selectedId === card.id} canDrag={false} />
                 </span>
               </CardReveal>
             )
@@ -283,6 +283,7 @@ function DraggableDraftCard({ card, index, fanAngle = 0, displayScale, selected,
             displayScale={displayScale}
             selected={selected}
             onClick={clickable ? () => onPick(card) : undefined}
+            canDrag={false}
           />
         </span>
       </CardReveal>
@@ -301,7 +302,7 @@ function DraggableDraftCard({ card, index, fanAngle = 0, displayScale, selected,
             rotate,
           }}
         >
-          <PlayerCard card={card} displayScale={displayScale} tilt={false} />
+          <PlayerCard card={card} displayScale={displayScale} tilt={false} canDrag={false} />
         </m.div>,
         document.body,
       )}
