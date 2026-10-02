@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import AppFrame from '../components/AppFrame';
 import Split from '../components/Split';
 import cards from '../data/cards.json';
@@ -20,8 +20,6 @@ const RiveFixtureStrip = lazy(() => import('../rive/FixtureStrip'));
 const RivePointsTicker = lazy(() => import('../rive/PointsTicker'));
 
 const EVENT_ID = 2766; // Valorant Champions 2026
-const SLOT_LABEL = { D: 'DUELIST', I: 'INITIATOR', C: 'CONTROLLER', F1: 'FLEX', F2: 'FLEX' };
-const ROLE_FOR = { D: 'duelist', I: 'initiator', C: 'controller' };
 const fmt = k => `${(k / 1000).toFixed(2)}M`;
 const trend = form => (form >= 3 ? 'up' : form <= -3 ? 'down' : 'flat');
 
@@ -130,7 +128,6 @@ export default function Fantasy() {
   const [message, setMessage] = useState('');
   const [reveal, setReveal] = useState(null);
   const [view, setView] = useState('board'); // board | transfers | broadcast | result
-  const [picker, setPicker] = useState(null);
   const [pickedOrg, setPickedOrg] = useState(null);
   const [transferNote, setTransferNote] = useState(null); // outcome of the last lock-in's transfers
 
@@ -163,7 +160,6 @@ export default function Fantasy() {
   }, [state, override]);
 
   const ctx = useMemo(() => (replay && state ? ctxFor(replay, state.step) : null), [replay, state]);
-  const roleOf = useCallback(pid => replay.players[pid].role, [replay]);
   const squad = useMemo(() => (state ? squadOf(state, 'you') : []), [state]);
   const md = replay && state ? replay.matchdays[Math.min(state.step, replay.matchdays.length - 1)] : null;
   const strengths = useMemo(() => (replay && ctx ? teamStrengths(replay.players, ctx.values) : {}), [replay, ctx]);
@@ -179,16 +175,15 @@ export default function Fantasy() {
     const captain = prev && Object.values(slots).includes(prev.captain) ? prev.captain : null;
     return { slots, captain };
   }, [state, ctx, squad, override]);
-  const benchPids = squad.filter(pid => !Object.values(draft?.slots ?? {}).includes(pid));
+  const starters = draft ? SLOTS.map(sl => draft.slots[sl]).filter(pid => pid != null) : [];
+  const benchPids = squad.filter(pid => !starters.includes(pid));
   const lineupProblems = draft ? (() => {
     const problems = [];
-    const filled = SLOTS.filter(sl => draft.slots[sl] != null).length;
-    if (filled < 5) problems.push(`Choose ${5 - filled} more starter${5 - filled > 1 ? 's' : ''}.`);
-    else if (!validLineup({ slots: draft.slots, captain: draft.captain }, squad, roleOf).ok) problems.push('Your lineup needs a duelist, an initiator and a controller, and no more than two of one role.');
-    if (filled === 5 && draft.captain == null) problems.push('Pick a captain.');
+    if (starters.length < 5) problems.push(`Pick ${5 - starters.length} more starter${5 - starters.length > 1 ? 's' : ''}. Tap START on a player.`);
+    else if (draft.captain == null) problems.push('Pick a captain. Tap CAPTAIN on one of your starters.');
     return problems;
   })() : [];
-  const canLock = lineupProblems.length === 0;
+  const canLock = lineupProblems.length === 0 && validLineup({ slots: draft?.slots ?? {}, captain: draft?.captain }, squad).ok;
 
   // Today's fixtures with the manager's players and the matchup read.
   const fixtures = useMemo(() => {
@@ -242,13 +237,19 @@ export default function Fantasy() {
   };
 
   const slots = draft?.slots ?? {};
-  const assign = (slot, pid) => {
-    const next = { ...slots, [slot]: pid };
-    for (const sl of SLOTS) if (sl !== slot && next[sl] === pid) delete next[sl];
-    const captain = Object.values(next).includes(draft.captain) ? draft.captain : null;
-    setOverride({ slots: next, captain });
-    setPicker(null);
+  // Any five of your players start, in any roles.
+  const startPlayer = pid => {
+    const free = SLOTS.find(sl => slots[sl] == null);
+    if (!free) { setMessage('You already have five starters. Bench one first.'); return; }
+    setMessage('');
+    setOverride({ slots: { ...slots, [free]: pid }, captain: draft.captain });
   };
+  const benchPlayer = pid => {
+    const next = { ...slots };
+    for (const sl of SLOTS) if (next[sl] === pid) delete next[sl];
+    setOverride({ slots: next, captain: draft.captain === pid ? null : draft.captain });
+  };
+  const setCaptain = pid => setOverride({ slots, captain: pid });
 
   const lockIn = () => {
     if (!canLock) return;
@@ -274,7 +275,6 @@ export default function Fantasy() {
     setState(out.state);
     setOverride(null);
     setBidText({});
-    setPicker(null);
     setView('broadcast');
   };
 
@@ -439,47 +439,27 @@ export default function Fantasy() {
         </section>
 
         <section className={styles.panel}>
-          <h3>YOUR FIVE</h3>
-          {SLOTS.map(slot => {
-            const pid = slots[slot];
-            const isCap = pid != null && draft?.captain === pid;
-            const starting = Object.values(slots);
-            const options = squad.filter(x => (!ROLE_FOR[slot] || roleOf(x) === ROLE_FOR[slot]) && !starting.includes(x));
+          <h3>YOUR STARTING FIVE <span className={styles.count}>{starters.length}/5</span></h3>
+          <p className={styles.help}>Any of your players can start, in any role. Only players whose team plays today can score. <strong>Captain</strong> scores double.</p>
+          {starters.length === 0 && <div className={styles.emptySlot}><span>Nobody is starting yet. Tap START on a player below.</span></div>}
+          {starters.map(pid => {
+            const isCap = draft?.captain === pid;
             return (
-              <div key={slot} className={styles.slotCard}>
-                <span className={styles.micro}>{SLOT_LABEL[slot]}</span>
-                {pid == null ? (
-                  <div className={styles.emptySlot}>
-                    <span>No one chosen</span>
-                    <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'CHOOSE'}</button>
-                  </div>
-                ) : (
-                  <PlayerLine scale={cardScale} kit={kitOf(pid)} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
-                    <div className={styles.slotTools}>
-                      <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'SWAP'}</button>
-                      <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ slots, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
-                    </div>
-                  </PlayerLine>
-                )}
-                {picker === slot && (
-                  <div className={styles.picker}>
-                    {options.filter(x => x !== pid).length === 0 && <p className={styles.note}>No eligible player in your squad{ROLE_FOR[slot] ? ` for ${ROLE_FOR[slot]}` : ''}. Buy one in Transfers.</p>}
-                    {options.filter(x => x !== pid).map(x => (
-                      <button key={x} className={styles.pick} onClick={() => assign(slot, x)}>
-                        <strong>{replay.players[x].handle}</strong>
-                        {matchupLine(x)}
-                        <span className={styles.micro}>AVG {ctx.values[x].ep.toFixed(0)}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <PlayerLine scale={cardScale} kit={kitOf(pid)} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+                <div className={styles.slotTools}>
+                  <button className={styles.secondary} onClick={() => benchPlayer(pid)}>BENCH</button>
+                  <button className={styles.secondary} data-on={isCap} onClick={() => setCaptain(pid)}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
+                </div>
+              </PlayerLine>
             );
           })}
-          {benchPids.length > 0 && <h4>BENCH</h4>}
+          {benchPids.length > 0 && <h4>YOUR BENCH</h4>}
           {benchPids.map(pid => (
-            <PlayerLine scale={cardScale} kit={kitOf(pid)} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
+            <PlayerLine scale={cardScale} kit={kitOf(pid)} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+              <button className={styles.secondary} onClick={() => startPlayer(pid)}>START</button>
+            </PlayerLine>
           ))}
+          {message && <p className={styles.error} role="alert">{message}</p>}
         </section>
 
         <section className={styles.panel}>
@@ -490,7 +470,7 @@ export default function Fantasy() {
         <div className={styles.actions}>
           {!canLock && <p className={styles.lockHint} role="status">{lineupProblems[0]}</p>}
           <button className={styles.secondary} onClick={() => setView('transfers')}>TRANSFERS{bidsPlacedBadge(bidsPlaced)}</button>
-          <button className={styles.primary} onClick={lockIn} disabled={!canLock}>LOCK IN AND WATCH {md.label}</button>
+          <button className={styles.primary} onClick={lockIn} disabled={!canLock}>LOCK IN AND WATCH</button>
         </div>
       </>
     );

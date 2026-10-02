@@ -55,22 +55,16 @@ test('a full replay: market closes, points land, cash pays out, invariants hold 
   assert.equal(Object.keys(state.lineups).length, 3);
 });
 
-test('the human lineup is used when legal and the captain doubles', () => {
+test('the human lineup is used as chosen, in any roles, and the captain doubles', () => {
   const r = replay();
-  let state = startReplay(r, { seed: 4 });
+  const state = startReplay(r, { seed: 4 });
   const squad = squadOf(state, 'you');
-  const roleOf = pid => r.players[pid].role;
-  const D = squad.find(p => roleOf(p) === 'duelist');
-  const I = squad.find(p => roleOf(p) === 'initiator');
-  const C = squad.find(p => roleOf(p) === 'controller');
-  const rest = squad.filter(p => ![D, I, C].includes(p));
-  if ([D, I, C].some(p => p == null) || rest.length < 2) return; // this seed's deal lacks a role: nothing to assert
-  const draft = { slots: { D, I, C, F1: rest[0], F2: rest[1] }, bench: [], captain: D };
+  const five = squad.slice(0, 5);
+  const draft = { slots: { S1: five[0], S2: five[1], S3: five[2], S4: five[3], S5: five[4] }, captain: five[2] };
   const out = playMatchday(state, r, draft);
-  assert.equal(out.locked.you.slots.D, D);
-  assert.equal(out.locked.you.captain, D);
-  state = out.state;
-  assert.equal(state.step, 1);
+  assert.deepEqual(Object.values(out.locked.you.slots), five);
+  assert.equal(out.locked.you.captain, five[2]);
+  assert.equal(out.state.step, 1);
 });
 
 test('replay play is deterministic from the seed', () => {

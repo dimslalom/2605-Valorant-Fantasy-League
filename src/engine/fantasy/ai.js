@@ -31,8 +31,6 @@ function favouriteTeam(state, ctx, mgrId) {
   return teams[Math.floor(rngFor(state.seed, 'fav', mgrId)() * teams.length)];
 }
 
-const roleCounts = (pids, ctx) => pids.reduce((c, pid) => ({ ...c, [ctx.players[pid].role]: (c[ctx.players[pid].role] ?? 0) + 1 }), {});
-
 // How much this personality wants a listed player. Higher is better; <= 0 skips.
 function want(personality, state, mgrId, pid, ctx, held) {
   const row = ctx.values[pid];
@@ -49,8 +47,14 @@ function want(personality, state, mgrId, pid, ctx, held) {
     case 'scout': return row.v < 4000 ? row.ep : 0;
     case 'gambler': return (ctx.seriesNext?.[pid] ?? 1) * 10 + row.ep / 10;
     case 'steady': {
-      const counts = roleCounts(held, ctx);
-      return (counts[ctx.players[pid].role] ?? 0) === 0 ? 100 + row.ep : 0;
+      // Roles no longer matter. Steady first makes sure five of his players actually play
+      // next, then upgrades his weakest starter when a clearly better player is listed.
+      const sched = h => (ctx.seriesNext?.[h] ?? 1) > 0;
+      const playing = held.filter(sched);
+      if (!sched(pid)) return 0;
+      if (playing.length < 5) return 100 + row.ep;
+      const fifth = [...playing].map(h => ctx.values[h].ep).sort((x, y) => y - x)[4] ?? 0;
+      return row.ep > fifth + 2 ? row.ep - fifth : 0;
     }
     default: return 0;
   }

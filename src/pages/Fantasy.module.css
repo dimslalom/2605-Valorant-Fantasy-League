@@ -181,3 +181,5 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .noteItem { display: flex; gap: 12px; align-items: center; }
 
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; list-style: none; }
+
+.count { font-variant-numeric: tabular-nums; color: var(--muted); margin-left: 8px; }

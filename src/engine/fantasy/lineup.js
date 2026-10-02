@@ -1,4 +1,4 @@
-import { AGENT_ROLE, MAX_PER_ROLE, SLOTS, SLOT_ROLE } from './constants.js';
+import { AGENT_ROLE, SLOTS } from './constants.js';
 
 // Fantasy role: the role class of the agent played most in the last 10 maps,
 // falling back to the card role. Fixed per event, never changed mid-event.
@@ -12,9 +12,9 @@ export function fantasyRole(recentAgents, cardRole = null) {
   return top ? top[0] : (cardRole ? String(cardRole).toLowerCase() : 'flex');
 }
 
-// draft: { slots: { D, I, C, F1, F2 }, bench: [pid, pid], captain }
-// roleOf: pid -> role. Returns { ok, problems[] }.
-export function validLineup(draft, squad, roleOf) {
+// draft: { slots: { S1..S5 }, captain }. Any five distinct players you own, any roles.
+// Returns { ok, problems[] }. (roleOf is accepted and ignored so older callers still work.)
+export function validLineup(draft, squad) {
   const problems = [];
   const owned = new Set(squad);
   const used = [];
@@ -24,38 +24,21 @@ export function validLineup(draft, squad, roleOf) {
     if (!owned.has(pid)) problems.push(`${slot} not owned`);
     if (used.includes(pid)) problems.push(`${slot} duplicate`);
     used.push(pid);
-    const need = SLOT_ROLE[slot];
-    if (need && roleOf(pid) !== need) problems.push(`${slot} needs a ${need}`);
-  }
-  const perRole = {};
-  for (const pid of used) perRole[roleOf(pid)] = (perRole[roleOf(pid)] ?? 0) + 1;
-  for (const [role, n] of Object.entries(perRole)) {
-    if (n > MAX_PER_ROLE) problems.push(`more than ${MAX_PER_ROLE} ${role}s`);
   }
   if (draft.captain != null && !used.includes(draft.captain)) problems.push('captain not a starter');
   return { ok: problems.length === 0, problems };
 }
 
-// Best legal lineup by expected points weighted by series scheduled.
-// epOf: pid -> EP per map. seriesOf: pid -> series this matchday (default 1).
-export function autoLineup(squad, { epOf, roleOf, seriesOf = () => 1 }) {
+// Best five by expected points weighted by series scheduled. Used for the AI managers
+// only: the human always builds their own lineup.
+export function autoLineup(squad, { epOf, seriesOf = () => 1 }) {
   const score = pid => epOf(pid) * Math.max(0.2, seriesOf(pid));
-  const ranked = [...squad].sort((a, b) => score(b) - score(a));
+  const ranked = [...squad].sort((a, b) => score(b) - score(a) || a - b);
   const slots = {};
-  const taken = new Set();
-  for (const slot of ['D', 'I', 'C']) {
-    const pick = ranked.find(pid => !taken.has(pid) && roleOf(pid) === SLOT_ROLE[slot]);
-    if (pick != null) { slots[slot] = pick; taken.add(pick); }
-  }
-  const count = role => [...taken].filter(pid => roleOf(pid) === role).length;
-  for (const slot of ['F1', 'F2']) {
-    const pick = ranked.find(pid => !taken.has(pid) && count(roleOf(pid)) < MAX_PER_ROLE);
-    if (pick != null) { slots[slot] = pick; taken.add(pick); }
-  }
-  const starters = SLOTS.map(s => slots[s]).filter(pid => pid != null);
-  const bench = ranked.filter(pid => !taken.has(pid));
-  const captain = [...starters].sort((a, b) => score(b) - score(a))[0] ?? null;
-  return { slots, bench, captain };
+  SLOTS.forEach((slot, i) => { if (ranked[i] != null) slots[slot] = ranked[i]; });
+  const starters = SLOTS.map(sl => slots[sl]).filter(pid => pid != null);
+  const bench = ranked.filter(pid => !starters.includes(pid));
+  return { slots, bench, captain: starters[0] ?? null };
 }
 
 // At settle: a starter who played no maps is replaced by the first bench player

@@ -55,36 +55,50 @@ test('buildValueTable stays inside bounds and respects the previous base', () =>
 });
 
 const roles = { 1: 'duelist', 2: 'duelist', 3: 'duelist', 4: 'initiator', 5: 'controller', 6: 'sentinel', 7: 'controller' };
-const roleOf = pid => roles[pid];
 
 test('fantasy role comes from recent agents with a card fallback', () => {
   assert.equal(fantasyRole(['omen', 'omen', 'jett'], 'Duelist'), 'controller');
   assert.equal(fantasyRole([], 'Sentinel'), 'sentinel');
 });
 
-test('validLineup enforces role slots, the two-per-role cap and the captain rule', () => {
+test('any five players can start, in any roles: three duelists and no controller is fine', () => {
   const squad = [1, 2, 3, 4, 5, 6, 7];
-  assert.equal(validLineup({ slots: { D: 1, I: 4, C: 5, F1: 6, F2: 7 }, captain: 1 }, squad, roleOf).ok, true);
-  assert.match(validLineup({ slots: { D: 4, I: 4, C: 5, F1: 6, F2: 7 } }, squad, roleOf).problems.join(), /needs a duelist/);
-  assert.match(validLineup({ slots: { D: 1, I: 4, C: 5, F1: 2, F2: 3 } }, squad, roleOf).problems.join(), /more than 2 duelists/);
-  assert.match(validLineup({ slots: { D: 1, I: 4, C: 5, F1: 6, F2: 7 }, captain: 2 }, squad, roleOf).problems.join(), /captain/);
+  assert.equal(roles[1], 'duelist');
+  const draft = { slots: { S1: 1, S2: 2, S3: 3, S4: 4, S5: 6 }, captain: 1 };
+  assert.equal(validLineup(draft, squad).ok, true);
 });
 
-test('autoLineup is always legal and captains the best scorer', () => {
+test('validLineup still needs five distinct players you own and a starter as captain', () => {
+  const squad = [1, 2, 3, 4, 5, 6, 7];
+  assert.match(validLineup({ slots: { S1: 1, S2: 2, S3: 3, S4: 4 } }, squad).problems.join(), /S5 empty/);
+  assert.match(validLineup({ slots: { S1: 1, S2: 1, S3: 3, S4: 4, S5: 5 } }, squad).problems.join(), /duplicate/);
+  assert.match(validLineup({ slots: { S1: 1, S2: 2, S3: 3, S4: 4, S5: 99 } }, squad).problems.join(), /not owned/);
+  assert.match(validLineup({ slots: { S1: 1, S2: 2, S3: 3, S4: 4, S5: 5 }, captain: 7 }, squad).problems.join(), /captain/);
+});
+
+test('autoLineup (AI only) picks the best five by expected points and captains the top scorer', () => {
   const squad = [1, 2, 3, 4, 5, 6, 7];
   const ep = { 1: 40, 2: 38, 3: 37, 4: 30, 5: 28, 6: 26, 7: 25 };
-  const draft = autoLineup(squad, { epOf: p => ep[p], roleOf });
-  assert.equal(validLineup(draft, squad, roleOf).ok, true);
+  const draft = autoLineup(squad, { epOf: p => ep[p] });
+  assert.deepEqual(Object.values(draft.slots), [1, 2, 3, 4, 5]);
   assert.equal(draft.captain, 1);
-  assert.equal(draft.bench.length, 2);
+  assert.deepEqual(draft.bench, [6, 7]);
+  assert.equal(validLineup(draft, squad).ok, true);
+});
+
+test('autoLineup prefers players who actually play', () => {
+  const squad = [1, 2, 3, 4, 5, 6, 7];
+  const ep = { 1: 40, 2: 38, 3: 37, 4: 30, 5: 28, 6: 26, 7: 25 };
+  const draft = autoLineup(squad, { epOf: p => ep[p], seriesOf: p => (p === 1 || p === 2 ? 0 : 1) });
+  assert.ok(!Object.values(draft.slots).includes(1) && !Object.values(draft.slots).includes(2));
 });
 
 test('auto-sub: first bench player who played replaces a starter who did not', () => {
-  const locked = { slots: { D: 1, I: 4, C: 5, F1: 6, F2: 7 }, bench: [2, 3], captain: 4 };
+  const locked = { slots: { S1: 1, S2: 4, S3: 5, S4: 6, S5: 7 }, bench: [2, 3], captain: 4 };
   const played = { 1: 2, 4: 0, 5: 2, 6: 2, 7: 2, 2: 0, 3: 2 };
   const r = applyAutoSubs(locked, pid => played[pid]);
-  assert.deepEqual(r.subs, [{ slot: 'I', out: 4, in: 3 }]);
-  assert.equal(r.starters.I, 3);
+  assert.deepEqual(r.subs, [{ slot: 'S2', out: 4, in: 3 }]);
+  assert.equal(r.starters.S2, 3);
   assert.equal(r.captain, null);  // the absent captain doubles nobody
 });
 

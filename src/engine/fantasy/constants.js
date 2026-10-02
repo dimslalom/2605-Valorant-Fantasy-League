@@ -29,10 +29,9 @@ export const AGENT_ROLE = {
   deadlock: 'sentinel', vyse: 'sentinel', veto: 'sentinel',
 };
 
-// Lineup: three fixed role slots and two FLEX, at most two of any role.
-export const SLOTS = ['D', 'I', 'C', 'F1', 'F2'];
-export const SLOT_ROLE = { D: 'duelist', I: 'initiator', C: 'controller' };
-export const MAX_PER_ROLE = 2;
+// Lineup: any five of your players, in any roles, plus a captain. Roles are shown on
+// the card but never restrict who can start. The slot names are just positions.
+export const SLOTS = ['S1', 'S2', 'S3', 'S4', 'S5'];
 
 // Value model.
 export const VALUE = {

@@ -13,8 +13,6 @@ export const ctxFor = (replay, step) => ({
   seriesNext: replay.seriesNext[Math.min(step, replay.seriesNext.length - 1)],
 });
 
-const roleOfFn = replay => pid => replay.players[pid].role;
-
 export function startReplay(replay, { seed = 1, humanName = 'You', campaignId = 'replay', org = null } = {}) {
   const ctx = ctxFor(replay, 0);
   const tags = Object.keys(replay.orgs ?? {});
@@ -40,12 +38,11 @@ export function startReplay(replay, { seed = 1, humanName = 'You', campaignId = 
 // A lineup for every manager: the human's draft if it is legal, else the auto pick.
 export function lockLineups(state, replay, humanDraft) {
   const ctx = ctxFor(replay, state.step);
-  const roleOf = roleOfFn(replay);
   const locked = {};
   for (const m of state.managers) {
     const squad = squadOf(state, m.id);
-    const auto = autoLineup(squad, { epOf: pid => ctx.values[pid].ep, roleOf, seriesOf: pid => ctx.seriesNext[pid] ?? 1 });
-    if (m.kind === 'human' && humanDraft && validLineup(humanDraft, squad, roleOf).ok) {
+    const auto = autoLineup(squad, { epOf: pid => ctx.values[pid].ep, seriesOf: pid => ctx.seriesNext[pid] ?? 1 });
+    if (m.kind === 'human' && humanDraft && validLineup(humanDraft, squad).ok) {
       const bench = squad.filter(pid => !Object.values(humanDraft.slots).includes(pid));
       locked[m.id] = { slots: humanDraft.slots, bench: humanDraft.bench?.length ? humanDraft.bench.filter(p => bench.includes(p)).concat(bench.filter(p => !humanDraft.bench.includes(p))) : bench, captain: humanDraft.captain ?? auto.captain };
     } else {
