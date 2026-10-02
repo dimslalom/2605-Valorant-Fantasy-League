@@ -70,10 +70,19 @@ export function removeOwner(state, mgr, pid) {
   if (state.owners[pid].length === 0) delete state.owners[pid];
 }
 
-export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName = 'You', kind = 'live', now = 0 }) {
+export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, assignments = null, humanName = 'You', kind = 'live', now = 0 }) {
   const aiIds = PERSONALITIES.map((_, i) => `ai${i + 1}`);
   const managerIds = ['you', ...aiIds];
-  const { squads, mean } = dealSquads(seed, managerIds, dealCtx);
+  // Either each manager takes over a real org (assignments) or squads are dealt.
+  let squads;
+  let mean;
+  if (assignments) {
+    squads = Object.fromEntries(managerIds.map(id => [id, assignments[id].pids]));
+    const totals = managerIds.map(id => squads[id].reduce((sum, pid) => sum + valueOf(ctx, pid), 0));
+    mean = totals.reduce((a, b) => a + b, 0) / totals.length;
+  } else {
+    ({ squads, mean } = dealSquads(seed, managerIds, dealCtx));
+  }
   const poolSize = Object.keys(ctx.players).length;
   const startCash = Math.round((mean * ECONOMY.startCashFactor) / 10) * 10;
 
@@ -93,6 +102,7 @@ export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName =
       ...aiIds.map((id, i) => ({ id, kind: 'ai', personality: PERSONALITIES[i] })),
     ],
     cash: Object.fromEntries(managerIds.map(id => [id, startCash])),
+    orgs: assignments ? Object.fromEntries(managerIds.map(id => [id, assignments[id].org])) : null,
     copies: copiesFor(ctx, managerIds.length),
     owners,
     bought: {},

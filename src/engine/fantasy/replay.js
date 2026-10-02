@@ -63,9 +63,10 @@ export function buildReplay({ matches, cards = [], title = 'Replay' }) {
       for (const map of match.maps) {
         for (const row of map.players) {
           const p = (players[row.vlrId] ??= {
-            pid: row.vlrId, handle: row.handle ?? `#${row.vlrId}`, team: row.teamTag, agents: [], card: null,
+            pid: row.vlrId, handle: row.handle ?? `#${row.vlrId}`, team: row.teamTag, agents: [], maps: 0, card: null,
           });
           p.agents.push(row.agent);
+          p.maps += 1;
         }
       }
     }
@@ -104,7 +105,20 @@ export function buildReplay({ matches, cards = [], title = 'Replay' }) {
     for (const [pid, entry] of md.points) history[pid] = [...entry.maps.map(m => m.total).reverse(), ...history[pid]];
   });
 
-  return { title, players, matchdays, valuesAt, seriesNext };
+  // Real orgs a manager can take over: each team's five most-used players.
+  const names = {};
+  for (const m of matches) for (const t of m.teams) if (t.tag && t.name) names[t.tag] = t.name;
+  const byTeam = {};
+  for (const p of Object.values(players)) (byTeam[p.team] ??= []).push(p);
+  const orgs = {};
+  for (const [tag, list] of Object.entries(byTeam)) {
+    if (list.length < 5) continue;
+    const top = [...list].sort((a, b) => b.maps - a.maps || a.pid - b.pid).slice(0, 5);
+    const ep = top.reduce((sum, p) => sum + (valuesAt[0]?.[p.pid]?.ep ?? 0), 0) / 5;
+    orgs[tag] = { tag, name: names[tag] ?? tag, pids: top.map(p => p.pid), strength: Math.round(ep * 10) / 10 };
+  }
+
+  return { title, players, matchdays, valuesAt, seriesNext, orgs };
 }
 
 // Mean expected points of a team's best five, from a value table. A rough team

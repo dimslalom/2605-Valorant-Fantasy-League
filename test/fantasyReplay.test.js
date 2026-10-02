@@ -114,3 +114,22 @@ test('thin group-stage days merge into one matchday; bracket days never do', () 
   const bracket = buildReplay({ matches: [...byDay('1:2026-09-24'), ...byDay('1:2026-09-25')].map(m => ({ ...m, stage: 'Playoffs' })), cards });
   assert.equal(bracket.matchdays.length, 2);
 });
+
+test('taking over a real org: you start with that team\'s real five, rivals take distinct orgs', () => {
+  const r = replay();
+  const tag = Object.keys(r.orgs)[3];
+  const state = startReplay(r, { seed: 6, org: tag });
+  assert.equal(state.orgs.you, tag);
+  assert.deepEqual([...squadOf(state, 'you')].sort(), [...r.orgs[tag].pids].sort());
+  assert.ok(squadOf(state, 'you').every(pid => r.players[pid].team === tag));
+  const rivalOrgs = state.managers.filter(m => m.kind === 'ai').map(m => state.orgs[m.id]);
+  assert.equal(new Set(rivalOrgs).size, 7);
+  assert.ok(!rivalOrgs.includes(tag));
+  for (const m of state.managers.filter(x => x.kind === 'ai')) {
+    assert.ok(squadOf(state, m.id).every(pid => r.players[pid].team === state.orgs[m.id]));
+  }
+  // Playing on works exactly as before.
+  let s = state;
+  while (s.status !== 'done') s = playMatchday(s, r, null).state;
+  assert.equal(standings(s).length, 8);
+});

@@ -171,3 +171,11 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 
 .cardThumb { overflow: hidden; flex-shrink: 0; }
 .row { padding: 10px 0; }
+
+/* Team picker */
+.orgGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; width: 100%; }
+.org { display: flex; flex-direction: column; gap: 6px; align-items: start; padding: 10px; background: var(--surface); border: 0; border-left: 3px solid var(--line-bracket); color: var(--ink); text-align: left; cursor: pointer; font-family: var(--font-body); }
+.org:hover { background: var(--surface-hi); }
+.org[data-on='true'] { border-left-color: var(--accent); background: var(--surface-hi); }
+.orgCards { display: flex; gap: 2px; overflow: hidden; max-width: 100%; }
+.noteItem { display: flex; gap: 12px; align-items: center; }

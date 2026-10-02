@@ -1,5 +1,6 @@
 import { applyAutoSubs, autoLineup, validLineup } from './lineup.js';
 import { createLeague, settleMatchday, squadOf, standings } from './league.js';
+import { rngFor, shuffle } from './rng.js';
 import { closeMarket, openMarket } from './market.js';
 import { scoreLineup } from './scoring.js';
 
@@ -14,13 +15,24 @@ export const ctxFor = (replay, step) => ({
 
 const roleOfFn = replay => pid => replay.players[pid].role;
 
-export function startReplay(replay, { seed = 1, humanName = 'You', campaignId = 'replay' } = {}) {
+export function startReplay(replay, { seed = 1, humanName = 'You', campaignId = 'replay', org = null } = {}) {
   const ctx = ctxFor(replay, 0);
-  // Deal starting squads from teams that play on matchday 1, so day 1 is playable
-  // for everyone. Falls back to the whole pool when too few teams play.
-  const playing = Object.fromEntries(Object.entries(replay.players).filter(([pid]) => replay.seriesNext[0][pid] > 0));
-  const dealCtx = Object.keys(playing).length >= 45 ? { ...ctx, players: playing } : ctx;
-  let state = createLeague({ seed, campaignId, ctx, dealCtx, humanName, kind: 'replay' });
+  const tags = Object.keys(replay.orgs ?? {});
+  let assignments = null;
+  let dealCtx = ctx;
+  if (tags.length >= 8) {
+    // Every manager takes over a real org with its real five. The player picks
+    // theirs; the seven rivals get seeded, distinct others.
+    const mine = org && replay.orgs[org] ? org : tags[0];
+    const others = shuffle(rngFor(seed, 'orgs'), tags.filter(t => t !== mine)).slice(0, 7);
+    assignments = { you: { org: mine, pids: replay.orgs[mine].pids } };
+    others.forEach((tag, i) => { assignments[`ai${i + 1}`] = { org: tag, pids: replay.orgs[tag].pids }; });
+  } else {
+    // Too few full rosters in the data yet: deal squads from teams that play on matchday 1.
+    const playing = Object.fromEntries(Object.entries(replay.players).filter(([pid]) => replay.seriesNext[0][pid] > 0));
+    dealCtx = Object.keys(playing).length >= 45 ? { ...ctx, players: playing } : ctx;
+  }
+  let state = createLeague({ seed, campaignId, ctx, dealCtx, assignments, humanName, kind: 'replay' });
   state = { ...state, step: 0, status: 'market', totalSteps: replay.matchdays.length };
   return openMarket(state, 'md1', ctx, { replay: true });
 }

@@ -38,18 +38,18 @@ function cardFor(player, value) {
   };
 }
 
-function CardThumb({ player, value, scale }) {
+function CardThumb({ player, value, scale, kit }) {
   return (
     <div className={styles.cardThumb} style={{ width: 400 * scale, height: 580 * scale }}>
-      <PlayerCard card={cardFor(player, value)} displayScale={scale} tilt={false} canDrag={false} portraitLoading="lazy" />
+      <PlayerCard card={cardFor(player, value)} kit={kit} displayScale={scale} tilt={false} canDrag={false} portraitLoading="lazy" />
     </div>
   );
 }
 
-function PlayerLine({ player, value, sub, children, scale = 0.2 }) {
+function PlayerLine({ player, value, sub, children, scale = 0.2, kit }) {
   return (
     <div className={styles.row} style={{ '--cw': `${400 * scale}px` }}>
-      <CardThumb player={player} value={value} scale={scale} />
+      <CardThumb player={player} value={value} scale={scale} kit={kit} />
       <div className={styles.who}>
         <strong>{player.handle}</strong>
         <span className={styles.micro}><Split parts={[player.team, player.role.toUpperCase()]} /></span>
@@ -121,6 +121,7 @@ export default function Fantasy() {
   const [reveal, setReveal] = useState(null);
   const [view, setView] = useState('board'); // board | transfers | broadcast | result
   const [picker, setPicker] = useState(null);
+  const [pickedOrg, setPickedOrg] = useState(null);
   const [transferNote, setTransferNote] = useState(null); // outcome of the last lock-in's transfers
 
   useEffect(() => {
@@ -213,14 +214,15 @@ export default function Fantasy() {
     return Object.values(state.market.aiPlans).filter(plan => plan.some(c => c.type === 'bid' && c.pid === pid)).length;
   };
 
-  const start = () => {
+  const start = (org = null) => {
     clearFantasySave();
-    setState(startReplay(replay, { seed: Math.floor(Math.random() * 1e6) }));
+    setState(startReplay(replay, { seed: Math.floor(Math.random() * 1e6), org }));
     setOverride(null);
     setReveal(null);
     setTransferNote(null);
     setView('board');
     setStatus('play');
+    setPickedOrg(null);
   };
 
   const attempt = fn => {
@@ -268,28 +270,52 @@ export default function Fantasy() {
 
   const rows = state ? standings(state) : [];
   const myRank = rows.findIndex(r => r.id === 'you') + 1;
+  const myOrg = state?.orgs?.you ?? null;
+  const orgTag = id => state.orgs?.[id] ?? null;
   const nameOf = id => {
     const m = state.managers.find(x => x.id === id);
-    return m.kind === 'human' ? 'You' : m.personality[0].toUpperCase() + m.personality.slice(1);
+    const base = m.kind === 'human' ? 'You' : m.personality[0].toUpperCase() + m.personality.slice(1);
+    return orgTag(id) ? `${base} (${orgTag(id)})` : base;
   };
+  // Everyone you own wears your jersey; that is what a signing visibly does.
+  const kitOf = pid => (myOrg && squad.includes(pid) ? myOrg : undefined);
 
   let body;
   if (status === 'loading') body = <p className={styles.note}>Loading the feed</p>;
   else if (status === 'error') body = <p className={styles.note}>The data feed is unreachable. Try again in a minute.</p>;
   else if (status === 'empty') body = <p className={styles.note}>Only {replay.matchdays.length} matchday of Champions 2026 is stored so far. Check back soon.</p>;
   else if (status === 'intro') {
+    const orgs = Object.values(replay.orgs ?? {}).sort((x, y) => y.strength - x.strength);
+    const tier = i => (i < orgs.length / 3 ? 'CONTENDER' : i < (2 * orgs.length) / 3 ? 'MID TABLE' : 'UNDERDOG');
+    const chosen = pickedOrg ? replay.orgs[pickedOrg] : null;
     body = (
       <section className={styles.intro}>
         <span className={styles.micro}>REPLAY</span>
         <h2>Champions 2026</h2>
-        <p>Relive the tournament as a manager. Every match day you can see the real fixtures, field the players you think will dominate, then watch the matches replay with your points ticking up.</p>
-        <ol className={styles.how}>
-          <li><strong>Read the board.</strong> Today's real matches, who is favourite, and where your players sit.</li>
-          <li><strong>Pick your five and a captain</strong> who scores double.</li>
-          <li><strong>Outbid the other managers</strong> for the players you want. Bids are secret.</li>
-          <li><strong>Lock in and watch</strong> the real maps play out.</li>
-        </ol>
-        <button className={styles.primary} onClick={start}>START REPLAY</button>
+        <p>Take over a real team. You start with its real five. Buy and sell players between matchdays: everyone you sign pulls on your team's jersey. Read the day's fixtures, pick your five and a captain, then watch the real matches play out.</p>
+        {orgs.length === 0 ? (
+          <button className={styles.primary} onClick={() => start(null)}>START REPLAY</button>
+        ) : (
+          <>
+            <h3>CHOOSE YOUR TEAM</h3>
+            <div className={styles.orgGrid}>
+              {orgs.map((o, i) => (
+                <button key={o.tag} className={styles.org} data-on={pickedOrg === o.tag} onClick={() => setPickedOrg(o.tag)}>
+                  <div className={styles.orgCards}>
+                    {o.pids.map(pid => <CardThumb key={pid} player={replay.players[pid]} value={{ ep: replay.valuesAt[0][pid]?.ep }} scale={cardScale * 0.62} />)}
+                  </div>
+                  <strong>{o.name}</strong>
+                  <span className={styles.micro}><Split parts={[o.tag, tier(i)]} /></span>
+                </button>
+              ))}
+            </div>
+            <div className={styles.actions}>
+              <button className={styles.primary} disabled={!chosen} onClick={() => start(pickedOrg)}>
+                {chosen ? `MANAGE ${chosen.name.toUpperCase()}` : 'PICK A TEAM'}
+              </button>
+            </div>
+          </>
+        )}
       </section>
     );
   } else if (state) {
@@ -300,8 +326,8 @@ export default function Fantasy() {
     const header = (
       <header className={styles.top}>
         <div>
-          <span className={styles.micro}>{done && !hold ? 'FINISHED' : `${replay.matchdays[shownStep].label} OF ${state.totalSteps}`}</span>
-          <h2>{replay.title}</h2>
+          <span className={styles.micro}><Split parts={[done && !hold ? 'FINISHED' : `${replay.matchdays[shownStep].label} OF ${state.totalSteps}`, replay.title.toUpperCase()]} /></span>
+          <h2>{myOrg ? (replay.orgs[myOrg]?.name ?? myOrg) : replay.title}</h2>
         </div>
         <div className={styles.stats}>
           <div><span className={styles.micro}>CREDITS</span><strong>{fmt(hold ? hold.cash : state.cash.you)}</strong></div>
@@ -334,7 +360,10 @@ export default function Fantasy() {
           <button className={styles.secondary} onClick={() => setTransferNote(null)}>DISMISS</button>
         </div>
         {transferNote.map(item => (
-          <p key={`${item.kind}-${item.pid}`} className={styles.noteLine} data-kind={item.kind}>{item.text}</p>
+          <div key={`${item.kind}-${item.pid}`} className={styles.noteItem}>
+            {item.kind === 'won' && <CardThumb player={replay.players[item.pid]} value={ctx.values[item.pid]} scale={cardScale} kit={myOrg ?? undefined} />}
+            <p className={styles.noteLine} data-kind={item.kind}>{item.text}{item.kind === 'won' && myOrg ? ` He now wears your ${myOrg} jersey.` : ''}</p>
+          </div>
         ))}
       </section>
     );
@@ -385,7 +414,8 @@ export default function Fantasy() {
           {SLOTS.map(slot => {
             const pid = slots[slot];
             const isCap = pid != null && draft?.captain === pid;
-            const options = squad.filter(x => !ROLE_FOR[slot] || roleOf(x) === ROLE_FOR[slot]);
+            const starting = Object.values(slots);
+            const options = squad.filter(x => (!ROLE_FOR[slot] || roleOf(x) === ROLE_FOR[slot]) && !starting.includes(x));
             return (
               <div key={slot} className={styles.slotCard}>
                 <span className={styles.micro}>{SLOT_LABEL[slot]}</span>
@@ -395,7 +425,7 @@ export default function Fantasy() {
                     <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'CHOOSE'}</button>
                   </div>
                 ) : (
-                  <PlayerLine scale={cardScale} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+                  <PlayerLine scale={cardScale} kit={kitOf(pid)} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
                     <div className={styles.slotTools}>
                       <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'SWAP'}</button>
                       <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ slots, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
@@ -419,7 +449,7 @@ export default function Fantasy() {
           })}
           {benchPids.length > 0 && <h4>BENCH</h4>}
           {benchPids.map(pid => (
-            <PlayerLine scale={cardScale} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
+            <PlayerLine scale={cardScale} kit={kitOf(pid)} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
           ))}
         </section>
 
@@ -444,12 +474,12 @@ export default function Fantasy() {
           {pendingBox}
           {state.market.offers.length > 0 && <h4>A RIVAL WANTS ONE OF YOUR PLAYERS</h4>}
           {state.market.offers.map(o => (
-            <PlayerLine scale={cardScale} key={o.id} player={replay.players[o.pid]} sub={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
+            <PlayerLine scale={cardScale} kit={kitOf(o.pid)} key={o.id} player={replay.players[o.pid]} sub={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
               <button className={styles.secondary} disabled={o.accepted} onClick={() => attempt(() => acceptOffer(state, o.id))}>{o.accepted ? 'SELLING' : 'SELL TO THEM'}</button>
             </PlayerLine>
           ))}
           <h4>ON THE MARKET</h4>
-          {state.market.listings.map(l => {
+          {state.market.listings.filter(l => !owns(state, 'you', l.pid)).map(l => {
             const p = replay.players[l.pid];
             const placed = state.market.bids.you[l.pid];
             const heat = eyeing(l.pid);
@@ -485,7 +515,7 @@ export default function Fantasy() {
           {squad.map(pid => {
             const queued = state.market.sales.you?.includes(pid);
             return (
-              <PlayerLine scale={cardScale} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+              <PlayerLine scale={cardScale} kit={kitOf(pid)} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
                 <button className={styles.secondary} disabled={queued} onClick={() => attempt(() => queueSale(state, 'you', pid))}>{queued ? 'WILL SELL' : 'SELL'}</button>
               </PlayerLine>
             );
