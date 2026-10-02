@@ -1,2 +1,3 @@
 # Copy this file to .dev.vars only if local Worker development needs secrets.
-# Multiplayer v1 has no application secrets.
+# Feed ingest bearer (generate one: openssl rand -base64 32).
+FEED_INGEST_TOKEN=local-dev

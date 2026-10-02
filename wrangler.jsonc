@@ -44,6 +44,10 @@
     }
   ],
 
+  // Feed: raw stats live in the existing D1 (migrations/0002_feed.sql, applied by deploy.yml).
+  // Ingest bearer is a secret, never committed: npx wrangler secret put FEED_INGEST_TOKEN
+  "vars": { "FEED_STALE_MINUTES": "120", "FEED_ATTRIBUTION": "Data: vlr.gg" },
+
   "migrations": [
     {
       "tag": "v1",

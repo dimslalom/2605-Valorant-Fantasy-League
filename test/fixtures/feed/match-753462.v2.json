@@ -1,0 +1,2504 @@
+{
+ "data": {
+  "status": 200,
+  "segments": [
+   {
+    "match_id": "753462",
+    "event": {
+     "name": "Valorant Champions 2026 Group Stage: Elimination (D)",
+     "series": "Group Stage: Elimination (D)",
+     "logo": "https://owcdn.net/img/692fc60a022bb.png"
+    },
+    "date": "Thursday, October 1 7:05 PM WIB Patch 13.05",
+    "map_vetos": "XLG ban Haven; NS ban Lotus; XLG pick Summit; NS pick Sunset; XLG ban Ascent; NS ban Split; Abyss remains",
+    "status": "final",
+    "start_utc": "2026-10-01 08:05:00",
+    "best_of": 3,
+    "event_id": 2766,
+    "patch": "13.05",
+    "teams": [
+     {
+      "id": "13581",
+      "name": "Xi Lai Gaming",
+      "tag": "",
+      "logo": "https://owcdn.net/img/671742f863b9b.png",
+      "score": "0",
+      "is_winner": false
+     },
+     {
+      "id": "11060",
+      "name": "Nongshim RedForce",
+      "tag": "",
+      "logo": "https://owcdn.net/img/6399bb707aacb.png",
+      "score": "2",
+      "is_winner": true
+     }
+    ],
+    "streams": [],
+    "vods": [],
+    "maps": [
+     {
+      "game_id": "283205",
+      "map_name": "Summit",
+      "picked_by": "PICK",
+      "picked_side": 1,
+      "duration": "1:09:39",
+      "score": {
+       "team1": 11,
+       "team2": 13
+      },
+      "score_ct": {
+       "team1": "4",
+       "team2": "5"
+      },
+      "score_t": {
+       "team1": "7",
+       "team2": "8"
+      },
+      "score_ot": {
+       "team1": "",
+       "team2": ""
+      },
+      "players": {
+       "team1": [
+        {
+         "name": "Lysoar",
+         "player_id": 37489,
+         "team_tag": "XLG",
+         "agent": "Omen",
+         "rating": "1.37",
+         "acs": "262",
+         "kills": "22",
+         "deaths": "17",
+         "assists": "11",
+         "kd_diff": "+5",
+         "kast": "71%",
+         "adr": "173",
+         "hs_pct": "32%",
+         "fk": "2",
+         "fd": "2",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "1.81",
+           "acs": "368",
+           "kills": "15",
+           "deaths": "8",
+           "assists": "5",
+           "kd_diff": "+7",
+           "kast": "75%",
+           "adr": "238",
+           "hs_pct": "40%",
+           "fk": "2",
+           "fd": "1",
+           "fk_diff": "+1"
+          },
+          "ct": {
+           "rating": "0.93",
+           "acs": "158",
+           "kills": "7",
+           "deaths": "9",
+           "assists": "6",
+           "kd_diff": "-2",
+           "kast": "67%",
+           "adr": "109",
+           "hs_pct": "19%",
+           "fk": "0",
+           "fd": "1",
+           "fk_diff": "-1"
+          }
+         }
+        },
+        {
+         "name": "happywei",
+         "player_id": 37927,
+         "team_tag": "XLG",
+         "agent": "Sage",
+         "rating": "1.19",
+         "acs": "219",
+         "kills": "20",
+         "deaths": "17",
+         "assists": "4",
+         "kd_diff": "+3",
+         "kast": "79%",
+         "adr": "149",
+         "hs_pct": "33%",
+         "fk": "1",
+         "fd": "1",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "1.25",
+           "acs": "192",
+           "kills": "9",
+           "deaths": "8",
+           "assists": "2",
+           "kd_diff": "+1",
+           "kast": "92%",
+           "adr": "148",
+           "hs_pct": "33%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "1.12",
+           "acs": "248",
+           "kills": "11",
+           "deaths": "9",
+           "assists": "2",
+           "kd_diff": "+2",
+           "kast": "67%",
+           "adr": "150",
+           "hs_pct": "33%",
+           "fk": "1",
+           "fd": "1",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "WsLeo",
+         "player_id": 24308,
+         "team_tag": "XLG",
+         "agent": "Fade",
+         "rating": "1.09",
+         "acs": "158",
+         "kills": "13",
+         "deaths": "14",
+         "assists": "12",
+         "kd_diff": "-1",
+         "kast": "67%",
+         "adr": "92",
+         "hs_pct": "24%",
+         "fk": "4",
+         "fd": "2",
+         "fk_diff": "+2",
+         "sides": {
+          "t": {
+           "rating": "1.10",
+           "acs": "155",
+           "kills": "6",
+           "deaths": "7",
+           "assists": "10",
+           "kd_diff": "-1",
+           "kast": "67%",
+           "adr": "96",
+           "hs_pct": "18%",
+           "fk": "1",
+           "fd": "2",
+           "fk_diff": "-1"
+          },
+          "ct": {
+           "rating": "1.08",
+           "acs": "162",
+           "kills": "7",
+           "deaths": "7",
+           "assists": "2",
+           "kd_diff": "0",
+           "kast": "67%",
+           "adr": "89",
+           "hs_pct": "35%",
+           "fk": "3",
+           "fd": "0",
+           "fk_diff": "+3"
+          }
+         }
+        },
+        {
+         "name": "Rarga",
+         "player_id": 22047,
+         "team_tag": "XLG",
+         "agent": "Chamber",
+         "rating": "1.06",
+         "acs": "199",
+         "kills": "18",
+         "deaths": "18",
+         "assists": "4",
+         "kd_diff": "0",
+         "kast": "71%",
+         "adr": "119",
+         "hs_pct": "12%",
+         "fk": "3",
+         "fd": "3",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "1.30",
+           "acs": "205",
+           "kills": "11",
+           "deaths": "7",
+           "assists": "0",
+           "kd_diff": "+4",
+           "kast": "67%",
+           "adr": "119",
+           "hs_pct": "17%",
+           "fk": "0",
+           "fd": "1",
+           "fk_diff": "-1"
+          },
+          "ct": {
+           "rating": "0.82",
+           "acs": "194",
+           "kills": "7",
+           "deaths": "11",
+           "assists": "4",
+           "kd_diff": "-4",
+           "kast": "75%",
+           "adr": "119",
+           "hs_pct": "7%",
+           "fk": "3",
+           "fd": "2",
+           "fk_diff": "+1"
+          }
+         }
+        },
+        {
+         "name": "NoMan",
+         "player_id": 11527,
+         "team_tag": "XLG",
+         "agent": "Waylay",
+         "rating": "0.23",
+         "acs": "118",
+         "kills": "8",
+         "deaths": "23",
+         "assists": "7",
+         "kd_diff": "-15",
+         "kast": "46%",
+         "adr": "90",
+         "hs_pct": "38%",
+         "fk": "1",
+         "fd": "5",
+         "fk_diff": "-4",
+         "sides": {
+          "t": {
+           "rating": "0.19",
+           "acs": "132",
+           "kills": "5",
+           "deaths": "12",
+           "assists": "2",
+           "kd_diff": "-7",
+           "kast": "50%",
+           "adr": "95",
+           "hs_pct": "33%",
+           "fk": "1",
+           "fd": "4",
+           "fk_diff": "-3"
+          },
+          "ct": {
+           "rating": "0.28",
+           "acs": "105",
+           "kills": "3",
+           "deaths": "11",
+           "assists": "5",
+           "kd_diff": "-8",
+           "kast": "42%",
+           "adr": "85",
+           "hs_pct": "43%",
+           "fk": "0",
+           "fd": "1",
+           "fk_diff": "-1"
+          }
+         }
+        }
+       ],
+       "team2": [
+        {
+         "name": "Francis",
+         "player_id": 31828,
+         "team_tag": "NS",
+         "agent": "Chamber",
+         "rating": "1.28",
+         "acs": "295",
+         "kills": "25",
+         "deaths": "17",
+         "assists": "3",
+         "kd_diff": "+8",
+         "kast": "75%",
+         "adr": "168",
+         "hs_pct": "22%",
+         "fk": "6",
+         "fd": "2",
+         "fk_diff": "+4",
+         "sides": {
+          "t": {
+           "rating": "1.59",
+           "acs": "351",
+           "kills": "15",
+           "deaths": "8",
+           "assists": "2",
+           "kd_diff": "+7",
+           "kast": "92%",
+           "adr": "201",
+           "hs_pct": "17%",
+           "fk": "3",
+           "fd": "1",
+           "fk_diff": "+2"
+          },
+          "ct": {
+           "rating": "0.97",
+           "acs": "241",
+           "kills": "10",
+           "deaths": "9",
+           "assists": "1",
+           "kd_diff": "+1",
+           "kast": "58%",
+           "adr": "135",
+           "hs_pct": "31%",
+           "fk": "3",
+           "fd": "1",
+           "fk_diff": "+2"
+          }
+         }
+        },
+        {
+         "name": "Rb",
+         "player_id": 488,
+         "team_tag": "NS",
+         "agent": "Harbor",
+         "rating": "1.13",
+         "acs": "250",
+         "kills": "21",
+         "deaths": "16",
+         "assists": "10",
+         "kd_diff": "+5",
+         "kast": "83%",
+         "adr": "166",
+         "hs_pct": "43%",
+         "fk": "1",
+         "fd": "2",
+         "fk_diff": "-1",
+         "sides": {
+          "t": {
+           "rating": "0.89",
+           "acs": "180",
+           "kills": "8",
+           "deaths": "8",
+           "assists": "4",
+           "kd_diff": "0",
+           "kast": "83%",
+           "adr": "115",
+           "hs_pct": "44%",
+           "fk": "0",
+           "fd": "1",
+           "fk_diff": "-1"
+          },
+          "ct": {
+           "rating": "1.37",
+           "acs": "321",
+           "kills": "13",
+           "deaths": "8",
+           "assists": "6",
+           "kd_diff": "+5",
+           "kast": "83%",
+           "adr": "216",
+           "hs_pct": "42%",
+           "fk": "1",
+           "fd": "1",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "Xross",
+         "player_id": 42772,
+         "team_tag": "NS",
+         "agent": "Fade",
+         "rating": "1.08",
+         "acs": "155",
+         "kills": "13",
+         "deaths": "12",
+         "assists": "6",
+         "kd_diff": "+1",
+         "kast": "83%",
+         "adr": "106",
+         "hs_pct": "38%",
+         "fk": "2",
+         "fd": "1",
+         "fk_diff": "+1",
+         "sides": {
+          "t": {
+           "rating": "1.21",
+           "acs": "133",
+           "kills": "6",
+           "deaths": "4",
+           "assists": "3",
+           "kd_diff": "+2",
+           "kast": "83%",
+           "adr": "94",
+           "hs_pct": "44%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "0.95",
+           "acs": "178",
+           "kills": "7",
+           "deaths": "8",
+           "assists": "3",
+           "kd_diff": "-1",
+           "kast": "83%",
+           "adr": "117",
+           "hs_pct": "33%",
+           "fk": "2",
+           "fd": "1",
+           "fk_diff": "+1"
+          }
+         }
+        },
+        {
+         "name": "Ivy",
+         "player_id": 31829,
+         "team_tag": "NS",
+         "agent": "Sage",
+         "rating": "0.87",
+         "acs": "157",
+         "kills": "13",
+         "deaths": "15",
+         "assists": "7",
+         "kd_diff": "-2",
+         "kast": "67%",
+         "adr": "123",
+         "hs_pct": "36%",
+         "fk": "0",
+         "fd": "4",
+         "fk_diff": "-4",
+         "sides": {
+          "t": {
+           "rating": "1.03",
+           "acs": "181",
+           "kills": "7",
+           "deaths": "6",
+           "assists": "6",
+           "kd_diff": "+1",
+           "kast": "67%",
+           "adr": "136",
+           "hs_pct": "38%",
+           "fk": "0",
+           "fd": "3",
+           "fk_diff": "-3"
+          },
+          "ct": {
+           "rating": "0.71",
+           "acs": "135",
+           "kills": "6",
+           "deaths": "9",
+           "assists": "1",
+           "kd_diff": "-3",
+           "kast": "67%",
+           "adr": "109",
+           "hs_pct": "33%",
+           "fk": "0",
+           "fd": "1",
+           "fk_diff": "-1"
+          }
+         }
+        },
+        {
+         "name": "Dambi",
+         "player_id": 31827,
+         "team_tag": "NS",
+         "agent": "Neon",
+         "rating": "0.72",
+         "acs": "217",
+         "kills": "17",
+         "deaths": "21",
+         "assists": "3",
+         "kd_diff": "-4",
+         "kast": "71%",
+         "adr": "136",
+         "hs_pct": "33%",
+         "fk": "4",
+         "fd": "2",
+         "fk_diff": "+2",
+         "sides": {
+          "t": {
+           "rating": "0.97",
+           "acs": "259",
+           "kills": "11",
+           "deaths": "9",
+           "assists": "0",
+           "kd_diff": "+2",
+           "kast": "67%",
+           "adr": "150",
+           "hs_pct": "44%",
+           "fk": "2",
+           "fd": "2",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "0.47",
+           "acs": "177",
+           "kills": "6",
+           "deaths": "12",
+           "assists": "3",
+           "kd_diff": "-6",
+           "kast": "75%",
+           "adr": "123",
+           "hs_pct": "22%",
+           "fk": "2",
+           "fd": "0",
+           "fk_diff": "+2"
+          }
+         }
+        }
+       ]
+      },
+      "rounds": [
+       {
+        "round_num": 1,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 2,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 3,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 4,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 5,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 6,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 7,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 8,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 9,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 10,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 11,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 12,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 13,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 14,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 15,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 16,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 17,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 18,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 19,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 20,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 21,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 22,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 23,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 24,
+        "winner": "team2",
+        "side": "t"
+       }
+      ],
+      "performance": {
+       "kill_matrix": [
+        {
+         "player": "",
+         "kills_vs": {
+          "1": "Rb NS",
+          "2": "Dambi NS",
+          "3": "Francis NS",
+          "4": "Xross NS",
+          "5": "Ivy NS"
+         }
+        },
+        {
+         "player": "happywei XLG",
+         "kills_vs": {
+          "1": "3 4 -1",
+          "2": "6 2 +4",
+          "3": "6 5 +1",
+          "4": "1 4 -3",
+          "5": "4 2 +2"
+         }
+        },
+        {
+         "player": "Rarga XLG",
+         "kills_vs": {
+          "1": "2 4 -2",
+          "2": "3 3 +0",
+          "3": "5 7 -2",
+          "4": "4 0 +4",
+          "5": "4 4 +0"
+         }
+        },
+        {
+         "player": "Lysoar XLG",
+         "kills_vs": {
+          "1": "4 5 -1",
+          "2": "10 3 +7",
+          "3": "3 5 -2",
+          "4": "2 2 +0",
+          "5": "3 2 +1"
+         }
+        },
+        {
+         "player": "WsLeo XLG",
+         "kills_vs": {
+          "1": "4 4 +0",
+          "2": "0 4 -4",
+          "3": "3 2 +1",
+          "4": "4 0 +4",
+          "5": "2 4 -2"
+         }
+        },
+        {
+         "player": "NoMan XLG",
+         "kills_vs": {
+          "1": "3 4 -1",
+          "2": "2 5 -3",
+          "3": "0 6 -6",
+          "4": "1 7 -6",
+          "5": "2 1 +1"
+         }
+        }
+       ],
+       "advanced_stats": [
+        {
+         "player": "NoMan",
+         "team_tag": "XLG",
+         "agent": "waylay",
+         "2K": "0",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "34",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Rarga",
+         "team_tag": "XLG",
+         "agent": "chamber",
+         "2K": "1",
+         "3K": "2",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "41",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "WsLeo",
+         "team_tag": "XLG",
+         "agent": "fade",
+         "2K": "3",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "37",
+         "PL": "7",
+         "DE": "1"
+        },
+        {
+         "player": "Lysoar",
+         "team_tag": "XLG",
+         "agent": "omen",
+         "2K": "5",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "66",
+         "PL": "1",
+         "DE": "1"
+        },
+        {
+         "player": "happywei",
+         "team_tag": "XLG",
+         "agent": "sage",
+         "2K": "1",
+         "3K": "2",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "56",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Rb",
+         "team_tag": "NS",
+         "agent": "harbor",
+         "2K": "5",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "68",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "Dambi",
+         "team_tag": "NS",
+         "agent": "neon",
+         "2K": "2",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "41",
+         "PL": "2",
+         "DE": "0"
+        },
+        {
+         "player": "Francis",
+         "team_tag": "NS",
+         "agent": "chamber",
+         "2K": "5",
+         "3K": "2",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "71",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "Ivy",
+         "team_tag": "NS",
+         "agent": "sage",
+         "2K": "1",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "47",
+         "PL": "2",
+         "DE": "0"
+        },
+        {
+         "player": "Xross",
+         "team_tag": "NS",
+         "agent": "fade",
+         "2K": "2",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "2",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "53",
+         "PL": "3",
+         "DE": "2"
+        }
+       ]
+      },
+      "economy": []
+     },
+     {
+      "game_id": "283206",
+      "map_name": "Sunset",
+      "picked_by": "PICK",
+      "picked_side": 2,
+      "duration": "45:43",
+      "score": {
+       "team1": 11,
+       "team2": 13
+      },
+      "score_ct": {
+       "team1": "5",
+       "team2": "6"
+      },
+      "score_t": {
+       "team1": "6",
+       "team2": "7"
+      },
+      "score_ot": {
+       "team1": "",
+       "team2": ""
+      },
+      "players": {
+       "team1": [
+        {
+         "name": "happywei",
+         "player_id": 37927,
+         "team_tag": "XLG",
+         "agent": "Cypher",
+         "rating": "1.04",
+         "acs": "211",
+         "kills": "18",
+         "deaths": "16",
+         "assists": "5",
+         "kd_diff": "+2",
+         "kast": "71%",
+         "adr": "142",
+         "hs_pct": "23%",
+         "fk": "2",
+         "fd": "2",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "1.27",
+           "acs": "229",
+           "kills": "11",
+           "deaths": "7",
+           "assists": "2",
+           "kd_diff": "+4",
+           "kast": "75%",
+           "adr": "140",
+           "hs_pct": "27%",
+           "fk": "2",
+           "fd": "2",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "0.80",
+           "acs": "193",
+           "kills": "7",
+           "deaths": "9",
+           "assists": "3",
+           "kd_diff": "-2",
+           "kast": "67%",
+           "adr": "144",
+           "hs_pct": "20%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "Rarga",
+         "player_id": 22047,
+         "team_tag": "XLG",
+         "agent": "Yoru",
+         "rating": "0.93",
+         "acs": "179",
+         "kills": "17",
+         "deaths": "19",
+         "assists": "1",
+         "kd_diff": "-2",
+         "kast": "54%",
+         "adr": "117",
+         "hs_pct": "32%",
+         "fk": "1",
+         "fd": "3",
+         "fk_diff": "-2",
+         "sides": {
+          "t": {
+           "rating": "0.24",
+           "acs": "93",
+           "kills": "4",
+           "deaths": "11",
+           "assists": "1",
+           "kd_diff": "-7",
+           "kast": "33%",
+           "adr": "79",
+           "hs_pct": "25%",
+           "fk": "0",
+           "fd": "2",
+           "fk_diff": "-2"
+          },
+          "ct": {
+           "rating": "1.62",
+           "acs": "266",
+           "kills": "13",
+           "deaths": "8",
+           "assists": "0",
+           "kd_diff": "+5",
+           "kast": "75%",
+           "adr": "155",
+           "hs_pct": "37%",
+           "fk": "1",
+           "fd": "1",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "WsLeo",
+         "player_id": 24308,
+         "team_tag": "XLG",
+         "agent": "Fade",
+         "rating": "0.77",
+         "acs": "165",
+         "kills": "14",
+         "deaths": "19",
+         "assists": "7",
+         "kd_diff": "-5",
+         "kast": "67%",
+         "adr": "109",
+         "hs_pct": "35%",
+         "fk": "3",
+         "fd": "2",
+         "fk_diff": "+1",
+         "sides": {
+          "t": {
+           "rating": "0.67",
+           "acs": "119",
+           "kills": "6",
+           "deaths": "9",
+           "assists": "2",
+           "kd_diff": "-3",
+           "kast": "75%",
+           "adr": "80",
+           "hs_pct": "40%",
+           "fk": "1",
+           "fd": "1",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "0.87",
+           "acs": "212",
+           "kills": "8",
+           "deaths": "10",
+           "assists": "5",
+           "kd_diff": "-2",
+           "kast": "58%",
+           "adr": "137",
+           "hs_pct": "33%",
+           "fk": "2",
+           "fd": "1",
+           "fk_diff": "+1"
+          }
+         }
+        },
+        {
+         "name": "NoMan",
+         "player_id": 11527,
+         "team_tag": "XLG",
+         "agent": "Waylay",
+         "rating": "0.77",
+         "acs": "187",
+         "kills": "16",
+         "deaths": "18",
+         "assists": "3",
+         "kd_diff": "-2",
+         "kast": "54%",
+         "adr": "107",
+         "hs_pct": "38%",
+         "fk": "5",
+         "fd": "3",
+         "fk_diff": "+2",
+         "sides": {
+          "t": {
+           "rating": "0.93",
+           "acs": "248",
+           "kills": "11",
+           "deaths": "10",
+           "assists": "2",
+           "kd_diff": "+1",
+           "kast": "58%",
+           "adr": "134",
+           "hs_pct": "36%",
+           "fk": "2",
+           "fd": "1",
+           "fk_diff": "+1"
+          },
+          "ct": {
+           "rating": "0.61",
+           "acs": "127",
+           "kills": "5",
+           "deaths": "8",
+           "assists": "1",
+           "kd_diff": "-3",
+           "kast": "50%",
+           "adr": "80",
+           "hs_pct": "40%",
+           "fk": "3",
+           "fd": "2",
+           "fk_diff": "+1"
+          }
+         }
+        },
+        {
+         "name": "Lysoar",
+         "player_id": 37489,
+         "team_tag": "XLG",
+         "agent": "Omen",
+         "rating": "0.75",
+         "acs": "168",
+         "kills": "14",
+         "deaths": "17",
+         "assists": "5",
+         "kd_diff": "-3",
+         "kast": "63%",
+         "adr": "102",
+         "hs_pct": "35%",
+         "fk": "0",
+         "fd": "3",
+         "fk_diff": "-3",
+         "sides": {
+          "t": {
+           "rating": "0.85",
+           "acs": "196",
+           "kills": "8",
+           "deaths": "8",
+           "assists": "1",
+           "kd_diff": "0",
+           "kast": "67%",
+           "adr": "117",
+           "hs_pct": "35%",
+           "fk": "0",
+           "fd": "1",
+           "fk_diff": "-1"
+          },
+          "ct": {
+           "rating": "0.64",
+           "acs": "141",
+           "kills": "6",
+           "deaths": "9",
+           "assists": "4",
+           "kd_diff": "-3",
+           "kast": "58%",
+           "adr": "86",
+           "hs_pct": "36%",
+           "fk": "0",
+           "fd": "2",
+           "fk_diff": "-2"
+          }
+         }
+        }
+       ],
+       "team2": [
+        {
+         "name": "Francis",
+         "player_id": 31828,
+         "team_tag": "NS",
+         "agent": "Yoru",
+         "rating": "1.48",
+         "acs": "291",
+         "kills": "25",
+         "deaths": "14",
+         "assists": "4",
+         "kd_diff": "+11",
+         "kast": "71%",
+         "adr": "170",
+         "hs_pct": "25%",
+         "fk": "5",
+         "fd": "3",
+         "fk_diff": "+2",
+         "sides": {
+          "t": {
+           "rating": "1.76",
+           "acs": "386",
+           "kills": "16",
+           "deaths": "8",
+           "assists": "1",
+           "kd_diff": "+8",
+           "kast": "58%",
+           "adr": "221",
+           "hs_pct": "30%",
+           "fk": "3",
+           "fd": "2",
+           "fk_diff": "+1"
+          },
+          "ct": {
+           "rating": "1.20",
+           "acs": "197",
+           "kills": "9",
+           "deaths": "6",
+           "assists": "3",
+           "kd_diff": "+3",
+           "kast": "83%",
+           "adr": "119",
+           "hs_pct": "7%",
+           "fk": "2",
+           "fd": "1",
+           "fk_diff": "+1"
+          }
+         }
+        },
+        {
+         "name": "Xross",
+         "player_id": 42772,
+         "team_tag": "NS",
+         "agent": "Fade",
+         "rating": "1.36",
+         "acs": "238",
+         "kills": "19",
+         "deaths": "14",
+         "assists": "7",
+         "kd_diff": "+5",
+         "kast": "75%",
+         "adr": "160",
+         "hs_pct": "33%",
+         "fk": "0",
+         "fd": "0",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "1.14",
+           "acs": "164",
+           "kills": "7",
+           "deaths": "6",
+           "assists": "3",
+           "kd_diff": "+1",
+           "kast": "75%",
+           "adr": "118",
+           "hs_pct": "30%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "1.58",
+           "acs": "313",
+           "kills": "12",
+           "deaths": "8",
+           "assists": "4",
+           "kd_diff": "+4",
+           "kast": "75%",
+           "adr": "201",
+           "hs_pct": "35%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "Rb",
+         "player_id": 488,
+         "team_tag": "NS",
+         "agent": "Omen",
+         "rating": "0.98",
+         "acs": "178",
+         "kills": "15",
+         "deaths": "16",
+         "assists": "9",
+         "kd_diff": "-1",
+         "kast": "71%",
+         "adr": "99",
+         "hs_pct": "19%",
+         "fk": "2",
+         "fd": "2",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "0.76",
+           "acs": "124",
+           "kills": "5",
+           "deaths": "7",
+           "assists": "5",
+           "kd_diff": "-2",
+           "kast": "67%",
+           "adr": "72",
+           "hs_pct": "18%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "1.19",
+           "acs": "233",
+           "kills": "10",
+           "deaths": "9",
+           "assists": "4",
+           "kd_diff": "+1",
+           "kast": "75%",
+           "adr": "126",
+           "hs_pct": "20%",
+           "fk": "2",
+           "fd": "2",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "Ivy",
+         "player_id": 31829,
+         "team_tag": "NS",
+         "agent": "Cypher",
+         "rating": "0.96",
+         "acs": "211",
+         "kills": "18",
+         "deaths": "18",
+         "assists": "4",
+         "kd_diff": "0",
+         "kast": "71%",
+         "adr": "136",
+         "hs_pct": "29%",
+         "fk": "2",
+         "fd": "2",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "1.14",
+           "acs": "262",
+           "kills": "12",
+           "deaths": "9",
+           "assists": "2",
+           "kd_diff": "+3",
+           "kast": "75%",
+           "adr": "168",
+           "hs_pct": "36%",
+           "fk": "2",
+           "fd": "2",
+           "fk_diff": "0"
+          },
+          "ct": {
+           "rating": "0.78",
+           "acs": "162",
+           "kills": "6",
+           "deaths": "9",
+           "assists": "2",
+           "kd_diff": "-3",
+           "kast": "67%",
+           "adr": "103",
+           "hs_pct": "20%",
+           "fk": "0",
+           "fd": "0",
+           "fk_diff": "0"
+          }
+         }
+        },
+        {
+         "name": "Dambi",
+         "player_id": 31827,
+         "team_tag": "NS",
+         "agent": "Waylay",
+         "rating": "0.73",
+         "acs": "153",
+         "kills": "12",
+         "deaths": "17",
+         "assists": "10",
+         "kd_diff": "-5",
+         "kast": "58%",
+         "adr": "88",
+         "hs_pct": "14%",
+         "fk": "4",
+         "fd": "4",
+         "fk_diff": "0",
+         "sides": {
+          "t": {
+           "rating": "0.48",
+           "acs": "113",
+           "kills": "4",
+           "deaths": "9",
+           "assists": "5",
+           "kd_diff": "-5",
+           "kast": "58%",
+           "adr": "61",
+           "hs_pct": "8%",
+           "fk": "1",
+           "fd": "2",
+           "fk_diff": "-1"
+          },
+          "ct": {
+           "rating": "0.97",
+           "acs": "194",
+           "kills": "8",
+           "deaths": "8",
+           "assists": "5",
+           "kd_diff": "0",
+           "kast": "58%",
+           "adr": "115",
+           "hs_pct": "19%",
+           "fk": "3",
+           "fd": "2",
+           "fk_diff": "+1"
+          }
+         }
+        }
+       ]
+      },
+      "rounds": [
+       {
+        "round_num": 1,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 2,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 3,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 4,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 5,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 6,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 7,
+        "winner": "team1",
+        "side": "t"
+       },
+       {
+        "round_num": 8,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 9,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 10,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 11,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 12,
+        "winner": "team2",
+        "side": "ct"
+       },
+       {
+        "round_num": 13,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 14,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 15,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 16,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 17,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 18,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 19,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 20,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 21,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 22,
+        "winner": "team1",
+        "side": "ct"
+       },
+       {
+        "round_num": 23,
+        "winner": "team2",
+        "side": "t"
+       },
+       {
+        "round_num": 24,
+        "winner": "team2",
+        "side": "t"
+       }
+      ],
+      "performance": {
+       "kill_matrix": [
+        {
+         "player": "",
+         "kills_vs": {
+          "1": "Rb NS",
+          "2": "Dambi NS",
+          "3": "Francis NS",
+          "4": "Xross NS",
+          "5": "Ivy NS"
+         }
+        },
+        {
+         "player": "happywei XLG",
+         "kills_vs": {
+          "1": "3 1 +2",
+          "2": "2 2 +0",
+          "3": "4 5 -1",
+          "4": "5 2 +3",
+          "5": "4 6 -2"
+         }
+        },
+        {
+         "player": "Rarga XLG",
+         "kills_vs": {
+          "1": "4 2 +2",
+          "2": "3 1 +2",
+          "3": "3 9 -6",
+          "4": "2 4 -2",
+          "5": "5 3 +2"
+         }
+        },
+        {
+         "player": "Lysoar XLG",
+         "kills_vs": {
+          "1": "5 2 +3",
+          "2": "2 2 +0",
+          "3": "3 7 -4",
+          "4": "1 4 -3",
+          "5": "3 2 +1"
+         }
+        },
+        {
+         "player": "WsLeo XLG",
+         "kills_vs": {
+          "1": "2 3 -1",
+          "2": "5 4 +1",
+          "3": "2 2 +0",
+          "4": "3 6 -3",
+          "5": "2 4 -2"
+         }
+        },
+        {
+         "player": "NoMan XLG",
+         "kills_vs": {
+          "1": "2 7 -5",
+          "2": "5 3 +2",
+          "3": "2 2 +0",
+          "4": "3 3 +0",
+          "5": "4 3 +1"
+         }
+        }
+       ],
+       "advanced_stats": [
+        {
+         "player": "NoMan",
+         "team_tag": "XLG",
+         "agent": "waylay",
+         "2K": "4",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "42",
+         "PL": "1",
+         "DE": "1"
+        },
+        {
+         "player": "Rarga",
+         "team_tag": "XLG",
+         "agent": "yoru",
+         "2K": "2",
+         "3K": "0",
+         "4K": "0",
+         "5K": "1",
+         "1v1": "1",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "41",
+         "PL": "0",
+         "DE": "2"
+        },
+        {
+         "player": "WsLeo",
+         "team_tag": "XLG",
+         "agent": "fade",
+         "2K": "1",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "44",
+         "PL": "5",
+         "DE": "0"
+        },
+        {
+         "player": "Lysoar",
+         "team_tag": "XLG",
+         "agent": "omen",
+         "2K": "5",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "38",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "happywei",
+         "team_tag": "XLG",
+         "agent": "cypher",
+         "2K": "2",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "51",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Rb",
+         "team_tag": "NS",
+         "agent": "omen",
+         "2K": "2",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "1",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "40",
+         "PL": "3",
+         "DE": "1"
+        },
+        {
+         "player": "Dambi",
+         "team_tag": "NS",
+         "agent": "waylay",
+         "2K": "4",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "35",
+         "PL": "2",
+         "DE": "0"
+        },
+        {
+         "player": "Francis",
+         "team_tag": "NS",
+         "agent": "yoru",
+         "2K": "6",
+         "3K": "2",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "1",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "81",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "Ivy",
+         "team_tag": "NS",
+         "agent": "cypher",
+         "2K": "8",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "50",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Xross",
+         "team_tag": "NS",
+         "agent": "fade",
+         "2K": "3",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "70",
+         "PL": "4",
+         "DE": "1"
+        }
+       ]
+      },
+      "economy": []
+     }
+    ],
+    "head_to_head": [],
+    "performance": {
+     "kill_matrix": [
+      {
+       "player": "",
+       "kills_vs": {
+        "1": "Rb NS",
+        "2": "Dambi NS",
+        "3": "Francis NS",
+        "4": "Xross NS",
+        "5": "Ivy NS"
+       }
+      },
+      {
+       "player": "happywei XLG",
+       "kills_vs": {
+        "1": "3 4 -1",
+        "2": "6 2 +4",
+        "3": "6 5 +1",
+        "4": "1 4 -3",
+        "5": "4 2 +2"
+       }
+      },
+      {
+       "player": "Rarga XLG",
+       "kills_vs": {
+        "1": "2 4 -2",
+        "2": "3 3 +0",
+        "3": "5 7 -2",
+        "4": "4 0 +4",
+        "5": "4 4 +0"
+       }
+      },
+      {
+       "player": "Lysoar XLG",
+       "kills_vs": {
+        "1": "4 5 -1",
+        "2": "10 3 +7",
+        "3": "3 5 -2",
+        "4": "2 2 +0",
+        "5": "3 2 +1"
+       }
+      },
+      {
+       "player": "WsLeo XLG",
+       "kills_vs": {
+        "1": "4 4 +0",
+        "2": "0 4 -4",
+        "3": "3 2 +1",
+        "4": "4 0 +4",
+        "5": "2 4 -2"
+       }
+      },
+      {
+       "player": "NoMan XLG",
+       "kills_vs": {
+        "1": "3 4 -1",
+        "2": "2 5 -3",
+        "3": "0 6 -6",
+        "4": "1 7 -6",
+        "5": "2 1 +1"
+       }
+      }
+     ],
+     "advanced_stats": [
+      {
+       "player": "NoMan",
+       "team_tag": "XLG",
+       "agent": "waylay",
+       "2K": "0",
+       "3K": "1",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "34",
+       "PL": "0",
+       "DE": "0"
+      },
+      {
+       "player": "Rarga",
+       "team_tag": "XLG",
+       "agent": "chamber",
+       "2K": "1",
+       "3K": "2",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "41",
+       "PL": "1",
+       "DE": "0"
+      },
+      {
+       "player": "WsLeo",
+       "team_tag": "XLG",
+       "agent": "fade",
+       "2K": "3",
+       "3K": "1",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "37",
+       "PL": "7",
+       "DE": "1"
+      },
+      {
+       "player": "Lysoar",
+       "team_tag": "XLG",
+       "agent": "omen",
+       "2K": "5",
+       "3K": "0",
+       "4K": "1",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "66",
+       "PL": "1",
+       "DE": "1"
+      },
+      {
+       "player": "happywei",
+       "team_tag": "XLG",
+       "agent": "sage",
+       "2K": "1",
+       "3K": "2",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "56",
+       "PL": "0",
+       "DE": "0"
+      },
+      {
+       "player": "Rb",
+       "team_tag": "NS",
+       "agent": "harbor",
+       "2K": "5",
+       "3K": "0",
+       "4K": "1",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "68",
+       "PL": "1",
+       "DE": "0"
+      },
+      {
+       "player": "Dambi",
+       "team_tag": "NS",
+       "agent": "neon",
+       "2K": "2",
+       "3K": "1",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "41",
+       "PL": "2",
+       "DE": "0"
+      },
+      {
+       "player": "Francis",
+       "team_tag": "NS",
+       "agent": "chamber",
+       "2K": "5",
+       "3K": "2",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "71",
+       "PL": "1",
+       "DE": "0"
+      },
+      {
+       "player": "Ivy",
+       "team_tag": "NS",
+       "agent": "sage",
+       "2K": "1",
+       "3K": "1",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "0",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "47",
+       "PL": "2",
+       "DE": "0"
+      },
+      {
+       "player": "Xross",
+       "team_tag": "NS",
+       "agent": "fade",
+       "2K": "2",
+       "3K": "0",
+       "4K": "0",
+       "5K": "0",
+       "1v1": "2",
+       "1v2": "0",
+       "1v3": "0",
+       "1v4": "0",
+       "1v5": "0",
+       "ECON": "53",
+       "PL": "3",
+       "DE": "2"
+      }
+     ],
+     "by_map": [
+      {
+       "game_id": "283205",
+       "kill_matrix": [
+        {
+         "player": "",
+         "kills_vs": {
+          "1": "Rb NS",
+          "2": "Dambi NS",
+          "3": "Francis NS",
+          "4": "Xross NS",
+          "5": "Ivy NS"
+         }
+        },
+        {
+         "player": "happywei XLG",
+         "kills_vs": {
+          "1": "3 4 -1",
+          "2": "6 2 +4",
+          "3": "6 5 +1",
+          "4": "1 4 -3",
+          "5": "4 2 +2"
+         }
+        },
+        {
+         "player": "Rarga XLG",
+         "kills_vs": {
+          "1": "2 4 -2",
+          "2": "3 3 +0",
+          "3": "5 7 -2",
+          "4": "4 0 +4",
+          "5": "4 4 +0"
+         }
+        },
+        {
+         "player": "Lysoar XLG",
+         "kills_vs": {
+          "1": "4 5 -1",
+          "2": "10 3 +7",
+          "3": "3 5 -2",
+          "4": "2 2 +0",
+          "5": "3 2 +1"
+         }
+        },
+        {
+         "player": "WsLeo XLG",
+         "kills_vs": {
+          "1": "4 4 +0",
+          "2": "0 4 -4",
+          "3": "3 2 +1",
+          "4": "4 0 +4",
+          "5": "2 4 -2"
+         }
+        },
+        {
+         "player": "NoMan XLG",
+         "kills_vs": {
+          "1": "3 4 -1",
+          "2": "2 5 -3",
+          "3": "0 6 -6",
+          "4": "1 7 -6",
+          "5": "2 1 +1"
+         }
+        }
+       ],
+       "advanced_stats": [
+        {
+         "player": "NoMan",
+         "team_tag": "XLG",
+         "agent": "waylay",
+         "2K": "0",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "34",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Rarga",
+         "team_tag": "XLG",
+         "agent": "chamber",
+         "2K": "1",
+         "3K": "2",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "41",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "WsLeo",
+         "team_tag": "XLG",
+         "agent": "fade",
+         "2K": "3",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "37",
+         "PL": "7",
+         "DE": "1"
+        },
+        {
+         "player": "Lysoar",
+         "team_tag": "XLG",
+         "agent": "omen",
+         "2K": "5",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "66",
+         "PL": "1",
+         "DE": "1"
+        },
+        {
+         "player": "happywei",
+         "team_tag": "XLG",
+         "agent": "sage",
+         "2K": "1",
+         "3K": "2",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "56",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Rb",
+         "team_tag": "NS",
+         "agent": "harbor",
+         "2K": "5",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "68",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "Dambi",
+         "team_tag": "NS",
+         "agent": "neon",
+         "2K": "2",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "41",
+         "PL": "2",
+         "DE": "0"
+        },
+        {
+         "player": "Francis",
+         "team_tag": "NS",
+         "agent": "chamber",
+         "2K": "5",
+         "3K": "2",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "71",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "Ivy",
+         "team_tag": "NS",
+         "agent": "sage",
+         "2K": "1",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "47",
+         "PL": "2",
+         "DE": "0"
+        },
+        {
+         "player": "Xross",
+         "team_tag": "NS",
+         "agent": "fade",
+         "2K": "2",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "2",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "53",
+         "PL": "3",
+         "DE": "2"
+        }
+       ]
+      },
+      {
+       "game_id": "283206",
+       "kill_matrix": [
+        {
+         "player": "",
+         "kills_vs": {
+          "1": "Rb NS",
+          "2": "Dambi NS",
+          "3": "Francis NS",
+          "4": "Xross NS",
+          "5": "Ivy NS"
+         }
+        },
+        {
+         "player": "happywei XLG",
+         "kills_vs": {
+          "1": "3 1 +2",
+          "2": "2 2 +0",
+          "3": "4 5 -1",
+          "4": "5 2 +3",
+          "5": "4 6 -2"
+         }
+        },
+        {
+         "player": "Rarga XLG",
+         "kills_vs": {
+          "1": "4 2 +2",
+          "2": "3 1 +2",
+          "3": "3 9 -6",
+          "4": "2 4 -2",
+          "5": "5 3 +2"
+         }
+        },
+        {
+         "player": "Lysoar XLG",
+         "kills_vs": {
+          "1": "5 2 +3",
+          "2": "2 2 +0",
+          "3": "3 7 -4",
+          "4": "1 4 -3",
+          "5": "3 2 +1"
+         }
+        },
+        {
+         "player": "WsLeo XLG",
+         "kills_vs": {
+          "1": "2 3 -1",
+          "2": "5 4 +1",
+          "3": "2 2 +0",
+          "4": "3 6 -3",
+          "5": "2 4 -2"
+         }
+        },
+        {
+         "player": "NoMan XLG",
+         "kills_vs": {
+          "1": "2 7 -5",
+          "2": "5 3 +2",
+          "3": "2 2 +0",
+          "4": "3 3 +0",
+          "5": "4 3 +1"
+         }
+        }
+       ],
+       "advanced_stats": [
+        {
+         "player": "NoMan",
+         "team_tag": "XLG",
+         "agent": "waylay",
+         "2K": "4",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "42",
+         "PL": "1",
+         "DE": "1"
+        },
+        {
+         "player": "Rarga",
+         "team_tag": "XLG",
+         "agent": "yoru",
+         "2K": "2",
+         "3K": "0",
+         "4K": "0",
+         "5K": "1",
+         "1v1": "1",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "41",
+         "PL": "0",
+         "DE": "2"
+        },
+        {
+         "player": "WsLeo",
+         "team_tag": "XLG",
+         "agent": "fade",
+         "2K": "1",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "44",
+         "PL": "5",
+         "DE": "0"
+        },
+        {
+         "player": "Lysoar",
+         "team_tag": "XLG",
+         "agent": "omen",
+         "2K": "5",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "38",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "happywei",
+         "team_tag": "XLG",
+         "agent": "cypher",
+         "2K": "2",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "51",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Rb",
+         "team_tag": "NS",
+         "agent": "omen",
+         "2K": "2",
+         "3K": "1",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "1",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "40",
+         "PL": "3",
+         "DE": "1"
+        },
+        {
+         "player": "Dambi",
+         "team_tag": "NS",
+         "agent": "waylay",
+         "2K": "4",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "35",
+         "PL": "2",
+         "DE": "0"
+        },
+        {
+         "player": "Francis",
+         "team_tag": "NS",
+         "agent": "yoru",
+         "2K": "6",
+         "3K": "2",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "1",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "81",
+         "PL": "1",
+         "DE": "0"
+        },
+        {
+         "player": "Ivy",
+         "team_tag": "NS",
+         "agent": "cypher",
+         "2K": "8",
+         "3K": "0",
+         "4K": "0",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "50",
+         "PL": "0",
+         "DE": "0"
+        },
+        {
+         "player": "Xross",
+         "team_tag": "NS",
+         "agent": "fade",
+         "2K": "3",
+         "3K": "0",
+         "4K": "1",
+         "5K": "0",
+         "1v1": "0",
+         "1v2": "0",
+         "1v3": "0",
+         "1v4": "0",
+         "1v5": "0",
+         "ECON": "70",
+         "PL": "4",
+         "DE": "1"
+        }
+       ]
+      }
+     ]
+    },
+    "economy": [],
+    "economy_by_map": [
+     {
+      "game_id": "283205",
+      "rows": []
+     },
+     {
+      "game_id": "283206",
+      "rows": []
+     }
+    ]
+   }
+  ]
+ }
+}

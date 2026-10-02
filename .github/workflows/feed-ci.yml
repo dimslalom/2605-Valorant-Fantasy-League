@@ -1,0 +1,26 @@
+name: Feed parser tests
+
+on:
+  push:
+    paths: ['tools/vlrggapi/**', 'scripts/feed/**', 'worker/feed/**', 'migrations/**']
+  pull_request:
+    paths: ['tools/vlrggapi/**', 'scripts/feed/**', 'worker/feed/**', 'migrations/**']
+
+permissions:
+  contents: read
+
+jobs:
+  parser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tools/vlrggapi/requirements.txt
+      - run: pip install -r tools/vlrggapi/requirements.txt
+      - name: Offline parser tests (saved vlr.gg HTML)
+        working-directory: tools/vlrggapi
+        run: pytest -q tests/test_live_markup.py tests/test_match_detail_scraper.py tests/test_pacing.py
