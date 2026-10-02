@@ -1,0 +1,219 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//VLR.gg//Event Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Valorant Champions 2026 - VLR.gg
+X-PUBLISHED-TTL:PT1H
+BEGIN:VEVENT
+UID:match-116607@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261002T090000Z
+DTEND:20261002T110000Z
+SUMMARY:Global Esports vs. EDward Gaming - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/753452/global-esports-vs-edward-gaming-valor
+ ant-champions-2026-elim-b
+URL:https://www.vlr.gg/753452/global-esports-vs-edward-gaming-valorant-cham
+ pions-2026-elim-b
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116602@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261002T120000Z
+DTEND:20261002T140000Z
+SUMMARY:T1 vs. JD Gaming - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/753447/t1-vs-jd-gaming-valorant-champions-20
+ 26-elim-a
+URL:https://www.vlr.gg/753447/t1-vs-jd-gaming-valorant-champions-2026-elim-
+ a
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116613@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261003T090000Z
+DTEND:20261003T110000Z
+SUMMARY:G2 Esports vs. Team Liquid - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/753458/g2-esports-vs-team-liquid-valorant-ch
+ ampions-2026-decider-c
+URL:https://www.vlr.gg/753458/g2-esports-vs-team-liquid-valorant-champions-
+ 2026-decider-c
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116618@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261003T120000Z
+DTEND:20261003T140000Z
+SUMMARY:Karmine Corp vs. Nongshim RedForce - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/753463/karmine-corp-vs-nongshim-redforce-val
+ orant-champions-2026-decider-d
+URL:https://www.vlr.gg/753463/karmine-corp-vs-nongshim-redforce-valorant-ch
+ ampions-2026-decider-d
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116608@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261004T090000Z
+DTEND:20261004T110000Z
+SUMMARY:LOUD vs. TBD - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/753453/loud-vs-tbd-valorant-champions-2026-d
+ ecider-b
+URL:https://www.vlr.gg/753453/loud-vs-tbd-valorant-champions-2026-decider-b
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116603@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261004T120000Z
+DTEND:20261004T140000Z
+SUMMARY:FUT Esports vs. TBD - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/753448/fut-esports-vs-tbd-valorant-champions
+ -2026-decider-a
+URL:https://www.vlr.gg/753448/fut-esports-vs-tbd-valorant-champions-2026-de
+ cider-a
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116641@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261007T090000Z
+DTEND:20261007T110000Z
+SUMMARY:Upper Quarterfinals - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754730/tbd-valorant-champions-2026-ubqf
+URL:https://www.vlr.gg/754730/tbd-valorant-champions-2026-ubqf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116642@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261007T120000Z
+DTEND:20261007T140000Z
+SUMMARY:Upper Quarterfinals - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754731/tbd-valorant-champions-2026-ubqf
+URL:https://www.vlr.gg/754731/tbd-valorant-champions-2026-ubqf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116643@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261008T090000Z
+DTEND:20261008T110000Z
+SUMMARY:Upper Quarterfinals - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754732/tbd-valorant-champions-2026-ubqf
+URL:https://www.vlr.gg/754732/tbd-valorant-champions-2026-ubqf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116644@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261008T120000Z
+DTEND:20261008T140000Z
+SUMMARY:Upper Quarterfinals - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754733/tbd-valorant-champions-2026-ubqf
+URL:https://www.vlr.gg/754733/tbd-valorant-champions-2026-ubqf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116649@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261009T090000Z
+DTEND:20261009T110000Z
+SUMMARY:Lower Round 1 - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754738/tbd-valorant-champions-2026-lr1
+URL:https://www.vlr.gg/754738/tbd-valorant-champions-2026-lr1
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116650@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261009T120000Z
+DTEND:20261009T140000Z
+SUMMARY:Lower Round 1 - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754739/tbd-valorant-champions-2026-lr1
+URL:https://www.vlr.gg/754739/tbd-valorant-champions-2026-lr1
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116645@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261010T090000Z
+DTEND:20261010T110000Z
+SUMMARY:Upper Semifinals - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754734/tbd-valorant-champions-2026-ubsf
+URL:https://www.vlr.gg/754734/tbd-valorant-champions-2026-ubsf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116646@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261010T120000Z
+DTEND:20261010T140000Z
+SUMMARY:Upper Semifinals - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754735/tbd-valorant-champions-2026-ubsf
+URL:https://www.vlr.gg/754735/tbd-valorant-champions-2026-ubsf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116651@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261011T090000Z
+DTEND:20261011T110000Z
+SUMMARY:Lower Round 2 - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754740/tbd-valorant-champions-2026-lr2
+URL:https://www.vlr.gg/754740/tbd-valorant-champions-2026-lr2
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116652@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261011T120000Z
+DTEND:20261011T140000Z
+SUMMARY:Lower Round 2 - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754741/tbd-valorant-champions-2026-lr2
+URL:https://www.vlr.gg/754741/tbd-valorant-champions-2026-lr2
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116647@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261016T060000Z
+DTEND:20261016T080000Z
+SUMMARY:Upper Final - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754736/tbd-valorant-champions-2026-ubf
+URL:https://www.vlr.gg/754736/tbd-valorant-champions-2026-ubf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116653@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261016T090000Z
+DTEND:20261016T110000Z
+SUMMARY:Lower Round 3 - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754742/tbd-valorant-champions-2026-lr3
+URL:https://www.vlr.gg/754742/tbd-valorant-champions-2026-lr3
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116654@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261017T070000Z
+DTEND:20261017T110000Z
+SUMMARY:Lower Final - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754743/tbd-valorant-champions-2026-lbf
+URL:https://www.vlr.gg/754743/tbd-valorant-champions-2026-lbf
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:match-116648@VLR.gg
+DTSTAMP:20261002T093015Z
+DTSTART:20261018T060000Z
+DTEND:20261018T100000Z
+SUMMARY:Grand Final - Valorant Champions 2026
+DESCRIPTION:https://www.vlr.gg/754737/tbd-valorant-champions-2026-gf
+URL:https://www.vlr.gg/754737/tbd-valorant-champions-2026-gf
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

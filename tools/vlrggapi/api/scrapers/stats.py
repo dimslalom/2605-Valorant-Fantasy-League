@@ -1,0 +1,102 @@
+import logging
+
+from utils.cache_manager import cache_manager
+from utils.constants import CACHE_TTL_STATS, VLR_STATS_URL
+from utils.error_handling import (
+    handle_scraper_errors,
+    raise_for_upstream_status,
+    validate_region,
+    validate_timespan,
+)
+from utils.html_parsers import extract_text_content, parse_html
+from utils.http_client import fetch_with_retries, get_http_client
+
+logger = logging.getLogger(__name__)
+
+
+def _cell_text(cells: list, index: int) -> str:
+    """Read a table cell by index without raising on sparse rows."""
+    if index >= len(cells):
+        return ""
+    return extract_text_content(cells[index])
+
+
+def _parse_stats_row(item) -> dict:
+    """Parse one stats table row using table-cell structure, not flattened text."""
+    cells = item.css("td")
+    player_cell = item.css_first("td.mod-player")
+
+    player_name = extract_text_content(player_cell.css_first(".text-of")) if player_cell else ""
+    org = extract_text_content(player_cell.css_first(".stats-player-country")) if player_cell else ""
+    if not org:
+        org = "N/A"
+
+    agents = []
+    for agent_img in item.css("td.mod-agents img"):
+        src = agent_img.attributes.get("src", "")
+        if not src:
+            continue
+        agents.append(src.split("/")[-1].split(".")[0])
+
+    return {
+        "player": player_name,
+        "org": org,
+        "agents": agents,
+        # Columns (2026 layout): 0 Player, 1 Agents, 2 Maps, 3 Rnd, 4 R,
+        # 5 ACS, 6 K:D, 7 KAST, 8 ADR, 9 KPR, 10 APR, 11 FK:FD, 12 FKPR,
+        # 13 FDPR, 14 HS%, 15 CL%, 16 CL, 17 KMAX, 18 K, 19 D, 20 A, 21 FK, 22 FD
+        "rounds_played": _cell_text(cells, 3),
+        "rating": _cell_text(cells, 4),
+        "average_combat_score": _cell_text(cells, 5),
+        "kill_deaths": _cell_text(cells, 6),
+        "kill_assists_survived_traded": _cell_text(cells, 7),
+        "average_damage_per_round": _cell_text(cells, 8),
+        "kills_per_round": _cell_text(cells, 9),
+        "assists_per_round": _cell_text(cells, 10),
+        "first_kills_per_round": _cell_text(cells, 12),
+        "first_deaths_per_round": _cell_text(cells, 13),
+        "headshot_percentage": _cell_text(cells, 14),
+        "clutch_success_percentage": _cell_text(cells, 15),
+        "clutch_attempts": _cell_text(cells, 16),
+    }
+
+
+@handle_scraper_errors
+async def vlr_stats(region_key: str, timespan: str):
+    async def build():
+        validate_region(region_key)
+        validate_timespan(timespan)
+
+        base_url = (
+            # NOTE: vlr.gg 302-redirects to the unfiltered /stats page when
+            # a `country=all` param is present — do not add it back.
+            f"{VLR_STATS_URL}/?event_group_id=all&event_id=all"
+            f"&region={region_key}&min_rounds=200"
+            f"&min_rating=1550&agent=all&map_id=all"
+        )
+        url = (
+            f"{base_url}&timespan=all"
+            if timespan.lower() == "all"
+            else f"{base_url}&timespan={timespan}d"
+        )
+
+        client = get_http_client()
+        resp = await fetch_with_retries(url, client=client)
+        status = resp.status_code
+        raise_for_upstream_status(status, "stats")
+
+        html = parse_html(resp.text)
+
+        result = []
+        for item in html.css("tbody tr"):
+            parsed = _parse_stats_row(item)
+            if parsed["player"]:
+                result.append(parsed)
+
+        data = {"data": {"status": status, "segments": result}}
+
+        return data
+
+    return await cache_manager.get_or_create_async(
+        CACHE_TTL_STATS, build, "stats", region_key, timespan
+    )

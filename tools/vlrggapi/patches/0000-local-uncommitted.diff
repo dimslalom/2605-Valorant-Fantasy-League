@@ -1,0 +1,134 @@
+diff --git a/api/scrapers/players.py b/api/scrapers/players.py
+index bece442..c3aeb9b 100644
+--- a/api/scrapers/players.py
++++ b/api/scrapers/players.py
+@@ -179,13 +179,16 @@ def _parse_agent_stats(html: HTMLParser) -> list[dict]:
+     """
+     agent_stats: list[dict] = []
+ 
+-    table = html.css_first("table.wf-table")
++    # 2026 layout uses `st-table mod-agent-rows`; older pages used `wf-table`.
++    table = html.css_first("table.st-table") or html.css_first("table.wf-table")
+     if not table:
+         return agent_stats
+ 
+     for row in table.css("tbody tr"):
+         cells = row.css("td")
+-        if len(cells) < 17:
++        # New layout: 16 cols — 0 Agent, 1 Use, 2 Rnd, 3 R, 4 ACS, 5 K:D,
++        # 6 KAST, 7 ADR, 8 KPR, 9 APR, 10 FK:FD, 11 K, 12 D, 13 A, 14 FK, 15 FD
++        if len(cells) < 16:
+             continue
+ 
+         # Agent name
+@@ -212,6 +215,16 @@ def _parse_agent_stats(html: HTMLParser) -> list[dict]:
+         def val(idx: int) -> str:
+             return cells[idx].text(strip=True) if idx < len(cells) else ""
+ 
++        # vlr.gg replaced the FKPR/FDPR columns with a single FK:FD ratio;
++        # recompute the per-round values from raw FK / FD / rounds so the
++        # response shape stays backward-compatible.
++        def per_round(idx: int) -> str:
++            try:
++                rounds = float(val(2))
++                return f"{float(val(idx)) / rounds:.2f}" if rounds else ""
++            except ValueError:
++                return ""
++
+         agent_stats.append({
+             "agent": agent,
+             "usage_count": usage_count,
+@@ -220,17 +233,17 @@ def _parse_agent_stats(html: HTMLParser) -> list[dict]:
+             "rating": val(3),
+             "acs": val(4),
+             "kd": val(5),
+-            "adr": val(6),
+-            "kast": val(7),
++            "kast": val(6),
++            "adr": val(7),
+             "kpr": val(8),
+             "apr": val(9),
+-            "fkpr": val(10),
+-            "fdpr": val(11),
+-            "kills": val(12),
+-            "deaths": val(13),
+-            "assists": val(14),
+-            "fk": val(15),
+-            "fd": val(16),
++            "fkpr": per_round(14),
++            "fdpr": per_round(15),
++            "kills": val(11),
++            "deaths": val(12),
++            "assists": val(13),
++            "fk": val(14),
++            "fd": val(15),
+         })
+ 
+     return agent_stats
+diff --git a/api/scrapers/stats.py b/api/scrapers/stats.py
+index 03c6417..0a2a5b0 100644
+--- a/api/scrapers/stats.py
++++ b/api/scrapers/stats.py
+@@ -42,19 +42,22 @@ def _parse_stats_row(item) -> dict:
+         "player": player_name,
+         "org": org,
+         "agents": agents,
+-        "rounds_played": _cell_text(cells, 2),
+-        "rating": _cell_text(cells, 3),
+-        "average_combat_score": _cell_text(cells, 4),
+-        "kill_deaths": _cell_text(cells, 5),
+-        "kill_assists_survived_traded": _cell_text(cells, 6),
+-        "average_damage_per_round": _cell_text(cells, 7),
+-        "kills_per_round": _cell_text(cells, 8),
+-        "assists_per_round": _cell_text(cells, 9),
+-        "first_kills_per_round": _cell_text(cells, 10),
+-        "first_deaths_per_round": _cell_text(cells, 11),
+-        "headshot_percentage": _cell_text(cells, 12),
+-        "clutch_success_percentage": _cell_text(cells, 13),
+-        "clutch_attempts": _cell_text(cells, 14),
++        # Columns (2026 layout): 0 Player, 1 Agents, 2 Maps, 3 Rnd, 4 R,
++        # 5 ACS, 6 K:D, 7 KAST, 8 ADR, 9 KPR, 10 APR, 11 FK:FD, 12 FKPR,
++        # 13 FDPR, 14 HS%, 15 CL%, 16 CL, 17 KMAX, 18 K, 19 D, 20 A, 21 FK, 22 FD
++        "rounds_played": _cell_text(cells, 3),
++        "rating": _cell_text(cells, 4),
++        "average_combat_score": _cell_text(cells, 5),
++        "kill_deaths": _cell_text(cells, 6),
++        "kill_assists_survived_traded": _cell_text(cells, 7),
++        "average_damage_per_round": _cell_text(cells, 8),
++        "kills_per_round": _cell_text(cells, 9),
++        "assists_per_round": _cell_text(cells, 10),
++        "first_kills_per_round": _cell_text(cells, 12),
++        "first_deaths_per_round": _cell_text(cells, 13),
++        "headshot_percentage": _cell_text(cells, 14),
++        "clutch_success_percentage": _cell_text(cells, 15),
++        "clutch_attempts": _cell_text(cells, 16),
+     }
+ 
+ 
+@@ -65,8 +68,10 @@ async def vlr_stats(region_key: str, timespan: str):
+         validate_timespan(timespan)
+ 
+         base_url = (
++            # NOTE: vlr.gg 302-redirects to the unfiltered /stats page when
++            # a `country=all` param is present — do not add it back.
+             f"{VLR_STATS_URL}/?event_group_id=all&event_id=all"
+-            f"&region={region_key}&country=all&min_rounds=200"
++            f"&region={region_key}&min_rounds=200"
+             f"&min_rating=1550&agent=all&map_id=all"
+         )
+         url = (
+diff --git a/api/utils/rate_limiter.py b/api/utils/rate_limiter.py
+index a0bb8eb..4af6ad7 100644
+--- a/api/utils/rate_limiter.py
++++ b/api/utils/rate_limiter.py
+@@ -33,7 +33,9 @@ logger = logging.getLogger(__name__)
+ TIERS: dict[str, tuple[int, int]] = {
+     "cheap": (200, 60),
+     "moderate": (60, 60),
+-    "expensive": (20, 60),
++    # Local self-hosted instance: raised from 20 so batch sync scripts
++    # (paced at ~2 req/s upstream) aren't throttled by our own middleware.
++    "expensive": (150, 60),
+ }
+ 
+ # URL-pattern → tier mapping. Order matters: more specific paths first.

@@ -28,3 +28,10 @@ dist-ssr
 # Python tooling caches
 __pycache__/
 *.py[cod]
+
+# graphify
+graphify-out/
+
+tools/vlrggapi/.venv/
+__pycache__/
+.pytest_cache/
