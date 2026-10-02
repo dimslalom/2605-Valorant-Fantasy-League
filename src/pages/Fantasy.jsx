@@ -178,12 +178,19 @@ export default function Fantasy() {
             })}
             <h4>MARKET</h4>
             {reveal.report.auctions.length === 0 && <p className={styles.note}>No bids were placed.</p>}
-            {reveal.report.auctions.map(a => (
-              <p key={a.pid} className={styles.note}>
-                <strong>{replay.players[a.pid].handle}</strong>
-                <Split parts={[a.winner ? `${nameOf(a.winner)} won at ${fmt(a.bids[0].amt)}` : 'unsold', a.bids.length > 1 ? `${a.bids.length} bids` : '']} />
-              </p>
-            ))}
+            {reveal.report.auctions.map(a => {
+              const mine = a.bids.find(b => b.mgr === 'you');
+              return (
+                <div key={a.pid} className={styles.auction}>
+                  <strong>{replay.players[a.pid].handle}</strong>
+                  <Split parts={[
+                    a.winner ? `${nameOf(a.winner)} won at ${fmt(a.bids[0].amt)}` : 'unsold',
+                    mine && a.winner !== 'you' ? `you bid ${fmt(mine.amt)}` : '',
+                    a.bids.length > 1 ? `${a.bids.length} bids` : '',
+                  ]} />
+                </div>
+              );
+            })}
             <button className={styles.secondary} onClick={() => setReveal(null)}>CLOSE</button>
           </section>
         )}

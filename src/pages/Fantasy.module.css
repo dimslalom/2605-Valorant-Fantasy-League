@@ -69,8 +69,10 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .bid { display: flex; gap: 6px; }
 .bid input { width: 72px; min-height: 36px; background: var(--surface); border: 1px solid var(--line-bracket); color: var(--ink); padding: 0 8px; font-variant-numeric: tabular-nums; }
 
-.slot { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 6px 0; }
+.slot { display: grid; grid-template-columns: 96px minmax(0, 1fr) 44px; align-items: center; gap: 12px; padding: 6px 0; }
 .slot select { min-height: 40px; background: var(--surface); border: 1px solid var(--line-bracket); color: var(--ink); padding: 0 8px; min-width: 0; }
+.auction { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 4px 0; color: var(--muted); }
+.auction strong { color: var(--ink); }
 .cap { font-family: var(--font-mono); font-size: var(--fs-label); display: flex; gap: 4px; align-items: center; }
 
 .actions { position: sticky; bottom: 0; padding: 12px 0; background: var(--bg); border-top: 1px solid var(--line); display: flex; }
@@ -92,6 +94,6 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 @media (max-width: 420px) {
   .row { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .row > :nth-child(4) { grid-column: 1 / -1; justify-self: end; }
-  .slot { grid-template-columns: 1fr auto; }
+  .slot { grid-template-columns: minmax(0, 1fr) 44px; }
   .slot .micro { grid-column: 1 / -1; }
 }
