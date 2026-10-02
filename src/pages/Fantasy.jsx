@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppFrame from '../components/AppFrame';
 import Split from '../components/Split';
 import cards from '../data/cards.json';
@@ -9,10 +9,15 @@ import { freeCopies, owns, squadOf, standings } from '../engine/fantasy/league';
 import { MarketError, acceptOffer, cancelBid, queueBid, queueSale } from '../engine/fantasy/market';
 import { buildReplay, playbackSteps, teamStrengths } from '../engine/fantasy/replay';
 import PlayerCard from '../components/PlayerCard';
+import RiveBoundary from '../rive/RiveBoundary';
 import useMediaQuery from '../lib/useMediaQuery';
 import { fetchEventMatches } from '../lib/feedClient';
 import { clearFantasySave, loadFantasySave, saveFantasy } from '../lib/fantasySave';
 import styles from './Fantasy.module.css';
+
+// Rive surfaces load on demand so the wasm only ships to people who reach the board.
+const RiveFixtureStrip = lazy(() => import('../rive/FixtureStrip'));
+const RivePointsTicker = lazy(() => import('../rive/PointsTicker'));
 
 const EVENT_ID = 2766; // Valorant Champions 2026
 const SLOT_LABEL = { D: 'DUELIST', I: 'INITIATOR', C: 'CONTROLLER', F1: 'FLEX', F2: 'FLEX' };
@@ -77,13 +82,18 @@ function Broadcast({ steps, replay, onDone }) {
   const visible = steps.slice(0, shown);
   const total = visible.reduce((sum, st) => sum + st.lines.reduce((a, l) => a + l.counted, 0), 0);
   const finished = shown >= steps.length;
+  const lastDelta = visible.length ? visible[visible.length - 1].lines.reduce((a, l) => a + l.counted, 0) : 0;
 
   return (
     <section className={styles.panel} aria-live="polite">
       <div className={styles.liveTop}>
         <span className={styles.micro}>{finished ? 'FINAL' : 'LIVE REPLAY'}</span>
-        <strong className={styles.liveTotal}>{total}</strong>
-        <span className={styles.micro}>YOUR POINTS TODAY</span>
+        <RiveBoundary fallback={<strong className={styles.liveTotal}>{total}</strong>}>
+          <Suspense fallback={<strong className={styles.liveTotal}>{total}</strong>}>
+            <RivePointsTicker total={total} deltaText={lastDelta > 0 ? `+${lastDelta}` : String(lastDelta)} deltaShown={!finished && shown > 0} />
+          </Suspense>
+        </RiveBoundary>
+        <span className={styles.srOnly} role="status">{total} points today</span>
       </div>
       {steps.length === 0 && <p className={styles.note}>None of your starters played today. Check your fixtures before locking in next time.</p>}
       {[...visible].reverse().map((st, i) => (
@@ -387,25 +397,44 @@ export default function Fantasy() {
       </section>
     );
 
+    // The same strip in plain DOM: the loading state and the fallback if Rive cannot run.
+    const domFixtures = (
+      <>
+        {fixtures.map(f => (
+          <div key={f.id} className={styles.fixture} data-mine={f.mine.length > 0}>
+            <div className={styles.teams}>
+              <span data-fav={f.fav === f.a}>{f.a}</span>
+              <span className={styles.micro}>VS</span>
+              <span data-fav={f.fav === f.b}>{f.b}</span>
+            </div>
+            <span className={styles.micro}>{`STRENGTH ${f.sa.toFixed(0)}  ${f.sb.toFixed(0)}`}</span>
+            <span className={styles.micro}>BO{f.bestOf}</span>
+            {f.mine.length > 0 && <span className={styles.stamp} data-hot="true">{f.mine.length} OF YOURS</span>}
+          </div>
+        ))}
+      </>
+    );
+
     const board = (
       <>
         {noteBox}
         <section className={styles.panel}>
           <h3>TODAY'S MATCHES</h3>
           <div className={styles.fixtures}>
-            {fixtures.map(f => (
-              <div key={f.id} className={styles.fixture} data-mine={f.mine.length > 0}>
-                <div className={styles.teams}>
-                  <span data-fav={f.fav === f.a}>{f.a}</span>
-                  <span className={styles.micro}>VS</span>
-                  <span data-fav={f.fav === f.b}>{f.b}</span>
-                </div>
-                <span className={styles.micro}>{`STRENGTH ${f.sa.toFixed(0)}  ${f.sb.toFixed(0)}`}</span>
-                <span className={styles.micro}>BO{f.bestOf}</span>
-                {f.mine.length > 0 && <span className={styles.stamp} data-hot="true">{f.mine.length} OF YOURS</span>}
-              </div>
-            ))}
+            <RiveBoundary fallback={domFixtures}>
+              <Suspense fallback={domFixtures}>
+                <RiveFixtureStrip fixtures={fixtures.map(f => ({ ...f, mineCount: f.mine.length }))} />
+              </Suspense>
+            </RiveBoundary>
           </div>
+          <ul className={styles.srOnly}>
+            {fixtures.map(f => (
+              <li key={f.id}>
+                {f.a} versus {f.b}, best of {f.bestOf}, {f.fav ? `${f.fav} favourite` : 'even'}, strength {f.sa.toFixed(0)} to {f.sb.toFixed(0)}
+                {f.mine.length > 0 ? `, ${f.mine.length} of your players` : ''}
+              </li>
+            ))}
+          </ul>
           <p className={styles.help}>Strength is the average points per map of each team's best five. The bolder team is the favourite.</p>
         </section>
 

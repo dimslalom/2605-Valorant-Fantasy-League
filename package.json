@@ -18,7 +18,8 @@
     "test:hover": "node --test test/squadSheetPreview.test.js",
     "check": "npm run lint && npm test && npm run build && npx wrangler deploy --dry-run",
     "lint:app": "eslint src/engine/perfectRun.js src/engine/multiplayer.js src/pages/PerfectRun.jsx src/pages/Multiplayer.jsx src/lib/leaderboardClient.js src/lib/multiplayerClient.js worker/index.js test/perfectRunModes.test.js test/multiplayer.test.js",
-    "lint:multiplayer": "eslint src/engine/multiplayer.js src/pages/Multiplayer.jsx src/lib/multiplayerClient.js worker/index.js"
+    "lint:multiplayer": "eslint src/engine/multiplayer.js src/pages/Multiplayer.jsx src/lib/multiplayerClient.js worker/index.js",
+    "rive:build": "node scripts/rive-build.js"
   },
   "dependencies": {
     "@rive-app/react-canvas": "4.36.0",

@@ -1,7 +1,7 @@
 <Rive version="1" kind="fragment">
     <!-- SlotPlate: one lineup slot. 343x72. Flat plate, notched top-right corner
          is drawn by the Notch path; no gradients, glows or rounded corners. -->
-    <Artboard defaultStateMachineId="2:7" styleId="2:5" viewModelId="1:1" viewModelInstanceId="1:2"
+    <Artboard x="0" y="0" defaultStateMachineId="2:7" styleId="2:5" viewModelId="1:1" viewModelInstanceId="1:2"
               width="343" height="72" name="SlotPlate" id="2:2">
         <LayoutComponentStyle name="Artboard Style" id="2:5"/>
 

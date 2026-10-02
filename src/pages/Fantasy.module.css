@@ -179,3 +179,5 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .org[data-on='true'] { border-left-color: var(--accent); background: var(--surface-hi); }
 .orgCards { display: flex; gap: 2px; overflow: hidden; max-width: 100%; }
 .noteItem { display: flex; gap: 12px; align-items: center; }
+
+.srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; list-style: none; }
