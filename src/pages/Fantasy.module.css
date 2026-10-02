@@ -152,3 +152,14 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .pts[data-neg='true'] { color: var(--accent); }
 .liveActions { display: flex; margin-top: 16px; }
 .liveActions .primary, .liveActions .secondary { flex: 1; }
+
+/* Transfer feedback */
+.note2 { background: var(--surface); border-left: 3px solid var(--accent); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.noteHead { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.noteHead h3 { margin: 0; }
+.noteLine { margin: 0; line-height: 1.5; }
+.noteLine[data-kind='won'] { color: var(--win); }
+.noteLine[data-kind='lost'], .noteLine[data-kind='risk'] { color: var(--accent); }
+.noteLine[data-kind='sold'], .noteLine[data-kind='ok'] { color: var(--ink); }
+.pending { background: var(--bg-sunken); padding: 12px 14px; margin: 8px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.pending h4 { margin: 0 0 4px; }

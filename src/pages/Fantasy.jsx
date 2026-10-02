@@ -98,6 +98,7 @@ export default function Fantasy() {
   const [reveal, setReveal] = useState(null);
   const [view, setView] = useState('board'); // board | transfers | broadcast | result
   const [picker, setPicker] = useState(null);
+  const [transferNote, setTransferNote] = useState(null); // outcome of the last lock-in's transfers
 
   useEffect(() => {
     let live = true;
@@ -119,6 +120,9 @@ export default function Fantasy() {
     })();
     return () => { live = false; };
   }, []);
+
+  // A new screen should start at the top, not where the last one was scrolled to.
+  useEffect(() => { window.scrollTo(0, 0); }, [view]);
 
   useEffect(() => {
     if (state) saveFantasy({ state, override, totalSteps: state.totalSteps });
@@ -175,6 +179,7 @@ export default function Fantasy() {
     setState(startReplay(replay, { seed: Math.floor(Math.random() * 1e6) }));
     setOverride(null);
     setReveal(null);
+    setTransferNote(null);
     setView('board');
     setStatus('play');
   };
@@ -201,6 +206,19 @@ export default function Fantasy() {
     // Only maps with your players are worth watching.
     const steps = playbackSteps(out.md, effective, out.results.you.captain).filter(st => st.lines.length > 0);
     setReveal({ ...out, before, step: state.step, steps });
+    const items = [];
+    for (const a of out.report.auctions) {
+      const mine = a.bids.find(b => b.mgr === 'you');
+      if (!mine) continue;
+      items.push(a.winner === 'you'
+        ? { kind: 'won', pid: a.pid, text: `You signed ${replay.players[a.pid].handle} for ${fmt(mine.amt)}.` }
+        : { kind: 'lost', pid: a.pid, text: `You lost ${replay.players[a.pid].handle}. ${a.winner ? `${nameOf(a.winner)} won him with ${fmt(a.bids[0].amt)}; you bid ${fmt(mine.amt)}.` : 'Nobody could pay for him.'} You were not charged.` });
+    }
+    for (const sale of out.report.sold.filter(x => x.mgr === 'you')) items.push({ kind: 'sold', pid: sale.pid, text: `You sold ${replay.players[sale.pid].handle} for ${fmt(sale.price)}.` });
+    for (const o of out.report.offers) {
+      if (state.owner[o.pid] === 'you') items.push({ kind: 'sold', pid: o.pid, text: `You sold ${replay.players[o.pid].handle} to ${nameOf(o.from)} for ${fmt(o.amt)}.` });
+    }
+    setTransferNote(items);
     setState(out.state);
     setOverride(null);
     setBidText({});
@@ -268,8 +286,41 @@ export default function Fantasy() {
 
     const bidsPlaced = Object.keys(state.market.bids.you).length + (state.market.sales.you?.length ?? 0);
 
+    // What happened to your last bids and sales, shown until you dismiss it.
+    const noteBox = transferNote && transferNote.length > 0 && (
+      <section className={styles.note2} role="status">
+        <div className={styles.noteHead}>
+          <h3>LAST DAY'S TRANSFERS</h3>
+          <button className={styles.secondary} onClick={() => setTransferNote(null)}>DISMISS</button>
+        </div>
+        {transferNote.map(item => (
+          <p key={`${item.kind}-${item.pid}`} className={styles.noteLine} data-kind={item.kind}>{item.text}</p>
+        ))}
+      </section>
+    );
+
+    // Pending bids with the risk spelled out.
+    const pendingBids = Object.entries(state.market.bids.you);
+    const pendingBox = (
+      <section className={styles.pending}>
+        <h4>YOUR PENDING BIDS</h4>
+        <p className={styles.help}>Nothing is decided yet. <strong>Bids resolve when you lock in</strong>, after your team is set. If another manager bids more, you lose him and are not charged. You will see the result right after the matches.</p>
+        {pendingBids.length === 0 && <p className={styles.note}>No bids placed yet.</p>}
+        {pendingBids.map(([pid, amt]) => {
+          const heat = eyeing(Number(pid));
+          return (
+            <p key={pid} className={styles.noteLine} data-kind={heat > 0 ? 'risk' : 'ok'}>
+              {replay.players[pid].handle}: your bid {fmt(amt)}.{' '}
+              {heat > 0 ? `${heat} rival${heat > 1 ? 's are' : ' is'} also going for him. Bid higher to be safe.` : 'No rival is going for him right now.'}
+            </p>
+          );
+        })}
+      </section>
+    );
+
     const board = (
       <>
+        {noteBox}
         <section className={styles.panel}>
           <h3>TODAY'S MATCHES</h3>
           <div className={styles.fixtures}>
@@ -340,8 +391,10 @@ export default function Fantasy() {
 
     const transfers = (
       <>
+        {noteBox}
         <section className={styles.panel}>
-          <p className={styles.help}>Bids are secret. When you lock in, the highest bid wins each player and you only pay if you win. A <strong>RIVALS EYEING</strong> tag means other managers are likely to bid too.</p>
+          <p className={styles.help}>Place secret bids on players. A <strong>RIVALS EYEING</strong> tag means another manager plans to bid on him too, so you will need to bid more than the market value to win. The highest bid wins and you only pay if you win.</p>
+          {pendingBox}
           {state.market.offers.length > 0 && <h4>A RIVAL WANTS ONE OF YOUR PLAYERS</h4>}
           {state.market.offers.map(o => (
             <PlayerLine key={o.id} player={replay.players[o.pid]} sub={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
