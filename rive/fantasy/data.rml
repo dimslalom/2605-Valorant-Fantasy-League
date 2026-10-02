@@ -1,0 +1,25 @@
+<Rive version="1" kind="fragment">
+    <!-- Contract with the app. Names are the public surface: src/rive reads and
+         writes these by name. PascalCase view models, camelCase properties. -->
+    <ViewModel defaultInstanceId="1:2" name="SlotPlateVM" id="1:1">
+        <ViewModelPropertyString name="handle" id="1:10"/>
+        <ViewModelPropertyString name="roleLabel" id="1:11"/>
+        <ViewModelPropertyString name="valueText" id="1:12"/>
+        <ViewModelPropertyString name="statusText" id="1:13"/>
+        <ViewModelPropertyNumber name="form" id="1:14"/>
+
+        <ViewModelInstance exports="true" name="Default" id="1:2">
+            <ViewModelInstanceString propertyValue="aspas" viewModelPropertyId="1:10"/>
+            <ViewModelInstanceString propertyValue="DUELIST" viewModelPropertyId="1:11"/>
+            <ViewModelInstanceString propertyValue="5.58M" viewModelPropertyId="1:12"/>
+            <ViewModelInstanceString propertyValue="PLAYS TODAY" viewModelPropertyId="1:13"/>
+            <ViewModelInstanceNumber propertyValue="60" viewModelPropertyId="1:14"/>
+        </ViewModelInstance>
+    </ViewModel>
+
+    <!-- form 0..100 -> bar width 0..96 -->
+    <DataConverterRangeMapper minInput="0" maxInput="100" minOutput="0" maxOutput="96"
+                              clampLower="true" clampUpper="true" name="FormToWidth" id="1:50"/>
+
+    <FontAsset file="fonts/FamiljenGrotesk.ttf" name="Familjen Grotesk" id="1:60"/>
+</Rive>
