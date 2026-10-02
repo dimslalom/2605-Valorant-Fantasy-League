@@ -34,7 +34,7 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 
 .row {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  grid-template-columns: var(--cw, 80px) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   padding: 8px 0;
@@ -92,7 +92,7 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .legal a { color: inherit; }
 
 @media (max-width: 420px) {
-  .row { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .row { grid-template-columns: var(--cw, 64px) minmax(0, 1fr) auto; }
   .row > :nth-child(4) { grid-column: 1 / -1; justify-self: end; }
   .slot { grid-template-columns: minmax(0, 1fr) 44px; }
   .slot .micro { grid-column: 1 / -1; }
@@ -168,3 +168,6 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .lockHint { flex-basis: 100%; margin: 0 0 8px; color: var(--accent); font-size: var(--fs-label); }
 .actions { flex-wrap: wrap; }
 .primary:disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; }
+
+.cardThumb { overflow: hidden; flex-shrink: 0; }
+.row { padding: 10px 0; }

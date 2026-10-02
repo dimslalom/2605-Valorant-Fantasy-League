@@ -8,6 +8,8 @@ import { validLineup } from '../engine/fantasy/lineup';
 import { squadOf, standings } from '../engine/fantasy/league';
 import { MarketError, acceptOffer, cancelBid, queueBid, queueSale } from '../engine/fantasy/market';
 import { buildReplay, playbackSteps, teamStrengths } from '../engine/fantasy/replay';
+import PlayerCard from '../components/PlayerCard';
+import useMediaQuery from '../lib/useMediaQuery';
 import { fetchEventMatches } from '../lib/feedClient';
 import { clearFantasySave, loadFantasySave, saveFantasy } from '../lib/fantasySave';
 import styles from './Fantasy.module.css';
@@ -18,17 +20,36 @@ const ROLE_FOR = { D: 'duelist', I: 'initiator', C: 'controller' };
 const fmt = k => `${(k / 1000).toFixed(2)}M`;
 const trend = form => (form >= 3 ? 'up' : form <= -3 ? 'down' : 'flat');
 
-function Face({ player }) {
-  const photo = player.card?.photo;
-  return photo && !photo.includes('placeholder')
-    ? <img className={styles.face} src={photo} alt="" loading="lazy" />
-    : <span className={styles.face} data-empty="true">{player.role[0].toUpperCase()}</span>;
+// The real designed card for a player. Feed players with no card in cards.json
+// (new or Challengers players) get a stand-in built from their feed identity so
+// every player in the game is a card, with the tier following their rating.
+const REGION_FOR = { duelist: 'EMEA' };
+function cardFor(player, value) {
+  if (player.card) return player.card;
+  const rating = Math.max(52, Math.min(88, Math.round(72 + ((value?.ep ?? 26) - 30) * 1.7)));
+  const palette = rating >= 80 ? 'gold' : rating >= 70 ? 'silver' : 'bronze';
+  const stat = Math.max(50, rating - 2);
+  return {
+    id: `feed-${player.pid}`, player: player.handle, org: player.team, org_name: player.team, org_logo: null,
+    region: REGION_FOR[player.role] ?? 'EMEA', nationality: 'XX', tier: palette, palette, edition: null,
+    rating, role: player.role[0].toUpperCase() + player.role.slice(1), agents: [], photo: '/assets/players/placeholder.png',
+    stats: { aim: stat, positioning: stat, ability: stat, mentality: stat, synergy: stat },
+    league: 'vct', igl: false, stints: [],
+  };
 }
 
-function PlayerLine({ player, value, sub, children }) {
+function CardThumb({ player, value, scale }) {
   return (
-    <div className={styles.row}>
-      <Face player={player} />
+    <div className={styles.cardThumb} style={{ width: 400 * scale, height: 580 * scale }}>
+      <PlayerCard card={cardFor(player, value)} displayScale={scale} tilt={false} canDrag={false} portraitLoading="lazy" />
+    </div>
+  );
+}
+
+function PlayerLine({ player, value, sub, children, scale = 0.2 }) {
+  return (
+    <div className={styles.row} style={{ '--cw': `${400 * scale}px` }}>
+      <CardThumb player={player} value={value} scale={scale} />
       <div className={styles.who}>
         <strong>{player.handle}</strong>
         <span className={styles.micro}><Split parts={[player.team, player.role.toUpperCase()]} /></span>
@@ -89,6 +110,8 @@ function Broadcast({ steps, replay, onDone }) {
 }
 
 export default function Fantasy() {
+  const small = useMediaQuery('(max-width: 420px)');
+  const cardScale = small ? 0.16 : 0.2;
   const [replay, setReplay] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | empty | error | intro | play
   const [state, setState] = useState(null);
@@ -372,7 +395,7 @@ export default function Fantasy() {
                     <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'CHOOSE'}</button>
                   </div>
                 ) : (
-                  <PlayerLine player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+                  <PlayerLine scale={cardScale} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
                     <div className={styles.slotTools}>
                       <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'SWAP'}</button>
                       <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ slots, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
@@ -396,7 +419,7 @@ export default function Fantasy() {
           })}
           {benchPids.length > 0 && <h4>BENCH</h4>}
           {benchPids.map(pid => (
-            <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
+            <PlayerLine scale={cardScale} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
           ))}
         </section>
 
@@ -421,7 +444,7 @@ export default function Fantasy() {
           {pendingBox}
           {state.market.offers.length > 0 && <h4>A RIVAL WANTS ONE OF YOUR PLAYERS</h4>}
           {state.market.offers.map(o => (
-            <PlayerLine key={o.id} player={replay.players[o.pid]} sub={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
+            <PlayerLine scale={cardScale} key={o.id} player={replay.players[o.pid]} sub={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
               <button className={styles.secondary} disabled={o.accepted} onClick={() => attempt(() => acceptOffer(state, o.id))}>{o.accepted ? 'SELLING' : 'SELL TO THEM'}</button>
             </PlayerLine>
           ))}
@@ -438,7 +461,7 @@ export default function Fantasy() {
               </span>
             );
             return (
-              <PlayerLine key={l.pid} player={p} value={ctx.values[l.pid]} sub={flags}>
+              <PlayerLine scale={cardScale} key={l.pid} player={p} value={ctx.values[l.pid]} sub={flags}>
                 {placed
                   ? <button className={styles.secondary} onClick={() => attempt(() => cancelBid(state, 'you', l.pid))}>BID {fmt(placed)}  CANCEL</button>
                   : (
@@ -461,7 +484,7 @@ export default function Fantasy() {
           {squad.map(pid => {
             const queued = state.market.sales.you?.includes(pid);
             return (
-              <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+              <PlayerLine scale={cardScale} key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
                 <button className={styles.secondary} disabled={queued} onClick={() => attempt(() => queueSale(state, 'you', pid))}>{queued ? 'WILL SELL' : 'SELL'}</button>
               </PlayerLine>
             );
