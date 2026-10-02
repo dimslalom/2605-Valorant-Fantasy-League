@@ -48,6 +48,10 @@ test('ingest then read back: match, round and schedule endpoints agree', async (
 
   const round = await (await call(e, 'GET', '/api/feed/rounds/2766:d1')).json();
   assert.equal(round.matches.length, 1);
+  // Browsers encode the colon in round ids; the route must decode it.
+  const encoded = await (await call(e, 'GET', `/api/feed/rounds/${encodeURIComponent('2766:d1')}`)).json();
+  assert.equal(encoded.matches.length, 1);
+  assert.equal(encoded.matches[0].maps[0].players[0].handle, 'p1');
 
   const schedule = await (await call(e, 'GET', '/api/feed/schedule?event=2766')).json();
   assert.equal(schedule.matches[0].matchId, 9);

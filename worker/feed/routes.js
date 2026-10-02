@@ -108,13 +108,14 @@ async function loadMatch(env, id) {
   const maps = (await env.DB
     .prepare('SELECT * FROM feed_maps WHERE match_id = ?1 ORDER BY map_no').bind(id).all()).results;
   const rows = (await env.DB
-    .prepare('SELECT * FROM feed_player_maps WHERE match_id = ?1').bind(id).all()).results;
+    .prepare(`SELECT pm.*, p.handle FROM feed_player_maps pm
+              LEFT JOIN feed_players p ON p.vlr_id = pm.vlr_id WHERE pm.match_id = ?1`).bind(id).all()).results;
   return {
     ...matchRow(match),
     maps: maps.map(m => ({
       gameId: m.game_id, mapNo: m.map_no, map: m.map_name, pickedBy: m.picked_by, score: [m.score1, m.score2],
       players: rows.filter(p => p.game_id === m.game_id).map(p => ({
-        vlrId: p.vlr_id, side: p.side, teamTag: p.team_tag, agent: p.agent, r2: p.r2, acs: p.acs,
+        vlrId: p.vlr_id, handle: p.handle, side: p.side, teamTag: p.team_tag, agent: p.agent, r2: p.r2, acs: p.acs,
         k: p.k, d: p.d, a: p.a, kast: p.kast, adr: p.adr, hs: p.hs, fk: p.fk, fd: p.fd,
         mk: [p.mk2, p.mk3, p.mk4, p.mk5], cl: [p.cl1, p.cl2, p.cl3, p.cl4, p.cl5],
       })),
@@ -145,6 +146,6 @@ export async function handleFeed(request, env, url) {
   if (path === '/api/feed/schedule') return getSchedule(env, url);
   let m;
   if ((m = path.match(/^\/api\/feed\/matches\/(\d+)$/))) return getMatch(env, Number(m[1]));
-  if ((m = path.match(/^\/api\/feed\/rounds\/([\w:.-]+)$/))) return getRound(env, decodeURIComponent(m[1]));
+  if ((m = path.match(/^\/api\/feed\/rounds\/([^/]+)$/))) return getRound(env, decodeURIComponent(m[1]));
   return reply({ error: 'not found' }, 404);
 }

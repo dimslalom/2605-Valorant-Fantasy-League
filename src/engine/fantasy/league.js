@@ -17,7 +17,10 @@ export function dealSquads(seed, managerIds, ctx) {
   const band = role => {
     const ids = all.filter(pid => (role ? ctx.players[pid].role === role : true))
       .sort((a, b) => valueOf(ctx, a) - valueOf(ctx, b));
-    return ids.slice(Math.floor(ids.length * 0.2), Math.ceil(ids.length * 0.8));
+    const mid = ids.slice(Math.floor(ids.length * 0.2), Math.ceil(ids.length * 0.8));
+    // Small pools (a Masters or a half-played event): fall back to the whole role
+    // so every manager still gets a player in each bucket.
+    return mid.length >= managerIds.length ? mid : ids;
   };
   let best = null;
   for (let attempt = 0; attempt < 20; attempt += 1) {
