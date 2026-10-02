@@ -44,10 +44,10 @@ export function dealSquads(seed, managerIds, ctx) {
   return best;
 }
 
-export function createLeague({ seed, campaignId, ctx, humanName = 'You', kind = 'live', now = 0 }) {
+export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName = 'You', kind = 'live', now = 0 }) {
   const aiIds = PERSONALITIES.map((_, i) => `ai${i + 1}`);
   const managerIds = ['you', ...aiIds];
-  const { squads, mean } = dealSquads(seed, managerIds, ctx);
+  const { squads, mean } = dealSquads(seed, managerIds, dealCtx);
   const poolSize = Object.keys(ctx.players).length;
   const startCash = Math.round((mean * ECONOMY.startCashFactor) / 10) * 10;
 

@@ -7,6 +7,8 @@ import { buildValueTable } from './values.js';
 // Everything a step needs is derived only from matchdays BEFORE it, so playing
 // step n can never see step n's results in prices or listings.
 
+export const MIN_TEAMS = 12;
+export const MAX_DAYS = 3;
 const dayOf = roundId => String(roundId ?? '').split(':')[1] ?? '';
 const cardKey = (handle, tag) => `${String(handle).toLowerCase()}|${String(tag).toLowerCase()}`;
 
@@ -29,7 +31,22 @@ export function buildReplay({ matches, cards = [], title = 'Replay' }) {
     if (!rounds.has(key)) rounds.set(key, []);
     rounds.get(key).push(m);
   }
-  const order = [...rounds.keys()].sort((a, b) => dayOf(a).localeCompare(dayOf(b)) || a.localeCompare(b));
+  const dayKeys = [...rounds.keys()].sort((a, b) => dayOf(a).localeCompare(dayOf(b)) || a.localeCompare(b));
+
+  // A group-stage day may only cover a few teams, which leaves most of a squad
+  // idle. Merge consecutive group-stage days until the matchday covers at least
+  // MIN_TEAMS teams (at most MAX_DAYS days). Bracket rounds are never merged: who
+  // plays in a semifinal depends on the quarterfinal results.
+  const isGroup = key => rounds.get(key).every(m => m.stage === 'Group Stage');
+  const groups = [];
+  for (const key of dayKeys) {
+    const last = groups[groups.length - 1];
+    const teamsOf = ks => new Set(ks.flatMap(k => rounds.get(k).flatMap(m => m.teams.map(t => t.tag))));
+    if (last && isGroup(key) && last.every(isGroup) && last.length < MAX_DAYS && teamsOf(last).size < MIN_TEAMS) last.push(key);
+    else groups.push([key]);
+  }
+  const order = groups.map(g => g.join('+'));
+  groups.forEach(g => rounds.set(g.join('+'), g.flatMap(k => rounds.get(k))));
 
   const players = {};
   const matchdays = order.map((roundId, i) => {
@@ -52,7 +69,8 @@ export function buildReplay({ matches, cards = [], title = 'Replay' }) {
         }
       }
     }
-    return { id: `md${i + 1}`, roundId, label: `DAY ${i + 1}`, date: dayOf(roundId), matches: list, points, mapsPlayed, teams };
+    const days = roundId.split('+').map(dayOf);
+    return { id: `md${i + 1}`, roundId, label: `MATCHDAY ${i + 1}`, date: days[0], days, matches: list, points, mapsPlayed, teams };
   });
 
   for (const p of Object.values(players)) {
@@ -87,4 +105,48 @@ export function buildReplay({ matches, cards = [], title = 'Replay' }) {
   });
 
   return { title, players, matchdays, valuesAt, seriesNext };
+}
+
+// Mean expected points of a team's best five, from a value table. A rough team
+// strength for reading matchups; the same number the player sees for every team.
+export function teamStrengths(players, values) {
+  const byTeam = {};
+  for (const p of Object.values(players)) (byTeam[p.team] ??= []).push(values[p.pid]?.ep ?? 0);
+  return Object.fromEntries(Object.entries(byTeam).map(([team, list]) => {
+    const top = list.sort((a, b) => b - a).slice(0, 5);
+    return [team, Math.round((top.reduce((x, y) => x + y, 0) / top.length) * 10) / 10];
+  }));
+}
+
+// What a manager's effective starters did on each map of a matchday, in order,
+// for the broadcast replay. `starters` are pids after auto-subs, `captain` doubles.
+export function playbackSteps(md, starters, captain) {
+  const steps = [];
+  const mine = new Set(starters);
+  for (const match of md.matches) {
+    match.maps.forEach((map, mapIdx) => {
+      const lines = [];
+      for (const row of map.players) {
+        if (!mine.has(row.vlrId)) continue;
+        const entry = md.points.get(row.vlrId)?.maps.find(m => m.gameId === map.gameId);
+        if (!entry) continue;
+        const tags = [];
+        if (row.mk[3] > 0) tags.push('ACE');
+        else if (row.mk[2] > 0) tags.push('4K');
+        const clutch = row.cl.map((n, i) => (n > 0 ? i + 1 : 0)).filter(Boolean).pop();
+        if (clutch) tags.push(`CLUTCH 1v${clutch}`);
+        if (entry.lines.mvp > 0) tags.push('MVP');
+        lines.push({ pid: row.vlrId, points: entry.total, counted: row.vlrId === captain ? entry.total * 2 : entry.total, tags });
+      }
+      steps.push({
+        key: `${match.matchId}:${map.gameId}`,
+        teams: match.teams.map(t => t.tag),
+        map: map.map,
+        mapNo: mapIdx + 1,
+        score: map.score,
+        lines,
+      });
+    });
+  }
+  return steps;
 }

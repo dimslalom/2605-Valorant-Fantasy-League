@@ -1,22 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AppFrame from '../components/AppFrame';
 import Split from '../components/Split';
 import cards from '../data/cards.json';
+import { SLOTS } from '../engine/fantasy/constants';
 import { ctxFor, playMatchday, startReplay } from '../engine/fantasy/game';
 import { autoLineup, validLineup } from '../engine/fantasy/lineup';
 import { squadOf, standings } from '../engine/fantasy/league';
 import { MarketError, acceptOffer, cancelBid, queueBid, queueSale } from '../engine/fantasy/market';
-import { buildReplay } from '../engine/fantasy/replay';
-import { SLOTS } from '../engine/fantasy/constants';
+import { buildReplay, playbackSteps, teamStrengths } from '../engine/fantasy/replay';
 import { fetchEventMatches } from '../lib/feedClient';
 import { clearFantasySave, loadFantasySave, saveFantasy } from '../lib/fantasySave';
 import styles from './Fantasy.module.css';
 
 const EVENT_ID = 2766; // Valorant Champions 2026
 const SLOT_LABEL = { D: 'DUELIST', I: 'INITIATOR', C: 'CONTROLLER', F1: 'FLEX', F2: 'FLEX' };
+const ROLE_FOR = { D: 'duelist', I: 'initiator', C: 'controller' };
 const fmt = k => `${(k / 1000).toFixed(2)}M`;
 const trend = form => (form >= 3 ? 'up' : form <= -3 ? 'down' : 'flat');
-const STEPS = [['market', '1  BUY AND SELL'], ['lineup', '2  PICK YOUR TEAM'], ['play', '3  PLAY THE DAY']];
 
 function Face({ player }) {
   const photo = player.card?.photo;
@@ -25,21 +25,66 @@ function Face({ player }) {
     : <span className={styles.face} data-empty="true">{player.role[0].toUpperCase()}</span>;
 }
 
-function PlayerLine({ player, value, extra, children }) {
+function PlayerLine({ player, value, sub, children }) {
   return (
     <div className={styles.row}>
       <Face player={player} />
       <div className={styles.who}>
         <strong>{player.handle}</strong>
         <span className={styles.micro}><Split parts={[player.team, player.role.toUpperCase()]} /></span>
+        {sub}
       </div>
       <div className={styles.num}>
         {value != null && <span>{fmt(value.v)}</span>}
         {value != null && <span className={styles.micro} data-trend={trend(value.form)}>AVG {value.ep.toFixed(0)} PTS</span>}
-        {extra}
       </div>
       {children}
     </div>
+  );
+}
+
+// Broadcast playback: the day's real maps replay one by one with your points ticking up.
+function Broadcast({ steps, replay, onDone }) {
+  const [shown, setShown] = useState(0);
+  const timer = useRef(null);
+  useEffect(() => {
+    if (shown >= steps.length) return undefined;
+    timer.current = setTimeout(() => setShown(n => n + 1), 1500);
+    return () => clearTimeout(timer.current);
+  }, [shown, steps.length]);
+
+  const visible = steps.slice(0, shown);
+  const total = visible.reduce((sum, st) => sum + st.lines.reduce((a, l) => a + l.counted, 0), 0);
+  const finished = shown >= steps.length;
+
+  return (
+    <section className={styles.panel} aria-live="polite">
+      <div className={styles.liveTop}>
+        <span className={styles.micro}>{finished ? 'FINAL' : 'LIVE REPLAY'}</span>
+        <strong className={styles.liveTotal}>{total}</strong>
+        <span className={styles.micro}>YOUR POINTS TODAY</span>
+      </div>
+      {steps.length === 0 && <p className={styles.note}>None of your starters played today. Check your fixtures before locking in next time.</p>}
+      {[...visible].reverse().map((st, i) => (
+        <article key={st.key} className={styles.mapCard} data-new={i === 0 && !finished}>
+          <header>
+            <strong>{st.teams[0]} vs {st.teams[1]}</strong>
+            <span className={styles.micro}><Split parts={[st.map.toUpperCase(), `MAP ${st.mapNo}`, `${st.score[0]}-${st.score[1]}`]} /></span>
+          </header>
+          {st.lines.map(l => (
+            <div key={l.pid} className={styles.mapLine}>
+              <strong>{replay.players[l.pid].handle}</strong>
+              <span className={styles.tags}>{l.tags.map(t => <span key={t} className={styles.stamp} data-hot="true">{t}</span>)}</span>
+              <span className={styles.pts} data-neg={l.counted < 0}>{l.counted > 0 ? '+' : ''}{l.counted}</span>
+            </div>
+          ))}
+        </article>
+      ))}
+      <div className={styles.liveActions}>
+        {!finished && <button className={styles.secondary} onClick={() => setShown(steps.length)}>SKIP TO RESULT</button>}
+        {finished && <button className={styles.primary} onClick={onDone}>SEE THE TABLE</button>}
+      </div>
+    </section>
   );
 }
 
@@ -51,7 +96,8 @@ export default function Fantasy() {
   const [bidText, setBidText] = useState({});
   const [message, setMessage] = useState('');
   const [reveal, setReveal] = useState(null);
-  const [view, setView] = useState('market'); // market | lineup | play | result | table
+  const [view, setView] = useState('board'); // board | transfers | broadcast | result
+  const [picker, setPicker] = useState(null);
 
   useEffect(() => {
     let live = true;
@@ -60,8 +106,8 @@ export default function Fantasy() {
       if (!live) return;
       if (matches == null) { setStatus('error'); return; }
       const built = buildReplay({ matches, cards, title: 'Champions 2026' });
-      if (built.matchdays.length < 2) { setStatus('empty'); setReplay(built); return; }
       setReplay(built);
+      if (built.matchdays.length < 2) { setStatus('empty'); return; }
       const save = loadFantasySave();
       if (save?.state && save.totalSteps === built.matchdays.length) {
         setState(save.state);
@@ -81,20 +127,55 @@ export default function Fantasy() {
   const ctx = useMemo(() => (replay && state ? ctxFor(replay, state.step) : null), [replay, state]);
   const roleOf = useCallback(pid => replay.players[pid].role, [replay]);
   const squad = useMemo(() => (state ? squadOf(state, 'you') : []), [state]);
+  const md = replay && state ? replay.matchdays[Math.min(state.step, replay.matchdays.length - 1)] : null;
+  const strengths = useMemo(() => (replay && ctx ? teamStrengths(replay.players, ctx.values) : {}), [replay, ctx]);
 
   const draft = useMemo(() => {
     if (!state || !ctx) return null;
     const auto = autoLineup(squad, { epOf: pid => ctx.values[pid].ep, roleOf, seriesOf: pid => ctx.seriesNext[pid] ?? 1 });
-    if (override && validLineup(override, squad, roleOf).ok) return override;
-    return auto;
+    return override && validLineup(override, squad, roleOf).ok ? override : auto;
   }, [state, ctx, squad, override, roleOf]);
+
+  // Today's fixtures with the manager's players and the matchup read.
+  const fixtures = useMemo(() => {
+    if (!md || !replay) return [];
+    return md.matches.map(m => {
+      const [a, b] = m.teams.map(t => t.tag);
+      const sa = strengths[a] ?? 0;
+      const sb = strengths[b] ?? 0;
+      const mine = squad.filter(pid => [a, b].includes(replay.players[pid].team));
+      return { id: m.matchId, a, b, sa, sb, fav: sa === sb ? null : sa > sb ? a : b, bestOf: m.bestOf, mine };
+    });
+  }, [md, replay, strengths, squad]);
+
+  const fixtureOf = pid => {
+    const team = replay.players[pid].team;
+    const f = fixtures.find(x => x.a === team || x.b === team);
+    if (!f) return null;
+    const opp = f.a === team ? f.b : f.a;
+    const gap = Math.abs(f.sa - f.sb);
+    const verdict = f.fav == null || gap < 1 ? 'EVEN' : f.fav === team ? 'FAVOURITE' : 'UNDERDOG';
+    return { opp, verdict, bestOf: f.bestOf };
+  };
+  const matchupLine = pid => {
+    const f = fixtureOf(pid);
+    return f
+      ? <span className={styles.matchup} data-v={f.verdict}>vs {f.opp}<Split parts={[f.verdict, `BO${f.bestOf}`]} /></span>
+      : <span className={styles.matchup} data-v="idle">NO MATCH TODAY</span>;
+  };
+
+  // Rivals who plan to bid on a listing, shown only as a coarse read.
+  const eyeing = pid => {
+    if (!state) return 0;
+    return Object.values(state.market.aiPlans).filter(plan => plan.some(c => c.type === 'bid' && c.pid === pid)).length;
+  };
 
   const start = () => {
     clearFantasySave();
     setState(startReplay(replay, { seed: Math.floor(Math.random() * 1e6) }));
     setOverride(null);
     setReveal(null);
-    setView('market');
+    setView('board');
     setStatus('play');
   };
 
@@ -104,21 +185,27 @@ export default function Fantasy() {
     }
   };
 
-  const lineupSlots = draft?.slots ?? {};
-  const setSlot = (slot, pid) => {
-    const slots = { ...lineupSlots, [slot]: pid };
-    for (const s of SLOTS) if (s !== slot && slots[s] === pid) slots[s] = lineupSlots[slot];
-    const captain = Object.values(slots).includes(draft.captain) ? draft.captain : slots.D;
-    setOverride({ slots, bench: [], captain });
+  const slots = draft?.slots ?? {};
+  const assign = (slot, pid) => {
+    const next = { ...slots, [slot]: pid };
+    for (const s of SLOTS) if (s !== slot && next[s] === pid) next[s] = slots[slot];
+    const captain = Object.values(next).includes(draft.captain) ? draft.captain : next.D;
+    setOverride({ slots: next, bench: [], captain });
+    setPicker(null);
   };
 
-  const play = () => {
+  const lockIn = () => {
+    const before = { cash: state.cash.you, rank: myRank, points: state.points.you.total };
     const out = playMatchday(state, replay, draft);
-    setReveal({ ...out, step: state.step });
+    const effective = SLOTS.map(sl => out.results.you.subs.find(x => x.slot === sl)?.in ?? out.locked.you.slots[sl]).filter(p => p != null);
+    // Only maps with your players are worth watching.
+    const steps = playbackSteps(out.md, effective, out.results.you.captain).filter(st => st.lines.length > 0);
+    setReveal({ ...out, before, step: state.step, steps });
     setState(out.state);
     setOverride(null);
     setBidText({});
-    setView('result');
+    setPicker(null);
+    setView('broadcast');
   };
 
   const rows = state ? standings(state) : [];
@@ -127,163 +214,192 @@ export default function Fantasy() {
     const m = state.managers.find(x => x.id === id);
     return m.kind === 'human' ? 'You' : m.personality[0].toUpperCase() + m.personality.slice(1);
   };
-  const plays = pid => (ctx?.seriesNext[pid] ?? 0) > 0;
-  const Tag = ({ pid }) => <span className={styles.stamp} data-hot={plays(pid) ? 'false' : 'dim'}>{plays(pid) ? 'PLAYS TODAY' : 'NOT PLAYING'}</span>;
 
   let body;
   if (status === 'loading') body = <p className={styles.note}>Loading the feed</p>;
   else if (status === 'error') body = <p className={styles.note}>The data feed is unreachable. Try again in a minute.</p>;
-  else if (status === 'empty') {
-    body = <p className={styles.note}>Only {replay.matchdays.length} matchday of Champions 2026 is stored so far. The feed fills in about 30 minutes per run. Check back soon.</p>;
-  } else if (status === 'intro') {
+  else if (status === 'empty') body = <p className={styles.note}>Only {replay.matchdays.length} matchday of Champions 2026 is stored so far. Check back soon.</p>;
+  else if (status === 'intro') {
     body = (
       <section className={styles.intro}>
         <span className={styles.micro}>REPLAY</span>
         <h2>Champions 2026</h2>
-        <p>Relive the tournament as a manager. Each real match day, your team scores points from what your players actually did in those matches.</p>
+        <p>Relive the tournament as a manager. Every match day you can see the real fixtures, field the players you think will dominate, then watch the matches replay with your points ticking up.</p>
         <ol className={styles.how}>
-          <li><strong>Own 5 real pros.</strong> You get a starting squad. Seven rival managers get theirs. Nobody shares a player.</li>
-          <li><strong>Each day, pick your team.</strong> Choose which 5 of your players start, and one captain who scores double.</li>
-          <li><strong>Play the day.</strong> Your starters earn points for kills, assists, clutches and wins. The most points after all days wins.</li>
-          <li><strong>Buy and sell between days.</strong> Bid secretly on other players. The best bid wins when the day closes.</li>
+          <li><strong>Read the board.</strong> Today's real matches, who is favourite, and where your players sit.</li>
+          <li><strong>Pick your five and a captain</strong> who scores double.</li>
+          <li><strong>Outbid the other managers</strong> for the players you want. Bids are secret.</li>
+          <li><strong>Lock in and watch</strong> the real maps play out.</li>
         </ol>
         <button className={styles.primary} onClick={start}>START REPLAY</button>
       </section>
     );
   } else if (state) {
-    const md = replay.matchdays[Math.min(state.step, replay.matchdays.length - 1)];
     const done = state.status === 'done';
-    const starters = SLOTS.map(slot => lineupSlots[slot]).filter(pid => pid != null);
-    const playing = starters.filter(plays).length;
-
-    const stepper = (
-      <nav className={styles.stepper} aria-label="Steps">
-        {STEPS.map(([key, label]) => (
-          <button key={key} className={styles.step} data-on={view === key} onClick={() => setView(key)}>{label}</button>
-        ))}
-      </nav>
+    // While the broadcast plays, the header keeps the pre-day numbers so it does not spoil the result.
+    const hold = view === 'broadcast' && reveal ? reveal.before : null;
+    const shownStep = hold ? reveal.step : Math.min(state.step, state.totalSteps - 1);
+    const header = (
+      <header className={styles.top}>
+        <div>
+          <span className={styles.micro}>{done && !hold ? 'FINISHED' : `${replay.matchdays[shownStep].label} OF ${state.totalSteps}`}</span>
+          <h2>{replay.title}</h2>
+        </div>
+        <div className={styles.stats}>
+          <div><span className={styles.micro}>CREDITS</span><strong>{fmt(hold ? hold.cash : state.cash.you)}</strong></div>
+          <div><span className={styles.micro}>RANK</span><strong>{hold ? hold.rank : myRank}/8</strong></div>
+          <div><span className={styles.micro}>POINTS</span><strong>{hold ? hold.points : state.points.you.total}</strong></div>
+        </div>
+      </header>
     );
 
-    const marketView = (
-      <section className={styles.panel}>
-        <p className={styles.help}>Buy players to make your team stronger. <strong>Bids are secret.</strong> When you play the day, the highest bid for each player wins. You only pay if you win. Skip this step if you are happy with your squad.</p>
-        {state.market.offers.length > 0 && <h4>A RIVAL WANTS ONE OF YOUR PLAYERS</h4>}
-        {state.market.offers.map(o => (
-          <PlayerLine key={o.id} player={replay.players[o.pid]} extra={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
-            <button className={styles.secondary} disabled={o.accepted} onClick={() => attempt(() => acceptOffer(state, o.id))}>{o.accepted ? 'SELLING TO THEM' : 'SELL TO THEM'}</button>
-          </PlayerLine>
-        ))}
-        <h4>PLAYERS YOU CAN BID ON</h4>
-        {state.market.listings.map(l => {
-          const p = replay.players[l.pid];
-          const placed = state.market.bids.you[l.pid];
-          return (
-            <PlayerLine key={l.pid} player={p} value={ctx.values[l.pid]}>
-              {placed
-                ? <button className={styles.secondary} onClick={() => attempt(() => cancelBid(state, 'you', l.pid))}>YOUR BID {fmt(placed)}  CANCEL</button>
-                : (
-                  <form className={styles.bid} onSubmit={e => {
-                    e.preventDefault();
-                    const amt = Math.round(Number(bidText[l.pid] ?? l.min / 1000) * 1000 / 10) * 10;
-                    attempt(() => queueBid(state, 'you', l.pid, amt, ctx));
-                  }}>
-                    <input aria-label={`Your bid for ${p.handle}, in millions`} inputMode="decimal" value={bidText[l.pid] ?? (l.min / 1000).toFixed(2)}
-                      onChange={e => setBidText(t => ({ ...t, [l.pid]: e.target.value }))} />
-                    <button className={styles.secondary}>BID</button>
-                  </form>
-                )}
-            </PlayerLine>
-          );
-        })}
-        {message && <p className={styles.error} role="alert">{message}</p>}
-        <h4>YOUR PLAYERS</h4>
-        <p className={styles.help}>Selling pays you their value when the day closes. Your squad holds at most {state.squadMax} players.</p>
-        {squad.map(pid => {
-          const queued = state.market.sales.you?.includes(pid);
-          return (
-            <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]}>
-              <button className={styles.secondary} disabled={queued} onClick={() => attempt(() => queueSale(state, 'you', pid))}>{queued ? 'WILL SELL' : 'SELL'}</button>
-            </PlayerLine>
-          );
-        })}
-        <button className={styles.primary} onClick={() => setView('lineup')}>NEXT: PICK YOUR TEAM</button>
-      </section>
+    const table = (
+      <table className={styles.table}>
+        <thead><tr><th>#</th><th>MANAGER</th><th>TOTAL</th><th>{reveal ? 'THIS DAY' : 'DAY WINS'}</th></tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.id} data-you={r.id === 'you'}>
+              <td>{i + 1}</td><td>{nameOf(r.id)}</td><td>{r.total}</td><td>{reveal ? (reveal.results[r.id]?.total ?? 0) : r.wins}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     );
 
-    const lineupView = (
-      <section className={styles.panel}>
-        <p className={styles.help}>Choose the <strong>5 players who start</strong>. Only players whose team plays today can score. Tap <strong>CAPTAIN</strong> on one starter: their points count double.</p>
-        {SLOTS.map(slot => {
-          const pid = lineupSlots[slot];
-          if (pid == null) return <p key={slot} className={styles.note}>{SLOT_LABEL[slot]}: no player available</p>;
-          const isCap = draft?.captain === pid;
-          const options = squad.filter(x => !(slot in { D: 1, I: 1, C: 1 }) || roleOf(x) === { D: 'duelist', I: 'initiator', C: 'controller' }[slot]);
-          return (
-            <div key={slot} className={styles.slotCard}>
-              <span className={styles.micro}>{SLOT_LABEL[slot]}</span>
-              <PlayerLine player={replay.players[pid]} value={ctx.values[pid]} extra={<Tag pid={pid} />}>
-                <div className={styles.slotTools}>
-                  <select aria-label={`Change ${SLOT_LABEL[slot]}`} value={pid} onChange={e => setSlot(slot, Number(e.target.value))}>
-                    {options.map(x => <option key={x} value={x}>{replay.players[x].handle}{plays(x) ? '' : ' (not playing)'}</option>)}
-                  </select>
-                  <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ ...draft, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
+    const bidsPlaced = Object.keys(state.market.bids.you).length + (state.market.sales.you?.length ?? 0);
+
+    const board = (
+      <>
+        <section className={styles.panel}>
+          <h3>TODAY'S MATCHES</h3>
+          <div className={styles.fixtures}>
+            {fixtures.map(f => (
+              <div key={f.id} className={styles.fixture} data-mine={f.mine.length > 0}>
+                <div className={styles.teams}>
+                  <span data-fav={f.fav === f.a}>{f.a}</span>
+                  <span className={styles.micro}>VS</span>
+                  <span data-fav={f.fav === f.b}>{f.b}</span>
                 </div>
-              </PlayerLine>
-            </div>
-          );
-        })}
-        {draft?.bench?.length > 0 && <h4>ON THE BENCH</h4>}
-        {(draft?.bench ?? []).map(pid => (
-          <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]} extra={<Tag pid={pid} />} />
-        ))}
-        <p className={styles.help}>A starter whose team does not play is replaced by a bench player who does.</p>
-        <button className={styles.primary} onClick={() => setView('play')}>NEXT: PLAY THE DAY</button>
-      </section>
+                <span className={styles.micro}>{`STRENGTH ${f.sa.toFixed(0)}  ${f.sb.toFixed(0)}`}</span>
+                <span className={styles.micro}>BO{f.bestOf}</span>
+                {f.mine.length > 0 && <span className={styles.stamp} data-hot="true">{f.mine.length} OF YOURS</span>}
+              </div>
+            ))}
+          </div>
+          <p className={styles.help}>Strength is the average points per map of each team's best five. The bolder team is the favourite.</p>
+        </section>
+
+        <section className={styles.panel}>
+          <h3>YOUR FIVE</h3>
+          {SLOTS.map(slot => {
+            const pid = slots[slot];
+            if (pid == null) return <p key={slot} className={styles.note}>{SLOT_LABEL[slot]}: no player available</p>;
+            const isCap = draft?.captain === pid;
+            const options = squad.filter(x => !ROLE_FOR[slot] || roleOf(x) === ROLE_FOR[slot]);
+            return (
+              <div key={slot} className={styles.slotCard}>
+                <span className={styles.micro}>{SLOT_LABEL[slot]}</span>
+                <PlayerLine player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+                  <div className={styles.slotTools}>
+                    <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'SWAP'}</button>
+                    <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ ...draft, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
+                  </div>
+                </PlayerLine>
+                {picker === slot && (
+                  <div className={styles.picker}>
+                    {options.filter(x => x !== pid).length === 0 && <p className={styles.note}>No other eligible player. Buy one in Transfers.</p>}
+                    {options.filter(x => x !== pid).map(x => (
+                      <button key={x} className={styles.pick} onClick={() => assign(slot, x)}>
+                        <strong>{replay.players[x].handle}</strong>
+                        {matchupLine(x)}
+                        <span className={styles.micro}>AVG {ctx.values[x].ep.toFixed(0)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {(draft?.bench ?? []).length > 0 && <h4>BENCH</h4>}
+          {(draft?.bench ?? []).map(pid => (
+            <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
+          ))}
+        </section>
+
+        <section className={styles.panel}>
+          <h3>STANDINGS</h3>
+          {table}
+        </section>
+
+        <div className={styles.actions}>
+          <button className={styles.secondary} onClick={() => setView('transfers')}>TRANSFERS{bidsPlacedBadge(bidsPlaced)}</button>
+          <button className={styles.primary} onClick={lockIn}>LOCK IN AND WATCH {md.label}</button>
+        </div>
+      </>
     );
 
-    const playView = (
-      <section className={styles.panel}>
-        <p className={styles.help}>Ready? Playing the day closes the market, locks your team and reveals what your players really did.</p>
-        <h4>YOUR STARTERS</h4>
-        {SLOTS.map(slot => {
-          const pid = lineupSlots[slot];
-          if (pid == null) return null;
-          return (
-            <PlayerLine key={slot} player={replay.players[pid]} extra={<Tag pid={pid} />}>
-              {draft?.captain === pid && <span className={styles.stamp} data-hot="true">CAPTAIN x2</span>}
+    const transfers = (
+      <>
+        <section className={styles.panel}>
+          <p className={styles.help}>Bids are secret. When you lock in, the highest bid wins each player and you only pay if you win. A <strong>RIVALS EYEING</strong> tag means other managers are likely to bid too.</p>
+          {state.market.offers.length > 0 && <h4>A RIVAL WANTS ONE OF YOUR PLAYERS</h4>}
+          {state.market.offers.map(o => (
+            <PlayerLine key={o.id} player={replay.players[o.pid]} sub={<span className={styles.micro}>{nameOf(o.from)} offers {fmt(o.amt)}</span>}>
+              <button className={styles.secondary} disabled={o.accepted} onClick={() => attempt(() => acceptOffer(state, o.id))}>{o.accepted ? 'SELLING' : 'SELL TO THEM'}</button>
             </PlayerLine>
-          );
-        })}
-        {playing < 5 && <p className={styles.warn}>{5 - playing} of your starters are not playing today. They score 0 unless a bench player steps in. You can go back and change your team.</p>}
-        <h4>YOUR BIDS</h4>
-        {Object.keys(state.market.bids.you).length === 0
-          ? <p className={styles.note}>No bids placed.</p>
-          : Object.entries(state.market.bids.you).map(([pid, amt]) => <p key={pid} className={styles.note}>{replay.players[pid].handle}: {fmt(amt)}</p>)}
-        <button className={styles.primary} onClick={play}>PLAY {md.label}</button>
-        <button className={styles.secondary} onClick={() => setView('lineup')}>BACK</button>
-      </section>
+          ))}
+          <h4>ON THE MARKET</h4>
+          {state.market.listings.map(l => {
+            const p = replay.players[l.pid];
+            const placed = state.market.bids.you[l.pid];
+            const heat = eyeing(l.pid);
+            const flags = (
+              <span className={styles.flags}>
+                {matchupLine(l.pid)}
+                {ctx.values[l.pid].form >= 3 && <span className={styles.stamp} data-hot="false">IN FORM</span>}
+                {heat > 0 && <span className={styles.stamp} data-hot="true">RIVALS EYEING</span>}
+              </span>
+            );
+            return (
+              <PlayerLine key={l.pid} player={p} value={ctx.values[l.pid]} sub={flags}>
+                {placed
+                  ? <button className={styles.secondary} onClick={() => attempt(() => cancelBid(state, 'you', l.pid))}>BID {fmt(placed)}  CANCEL</button>
+                  : (
+                    <form className={styles.bid} onSubmit={e => {
+                      e.preventDefault();
+                      const amt = Math.round(Number(bidText[l.pid] ?? l.min / 1000) * 1000 / 10) * 10;
+                      attempt(() => queueBid(state, 'you', l.pid, amt, ctx));
+                    }}>
+                      <input aria-label={`Your bid for ${p.handle}, in millions`} inputMode="decimal" value={bidText[l.pid] ?? (l.min / 1000).toFixed(2)}
+                        onChange={e => setBidText(t => ({ ...t, [l.pid]: e.target.value }))} />
+                      <button className={styles.secondary}>BID</button>
+                    </form>
+                  )}
+              </PlayerLine>
+            );
+          })}
+          {message && <p className={styles.error} role="alert">{message}</p>}
+          <h4>YOUR SQUAD</h4>
+          <p className={styles.help}>Selling pays their value when you lock in. Squads hold at most {state.squadMax} players.</p>
+          {squad.map(pid => {
+            const queued = state.market.sales.you?.includes(pid);
+            return (
+              <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+                <button className={styles.secondary} disabled={queued} onClick={() => attempt(() => queueSale(state, 'you', pid))}>{queued ? 'WILL SELL' : 'SELL'}</button>
+              </PlayerLine>
+            );
+          })}
+        </section>
+        <div className={styles.actions}>
+          <button className={styles.primary} onClick={() => setView('board')}>BACK TO THE BOARD</button>
+        </div>
+      </>
     );
 
-    const resultView = reveal && (
-      <section className={styles.panel} aria-live="polite">
+    const result = reveal && (
+      <section className={styles.panel}>
         <h3>{replay.matchdays[reveal.step].label} RESULT</h3>
         <p className={styles.big}>You scored <strong>{reveal.results.you.total}</strong> points</p>
-        <p className={styles.help}>Points: +2 per kill, +1 per assist, -1 per death, bonuses for first kills, multi-kills, clutches, a strong round-win rate, and winning the map. The captain counts double.</p>
-        {SLOTS.map(slot => {
-          const pid = reveal.locked.you.slots[slot];
-          const sub = reveal.results.you.subs.find(x => x.slot === slot);
-          const shown = sub ? sub.in : pid;
-          if (shown == null) return null;
-          const pts = reveal.md.points.get(shown);
-          const cap = reveal.results.you.captain === shown;
-          return (
-            <PlayerLine key={slot} player={replay.players[shown]}
-              extra={<span className={styles.micro}>{pts ? `${pts.total} pts${cap ? ' x2' : ''}` : 'did not play'}</span>}>
-              {sub && <span className={styles.stamp}>SUBBED IN</span>}
-              {cap && <span className={styles.stamp} data-hot="true">CAPTAIN</span>}
-            </PlayerLine>
-          );
-        })}
         <h4>THE MARKET</h4>
         {reveal.report.auctions.length === 0 && <p className={styles.note}>Nobody bid on anyone.</p>}
         {reveal.report.auctions.map(a => {
@@ -300,60 +416,29 @@ export default function Fantasy() {
           );
         })}
         <h4>STANDINGS</h4>
-        <table className={styles.table}>
-          <thead><tr><th>#</th><th>MANAGER</th><th>TOTAL</th><th>THIS DAY</th></tr></thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.id} data-you={r.id === 'you'}><td>{i + 1}</td><td>{nameOf(r.id)}</td><td>{r.total}</td><td>{reveal.results[r.id]?.total ?? 0}</td></tr>
-            ))}
-          </tbody>
-        </table>
-        <button className={styles.primary} onClick={() => { setReveal(null); setView('market'); }}>
-          {done ? 'SEE FINAL RESULT' : `CONTINUE TO DAY ${state.step + 1}`}
+        {table}
+        <button className={styles.primary} onClick={() => { setReveal(null); setView('board'); }}>
+          {done ? 'SEE FINAL RESULT' : `CONTINUE TO MATCHDAY ${state.step + 1}`}
         </button>
       </section>
     );
 
-    const finalView = (
+    const final = (
       <section className={styles.panel}>
         <h3>FINAL STANDINGS</h3>
         <p className={styles.big}>You finished <strong>{myRank}</strong> of 8</p>
-        <table className={styles.table}>
-          <thead><tr><th>#</th><th>MANAGER</th><th>POINTS</th><th>DAY WINS</th></tr></thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.id} data-you={r.id === 'you'}><td>{i + 1}</td><td>{nameOf(r.id)}</td><td>{r.total}</td><td>{r.wins}</td></tr>
-            ))}
-          </tbody>
-        </table>
+        {table}
         <button className={styles.primary} onClick={start}>PLAY AGAIN</button>
       </section>
     );
 
-    let main;
-    if (reveal && view === 'result') main = resultView;
-    else if (done) main = finalView;
-    else if (view === 'lineup') main = lineupView;
-    else if (view === 'play') main = playView;
-    else main = marketView;
+    let main = board;
+    if (view === 'broadcast' && reveal) main = <Broadcast steps={reveal.steps} replay={replay} onDone={() => setView('result')} />;
+    else if (view === 'result' && reveal) main = result;
+    else if (done) main = final;
+    else if (view === 'transfers') main = transfers;
 
-    body = (
-      <>
-        <header className={styles.top}>
-          <div>
-            <span className={styles.micro}>{done ? 'FINISHED' : `${md.label} OF ${state.totalSteps}`}</span>
-            <h2>{replay.title}</h2>
-          </div>
-          <div className={styles.stats}>
-            <div><span className={styles.micro}>CREDITS</span><strong>{fmt(state.cash.you)}</strong></div>
-            <div><span className={styles.micro}>RANK</span><strong>{myRank}/8</strong></div>
-            <div><span className={styles.micro}>POINTS</span><strong>{state.points.you.total}</strong></div>
-          </div>
-        </header>
-        {!done && !(reveal && view === 'result') && stepper}
-        {main}
-      </>
-    );
+    body = <>{header}{main}</>;
   }
 
   return (
@@ -366,4 +451,8 @@ export default function Fantasy() {
       </main>
     </AppFrame>
   );
+}
+
+function bidsPlacedBadge(n) {
+  return n > 0 ? `  (${n})` : '';
 }

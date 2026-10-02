@@ -87,3 +87,30 @@ test('ctxFor clamps to the last step', () => {
   const r = replay();
   assert.equal(ctxFor(r, 99).values, r.valuesAt[2]);
 });
+
+test('team strengths and playback steps: totals of the playback equal the settled score', async () => {
+  const { teamStrengths, playbackSteps } = await import('../src/engine/fantasy/replay.js');
+  const r = replay();
+  const strengths = teamStrengths(r.players, r.valuesAt[0]);
+  assert.ok(Object.values(strengths).every(v => v > 0));
+
+  let state = startReplay(r, { seed: 3 });
+  const out = playMatchday(state, r, null);
+  const sl = out.locked.you;
+  const starters = Object.values(out.results.you.subs.reduce((acc, s) => ({ ...acc, [s.slot]: s.in }), { ...sl.slots }));
+  const steps = playbackSteps(out.md, starters, out.results.you.captain);
+  const replayed = steps.reduce((sum, st) => sum + st.lines.reduce((a, l) => a + l.counted, 0), 0);
+  assert.equal(replayed, out.results.you.total);
+  assert.ok(steps.length > 0);
+});
+
+test('thin group-stage days merge into one matchday; bracket days never do', () => {
+  const all = synthMatches(1);
+  const byDay = day => all.filter(m => m.roundId === day).slice(0, 2);
+  const grp = ms => ms.map(m => ({ ...m, stage: 'Group Stage' }));
+  const merged = buildReplay({ matches: grp([...byDay('1:2026-09-24'), ...byDay('1:2026-09-25'), ...byDay('1:2026-09-26')]), cards });
+  assert.equal(merged.matchdays.length, 1);
+  assert.equal(merged.matchdays[0].days.length, 3);
+  const bracket = buildReplay({ matches: [...byDay('1:2026-09-24'), ...byDay('1:2026-09-25')].map(m => ({ ...m, stage: 'Playoffs' })), cards });
+  assert.equal(bracket.matchdays.length, 2);
+});

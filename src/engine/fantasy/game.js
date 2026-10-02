@@ -16,7 +16,11 @@ const roleOfFn = replay => pid => replay.players[pid].role;
 
 export function startReplay(replay, { seed = 1, humanName = 'You', campaignId = 'replay' } = {}) {
   const ctx = ctxFor(replay, 0);
-  let state = createLeague({ seed, campaignId, ctx, humanName, kind: 'replay' });
+  // Deal starting squads from teams that play on matchday 1, so day 1 is playable
+  // for everyone. Falls back to the whole pool when too few teams play.
+  const playing = Object.fromEntries(Object.entries(replay.players).filter(([pid]) => replay.seriesNext[0][pid] > 0));
+  const dealCtx = Object.keys(playing).length >= 45 ? { ...ctx, players: playing } : ctx;
+  let state = createLeague({ seed, campaignId, ctx, dealCtx, humanName, kind: 'replay' });
   state = { ...state, step: 0, status: 'market', totalSteps: replay.matchdays.length };
   return openMarket(state, 'md1', ctx, { replay: true });
 }
