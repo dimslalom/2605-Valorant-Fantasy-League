@@ -1,5 +1,5 @@
 import { applyAutoSubs, autoLineup, validLineup } from './lineup.js';
-import { createLeague, settleMatchday, standings } from './league.js';
+import { createLeague, settleMatchday, squadOf, standings } from './league.js';
 import { closeMarket, openMarket } from './market.js';
 import { scoreLineup } from './scoring.js';
 
@@ -31,7 +31,7 @@ export function lockLineups(state, replay, humanDraft) {
   const roleOf = roleOfFn(replay);
   const locked = {};
   for (const m of state.managers) {
-    const squad = Object.keys(state.owner).filter(pid => state.owner[pid] === m.id).map(Number);
+    const squad = squadOf(state, m.id);
     const auto = autoLineup(squad, { epOf: pid => ctx.values[pid].ep, roleOf, seriesOf: pid => ctx.seriesNext[pid] ?? 1 });
     if (m.kind === 'human' && humanDraft && validLineup(humanDraft, squad, roleOf).ok) {
       const bench = squad.filter(pid => !Object.values(humanDraft.slots).includes(pid));

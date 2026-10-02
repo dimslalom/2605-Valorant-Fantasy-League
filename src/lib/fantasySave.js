@@ -1,7 +1,7 @@
 // Fantasy save. The replay itself is rebuilt from the feed on load, so only the
 // league state and the player's draft lineup are stored.
 const KEY = 'vfl-fantasy-save';
-const VERSION = 1;
+const VERSION = 2; // 2: limited copies (owners lists, not a single owner)
 
 export function loadFantasySave() {
   try {

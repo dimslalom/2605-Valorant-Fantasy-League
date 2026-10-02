@@ -44,6 +44,32 @@ export function dealSquads(seed, managerIds, ctx) {
   return best;
 }
 
+// Limited copies: a player can be held by several managers, up to `copies`. Stars
+// have fewer copies, so they stay scarce and contested while depth never runs out.
+// Copies scale with league size so a bigger league is not starved.
+export function copiesFor(ctx, managerCount) {
+  const scale = Math.max(1, Math.ceil(managerCount / 8));
+  const ids = Object.keys(ctx.players).map(Number).sort((a, b) => valueOf(ctx, b) - valueOf(ctx, a));
+  const copies = {};
+  ids.forEach((pid, i) => {
+    const pct = i / ids.length;
+    copies[pid] = (pct < 0.15 ? 2 : pct < 0.5 ? 3 : 4) * scale;
+  });
+  return copies;
+}
+
+export const ownersOf = (state, pid) => state.owners[pid] ?? [];
+export const owns = (state, mgr, pid) => ownersOf(state, pid).includes(mgr);
+export const freeCopies = (state, pid) => (state.copies[pid] ?? 0) - ownersOf(state, pid).length;
+// Mutating helpers: callers hold a clone.
+export function addOwner(state, mgr, pid) {
+  (state.owners[pid] ??= []).push(mgr);
+}
+export function removeOwner(state, mgr, pid) {
+  state.owners[pid] = (state.owners[pid] ?? []).filter(m => m !== mgr);
+  if (state.owners[pid].length === 0) delete state.owners[pid];
+}
+
 export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName = 'You', kind = 'live', now = 0 }) {
   const aiIds = PERSONALITIES.map((_, i) => `ai${i + 1}`);
   const managerIds = ['you', ...aiIds];
@@ -51,8 +77,8 @@ export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName =
   const poolSize = Object.keys(ctx.players).length;
   const startCash = Math.round((mean * ECONOMY.startCashFactor) / 10) * 10;
 
-  const owner = {};
-  for (const id of managerIds) for (const pid of squads[id]) owner[pid] = id;
+  const owners = {};
+  for (const id of managerIds) for (const pid of squads[id]) (owners[pid] ??= []).push(id);
 
   return {
     v: 1,
@@ -67,7 +93,8 @@ export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName =
       ...aiIds.map((id, i) => ({ id, kind: 'ai', personality: PERSONALITIES[i] })),
     ],
     cash: Object.fromEntries(managerIds.map(id => [id, startCash])),
-    owner,
+    copies: copiesFor(ctx, managerIds.length),
+    owners,
     bought: {},
     drafts: {},
     lineups: {},
@@ -78,7 +105,7 @@ export function createLeague({ seed, campaignId, ctx, dealCtx = ctx, humanName =
 }
 
 export const squadOf = (state, mgr) =>
-  Object.keys(state.owner).filter(pid => state.owner[pid] === mgr).map(Number);
+  Object.keys(state.owners).filter(pid => state.owners[pid].includes(mgr)).map(Number);
 
 export const squadValue = (state, mgr, ctx) =>
   squadOf(state, mgr).reduce((s, pid) => s + valueOf(ctx, pid), 0);

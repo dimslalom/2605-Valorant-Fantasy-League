@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import cards from '../src/data/cards.json' with { type: 'json' };
 import { ctxFor, playMatchday, startReplay } from '../src/engine/fantasy/game.js';
-import { squadOf, standings } from '../src/engine/fantasy/league.js';
+import { freeCopies, squadOf, standings } from '../src/engine/fantasy/league.js';
 import { buildReplay } from '../src/engine/fantasy/replay.js';
 import { synthMatches } from './fixtures/fantasySynth.js';
 
@@ -35,7 +35,7 @@ test('a full replay: market closes, points land, cash pays out, invariants hold 
   const r = replay();
   let state = startReplay(r, { seed: 3 });
   assert.equal(state.step, 0);
-  assert.equal(state.market.listings.length, Math.min(10, Math.floor(Object.keys(r.players).filter(p => state.owner[p] == null).length * 0.4)));
+  assert.equal(state.market.listings.length, Math.min(10, Math.floor(Object.keys(r.players).filter(p => freeCopies(state, p) > 0).length * 0.4)));
   let steps = 0;
   while (state.status !== 'done') {
     const cashBefore = state.cash.you;
@@ -43,7 +43,7 @@ test('a full replay: market closes, points land, cash pays out, invariants hold 
     state = out.state;
     steps += 1;
     const seen = new Set();
-    for (const pid of Object.keys(state.owner)) { assert.ok(!seen.has(pid)); seen.add(pid); }
+    for (const [pid, list] of Object.entries(state.owners)) { assert.ok(list.length <= state.copies[pid]); assert.equal(new Set(list).size, list.length); seen.add(pid); }
     for (const m of state.managers) assert.ok(state.cash[m.id] >= 0);
     assert.ok(out.results.you.total !== undefined);
     assert.ok(state.cash.you >= 0 && cashBefore >= 0);

@@ -1,6 +1,6 @@
 import { ECONOMY } from './constants.js';
 import { aiOffer, aiPlan } from './ai.js';
-import { squadOf, standings } from './league.js';
+import { addOwner, freeCopies, owns, removeOwner, squadOf, standings } from './league.js';
 import { pickWeighted, rngFor } from './rng.js';
 
 // Daily market. Listings are seeded per (league, day); bids are sealed and
@@ -15,7 +15,7 @@ const round10 = n => Math.round(n / 10) * 10;
 // toward players with a series coming up and players in form.
 export function pickListings(state, dayKey, ctx, count) {
   const rng = rngFor(state.seed, dayKey, 'listings');
-  const free = Object.keys(ctx.players).map(Number).filter(pid => state.owner[pid] == null);
+  const free = Object.keys(ctx.players).map(Number).filter(pid => freeCopies(state, pid) > 0);
   const target = Math.min(count, Math.floor(free.length * 0.4));
   const ranked = [...free].sort((a, b) => ctx.values[b].ep - ctx.values[a].ep || a - b);
   const q = Math.ceil(ranked.length / 4);
@@ -62,6 +62,7 @@ const committed = (state, mgr) => Object.values(state.market.bids[mgr] ?? {}).re
 export function queueBid(state, mgr, pid, amt, ctx) {
   const listing = state.market.listings.find(l => l.pid === pid);
   if (!listing) throw new MarketError('not listed');
+  if (owns(state, mgr, pid)) throw new MarketError('you already have this player');
   if (!Number.isInteger(amt) || amt < listing.min) throw new MarketError('below the minimum');
   const bids = state.market.bids[mgr] ?? {};
   const others = committed(state, mgr) - (bids[pid] ?? 0);
@@ -80,7 +81,7 @@ export function cancelBid(state, mgr, pid) {
 }
 
 export function queueSale(state, mgr, pid) {
-  if (state.owner[pid] !== mgr) throw new MarketError('not your player');
+  if (!owns(state, mgr, pid)) throw new MarketError('not your player');
   const next = structuredClone(state);
   const sales = next.market.sales[mgr] ?? [];
   if (!sales.includes(pid)) sales.push(pid);
@@ -105,13 +106,13 @@ export function closeMarket(state, ctx) {
   const m = next.market;
   const report = { sold: [], offers: [], auctions: [] };
   const sell = (mgr, pid, price) => {
-    delete next.owner[pid];
-    delete next.bought[pid];
+    removeOwner(next, mgr, pid);
+    delete next.bought[`${mgr}:${pid}`];
     next.cash[mgr] += price;
   };
   const sign = (mgr, pid, price) => {
-    next.owner[pid] = mgr;
-    next.bought[pid] = { price, day: next.day };
+    addOwner(next, mgr, pid);
+    next.bought[`${mgr}:${pid}`] = { price, day: next.day };
     next.cash[mgr] -= price;
   };
 
@@ -122,7 +123,7 @@ export function closeMarket(state, ctx) {
   }
   for (const [mgr, pids] of Object.entries(sales)) {
     for (const pid of pids) {
-      if (next.owner[pid] !== mgr) continue;
+      if (!owns(next, mgr, pid)) continue;
       const price = ctx.values[pid].v;
       sell(mgr, pid, price);
       report.sold.push({ mgr, pid, price });
@@ -131,8 +132,9 @@ export function closeMarket(state, ctx) {
 
   // 2. Accepted offers: the AI buys the player at the offered price.
   for (const offer of m.offers.filter(o => o.accepted)) {
-    const seller = next.owner[offer.pid];
-    if (!seller || next.cash[offer.from] < offer.amt || squadOf(next, offer.from).length >= next.squadMax) continue;
+    const seller = offer.to;
+    if (!owns(next, seller, offer.pid) || owns(next, offer.from, offer.pid)
+      || next.cash[offer.from] < offer.amt || squadOf(next, offer.from).length >= next.squadMax) continue;
     sell(seller, offer.pid, offer.amt);
     sign(offer.from, offer.pid, offer.amt);
     report.offers.push({ ...offer });
@@ -153,20 +155,21 @@ export function closeMarket(state, ctx) {
     const pid = Number(pidStr);
     const tie = rngFor(next.seed, next.day, 'tie', pid);
     const sorted = [...bids].sort((a, b) => b.amt - a.amt || rank[b.mgr] - rank[a.mgr] || tie() - 0.5);
-    const entry = { pid, bids: sorted.map(b => ({ ...b })), winner: null };
-    if (next.owner[pid] == null) {
-      for (const bid of sorted) {
-        if (next.cash[bid.mgr] >= bid.amt && squadOf(next, bid.mgr).length < next.squadMax) {
-          sign(bid.mgr, pid, bid.amt);
-          entry.winner = bid.mgr;
-          break;
-        }
+    const entry = { pid, bids: sorted.map(b => ({ ...b })), winner: null, winners: [] };
+    // Each free copy goes to the next-highest bid that can pay and fit; winners pay what they bid.
+    for (const bid of sorted) {
+      if (freeCopies(next, pid) <= 0) break;
+      if (owns(next, bid.mgr, pid)) continue;
+      if (next.cash[bid.mgr] >= bid.amt && squadOf(next, bid.mgr).length < next.squadMax) {
+        sign(bid.mgr, pid, bid.amt);
+        entry.winners.push(bid.mgr);
       }
     }
+    entry.winner = entry.winners[0] ?? null;
     report.auctions.push(entry);
   }
-  for (const w of report.auctions.filter(a => a.winner)) {
-    next.log.push({ k: 'signed', pid: w.pid, mgr: w.winner, amt: w.bids[0].amt, d: next.day });
+  for (const a of report.auctions) {
+    for (const mgr of a.winners) next.log.push({ k: 'signed', pid: a.pid, mgr, amt: a.bids.find(b => b.mgr === mgr).amt, d: next.day });
   }
   next.market = { day: next.day, listings: [], bids: { you: {} }, sales: { you: [] }, offers: [], aiPlans: {} };
   return { state: next, report };

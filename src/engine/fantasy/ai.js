@@ -1,5 +1,5 @@
 import { PERSONALITIES } from './constants.js';
-import { squadOf } from './league.js';
+import { freeCopies, owns, squadOf } from './league.js';
 import { rngFor } from './rng.js';
 import { valueFromEP } from './values.js';
 
@@ -73,7 +73,7 @@ export function aiPlan(state, mgrId, dayKey, ctx) {
   // Sell players who are OUT, and for traders anything up 10% since purchase.
   for (const pid of held) {
     const row = ctx.values[pid];
-    const paid = state.bought[pid]?.price;
+    const paid = state.bought[`${mgrId}:${pid}`]?.price;
     if (row.o === 'OUT' || (personality === 'trader' && paid && row.v >= paid * 1.1)) {
       commands.push({ type: 'sell', pid });
       cash += row.v;
@@ -83,7 +83,7 @@ export function aiPlan(state, mgrId, dayKey, ctx) {
 
   const candidates = state.market.listings
     .map(l => l.pid)
-    .filter(pid => state.owner[pid] == null)
+    .filter(pid => freeCopies(state, pid) > 0 && !owns(state, mgrId, pid))
     .map(pid => ({ pid, score: want(personality, state, mgrId, pid, ctx, held) }))
     .filter(c => c.score > 0)
     .sort((a, b) => b.score - a.score || a.pid - b.pid);
@@ -114,12 +114,12 @@ export function aiOffer(state, dayKey, ctx) {
       const personality = mgr.personality;
       const value = ctx.values[pid].v;
       if (fairValue(personality, state, mgr.id, pid, ctx) < value * 1.05) continue;
-      if (squadOf(state, mgr.id).length >= state.squadMax) continue;
+      if (squadOf(state, mgr.id).length >= state.squadMax || owns(state, mgr.id, pid)) continue;
       const rng = rngFor(state.seed, dayKey, mgr.id, 'offer', pid);
       if (rng() > 0.35) continue;
       const amt = round10(value * (1 + lerp(PROFILES[personality].offer, rng())));
       if (amt > state.cash[mgr.id]) continue;
-      if (!best || amt > best.amt) best = { id: `${dayKey}:${mgr.id}:${pid}`, from: mgr.id, pid, amt, accepted: false };
+      if (!best || amt > best.amt) best = { id: `${dayKey}:${mgr.id}:${pid}`, from: mgr.id, to: human, pid, amt, accepted: false };
     }
   }
   return best;

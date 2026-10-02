@@ -5,7 +5,7 @@ import cards from '../data/cards.json';
 import { SLOTS } from '../engine/fantasy/constants';
 import { ctxFor, playMatchday, startReplay } from '../engine/fantasy/game';
 import { validLineup } from '../engine/fantasy/lineup';
-import { squadOf, standings } from '../engine/fantasy/league';
+import { freeCopies, owns, squadOf, standings } from '../engine/fantasy/league';
 import { MarketError, acceptOffer, cancelBid, queueBid, queueSale } from '../engine/fantasy/market';
 import { buildReplay, playbackSteps, teamStrengths } from '../engine/fantasy/replay';
 import PlayerCard from '../components/PlayerCard';
@@ -250,13 +250,13 @@ export default function Fantasy() {
     for (const a of out.report.auctions) {
       const mine = a.bids.find(b => b.mgr === 'you');
       if (!mine) continue;
-      items.push(a.winner === 'you'
+      items.push(a.winners.includes('you')
         ? { kind: 'won', pid: a.pid, text: `You signed ${replay.players[a.pid].handle} for ${fmt(mine.amt)}.` }
-        : { kind: 'lost', pid: a.pid, text: `You lost ${replay.players[a.pid].handle}. ${a.winner ? `${nameOf(a.winner)} won him with ${fmt(a.bids[0].amt)}; you bid ${fmt(mine.amt)}.` : 'Nobody could pay for him.'} You were not charged.` });
+        : { kind: 'lost', pid: a.pid, text: `You lost ${replay.players[a.pid].handle}. ${a.winner ? `${a.winners.map(nameOf).join(' and ')} got the last ${a.winners.length > 1 ? 'copies' : 'copy'} with ${fmt(a.bids[0].amt)}; you bid ${fmt(mine.amt)}.` : 'Nobody could pay for him.'} You were not charged.` });
     }
     for (const sale of out.report.sold.filter(x => x.mgr === 'you')) items.push({ kind: 'sold', pid: sale.pid, text: `You sold ${replay.players[sale.pid].handle} for ${fmt(sale.price)}.` });
     for (const o of out.report.offers) {
-      if (state.owner[o.pid] === 'you') items.push({ kind: 'sold', pid: o.pid, text: `You sold ${replay.players[o.pid].handle} to ${nameOf(o.from)} for ${fmt(o.amt)}.` });
+      if (owns(state, 'you', o.pid)) items.push({ kind: 'sold', pid: o.pid, text: `You sold ${replay.players[o.pid].handle} to ${nameOf(o.from)} for ${fmt(o.amt)}.` });
     }
     setTransferNote(items);
     setState(out.state);
@@ -440,7 +440,7 @@ export default function Fantasy() {
       <>
         {noteBox}
         <section className={styles.panel}>
-          <p className={styles.help}>Place secret bids on players. A <strong>RIVALS EYEING</strong> tag means another manager plans to bid on him too, so you will need to bid more than the market value to win. The highest bid wins and you only pay if you win.</p>
+          <p className={styles.help}>Place secret bids on players. Every player has a limited number of copies, and stars have the fewest. The highest bids win the copies that are left, and you only pay if you win. <strong>RIVALS EYEING</strong> means another manager plans to bid too.</p>
           {pendingBox}
           {state.market.offers.length > 0 && <h4>A RIVAL WANTS ONE OF YOUR PLAYERS</h4>}
           {state.market.offers.map(o => (
@@ -457,6 +457,7 @@ export default function Fantasy() {
               <span className={styles.flags}>
                 {matchupLine(l.pid)}
                 {ctx.values[l.pid].form >= 3 && <span className={styles.stamp} data-hot="false">IN FORM</span>}
+                {freeCopies(state, l.pid) <= 2 && <span className={styles.stamp} data-hot="true">{freeCopies(state, l.pid) === 1 ? 'LAST COPY' : `${freeCopies(state, l.pid)} COPIES LEFT`}</span>}
                 {heat > 0 && <span className={styles.stamp} data-hot="true">RIVALS EYEING</span>}
               </span>
             );
@@ -508,8 +509,8 @@ export default function Fantasy() {
             <div key={a.pid} className={styles.auction}>
               <strong>{replay.players[a.pid].handle}</strong>
               <Split parts={[
-                a.winner ? `${nameOf(a.winner)} won at ${fmt(a.bids[0].amt)}` : 'nobody could pay',
-                mine && a.winner !== 'you' ? `you bid ${fmt(mine.amt)}` : '',
+                a.winner ? `${a.winners.map(nameOf).join(', ')} won at ${fmt(a.bids[0].amt)}` : 'nobody could pay',
+                mine && !a.winners.includes('you') ? `you bid ${fmt(mine.amt)}` : '',
                 a.bids.length > 1 ? `${a.bids.length} bids` : '',
               ]} />
             </div>
