@@ -4,7 +4,7 @@ import Split from '../components/Split';
 import cards from '../data/cards.json';
 import { SLOTS } from '../engine/fantasy/constants';
 import { ctxFor, playMatchday, startReplay } from '../engine/fantasy/game';
-import { autoLineup, validLineup } from '../engine/fantasy/lineup';
+import { validLineup } from '../engine/fantasy/lineup';
 import { squadOf, standings } from '../engine/fantasy/league';
 import { MarketError, acceptOffer, cancelBid, queueBid, queueSale } from '../engine/fantasy/market';
 import { buildReplay, playbackSteps, teamStrengths } from '../engine/fantasy/replay';
@@ -134,11 +134,27 @@ export default function Fantasy() {
   const md = replay && state ? replay.matchdays[Math.min(state.step, replay.matchdays.length - 1)] : null;
   const strengths = useMemo(() => (replay && ctx ? teamStrengths(replay.players, ctx.values) : {}), [replay, ctx]);
 
+  // The human builds their own lineup. Day 1 starts empty; later days start from the
+  // lineup you locked last time (minus anyone you no longer own). Nothing is picked for you.
   const draft = useMemo(() => {
     if (!state || !ctx) return null;
-    const auto = autoLineup(squad, { epOf: pid => ctx.values[pid].ep, roleOf, seriesOf: pid => ctx.seriesNext[pid] ?? 1 });
-    return override && validLineup(override, squad, roleOf).ok ? override : auto;
-  }, [state, ctx, squad, override, roleOf]);
+    if (override) return override;
+    const prev = state.lineups?.[`md${state.step}`]?.you;
+    const slots = {};
+    if (prev) for (const sl of SLOTS) if (squad.includes(prev.slots[sl])) slots[sl] = prev.slots[sl];
+    const captain = prev && Object.values(slots).includes(prev.captain) ? prev.captain : null;
+    return { slots, captain };
+  }, [state, ctx, squad, override]);
+  const benchPids = squad.filter(pid => !Object.values(draft?.slots ?? {}).includes(pid));
+  const lineupProblems = draft ? (() => {
+    const problems = [];
+    const filled = SLOTS.filter(sl => draft.slots[sl] != null).length;
+    if (filled < 5) problems.push(`Choose ${5 - filled} more starter${5 - filled > 1 ? 's' : ''}.`);
+    else if (!validLineup({ slots: draft.slots, captain: draft.captain }, squad, roleOf).ok) problems.push('Your lineup needs a duelist, an initiator and a controller, and no more than two of one role.');
+    if (filled === 5 && draft.captain == null) problems.push('Pick a captain.');
+    return problems;
+  })() : [];
+  const canLock = lineupProblems.length === 0;
 
   // Today's fixtures with the manager's players and the matchup read.
   const fixtures = useMemo(() => {
@@ -193,13 +209,14 @@ export default function Fantasy() {
   const slots = draft?.slots ?? {};
   const assign = (slot, pid) => {
     const next = { ...slots, [slot]: pid };
-    for (const s of SLOTS) if (s !== slot && next[s] === pid) next[s] = slots[slot];
-    const captain = Object.values(next).includes(draft.captain) ? draft.captain : next.D;
-    setOverride({ slots: next, bench: [], captain });
+    for (const sl of SLOTS) if (sl !== slot && next[sl] === pid) delete next[sl];
+    const captain = Object.values(next).includes(draft.captain) ? draft.captain : null;
+    setOverride({ slots: next, captain });
     setPicker(null);
   };
 
   const lockIn = () => {
+    if (!canLock) return;
     const before = { cash: state.cash.you, rank: myRank, points: state.points.you.total };
     const out = playMatchday(state, replay, draft);
     const effective = SLOTS.map(sl => out.results.you.subs.find(x => x.slot === sl)?.in ?? out.locked.you.slots[sl]).filter(p => p != null);
@@ -344,21 +361,27 @@ export default function Fantasy() {
           <h3>YOUR FIVE</h3>
           {SLOTS.map(slot => {
             const pid = slots[slot];
-            if (pid == null) return <p key={slot} className={styles.note}>{SLOT_LABEL[slot]}: no player available</p>;
-            const isCap = draft?.captain === pid;
+            const isCap = pid != null && draft?.captain === pid;
             const options = squad.filter(x => !ROLE_FOR[slot] || roleOf(x) === ROLE_FOR[slot]);
             return (
               <div key={slot} className={styles.slotCard}>
                 <span className={styles.micro}>{SLOT_LABEL[slot]}</span>
-                <PlayerLine player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
-                  <div className={styles.slotTools}>
-                    <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'SWAP'}</button>
-                    <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ ...draft, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
+                {pid == null ? (
+                  <div className={styles.emptySlot}>
+                    <span>No one chosen</span>
+                    <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'CHOOSE'}</button>
                   </div>
-                </PlayerLine>
+                ) : (
+                  <PlayerLine player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)}>
+                    <div className={styles.slotTools}>
+                      <button className={styles.secondary} onClick={() => setPicker(picker === slot ? null : slot)}>{picker === slot ? 'CLOSE' : 'SWAP'}</button>
+                      <button className={styles.secondary} data-on={isCap} onClick={() => setOverride({ slots, captain: pid })}>{isCap ? 'CAPTAIN x2' : 'CAPTAIN'}</button>
+                    </div>
+                  </PlayerLine>
+                )}
                 {picker === slot && (
                   <div className={styles.picker}>
-                    {options.filter(x => x !== pid).length === 0 && <p className={styles.note}>No other eligible player. Buy one in Transfers.</p>}
+                    {options.filter(x => x !== pid).length === 0 && <p className={styles.note}>No eligible player in your squad{ROLE_FOR[slot] ? ` for ${ROLE_FOR[slot]}` : ''}. Buy one in Transfers.</p>}
                     {options.filter(x => x !== pid).map(x => (
                       <button key={x} className={styles.pick} onClick={() => assign(slot, x)}>
                         <strong>{replay.players[x].handle}</strong>
@@ -371,8 +394,8 @@ export default function Fantasy() {
               </div>
             );
           })}
-          {(draft?.bench ?? []).length > 0 && <h4>BENCH</h4>}
-          {(draft?.bench ?? []).map(pid => (
+          {benchPids.length > 0 && <h4>BENCH</h4>}
+          {benchPids.map(pid => (
             <PlayerLine key={pid} player={replay.players[pid]} value={ctx.values[pid]} sub={matchupLine(pid)} />
           ))}
         </section>
@@ -383,8 +406,9 @@ export default function Fantasy() {
         </section>
 
         <div className={styles.actions}>
+          {!canLock && <p className={styles.lockHint} role="status">{lineupProblems[0]}</p>}
           <button className={styles.secondary} onClick={() => setView('transfers')}>TRANSFERS{bidsPlacedBadge(bidsPlaced)}</button>
-          <button className={styles.primary} onClick={lockIn}>LOCK IN AND WATCH {md.label}</button>
+          <button className={styles.primary} onClick={lockIn} disabled={!canLock}>LOCK IN AND WATCH {md.label}</button>
         </div>
       </>
     );

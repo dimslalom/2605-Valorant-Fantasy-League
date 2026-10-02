@@ -163,3 +163,8 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
 .noteLine[data-kind='sold'], .noteLine[data-kind='ok'] { color: var(--ink); }
 .pending { background: var(--bg-sunken); padding: 12px 14px; margin: 8px 0 4px; display: flex; flex-direction: column; gap: 4px; }
 .pending h4 { margin: 0 0 4px; }
+
+.emptySlot { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 0 12px; background: var(--bg-sunken); border: 1px dashed var(--line-bracket); color: var(--muted); }
+.lockHint { flex-basis: 100%; margin: 0 0 8px; color: var(--accent); font-size: var(--fs-label); }
+.actions { flex-wrap: wrap; }
+.primary:disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; }
