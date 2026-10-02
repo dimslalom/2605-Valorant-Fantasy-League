@@ -8,8 +8,10 @@ import PlayerCard from '../components/PlayerCard';
 import PlayerPortrait from '../components/PlayerPortrait';
 import { hasRealPortrait } from '../lib/portrait';
 import CardFocusOverlay from '../components/CardFocusOverlay';
+import SigningSequence from '../components/SigningSequence';
 import PhaseTransition from '../components/PhaseTransition';
 import TacticalButton from '../components/TacticalButton';
+import Split from '../components/Split';
 import CountryFlag from '../components/CountryFlag';
 import SquadBar from '../components/SquadBar';
 import SquadDock from '../components/SquadDock';
@@ -48,11 +50,15 @@ import {
 } from '../engine/endless/market';
 import { describeNews, newsKit, pushNews } from '../engine/endless/news';
 import {
-  ENDLESS_POWER_DIVISOR, TACTIC_HAND_MAX, changedMapCards, chooseNpcMap, createTacticInstance,
-  consumeTactic, gainMapMastery, mapActivation, mapCardsForYear, npcTactic, npcTacticChoices,
-  refillTacticHand, rivalMapMastery, tacticActivation,
+  ENDLESS_POWER_DIVISOR, REWARD_TACTIC_PICKS, TACTIC_HAND_MAX, bankTactics, changedMapCards,
+  chooseNpcMap, createTacticInstance, consumeTactic, gainMapMastery, mapActivation,
+  mapCardsForYear, mapPicksPerSide, npcTactic, npcTacticChoices, refillTacticHand, rivalMapMastery, settleTactic, tacticActivation,
   tacticBooster, tacticClash,
 } from '../engine/endless/seriesCards';
+import { flyTo, fallAway } from '../lib/flight';
+import { bump, STAGGER_MS } from '../lib/anime';
+import TacticReturn from '../components/TacticReturn';
+import { flyBracketMoves } from '../lib/bracketFlight';
 import {
   mulberry32, todaySeed, ROSTER_SIZE,
   rollNationality, draftChoices, teamPower, samplePack,
@@ -116,9 +122,19 @@ function resolveEndlessNpcMatches(tour, rng, runSeed, year, yearMapByName) {
     const secondTeam = aPicksFirst ? teamB : teamA;
     const firstMastery = aPicksFirst ? masteryA : masteryB;
     const secondMastery = aPicksFirst ? masteryB : masteryA;
-    const firstPick = chooseNpcMap(dealt, firstTeam.roster, firstMastery);
-    const secondPick = chooseNpcMap(dealt.filter(map => map.id !== firstPick.id), secondTeam.roster, secondMastery);
-    const maps = [firstPick, secondPick, ...dealt.filter(map => map.id !== firstPick.id && map.id !== secondPick.id)];
+    // Same alternating draft the player gets: A B (A B), then the decider.
+    const picks = [];
+    for (let turn = 0; turn < mapPicksPerSide(match.bestOf) * 2; turn += 1) {
+      const firstTurn = turn % 2 === 0;
+      const pick = chooseNpcMap(
+        dealt.filter(map => !picks.includes(map)),
+        (firstTurn ? firstTeam : secondTeam).roster,
+        firstTurn ? firstMastery : secondMastery,
+      );
+      if (!pick) break;
+      picks.push(pick);
+    }
+    const maps = [...picks, ...dealt.filter(map => !picks.includes(map))];
     const needed = Math.ceil(match.bestOf / 2);
     const played = [];
     let scoreA = 0;
@@ -176,6 +192,14 @@ export default function PerfectRun() {
   const [squadName, setSquadName] = useState('');
   const [fanCards] = useState(drawFanCards);
   const rng = useRef(null);
+  // Whatever fly-to-bank animation is in flight right now - the reward
+  // screen's picks, or a pack-phase card landing in a chip/slot - guards
+  // against a second click landing mid-flight and gives the run's universal
+  // skip button a `.complete()` to jump straight to the commit. Mirrored by
+  // `uiFlying` state (below) purely so currentSkip can react to it at
+  // render time - a ref read during render wouldn't be safe there.
+  const uiFlightRef = useRef(null);
+  const [uiFlying, setUiFlying] = useState(false);
   // Set at the year boundary (settleYear), consumed when the player actually
   // leaves that year's manage screen (nextTournament) — see the comment
   // there for why NPC signings are deferred to that moment.
@@ -233,6 +257,11 @@ export default function PerfectRun() {
   // for a player of yours, and the run's news feed.
   const [signedIds, setSignedIds] = useState({});
   const [poachOffer, setPoachOffer] = useState(null);
+  // The active signing sequence (Transfer Market or a free prospect), if
+  // any: { card, cost, source: 'market' | 'prospect' }. Nothing else about a
+  // signing commits until SigningSequence's fly-in actually lands - see
+  // commitSigning.
+  const [signing, setSigning] = useState(null);
   const [feed, setFeed] = useState([]);
   // Fires once per release so SquadDock can animate the departing card and
   // highlight the slot it left behind - a thing you SEE happen, not a
@@ -268,11 +297,18 @@ export default function PerfectRun() {
   const [tacticHand, setTacticHand] = useState([]);
   const [opponentTacticHand, setOpponentTacticHand] = useState([]);
   const [tacticReveal, setTacticReveal] = useState(null);
+  // The tactic just played on a finished map, waiting for the dock to come
+  // back so TacticReturn can send it home (won) or let it fall away (lost).
+  const [tacticReturn, setTacticReturn] = useState(null);
   const [mapMastery, setMapMastery] = useState({});
   const [pendingReward, setPendingReward] = useState(null);
   const [rewardStep, setRewardStep] = useState('packs');
   const [tacticOffers, setTacticOffers] = useState([]);
-  const [pendingTactic, setPendingTactic] = useState(null);
+  // Tactic prize picking: which of the 3 offers are currently selected
+  // (REWARD_TACTIC_PICKS = 2), and - once picked - whatever didn't fit under
+  // TACTIC_HAND_MAX, resolved one at a time by the replace step.
+  const [rewardTacticPicks, setRewardTacticPicks] = useState([]);
+  const [pendingTactics, setPendingTactics] = useState([]);
   // Holds the series' finished results between "series over" and the
   // skippable pause before returning to the board - null when no series is
   // waiting. A boolean-shaped active flag (`!== null`) rather than the array
@@ -453,10 +489,10 @@ export default function PerfectRun() {
     setReputation(0);
     setLadderMove(null);
     setDev({}); setBonds({}); setYearReport(null); setProspect(null); setYearsCompleted(0);
-    setSignedIds({}); setPoachOffer(null); setFeed([]);
+    setSignedIds({}); setPoachOffer(null); setFeed([]); setSigning(null);
     setTacticHand([]); setMapMastery({}); setSeriesPlan(null); setActiveMapIndex(0);
     setOpponentTacticHand([]); setTacticReveal(null); setPendingReward(null); setRewardStep('packs');
-    setTacticOffers([]); setPendingTactic(null);
+    setTacticOffers([]); setRewardTacticPicks([]); setPendingTactics([]);
     setPrestige({ level: 0, multiplier: 1, bankedScore: 0 });
     setMode(selectedMode);
     setRunLength(length);
@@ -633,10 +669,17 @@ export default function PerfectRun() {
       const opponentMastery = Object.fromEntries(dealt.map(card => [
         card.name, rivalMapMastery(runSeed, opp.id, card.name, currentYear),
       ]));
-      const opponentPick = higherSeedIsPlayer ? null : chooseNpcMap(dealt, opp.roster, opponentMastery)?.id;
-      setSeriesPlan({ dealt, higherSeedIsPlayer, playerPick: null, opponentPick, opponentMastery, order: null });
+      // `sequence` is the draft in the order it happened. The higher seed
+      // opens it; after that the opponent answers each player pick at once,
+      // so it is always the player's turn whenever the table is live.
+      const perSide = mapPicksPerSide(round.bestOf);
+      const opener = higherSeedIsPlayer ? null : chooseNpcMap(dealt, opp.roster, opponentMastery);
+      const sequence = opener ? [{ side: 'opponent', id: opener.id }] : [];
+      const plan = { dealt, higherSeedIsPlayer, perSide, sequence, opponentMastery, order: null };
+      setSeriesPlan(plan);
       setMaps([]);
       setView('maps');
+      if (!playerCanPick(plan, sequence)) lockSeries(plan, sequence);
       return;
     }
 
@@ -646,22 +689,35 @@ export default function PerfectRun() {
     animTimer.current = setTimeout(() => playNextMap(seriesMaps, [], null, tacticHand), 350);
   }
 
+  function playerCanPick(plan, sequence) {
+    const taken = new Set(sequence.map(pick => pick.id));
+    return sequence.filter(pick => pick.side === 'player').length < plan.perSide
+      && plan.dealt.some(map => !taken.has(map.id));
+  }
+
   function chooseSeriesMap(card) {
-    if (!seriesPlan || seriesPlan.playerPick) return;
-    let opponentPick = seriesPlan.opponentPick;
-    if (!opponentPick) {
-      const remaining = seriesPlan.dealt.filter(map => map.id !== card.id);
-      opponentPick = chooseNpcMap(remaining, opp.roster, seriesPlan.opponentMastery)?.id;
+    if (!seriesPlan || seriesPlan.order) return;
+    const plan = seriesPlan;
+    if (!playerCanPick(plan, plan.sequence) || plan.sequence.some(pick => pick.id === card.id)) return;
+    let sequence = [...plan.sequence, { side: 'player', id: card.id }];
+    if (sequence.filter(pick => pick.side === 'opponent').length < plan.perSide) {
+      const taken = new Set(sequence.map(pick => pick.id));
+      const answer = chooseNpcMap(plan.dealt.filter(map => !taken.has(map.id)), opp.roster, plan.opponentMastery);
+      if (answer) sequence = [...sequence, { side: 'opponent', id: answer.id }];
     }
-    const leading = seriesPlan.higherSeedIsPlayer
-      ? [card.id, opponentPick]
-      : [opponentPick, card.id];
-    const order = [
-      ...leading,
-      ...seriesPlan.dealt.map(map => map.id).filter(id => !leading.includes(id)),
-    ];
-    const seriesMaps = order.map(id => seriesPlan.dealt.find(map => map.id === id).name);
-    setSeriesPlan(current => ({ ...current, playerPick: card.id, opponentPick, order }));
+    if (playerCanPick(plan, sequence)) {
+      setSeriesPlan(current => ({ ...current, sequence }));
+      return;
+    }
+    lockSeries(plan, sequence);
+  }
+
+  // Picks in the order they were made, then whatever is left as decider(s).
+  function lockSeries(plan, sequence) {
+    const picked = sequence.map(pick => pick.id);
+    const order = [...picked, ...plan.dealt.map(map => map.id).filter(id => !picked.includes(id))];
+    const seriesMaps = order.map(id => plan.dealt.find(map => map.id === id).name);
+    setSeriesPlan(current => ({ ...current, sequence, order }));
     setMaps(seriesMaps);
     animTimer.current = setTimeout(
       () => prepareTacticForMap(seriesMaps, 0, tacticHand),
@@ -755,37 +811,50 @@ export default function PerfectRun() {
       matchSkipRef.current = null;
       setRoundTrigger(null);
       setLive(null);
+      const played = endless ? preparation?.playerCard ?? null : null;
       const updated = [...resultsSoFar, { ...result, map: mapName }];
       setMapResults(updated);
       if (endless) setMapMastery(previous => gainMapMastery(previous, mapName));
+      // A call that won the map goes back in the hand; a failed one stays spent.
+      const handAfter = endless
+        ? settleTactic(remainingHand, played, result.winA)
+        : remainingHand;
+      if (handAfter !== remainingHand) setTacticHand(handAfter);
+      // Shown by TacticReturn once the dock is back on screen: the card flies
+      // home into its dock slot, or falls away if the map was lost.
+      if (played) setTacticReturn({ card: played, won: result.winA });
 
       const wonNow = updated.filter(r => r.winA).length;
       const lostNow = updated.length - wonNow;
       if (wonNow < needed && lostNow < needed) {
         if (endless) {
           animTimer.current = setTimeout(
-            () => prepareTacticForMap(seriesMaps, updated.length, remainingHand),
+            () => prepareTacticForMap(seriesMaps, updated.length, handAfter),
             650,
           );
         } else {
-          animTimer.current = setTimeout(() => playNextMap(seriesMaps, updated, null, remainingHand), 650);
+          animTimer.current = setTimeout(() => playNextMap(seriesMaps, updated, null, handAfter), 650);
         }
       } else {
         if (endless && wonNow >= needed) {
-          // A series win pays now. The final pays twice; a grand-final loss
-          // has already banked every earlier win instead of deleting a run's
-          // consumed tactics at the last hurdle.
+          // A series win pays, but not yet - the reward screen now shows
+          // just before the bracket, after the "Series won" pause below, so
+          // it reads as the last stop before your next matchup rather than
+          // an interruption of the win itself. The final pays twice; a
+          // grand-final loss has already banked every earlier win instead of
+          // deleting a run's consumed tactics at the last hurdle.
           setPendingReward({ results: updated, remaining: round.key === 'final' ? 2 : 1 });
           setRewardStep('packs');
           setTacticOffers([]);
-          setPendingTactic(null);
-          setView('reward');
-        } else {
-          // Handed off to the seriesEndTimeline below (skippable, run-speed
-          // scaled) rather than a bare setTimeout - pendingBoardReturn flipping
-          // null -> array is what that hook's `active` flag keys off.
-          setPendingBoardReturn(updated);
+          setRewardTacticPicks([]);
+          setPendingTactics([]);
         }
+        // Handed off to the seriesEndTimeline below (skippable, run-speed
+        // scaled) rather than a bare setTimeout - pendingBoardReturn flipping
+        // null -> array is what that hook's `active` flag keys off. A won
+        // series and a lost one both pause here; only a win also has a
+        // reward waiting on the other side (seriesEndTimeline.onDone below).
+        setPendingBoardReturn(updated);
       }
     }
 
@@ -883,7 +952,8 @@ export default function PerfectRun() {
     if (!pendingReward) return;
     const remaining = pendingReward.remaining - 1;
     setTacticHand(nextHand);
-    setPendingTactic(null);
+    setRewardTacticPicks([]);
+    setPendingTactics([]);
     setTacticOffers([]);
     if (remaining > 0) {
       setPendingReward(current => ({ ...current, remaining }));
@@ -893,38 +963,122 @@ export default function PerfectRun() {
     const results = pendingReward.results;
     setPendingReward(null);
     setRewardStep('packs');
-    setView('match');
-    setPendingBoardReturn(results);
+    backToBoard(results);
   }
 
+  // Player pick: the chosen pack flies into the pack corner, the tactic pack
+  // falls away, then the count ticks and the pick commits. `uiFlightRef`
+  // guards against a second click landing mid-flight and lets the run's
+  // universal skip button jump straight to the commit.
   function chooseRewardPack(kind) {
-    if (kind === 'player') {
-      setPacks(value => value + 1);
-      playUiSound('drop');
-      finishRewardPick();
+    if (uiFlightRef.current || !pendingReward) return;
+    playUiSound(kind === 'player' ? 'lift' : 'lift');
+    if (kind !== 'player') {
+      // Choosing tactic doesn't bank anything itself - it opens the 3-card
+      // offer below. The player pack falls away to mirror the choice.
+      const playerPack = document.querySelector('[data-phase="reward"] [data-kind="player"]');
+      fallAway(playerPack, { reducedMotion, runSpeed });
+      setTacticOffers(tacticBooster(rng.current, 3));
+      setRewardStep('tactics');
       return;
     }
-    setTacticOffers(tacticBooster(rng.current, 3));
-    setRewardStep('tactics');
-    playUiSound('lift');
+    const chosenEl = document.querySelector('[data-phase="reward"] [data-kind="player"]');
+    const otherEl = document.querySelector('[data-phase="reward"] [data-kind="tactic"]');
+    const bankEl = document.querySelector('[data-bank="pack"]');
+    fallAway(otherEl, { reducedMotion, runSpeed });
+    setUiFlying(true);
+    const flight = flyTo(chosenEl, bankEl, {
+      scaleTo: 0.3, rotate: -8, reducedMotion, runSpeed,
+      onLand: () => {
+        uiFlightRef.current = null;
+        setUiFlying(false);
+        setPacks(value => value + 1);
+        bump(bankEl);
+        playUiSound('drop');
+        finishRewardPick();
+      },
+    });
+    uiFlightRef.current = flight;
   }
 
+  // Toggles a tactic offer's selection. At REWARD_TACTIC_PICKS (2) selected,
+  // both fly into the tactic bank (staggered) and the unpicked offer falls
+  // away; the bank then resolves fit vs overflow via bankTactics.
   function chooseRewardTactic(card) {
-    if (!card) return;
-    if (tacticHand.length < TACTIC_HAND_MAX) {
-      finishRewardPick([...tacticHand, card]);
-      playUiSound('drop');
-      return;
-    }
-    setPendingTactic(card);
-    setRewardStep('replace');
+    if (!card || uiFlightRef.current) return;
+    const already = rewardTacticPicks.some(c => c.uid === card.uid);
+    const next = already
+      ? rewardTacticPicks.filter(c => c.uid !== card.uid)
+      : rewardTacticPicks.length < REWARD_TACTIC_PICKS ? [...rewardTacticPicks, card] : rewardTacticPicks;
+    setRewardTacticPicks(next);
+    playUiSound(already ? 'hover' : 'lift');
+    if (next.length < REWARD_TACTIC_PICKS) return;
+
+    const unpicked = tacticOffers.filter(c => !next.some(picked => picked.uid === c.uid));
+    const bankEl = document.querySelector('[data-bank="tactic"]');
+    unpicked.forEach(card2 => {
+      const el = document.querySelector(`[data-phase="reward"] [data-uid="${card2.uid}"]`);
+      fallAway(el, { reducedMotion, runSpeed });
+    });
+
+    let landed = 0;
+    const settle = () => {
+      landed += 1;
+      if (landed < next.length) return;
+      uiFlightRef.current = null;
+      setUiFlying(false);
+      const { hand, overflow } = bankTactics(tacticHand, next, TACTIC_HAND_MAX);
+      if (overflow.length) {
+        setTacticHand(hand);
+        setPendingTactics(overflow);
+        setRewardStep('replace');
+        return;
+      }
+      finishRewardPick(hand);
+    };
+    setUiFlying(true);
+    const flights = next.map((card2, index) => {
+      const el = document.querySelector(`[data-phase="reward"] [data-uid="${card2.uid}"]`);
+      return flyTo(el, bankEl, {
+        scaleTo: 0.4, rotate: index ? 6 : -6, delay: index * STAGGER_MS,
+        reducedMotion, runSpeed,
+        onLand: () => { bump(bankEl); playUiSound('drop'); settle(); },
+      });
+    });
+    uiFlightRef.current = { complete: () => flights.forEach(f => f.complete()) };
   }
 
+  // Replace step: each incoming card in the overflow queue is resolved one
+  // at a time against a hand slot, flying into the bank the same way a fresh
+  // pick does. "Keep hand" (outgoing === null) discards whatever's left.
   function replaceRewardTactic(outgoing) {
-    if (!pendingTactic || !outgoing) return;
-    const next = tacticHand.map(card => card.uid === outgoing.uid ? pendingTactic : card);
-    playUiSound('drop');
-    finishRewardPick(next);
+    if (uiFlightRef.current || pendingTactics.length === 0) return;
+    const [incoming, ...restQueue] = pendingTactics;
+    if (!outgoing) {
+      setPendingTactics([]);
+      finishRewardPick(tacticHand);
+      return;
+    }
+    const bankEl = document.querySelector('[data-bank="tactic"]');
+    const sourceEl = document.querySelector(`[data-phase="reward"] [data-uid="${incoming.uid}"]`);
+    setUiFlying(true);
+    const flight = flyTo(sourceEl, bankEl, {
+      scaleTo: 0.4, rotate: -6, reducedMotion, runSpeed,
+      onLand: () => {
+        uiFlightRef.current = null;
+        setUiFlying(false);
+        const next = tacticHand.map(card => card.uid === outgoing.uid ? incoming : card);
+        bump(bankEl);
+        playUiSound('drop');
+        if (restQueue.length) {
+          setTacticHand(next);
+          setPendingTactics(restQueue);
+          return;
+        }
+        finishRewardPick(next);
+      },
+    });
+    uiFlightRef.current = flight;
   }
 
   function backToBoard(results) {
@@ -1005,6 +1159,10 @@ export default function PerfectRun() {
     onDone: () => {
       const results = pendingBoardReturn;
       setPendingBoardReturn(null);
+      // A won series has a reward waiting - show it now, the last stop
+      // before the bracket. finishRewardPick (below) carries these same
+      // results on to backToBoard once every pick is resolved.
+      if (pendingReward) { setView('reward'); return; }
       backToBoard(results);
     },
   });
@@ -1039,7 +1197,9 @@ export default function PerfectRun() {
       ? { skip: skipMatch, progress: null }
       : boardState === 'travel'
         ? { skip: skipTravel, progress: null }
-        : null;
+        : uiFlying
+          ? { skip: () => uiFlightRef.current?.complete(), progress: null }
+          : null;
 
   useEffect(() => {
     if (!currentSkip) return undefined;
@@ -1109,71 +1269,62 @@ export default function PerfectRun() {
     }
 
     const cRect = container.getBoundingClientRect();
-    const cleanups = [];
-    const runningAnimations = [];
     const travelDuration = scaleDuration(TRAVEL_MS, runSpeed);
-    const animations = info.moves.map(move => {
+    const flightMoves = info.moves.map(move => {
       const fromEl = cellRefs.current[move.fromKey];
       const toEl = cellRefs.current[move.toKey];
       const fromRow = [...(fromEl?.querySelectorAll('[data-team-id]') ?? [])].find(row => row.dataset.teamId === move.teamId);
       const toRow = [...(toEl?.querySelectorAll('[data-team-id]') ?? [])].find(row => row.dataset.teamId === move.teamId);
-      if (!fromRow || !toRow) return Promise.resolve();
-      const a = fromRow.getBoundingClientRect();
-      const b = toRow.getBoundingClientRect();
-      const x0 = a.left - cRect.left, y0 = a.top - cRect.top;
-      const x1 = b.left - cRect.left, y1 = b.top - cRect.top;
-      // The clone keeps its won/lost border for the whole flight rather than
-      // going neutral - it's carrying forward the result that just earned
-      // this team the trip, so the color travels with it instead of cutting
-      // out. The destination itself stays on "TBD" throughout (driven by
-      // pendingArrivalIds, not a visibility hide) and only the clone ever
-      // sits at that position mid-flight - nothing to hide there.
-      const clone = fromRow.cloneNode(true);
-      clone.classList.add(styles.travelClone);
-      const cloneScore = clone.querySelector('[data-bracket-score]');
-      if (cloneScore) cloneScore.textContent = '';
-      clone.style.width = `${a.width}px`;
-      clone.style.height = `${a.height}px`;
-      overlay.appendChild(clone);
-      cleanups.push(() => clone.remove());
-      const bridgeX = x0 + (x1 - x0) * 0.5;
-      const animation = clone.animate([
-        { transform: `translate(${x0}px, ${y0}px)` },
-        { transform: `translate(${bridgeX}px, ${y0}px)`, offset: 0.35 },
-        { transform: `translate(${bridgeX}px, ${y1}px)`, offset: 0.65 },
-        { transform: `translate(${x1}px, ${y1}px)` },
-      ], { duration: travelDuration, easing: 'cubic-bezier(0.5, 0, 0.2, 1)', fill: 'forwards' });
-      runningAnimations.push(animation);
-      return animation.finished.then(() => {
-        // This clone has landed - reveal its real matchup at the
-        // destination. Other still-in-flight moves keep their own keys in
-        // the set until their own clone lands, independently.
-        const arrivalKey = `${move.toKey}:${move.teamId}`;
+      return {
+        id: `${move.toKey}:${move.teamId}`,
+        fromEl: fromRow,
+        toEl: toRow,
+        // The clone keeps its won/lost border for the whole flight rather
+        // than going neutral - it's carrying forward the result that just
+        // earned this team the trip, so the color travels with it instead of
+        // cutting out. The destination itself stays on "TBD" throughout
+        // (driven by pendingArrivalIds, not a visibility hide) and only the
+        // clone ever sits at that position mid-flight - nothing to hide
+        // there.
+        cloneClass: styles.travelClone,
+        prepareClone: (clone) => {
+          const cloneScore = clone.querySelector('[data-bracket-score]');
+          if (cloneScore) cloneScore.textContent = '';
+        },
+      };
+    });
+
+    const flight = flyBracketMoves({
+      moves: flightMoves,
+      base: cRect,
+      overlay,
+      duration: travelDuration,
+      reducedMotion,
+      runSpeed,
+      // This clone has landed - reveal its real matchup at the destination.
+      // Other still-in-flight moves keep their own keys in the set until
+      // their own clone lands, independently.
+      onArrive: (arrivalKey) => {
         setPendingArrivalIds(prev => {
           if (!prev.has(arrivalKey)) return prev;
           const next = new Set(prev);
           next.delete(arrivalKey);
           return next;
         });
-      }).catch(() => {});
+      },
     });
 
     let done = false;
     const cleanup = () => {
       if (done) return;
       done = true;
-      runningAnimations.forEach(animation => animation.cancel());
-      cleanups.forEach(fn => fn());
+      flight.cancel();
       setPendingArrivalIds(EMPTY_TEAM_ID_SET);
       finish();
     };
-    // Skipping just runs the same cleanup early - the in-flight clones get
-    // torn down and any WAAPI animation still finishing on them lands on an
-    // already-removed node, harmless. Their .finished callbacks racing in
-    // after are already guarded (see the `prev.has` check above).
     travelSkipRef.current = cleanup;
-    Promise.all(animations).then(cleanup);
-    const guard = setTimeout(cleanup, travelDuration + 400);
+    flight.finished.then(cleanup);
+    const guard = setTimeout(cleanup, travelDuration + flightMoves.length * STAGGER_MS + 400);
     return () => { travelSkipRef.current = null; clearTimeout(guard); cleanup(); };
   }, [boardState, reducedMotion, runSpeed]);
 
@@ -1518,7 +1669,8 @@ export default function PerfectRun() {
     setTour(null); setView('board'); setBoardState('pairings'); setRevealCount(0);
     setMaps([]); setMapResults([]); setLive(null); setLiveRound(0);
     setSeriesPlan(null); setActiveMapIndex(0); setOpponentTacticHand([]); setTacticReveal(null);
-    setPendingReward(null); setRewardStep('packs'); setTacticOffers([]); setPendingTactic(null);
+    setPendingReward(null); setRewardStep('packs'); setTacticOffers([]);
+    setRewardTacticPicks([]); setPendingTactics([]);
     setRoundPulse(null); setRoundFlash(null); setBackdropVariant(0);
     setZoomLevel(1); zoomLevelRef.current = 1;
     setPendingBoardReturn(null);
@@ -1595,16 +1747,26 @@ export default function PerfectRun() {
   // leftmost/IGL slot, the incoming one lands there too and just inherits
   // the title, no separate reassignment needed.
   function confirmSwap() {
-    if (!pendingSwap) return;
+    if (!pendingSwap || uiFlightRef.current) return;
     const { card: incoming, targetId } = pendingSwap;
+    const sourceEl = document.querySelector('[data-swap-incoming]');
+    const targetEl = targetId === null
+      ? document.querySelector(`[data-empty-slot="${picks.length}"]`)
+      : document.querySelector(`[data-chip-slot][data-card-id="${targetId}"]`);
     // With an open bench slot the card joins the squad instead of displacing
     // someone - that is the whole point of unlocking depth.
-    const next = targetId === null
-      ? [...picks, incoming]
-      : picks.map(p => (p.id === targetId ? incoming : p));
-    setPicks(next);
-    setPendingSwap(null);
-    setPhase('manage');
+    const commit = () => {
+      const next = targetId === null
+        ? [...picks, incoming]
+        : picks.map(p => (p.id === targetId ? incoming : p));
+      setPicks(next);
+      setPendingSwap(null);
+      setPhase('manage');
+    };
+    if (!sourceEl || !targetEl) { commit(); return; }
+    uiFlightRef.current = flyTo(sourceEl, targetEl, {
+      scaleTo: 0.9, reducedMotion, runSpeed, onLand: () => { uiFlightRef.current = null; commit(); },
+    });
   }
 
   // Promote a squad member to IGL without disturbing the dock order. Free and
@@ -1644,16 +1806,15 @@ export default function PerfectRun() {
     setPoachOffer(null);
   }
 
+  // A market signing no longer routes through the pack-open flow at all -
+  // SigningSequence (mounted below, on the manage screen) plays pay/stamp/
+  // fly-in and only touches real state once the card actually lands. That
+  // also fixes the old bug where "Keep squad" on the pack screen could keep
+  // packs already spent without ever placing the card.
   function signTarget(card) {
     const cost = signingCost(card);
     if (!canSign(card, { packs, reputation, roster: squad }).ok) return;
-    setPacks(p => p - cost);
-    setPackNat(null);
-    setPackChoices([card]);
-    setRipId(id => id + 1);
-    setPendingSwap(null);
-    setFeed(cur => pushNews(cur, [{ kind: 'signed', player: card.player, cardId: card.id }], { year: yearsCompleted, event: tourIndex }));
-    setPhase('pack');
+    setSigning({ card, cost, source: 'market' });
   }
 
   function doPrestige() {
@@ -1667,13 +1828,28 @@ export default function PerfectRun() {
     if (!prospect) return;
     const card = allCards.find(c => c.id === prospect.cardId);
     if (!card) return;
-    setDev(prev => ({ ...prev, [card.id]: prospect.dev }));
-    setPackNat(null);
-    setPackChoices([card]);
-    setRipId(id => id + 1);
-    setPendingSwap(null);
-    setProspect(null);
-    setPhase('pack');
+    setSigning({ card, cost: 0, source: 'prospect' });
+  }
+
+  // Fires once the signing sequence's card has actually landed - the single
+  // moment every side effect of a signing commits, together: the squad, the
+  // packs spent (0 for a free prospect), the news item, and (for a prospect)
+  // its reset development curve.
+  function commitSigning(targetId) {
+    if (!signing) return;
+    const { card, cost, source } = signing;
+    setPicks(prev => (targetId === null ? [...prev, card] : prev.map(p => (p.id === targetId ? card : p))));
+    if (cost > 0) setPacks(p => p - cost);
+    if (source === 'prospect') {
+      setDev(prev => ({ ...prev, [card.id]: prospect?.dev }));
+      setProspect(null);
+    }
+    setFeed(cur => pushNews(cur, [{ kind: 'signed', player: card.player, cardId: card.id }], { year: yearsCompleted, event: tourIndex }));
+    setSigning(null);
+  }
+
+  function cancelSigning() {
+    setSigning(null);
   }
 
   // Promoting a caller MOVES them to the leftmost slot, because that slot is
@@ -1824,7 +2000,18 @@ export default function PerfectRun() {
   // copy of your five would just compete with it.
   const dockInBar = barVisible;
   const drawerRoster = picks;
-  const canArrangeLineup = phase === 'run' && view === 'board' && boardState === 'pairings';
+  // The squad is yours to arrange for as long as you can see it. The dock
+  // already stands down inside a live match (see `barVisible`), which is the
+  // only moment a reorder would be ambiguous about which lineup actually
+  // played - so every phase that shows the dock at all allows drag-to-swap,
+  // and with it the IGL change that slot 0 encodes. Narrower gates here
+  // (board/pairings only) made the chips inert on the phases where you are
+  // most likely to be looking at your five and wanting to shuffle them:
+  // manage, pack, draft, and the map/tactic legs of a run.
+  // A signing sequence in progress owns the dock's chips as its own drop
+  // targets for the moment (see SigningSequence) - drag-to-swap stands down
+  // for that one beat, the same way it already does inside a live match.
+  const canArrangeLineup = barVisible && !signing;
   const activePreparationMap = phase === 'run' && view === 'tactic'
     ? yearMapByName.get(maps[activeMapIndex]) : null;
   const activeDockIds = activePreparationMap
@@ -1906,7 +2093,7 @@ export default function PerfectRun() {
                   >
                     <b>Resume run</b>
                     <span className={styles.landingPlayMeta}>
-                      {savedRun.squadName} · Year {savedRun.year} · {savedRun.score.toLocaleString()}
+                      <Split parts={[savedRun.squadName, `Year ${savedRun.year}`, savedRun.score.toLocaleString()]} />
                     </span>
                   </button>
                   <button className={styles.landingRestart} onClick={() => startRun('solo', 'endless')}>
@@ -2033,7 +2220,7 @@ export default function PerfectRun() {
         <section className={styles.intro}>
           <span className={styles.introMarker}>
             {endless
-              ? `Year ${Math.floor(tourIndex / 3) + 1} · Tournament ${(tourIndex % 3) + 1} / 3`
+              ? <Split parts={[`Year ${Math.floor(tourIndex / 3) + 1}`, `Tournament ${(tourIndex % 3) + 1} / 3`]} />
               : `Tournament ${tourIndex + 1} / ${season.length}`}
           </span>
           <h1 className={styles.introTitle}>{def.label}<em>//</em></h1>
@@ -2063,12 +2250,13 @@ export default function PerfectRun() {
         <PhaseTransition phaseKey="run:maps">
           <MapDealTable
             maps={seriesPlan.dealt}
-            playerPick={seriesPlan.playerPick}
-            opponentPick={seriesPlan.opponentPick}
-            selectableIds={seriesPlan.playerPick
+            playerPicks={seriesPlan.sequence.filter(pick => pick.side === 'player').map(pick => pick.id)}
+            opponentPicks={seriesPlan.sequence.filter(pick => pick.side === 'opponent').map(pick => pick.id)}
+            picksPerSide={seriesPlan.perSide}
+            selectableIds={seriesPlan.order
               ? new Set()
               : new Set(seriesPlan.dealt
-                .filter(card => card.id !== seriesPlan.opponentPick)
+                .filter(card => !seriesPlan.sequence.some(pick => pick.id === card.id))
                 .map(card => card.id))}
             onPick={chooseSeriesMap}
             mastery={mapMastery}
@@ -2097,7 +2285,9 @@ export default function PerfectRun() {
             step={rewardStep}
             tacticOffers={tacticOffers}
             tacticHand={tacticHand}
-            pendingTactic={pendingTactic}
+            rewardTacticPicks={rewardTacticPicks}
+            picksNeeded={REWARD_TACTIC_PICKS}
+            pendingTactics={pendingTactics}
             onChoosePack={chooseRewardPack}
             onChooseTactic={chooseRewardTactic}
             onReplace={replaceRewardTactic}
@@ -2133,7 +2323,7 @@ export default function PerfectRun() {
             <span className={styles.liveTag}>
               {seriesOver
                 ? (mapsWon >= needed ? 'Series won' : 'Series lost')
-                : `Live · ${maps[mapResults.length]}`}
+                : <Split parts={['Live', maps[mapResults.length]]} />}
             </span>
             <div className={styles.castScore} data-specialty-active={roundTrigger ? 'true' : undefined}>
               <span className={styles.castSeries}>Series {mapsWon}–{mapsLost}</span>
@@ -2386,11 +2576,12 @@ export default function PerfectRun() {
               onFocusCard={setFocusCard}
               focusCardId={focusCard?.id ?? null}
               onSwap={canArrangeLineup ? swapPicks : null}
-              locked={phase === 'run' && !canArrangeLineup}
               activeIds={activeDockIds}
             />
           ) : null}
           packs={packs}
+          tactics={endless ? tacticHand : null}
+          arrivingTacticUid={tacticReturn?.won ? tacticReturn.card.uid : null}
           // Only wired up on the phases that have a real pack-spending
           // action right now - the pack badge stays a visible readout
           // everywhere else (run, result…) but forcing phase to 'pack'
@@ -2440,6 +2631,28 @@ export default function PerfectRun() {
         onAction={() => chooseIgl(focusCard?.id)}
         signals={signalsFor(focusCard)}
       />
+      {endless && phase === 'run' && barVisible && tacticReturn && (
+        <TacticReturn
+          key={tacticReturn.card.uid}
+          card={tacticReturn.card}
+          won={tacticReturn.won}
+          reducedMotion={reducedMotion}
+          runSpeed={runSpeed}
+          onDone={() => setTacticReturn(null)}
+        />
+      )}
+      {signing && (
+        <SigningSequence
+          card={signing.card}
+          cost={signing.cost}
+          picks={picks}
+          openSlot={hasOpenSlot()}
+          onCommit={commitSigning}
+          onCancel={cancelSigning}
+          reducedMotion={reducedMotion}
+          runSpeed={runSpeed}
+        />
+      )}
     </div>
     </>
   );
@@ -2518,7 +2731,7 @@ function CountryPicker({ options, onChoose }) {
               <small>{option.cards.length} players</small>
             </span>
             <span className={`${styles.countryTier} ${styles['tier' + option.tier]}`}>{option.tier}</span>
-            <span className={styles.countryProjection}>#{option.projectedSeed} · {option.projectedPower.toFixed(1)}</span>
+            <span className={styles.countryProjection}><Split parts={[`#${option.projectedSeed}`, option.projectedPower.toFixed(1)]} /></span>
           </button>
         ))}
       </div>
@@ -2759,7 +2972,7 @@ function BracketCell({ tour, match, revealed, hidePlayer, squadName, pendingArri
               : team.logo ? <img src={assetPath(team.logo)} alt="" /> : <span className={styles.youMark}>★</span>}
             <span className={styles.cellSeed}>{seedOf(tour, team.id)}</span>
             <span className={styles.cellTag}>
-              {team.isPlayer ? (team.nationality ? `${squadName} · ${team.tag}` : squadName) : team.tag}
+              {team.isPlayer ? (team.nationality ? <Split parts={[squadName, team.tag]} /> : squadName) : team.tag}
             </span>
             <span className={styles.bracketScore} data-bracket-score>{revealed ? score : ''}</span>
           </>
@@ -2858,7 +3071,7 @@ function TournamentResult({ result, runningScore, endless }) {
         <div className={styles.badges}>
           {result.badges.map(b => (
             <div key={b.key} className={`${styles.badge} ${styles['badge_' + b.key]}`}>
-              <b>{b.label}</b>
+              <b>{b.year ? <Split parts={[`Year ${b.year}`, b.label]} /> : b.label}</b>
               <span>{b.desc}</span>
             </div>
           ))}
@@ -2950,7 +3163,7 @@ function PackPhase({ nat, choices, ripId, picks, pendingSwap, onDropSwap, onConf
       {pendingSwap && (outgoing || pendingSwap.targetId === null) && (
         <div className={styles.swapArea}>
           <div className={styles.swapConfirm}>
-            <div className={styles.swapIncoming}>
+            <div className={styles.swapIncoming} data-swap-incoming="true">
               <span className={styles.stripLabel}>Incoming</span>
               <PlayerCard card={pendingSwap.card} displayScale={0.42} />
             </div>
@@ -2994,7 +3207,7 @@ function SeasonOver({ result, tourResults, season, endless, onReplay, onMenu }) 
         <div className={styles.badges}>
           {result.badges.map(b => (
             <div key={b.key} className={`${styles.badge} ${styles['badge_' + b.key]}`}>
-              <b>{b.label}</b>
+              <b>{b.year ? <Split parts={[`Year ${b.year}`, b.label]} /> : b.label}</b>
               <span>{b.desc}</span>
             </div>
           ))}
@@ -3012,9 +3225,9 @@ function SeasonOver({ result, tourResults, season, endless, onReplay, onMenu }) 
           <div key={skipped + i} className={[styles.historyRow, tr.champion ? styles.mapWin : styles.mapLoss].join(' ')}>
             <span className={styles.historyStage}>{season[skipped + i]?.kind === 'champions' ? 'Champions' : 'Masters'}</span>
             <span className={styles.historyOpp}>{tr.city}</span>
-            <span className={styles.historyScore}>{tr.champion ? 'Champion' : `Out · ${tr.finishRound}`}</span>
+            <span className={styles.historyScore}>{tr.champion ? 'Champion' : <Split parts={['Out', tr.finishRound]} />}</span>
             <span className={styles.historyMaps}>
-              {tr.badges.map(b => b.label).join(' · ')}
+              <Split parts={tr.badges.map(b => b.label)} />
             </span>
           </div>
         ))}
@@ -3290,7 +3503,7 @@ function TransferMarket({ targets, packs, ceiling, onSign, onInspect, signalsFor
         <span className={styles.marketHead}>Transfer market</span>
         <span className={styles.marketMeta}>
           <img className={styles.marketPackIcon} src={assetPath('/assets/brand/gauntlet-icon.webp')} alt="" aria-hidden="true" />
-          <b>{packs}</b> · up to {ceiling}
+          <Split parts={[<b key="packs">{packs}</b>, `up to ${ceiling}`]} />
         </span>
       </div>
       {targets.length === 0 ? (
@@ -3413,7 +3626,7 @@ function SquadReport({ report, squad }) {
 
   return (
     <div className={styles.squadReport}>
-      <span className={styles.squadReportHead}>Year {report.year} · Squad development</span>
+      <span className={styles.squadReportHead}><Split parts={[`Year ${report.year}`, 'Squad development']} /></span>
 
       <ul className={styles.squadReportList}>
         {changes.map(change => {
@@ -3455,7 +3668,7 @@ function CircuitPanel({ tier, tierPoints, reputation, eventInYear, year, move })
     <div className={styles.circuit}>
       <div className={styles.circuitHead}>
         <h3 className={styles.circuitTitle}>Circuit standing</h3>
-        <span className={styles.circuitWhen}>Y{year} · E{eventInYear}/3</span>
+        <span className={styles.circuitWhen}><Split parts={[`Y${year}`, `E${eventInYear}/3`]} /></span>
       </div>
 
       {/* Reputation as a badge with its own meter, not a label glued to a
@@ -3520,7 +3733,7 @@ function TournamentReport({ result }) {
         <li><span>Series</span><b>{result.seriesWon}–{seriesLost}</b></li>
         <li><span>Maps</span><b>{result.mapsWonTotal}–{result.mapsLostTotal}</b></li>
         {topMvp && (
-          <li><span>Most MVPs</span><b>{topMvp.card.player} · {topMvp.count}</b></li>
+          <li><span>Most MVPs</span><b><Split parts={[topMvp.card.player, topMvp.count]} /></b></li>
         )}
         {result.igl && (
           <li><span>In-game leader</span><b>{result.igl.player}</b></li>

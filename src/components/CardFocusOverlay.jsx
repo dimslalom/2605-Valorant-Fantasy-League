@@ -4,6 +4,7 @@ import { m, AnimatePresence } from 'motion/react';
 import PlayerCard from './PlayerCard';
 import { getCardSpecialties } from '../data/specialties';
 import SpecialtyIcon from './SpecialtyIcon';
+import Split from './Split';
 import { fadeIn } from '../lib/motion';
 import { countryName, regionFullName } from '../lib/utils';
 import useDialogFocusTrap from '../lib/useDialogFocusTrap';
@@ -212,7 +213,7 @@ export default function CardFocusOverlay({ card, onClose, action = null, onActio
                 {action.label}
               </button>
             )}
-            <p className={styles.hint}>click card to flip for the full sheet · esc to close</p>
+            <p className={styles.hint}><Split parts={['click card to flip for the full sheet', 'esc to close']} /></p>
           </div>
         </m.div>
       )}

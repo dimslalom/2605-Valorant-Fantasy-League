@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { m, useMotionValue, animate } from 'motion/react';
 import PlayerCard from './PlayerCard';
@@ -9,6 +9,7 @@ import { cardSpring } from '../lib/motion';
 import useReducedMotion, { prefersReducedMotion } from '../lib/useReducedMotion';
 import { playUiSound } from '../lib/gameAudio';
 import useScrollLean from '../lib/useScrollLean';
+import { animate as animeAnimate, MS, ANIME_EASE } from '../lib/anime';
 import styles from './PackRip.module.css';
 
 const DRAG_THRESHOLD = 6; // px of pointer travel before a press counts as a drag, not a tap
@@ -53,7 +54,13 @@ export default function PackRip({
 }) {
   const [ripping, setRipping] = useState(false);
   const stripRef = useRef(null);
+  const stripCardsRef = useRef(null);
   const reducedMotion = useReducedMotion();
+  // Where the pack itself last sat, measured the instant before it unmounts
+  // - the FLIP effect below reads this once to fly the whole strip out from
+  // the pack's own position instead of the cards just fading up in place.
+  const packRectRef = useRef(null);
+  const revealFlightRef = useRef(null);
   // Same scroll-into-inertia lean as the transfer market's shelf - scroll
   // the pack row and the cards swing with it, then spring back flat.
   useScrollLean(stripRef);
@@ -67,11 +74,63 @@ export default function PackRip({
     return () => clearTimeout(startTimer);
   }, [ripId, reducedMotion]);
 
+  function handleTorn() {
+    packRectRef.current = stripRef.current?.querySelector('[data-pack-body]')?.getBoundingClientRect() ?? null;
+    setRipping(false);
+  }
+
+  // Cards emerge from the pack mouth: once the strip mounts with the pack
+  // rect just measured, fly the whole group in from there to identity - one
+  // parent-level transform, so it never fights CardReveal's own per-card
+  // Framer entrance (a different element, a different style property).
+  useLayoutEffect(() => {
+    if (ripping) return undefined;
+    const packRect = packRectRef.current;
+    packRectRef.current = null;
+    const container = stripCardsRef.current;
+    if (!packRect || !container || reducedMotion) return undefined;
+    const target = container.getBoundingClientRect();
+    if (!target.width || !target.height) return undefined;
+    const x0 = (packRect.left + packRect.width / 2) - (target.left + target.width / 2);
+    const y0 = (packRect.top + packRect.height / 2) - (target.top + target.height / 2);
+    const scale0 = Math.max(0.2, Math.min(0.6, packRect.width / target.width));
+
+    const animation = animeAnimate(container, {
+      translateX: [x0, 0],
+      translateY: [y0, 0],
+      scale: [scale0, 1],
+      opacity: [0.6, 1],
+      duration: MS.hero,
+      ease: ANIME_EASE.out,
+    });
+    revealFlightRef.current = animation;
+    return () => { revealFlightRef.current = null; animation.pause(); };
+  }, [ripping, reducedMotion]);
+
   const onWheel = (e) => {
     if (stripRef.current && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       stripRef.current.scrollLeft += e.deltaY;
     }
   };
+
+  // Space/Enter or a tap on the strip while cards are still flying in from
+  // the pack jumps straight to their landed positions - PackTear's own tear
+  // gesture already owns Space/Enter up to that point and stops listening
+  // the moment it unmounts, so there's no overlap between the two.
+  function completeReveal() {
+    revealFlightRef.current?.complete();
+  }
+  useEffect(() => {
+    if (ripping) return undefined;
+    function onKey(e) {
+      if (e.key !== ' ' && e.key !== 'Enter') return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A') return;
+      completeReveal();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ripping]);
 
   return (
     <div className={[styles.lane, className].filter(Boolean).join(' ')}>
@@ -94,10 +153,15 @@ export default function PackRip({
           <PackTear
             key={`p${ripId}`}
             interactive={interactive}
-            onTorn={() => setRipping(false)}
+            onTorn={handleTorn}
           />
         )}
-        <div key={`c${ripId}`} className={[styles.stripCards, ripping ? styles.stripHidden : ''].join(' ')}>
+        <div
+          key={`c${ripId}`}
+          ref={stripCardsRef}
+          className={[styles.stripCards, ripping ? styles.stripHidden : ''].join(' ')}
+          onClick={completeReveal}
+        >
           {!ripping && choices.map((card, i) => (
             interactive ? (
               <DraggableDraftCard

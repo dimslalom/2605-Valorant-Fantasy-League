@@ -1,3 +1,4 @@
+import Split from '../components/Split';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MapCanvas from '../components/MapCanvas';
@@ -98,7 +99,7 @@ export default function Match() {
 
   return (
     <AppFrame>
-      <StatusStrip crumb="Match Simulation" count="Haven · Map 1 of 3 (Bo3)" />
+      <StatusStrip crumb="Match Simulation" count={<Split parts={['Haven', 'Map 1 of 3 (Bo3)']} />} />
 
         <div className={styles.mainContainer}>
           {/* Important-match hero overlay */}

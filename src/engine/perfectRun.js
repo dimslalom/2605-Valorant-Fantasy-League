@@ -871,7 +871,9 @@ export function evaluateEndless(results) {
       ? year.badges.map(badge => ({
         ...badge,
         key: `year_${yearIndex + 1}_${badge.key}`,
-        label: `YEAR ${yearIndex + 1} · ${badge.label}`,
+        // The year travels as its own field; the UI draws it as a separate
+        // readout beside the badge name rather than baking a separator in.
+        year: yearIndex + 1,
       }))
       : []
   ));

@@ -150,6 +150,7 @@ export default function SquadDock({
           ) : (
             <EmptyChip
               key={`empty-${i}`}
+              index={i}
               chipScale={chipScale}
               isNew={i === newSlotIndex}
               isAlert={i === alertSlot}
@@ -176,13 +177,14 @@ export default function SquadDock({
 // (useCardTilt, PlayerCard's own hook, bare here) so it reads as a real
 // object sitting in the row rather than a flat placeholder. No click/drag:
 // this slot has nothing in it yet.
-function EmptyChip({ chipScale, isNew, isAlert }) {
+function EmptyChip({ chipScale, isNew, isAlert, index }) {
   const {
     tiltRef, onPointerMove, onPointerEnter, onPointerDown, onPointerUp, onPointerLeave,
   } = useCardTilt({});
   return (
     <span
       className={styles.chipEmpty}
+      data-empty-slot={index}
       data-new={isNew ? 'true' : undefined}
       data-alert={isAlert ? 'true' : undefined}
       aria-hidden="true"
@@ -349,12 +351,19 @@ function DraggableChip({
       className={styles.chip}
       data-chip-slot
       data-card-id={card.id}
+      // Drives `touch-action: pan-y` in CSS (see .chip[data-swappable]). Set
+      // from the same condition onPointerDown bails on, so a chip that can't
+      // be swapped never takes a touch gesture away from the page scroller.
+      data-swappable={onSwap ? 'true' : undefined}
       data-igl={card.id === iglId ? 'true' : undefined}
       data-igl-stamp={stamped ? 'true' : undefined}
       data-benched={benched ? 'true' : undefined}
       data-card-active={active ? 'true' : undefined}
       data-fatigued={load > 60 ? 'true' : undefined}
-      style={{ opacity: ghostRect ? 0 : 1 }}
+      // The fatigue mark bends with the card silhouette, and its chevron
+      // depth is a share of the chip's width - which CSS can't read off a
+      // chip sized by its content, so it's handed down here.
+      style={{ opacity: ghostRect ? 0 : 1, '--chip-w': `${400 * chipScale}px` }}
       onPointerDown={onPointerDown}
       onMouseEnter={() => setHoveredId(card.id)}
       onMouseLeave={() => setHoveredId((id) => (id === card.id ? null : id))}

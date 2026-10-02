@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useNavigate, useParams } from 'react-router-dom';
 import { m } from 'motion/react';
 import { DUR, EASE, STAGGER } from '../lib/motion';
+import { flyBracketMoves } from '../lib/bracketFlight';
 import ModeRail from '../components/ModeRail';
 import CardFocusOverlay from '../components/CardFocusOverlay';
 import SquadBar from '../components/SquadBar';
@@ -9,6 +10,7 @@ import SquadDock from '../components/SquadDock';
 import SquadSheet from '../components/SquadSheet';
 import PackRip from '../components/PackRip';
 import TacticalButton from '../components/TacticalButton';
+import Split from '../components/Split';
 import cards from '../data/cards.json';
 import { ROSTER_SIZE, teamPower } from '../engine/perfectRun';
 import { connectLobby, createLobby, joinLobby, loadSession, makeCommand } from '../lib/multiplayerClient';
@@ -261,7 +263,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
       <ModeRail />
       <header className={styles.roomHeader}>
         <div><span className={styles.kicker}>Private lobby</span><h1>{snapshot.code}</h1></div>
-        <div className={styles.meta}><b>{snapshot.settings.gameLength}</b>{snapshot.season && <span>Year {snapshot.season.year} · Tournament {snapshot.season.eventIndex + 1}/3</span>}<span>{snapshot.settings.unboxing === 'enc' ? 'National' : 'Normal'} packs</span><span>{snapshot.competitors.length}/16 squads</span></div>
+        <div className={styles.meta}><b>{snapshot.settings.gameLength}</b>{snapshot.season && <><span>Year {snapshot.season.year}</span><span>Tournament {snapshot.season.eventIndex + 1}/3</span></>}<span>{snapshot.settings.unboxing === 'enc' ? 'National' : 'Normal'} packs</span><span>{snapshot.competitors.length}/16 squads</span></div>
       </header>
       {connectionStatus !== 'connected' && <p className={styles.connection} role="status">{connectionStatus === 'failed' ? 'Connection failed - retrying automatically. Commands are paused.' : 'Reconnecting - commands are paused until the lobby is back online.'}</p>}
       {error && <p className={styles.error}>{error}</p>}
@@ -358,7 +360,7 @@ function LobbyRoom({ snapshot, session, error, send, animationEvent, clearAnimat
 }
 
 function RosterList({ snapshot, isHost, myId, send }) {
-  return <div className={styles.rosterList}>{snapshot.competitors.map((player, index) => <div key={player.id} className={styles.rosterRow}><span>{index + 1}</span><b>{player.squadName}{player.id === myId ? ' · YOU' : ''}</b><i className={player.connected ? styles.online : styles.offline}>{player.connected ? 'online' : 'offline'}</i>{player.id === snapshot.hostId && <em>HOST</em>}{isHost && player.id !== myId && snapshot.phase === 'lobby' && <button onClick={() => send('kick_player', { competitorId: player.id })}>Remove</button>}</div>)}</div>;
+  return <div className={styles.rosterList}>{snapshot.competitors.map((player, index) => <div key={player.id} className={styles.rosterRow}><span>{index + 1}</span><b><Split parts={[player.squadName, player.id === myId && <em>You</em>]} /></b><i className={player.connected ? styles.online : styles.offline}>{player.connected ? 'online' : 'offline'}</i>{player.id === snapshot.hostId && <em>HOST</em>}{isHost && player.id !== myId && snapshot.phase === 'lobby' && <button onClick={() => send('kick_player', { competitorId: player.id })}>Remove</button>}</div>)}</div>;
 }
 
 // The lobby's shared world, as news. There is one card pool and one
@@ -370,7 +372,7 @@ function CircuitFeed({ world }) {
   if (!items.length) return null;
   return (
     <section className={styles.circuitFeed}>
-      <span className={styles.circuitFeedHead}>Around the circuit · Year {world.year}</span>
+      <span className={styles.circuitFeedHead}><Split parts={['Around the circuit', `Year ${world.year}`]} /></span>
       <ul className={styles.circuitFeedList}>
         {items.slice(0, 6).map((item, i) => {
           const { title, note } = describeNews(item);
@@ -405,7 +407,7 @@ function Standings({ snapshot, isHost, send }) {
         >
           <span>{index + 1}</span>
           <b>{row.squadName}</b>
-          <span>{snapshot.settings.gameLength === 'endless' ? `${row.yearsCompleted} years · ${row.titles} titles` : `${row.titles} titles`}</span>
+          <span>{snapshot.settings.gameLength === 'endless' ? <Split parts={[`${row.yearsCompleted} years`, `${row.titles} titles`]} /> : `${row.titles} titles`}</span>
           <span>{row.matchWins} wins</span>
           <strong>{row.score}</strong>
         </m.div>
@@ -456,52 +458,35 @@ function MultiplayerBracket({ tournament, animationEvent, onAnimationDone }) {
     const base = wrap?.getBoundingClientRect();
     if (!wrap || !overlay || !base) { onAnimationDone(); return undefined; }
     setPendingArrivalIds(new Set(animationEvent.moves.map(move => `${move.destinationSlot}:${move.teamId}`)));
-    const cleanups = [];
-    const runningAnimations = [];
-    let cancelled = false;
-    const animations = animationEvent.moves.map(move => {
-      const source = refs.current[move.sourceSlot]?.querySelector(`[data-team-id="${CSS.escape(move.teamId)}"]`);
-      const destination = refs.current[move.destinationSlot]?.querySelector(`[data-team-id="${CSS.escape(move.teamId)}"]`);
-      if (!source || !destination) return Promise.resolve();
-      const a = source.getBoundingClientRect();
-      const b = destination.getBoundingClientRect();
-      const clone = source.cloneNode(true);
-      clone.classList.add(soloStyles.travelClone);
-      clone.style.width = `${a.width}px`;
-      clone.style.height = `${a.height}px`;
-      overlay.appendChild(clone);
-      cleanups.push(() => clone.remove());
-      const x0 = a.left - base.left, y0 = a.top - base.top, x1 = b.left - base.left, y1 = b.top - base.top;
-      const bridge = x0 + (x1 - x0) / 2;
-      const animation = clone.animate([
-        { transform: `translate(${x0}px, ${y0}px)` },
-        { transform: `translate(${bridge}px, ${y0}px)`, offset: .35 },
-        { transform: `translate(${bridge}px, ${y1}px)`, offset: .65 },
-        { transform: `translate(${x1}px, ${y1}px)` },
-      ], { duration: DUR.travel * 1000, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' });
-      runningAnimations.push(animation);
-      return animation.finished.then(() => {
-        if (cancelled) return;
-        const arrivalKey = `${move.destinationSlot}:${move.teamId}`;
+
+    const flightMoves = animationEvent.moves.map(move => ({
+      id: `${move.destinationSlot}:${move.teamId}`,
+      fromEl: refs.current[move.sourceSlot]?.querySelector(`[data-team-id="${CSS.escape(move.teamId)}"]`),
+      toEl: refs.current[move.destinationSlot]?.querySelector(`[data-team-id="${CSS.escape(move.teamId)}"]`),
+      cloneClass: soloStyles.travelClone,
+    }));
+
+    const flight = flyBracketMoves({
+      moves: flightMoves,
+      base,
+      overlay,
+      duration: DUR.travel * 1000,
+      reducedMotion,
+      onArrive: (arrivalKey) => {
         setPendingArrivalIds(prev => {
           if (!prev.has(arrivalKey)) return prev;
           const next = new Set(prev);
           next.delete(arrivalKey);
           return next;
         });
-      }).catch(() => {});
+      },
     });
-    Promise.all(animations).then(() => {
-      if (cancelled) return;
-      cleanups.forEach(fn => fn());
+
+    flight.finished.then(() => {
       setPendingArrivalIds(EMPTY_TEAM_ID_SET);
       onAnimationDone();
     });
-    return () => {
-      cancelled = true;
-      runningAnimations.forEach(animation => animation.cancel());
-      cleanups.forEach(fn => fn());
-    };
+    return () => flight.cancel();
   }, [animationEvent, onAnimationDone, reducedMotion]);
 
   const byKey = key => tournament.rounds.find(round => round.key === key);
@@ -602,7 +587,7 @@ function TimerBar({ label, waitingLabel, pending, serverNow, isHost, onAdvance }
     return () => clearInterval(id);
   }, [pending.deadlineAt, serverNow]);
   const progress = remaining / 10_000;
-  return <div className={styles.timerDock}><button onClick={isHost ? onAdvance : undefined} disabled={!isHost} style={{ '--remaining': progress }}><span>{isHost ? label : waitingLabel} · {Math.ceil(remaining / 1000)}s</span></button></div>;
+  return <div className={styles.timerDock}><button onClick={isHost ? onAdvance : undefined} disabled={!isHost} style={{ '--remaining': progress }}><Split parts={[isHost ? label : waitingLabel, `${Math.ceil(remaining / 1000)}s`]} /></button></div>;
 }
 
 function Deadline({ deadlineAt, serverNow }) {

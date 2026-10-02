@@ -113,10 +113,21 @@
    inset by the SAME padding the dock plate itself uses (`.inner`'s
    20px/32px/14px, 26/32/18 large) - flush 8px read like it belonged to a
    different box; this reads like it's sitting in the same tray. */
-.packCorner {
+/* Shares the pack corner's own inset (bar's 32px/14px padding echo) - the
+   tactic bank sits to its left rather than each corner recalculating that
+   inset off its own varying width. */
+.bankCorners {
   position: absolute;
   right: 32px;
   bottom: 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+.bankCorners[data-large='true'] { bottom: 18px; }
+
+.packCorner {
+  position: relative;
   width: 80px;
   height: 116px;
   perspective: 900px;
@@ -129,7 +140,6 @@
 .packCorner[data-large='true'] {
   width: 104px;
   height: 151px;
-  bottom: 18px;
 }
 .packCorner:disabled { cursor: default; }
 .packCorner:focus-visible {
@@ -182,6 +192,29 @@
   color: var(--faint);
 }
 
+/* Tactic hand: the real tactic cards (small face, 84px) fanned beside the
+   pack, the way the squad chips sit in the dock. Overlap tightens as the
+   hand grows so seven cards still fit the corner. */
+.tacticDock {
+  display: flex;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+.tacticSlot {
+  position: relative;
+  display: block;
+  flex: none;
+}
+.tacticSlot + .tacticSlot { margin-left: -60px; }
+.tacticDock:has(.tacticSlot:nth-child(5)) .tacticSlot + .tacticSlot { margin-left: -66px; }
+.tacticSlot:hover, .tacticSlot:focus-within { z-index: 2; }
+.tacticEmpty {
+  display: block;
+  width: 84px;
+  height: 122px;
+  border: 1px dashed var(--line-bracket);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .packTilt { transform: none !important; }
 }
@@ -195,8 +228,16 @@
     padding: 17px 14px 10px;
     min-height: 0;
   }
-  .dockSlot { overflow-x: auto; }
+  /* A scroll box clips on both axes, and the fatigue mark hangs ~10px under
+     the chips - so the box reaches down into .inner's bottom padding
+     (padding out, margin back) without moving anything. */
+  .dockSlot { overflow-x: auto; padding-bottom: 10px; margin-bottom: -10px; }
   .actions { gap: 6px; }
-  .packCorner { width: 64px; height: 93px; right: 14px; bottom: 10px; }
-  .packCorner[data-large='true'] { width: 76px; height: 110px; bottom: 10px; }
+  .bankCorners { right: 14px; bottom: 10px; gap: 8px; }
+  .bankCorners[data-large='true'] { bottom: 10px; }
+  .packCorner { width: 64px; height: 93px; }
+  .packCorner[data-large='true'] { width: 76px; height: 110px; }
+  /* zoom, not transform: the corner's layout width shrinks with it, so it
+     keeps clear of the squad chips at 375px. */
+  .tacticDock { zoom: 0.72; }
 }

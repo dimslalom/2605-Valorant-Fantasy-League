@@ -1,3 +1,4 @@
+import Split from './Split';
 import { useState } from 'react';
 import { m } from 'motion/react';
 import { roleAbbr, cardTextColor, countryName, regionFullName, assetPath } from '../lib/utils';
@@ -284,7 +285,7 @@ export default function PlayerCard({
                     </span>
                     <span style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.1 }}>{card.player}</span>
                     <span style={{ fontSize: 15, fontWeight: 600, color: mutedColor, textAlign: 'center' }}>
-                      {card.org_name ?? card.org} · {regionFullName(card.region)} · {card.role}
+                      <Split parts={[card.org_name ?? card.org, regionFullName(card.region), card.role]} />
                     </span>
                   </div>
 

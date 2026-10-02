@@ -1675,8 +1675,7 @@
   color: var(--muted);
   text-align: right;
 }
-.castMapMvp b { color: var(--ink); }
-.castCentre .liveTag { padding: 0; }
+.castMapMvp b { color: var(--ink); }.castCentre .liveTag { padding: 0; }
 
 .badge_flawless { background: var(--win); color: var(--win-ink); }
 .badge_grand_slam { background: var(--gold); color: var(--gold-ink); }

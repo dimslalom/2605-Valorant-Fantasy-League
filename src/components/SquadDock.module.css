@@ -33,6 +33,19 @@
      interpolates over Motion's frame-by-frame transform values. */
   transition: translate var(--dur-transform) var(--ease-out), opacity var(--dur-micro) linear;
 }
+
+/* Touch: the fan is a horizontal row, so a horizontal drag on a chip is
+   always a rearrange and a vertical one is always a page scroll - `pan-y`
+   says exactly that, and is what makes drag-to-swap work on a phone at all.
+   Without it the browser owns the gesture for the first few px of travel
+   (DraggableChip only sets `touch-action: none` once DRAG_THRESHOLD is
+   passed), claims it as a scroll, and fires pointercancel - the drag dies
+   before it starts, which is why dock rearranging felt broken on mobile.
+   Scoped to chips that actually swap so a read-only dock (an opponent's
+   shelf) never steals a scroll it has no use for. */
+.chip[data-swappable='true'] {
+  touch-action: pan-y;
+}
 .chips > * + * {
   margin-left: calc(-1 * var(--chip-overlap, 0px));
 }
@@ -106,18 +119,24 @@
    IGL who is also fatigued had both rules cascading onto the same
    pseudo-element - the plate kept this one's 5px height and collapsed into a
    red splinter above the card with its label sliced off.
-   Inset into the art, too. The card silhouette cuts a chevron out of its own
-   bottom corners, so a full-width strip 3px off the chip's box floated in
-   the cut-away as loose dashes either side of the card. */
+   It hangs just under the card and rides the mask's bottom chevron
+   (0,539 -> 200,578 -> 400,539: a 0.2 gradient) rather than cutting
+   straight across. Over the strip's 76% span that's a dip of
+   0.2 x 38% = 7.6% of the chip's width at the centre; the box is that dip
+   plus the 4px band, and the clip carves the band out of it. Its top sits
+   where the card's edge is at the strip's ends (94.6% down, 12% in) plus a
+   4px gap, so the gap to the card is the same at the ends and the point. */
 .chip[data-fatigued='true']::after {
+  --dip: calc(var(--chip-w, 80px) * .076);
   content:'';
   position:absolute;
   left:12%;
   right:12%;
-  bottom:6%;
-  height:4px;
+  top:calc(94.6% + 4px);
+  height:calc(4px + var(--dip));
   z-index:12;
   background:repeating-linear-gradient(90deg,var(--accent) 0 8px,transparent 8px 12px);
+  clip-path:polygon(0 0, 50% var(--dip), 100% 0, 100% 4px, 50% calc(4px + var(--dip)), 0 4px);
   pointer-events:none;
 }
 @keyframes activeCardBeat { from { opacity:0; transform:scale(.92); } 45% { opacity:1; } to { opacity:.55; transform:none; } }

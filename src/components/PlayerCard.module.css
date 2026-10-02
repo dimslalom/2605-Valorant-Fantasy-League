@@ -237,6 +237,7 @@
   height: 100%;
   display: block;
   z-index: 0;
+  pointer-events: none;
 }
 
 /* ── Layer 1: player photo - top-anchored, full width ── */
@@ -247,6 +248,7 @@
   width: 100%;
   display: block;
   z-index: 1;
+  pointer-events: none;
 }
 
 /* ── Layer 2: stat panel bg - full 400×580 PNG, transparent top ── */
@@ -257,6 +259,7 @@
   height: 100%;
   display: block;
   z-index: 2;
+  pointer-events: none;
 }
 
 /* ── Layer 3: text overlay ── */

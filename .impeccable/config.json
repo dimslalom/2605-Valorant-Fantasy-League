@@ -145,6 +145,15 @@
         ],
         "createdAt": "2026-09-02T12:25:43.139Z",
         "reason": "the card's own rating numeral - a poster/graphic register matching the card's other inline oversized numerals (68/38/28px in PlayerCard.jsx), not UI body type"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "17px",
+        "files": [
+          "src/components/SquadBar.module.css"
+        ],
+        "createdAt": "2026-09-11T02:41:58.134Z",
+        "reason": "mobile step-down of the tacticMark glyph icon (not prose/label text); matches existing off-ramp icon glyphs in this codebase (.packBurst 80px, .replaceArrow 30px, .tacticBack b 48px) - the ramp governs typographic hierarchy, not decorative icon sizing"
       }
     ]
   }

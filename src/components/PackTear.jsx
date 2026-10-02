@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { m, useMotionValue, useTransform, animate } from 'motion/react';
 import { assetPath } from '../lib/utils';
 import { DUR, EASE } from '../lib/motion';
+import { animate as animeAnimate, MS, ANIME_EASE } from '../lib/anime';
+import useReducedMotion from '../lib/useReducedMotion';
 import styles from './PackTear.module.css';
 
 // Drag distance (px) past which a release counts as a tear rather than a
@@ -38,10 +40,27 @@ export default function PackTear({ interactive, onTorn }) {
   const rotateZ = useTransform(x, [0, TEAR_THRESHOLD, TEAR_FLY], [0, 15, 35]);
   const opacity = useTransform(x, [TEAR_THRESHOLD, TEAR_FLY], [1, 0]);
   const torn = useRef(false);
+  const bodyRef = useRef(null);
+  const reducedMotion = useReducedMotion();
 
+  // The top foil already flies off dramatically (the transforms above) -
+  // what used to just cut away was the flat front/inside body behind it,
+  // unmounting the instant the foil's own flight finished. Sending the body
+  // out on the same beat (drop + tip, same duration as the foil's fling-off)
+  // makes the whole pack read as one object leaving, not a foil animation
+  // with a body that vanished a frame later.
   function finishTear() {
     if (torn.current) return;
     torn.current = true;
+    if (bodyRef.current && !reducedMotion) {
+      animeAnimate(bodyRef.current, {
+        translateY: 60,
+        rotateX: 25,
+        opacity: [1, 0],
+        duration: MS.enter,
+        ease: ANIME_EASE.in,
+      });
+    }
     animate(x, TEAR_FLY, { duration: DUR.enter, ease: EASE_TEAR, onComplete: onTorn });
   }
 
@@ -83,9 +102,11 @@ export default function PackTear({ interactive, onTorn }) {
   }
 
   return (
-    <div className={styles.packWrap} aria-hidden={!interactive}>
-      <img className={styles.layerInside} src={assetPath('/assets/pack/Card-Inside.png')} alt="" />
-      <img className={styles.layerFront} src={assetPath('/assets/pack/Card-Front.png')} alt="" />
+    <div className={styles.packWrap} data-pack-body="true" aria-hidden={!interactive}>
+      <div ref={bodyRef} className={styles.packBody}>
+        <img className={styles.layerInside} src={assetPath('/assets/pack/Card-Inside.png')} alt="" />
+        <img className={styles.layerFront} src={assetPath('/assets/pack/Card-Front.png')} alt="" />
+      </div>
 
       <m.div
         className={styles.tearStrip}

@@ -43,8 +43,8 @@ test('Endless sums the standard score independently for every year', () => {
   assert.equal(endless.years[0].grandSlam, true);
   assert.equal(endless.years[0].perfectSeason, true);
   assert.equal(endless.years[1].grandSlam, false);
-  // Badges are objects, not strings, and endless prefixes each year's label.
-  assert.ok(endless.badges.some(b => b.key === 'year_1_grand_slam' && b.label === 'YEAR 1 · GRAND SLAM'));
+  // Badges are objects, not strings, and endless tags each one with its year.
+  assert.ok(endless.badges.some(b => b.key === 'year_1_grand_slam' && b.label === 'GRAND SLAM' && b.year === 1));
   // Only completed years contribute badges, so the unfinished year 3 adds none.
   assert.ok(endless.badges.every(b => b.key.startsWith('year_1_') || b.key.startsWith('year_2_')));
 });

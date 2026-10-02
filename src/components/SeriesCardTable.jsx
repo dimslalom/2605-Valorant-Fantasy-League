@@ -8,6 +8,8 @@ import { DUR, EASE, STAGGER } from '../lib/motion.js';
 import { playUiSound } from '../lib/gameAudio.js';
 import { assetPath } from '../lib/utils.js';
 import SquadDock from './SquadDock.jsx';
+import TacticalButton from './TacticalButton.jsx';
+import Split from './Split.jsx';
 import styles from './SeriesCardTable.module.css';
 
 const ROLE_MARK = { Duelist: 'DLT', Initiator: 'INI', Controller: 'CTL', Sentinel: 'SEN' };
@@ -245,14 +247,53 @@ export function MapCard({ card, owner = null, selectable = false, onPick, master
   );
 }
 
-export function MapDealTable({ maps, playerPick, opponentPick, selectableIds, onPick, mastery, opponent }) {
+const MAP_GAP = 14;
+
+// How far each dealt card tucks under the one before it: a plain 14px gap
+// while the row fits, and just enough overlap to fit once it doesn't. Read
+// off the fan's real width and the card's real width (it changes at the
+// 820px breakpoint), the same way the dock sizes its own overlap.
+function useFanOverlap(count) {
+  const fanRef = useRef(null);
+  const [overlap, setOverlap] = useState(-MAP_GAP);
+  useEffect(() => {
+    const fan = fanRef.current;
+    if (!fan) return undefined;
+    const measure = () => {
+      const cardWidth = fan.firstElementChild?.offsetWidth ?? 0;
+      if (!cardWidth || count < 2) return;
+      setOverlap(Math.max(-MAP_GAP, (count * cardWidth - fan.clientWidth) / (count - 1)));
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(fan);
+    return () => observer.disconnect();
+  }, [count]);
+  return [fanRef, overlap];
+}
+
+export function MapDealTable({ maps, playerPicks = [], opponentPicks = [], picksPerSide = 1, selectableIds, onPick, mastery, opponent }) {
+  const picksLeft = Math.max(0, picksPerSide - playerPicks.length);
+  const [fanRef, overlap] = useFanOverlap(maps.length);
   return (
     <section className={styles.table} data-phase="maps">
       <OpponentShelf opponent={opponent} />
-      <div className={styles.mapFan}>
+      <p className={styles.pickPrompt} aria-live="polite">
+        {picksLeft > 0
+          ? <Split parts={[`Pick ${picksPerSide === 1 ? 'a map' : `${picksPerSide} maps`}`, picksPerSide > 1 && <b>{picksLeft} left</b>]} />
+          : 'Series locked'}
+      </p>
+      {/* A hand, like the dock: as many cards as the series deals, overlapped
+          just enough to fit the row, each lifting clear on hover. */}
+      <div ref={fanRef} className={styles.mapFan} style={{ '--map-overlap': `${overlap}px` }}>
         {maps.map((card, index) => (
           <m.div key={card.id} className={styles.dealtMap} initial={{ opacity: 0, y: -80, rotate: (index - maps.length / 2) * 4 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ duration: DUR.enter, ease: EASE.out, delay: index * STAGGER }}>
-            <MapCard card={card} owner={playerPick === card.id ? 'player' : opponentPick === card.id ? 'opponent' : null} selectable={selectableIds.has(card.id)} onPick={onPick} mastery={mastery?.[card.name] ?? 0} />
+            <MapCard
+              card={card}
+              owner={playerPicks.includes(card.id) ? 'player' : opponentPicks.includes(card.id) ? 'opponent' : null}
+              selectable={picksLeft > 0 && selectableIds.has(card.id)}
+              onPick={onPick}
+              mastery={mastery?.[card.name] ?? 0}
+            />
           </m.div>
         ))}
       </div>
@@ -274,6 +315,7 @@ export function TacticCard({ instance, selected = false, disabled = false, onPla
       onClick={() => onPlay?.(instance)}
       small={compact}
       previewWidth={150}
+      data-uid={instance.uid}
       data-tier={tactic.tier}
       data-tag={tactic.tag}
       data-selected={selected ? 'true' : undefined}
@@ -310,7 +352,9 @@ export function TacticTable({ map, hand, opponentHand = [], opponent, opponentAc
   return (
     <section className={styles.table} data-phase="tactics">
       <OpponentShelf opponent={opponent} activeIds={opponentActiveIds} />
-      <div className={styles.activeMap}><MapCard card={map} compact /></div>
+      {/* Your hand | the map being fought over | their hand. The map is the
+          axis the two sides mirror across, so it sits in the middle column
+          and each hand pulls in toward it. */}
       <div className={styles.tacticArena} data-reveal={reveal ? 'true' : undefined}>
         <AnimatePresence mode="popLayout">
           {reveal ? (
@@ -325,7 +369,10 @@ export function TacticTable({ map, hand, opponentHand = [], opponent, opponentAc
             </m.div>
           )}
         </AnimatePresence>
-        <m.span className={styles.clashMark} data-edge={reveal?.edge} animate={{ opacity: reveal ? 1 : 0, scale: reveal ? 1 : .75 }}>×</m.span>
+        <div className={styles.arenaCenter}>
+          <div className={styles.activeMap}><MapCard card={map} compact /></div>
+          <m.span className={styles.clashMark} data-edge={reveal?.edge} animate={{ opacity: reveal ? 1 : 0, scale: reveal ? 1 : .75 }}>×</m.span>
+        </div>
         <div className={styles.enemyTacticHand}>
           <AnimatePresence mode="popLayout">
             {enemyCards.map((card, index) => {
@@ -360,12 +407,33 @@ function RewardPack({ kind, mark, onChoose }) {
   );
 }
 
-export function RewardTable({ step, tacticOffers, tacticHand, onChoosePack, onChooseTactic, pendingTactic, onReplace }) {
+export function RewardTable({
+  step, tacticOffers, tacticHand, onChoosePack, onChooseTactic,
+  rewardTacticPicks = [], picksNeeded = 2, pendingTactics = [], onReplace,
+}) {
+  const incoming = pendingTactics[0] ?? null;
   return (
     <section className={styles.table} data-phase="reward">
       {step === 'packs' && <div className={styles.rewardPair}><RewardPack kind="player" mark="★" onChoose={onChoosePack} /><RewardPack kind="tactic" mark="⌁" onChoose={onChoosePack} /></div>}
-      {step === 'tactics' && <div className={styles.rewardTactics}>{tacticOffers.map(card => <TacticCard key={card.uid} instance={card} selected={pendingTactic?.uid === card.uid} onPlay={onChooseTactic} />)}</div>}
-      {step === 'replace' && <div className={styles.replaceTable}><TacticCard instance={pendingTactic} selected disabled /><span className={styles.replaceArrow}>→</span><div className={styles.replaceHand}>{tacticHand.map(card => <TacticCard key={card.uid} instance={card} compact replace onPlay={onReplace} />)}</div></div>}
+      {step === 'tactics' && (
+        <div className={styles.rewardTacticsWrap}>
+          <span className={styles.rewardPickLabel}>Pick {picksNeeded - rewardTacticPicks.length} of {tacticOffers.length}</span>
+          <div className={styles.rewardTactics}>
+            {tacticOffers.map(card => (
+              <TacticCard key={card.uid} instance={card} selected={rewardTacticPicks.some(picked => picked.uid === card.uid)} onPlay={onChooseTactic} />
+            ))}
+          </div>
+        </div>
+      )}
+      {step === 'replace' && incoming && (
+        <div className={styles.replaceTable}>
+          {pendingTactics.length > 1 && <span className={styles.rewardPickLabel}>{pendingTactics.length} tactics left to place</span>}
+          <TacticCard instance={incoming} selected disabled />
+          <span className={styles.replaceArrow}>→</span>
+          <div className={styles.replaceHand}>{tacticHand.map(card => <TacticCard key={card.uid} instance={card} compact replace onPlay={onReplace} />)}</div>
+          <TacticalButton className={styles.replaceKeep} onClick={() => onReplace(null)}>Keep hand</TacticalButton>
+        </div>
+      )}
     </section>
   );
 }

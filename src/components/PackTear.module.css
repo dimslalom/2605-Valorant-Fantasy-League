@@ -20,6 +20,13 @@
   transform-style: preserve-3d;
 }
 
+/* Groups the two flat body layers so they can leave as one unit (see
+   PackTear's finishTear) instead of just cutting away the instant the top
+   foil's own flight finishes - it takes no size of its own (its children are
+   the absolutely-positioned layers, sized off .packWrap), just a transform
+   target. */
+.packBody { position: relative; }
+
 .layerInside,
 .layerFront {
   position: absolute;

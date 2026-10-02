@@ -8,8 +8,11 @@
 import { getCardSpecialties } from '../../data/specialties.js';
 import { hashSeed, mulberry32, pickN } from '../perfectRun.js';
 
-export const TACTIC_HAND_MAX = 5;
+export const TACTIC_HAND_MAX = 7;
 export const TACTIC_HAND_FLOOR = 2;
+// A tactic prize pays out two cards at once, so banking one is worth the same
+// trip through the reward screen as a player pack.
+export const REWARD_TACTIC_PICKS = 2;
 export const ENDLESS_POWER_DIVISOR = 85;
 
 const ROLE_ORDER = ['Duelist', 'Initiator', 'Controller', 'Sentinel'];
@@ -264,6 +267,28 @@ export function consumeTactic(hand, uid) {
   return (hand ?? []).filter(card => card.uid !== uid);
 }
 
+// A played call is only spent if it failed. Winning the map hands it back,
+// so a strong run grows its bank instead of draining it; a lost map burns
+// it, and the IGL's two-card floor stays the only safety net.
+export function settleTactic(hand, card, won, max = TACTIC_HAND_MAX) {
+  const current = hand ?? [];
+  if (!won || !card || current.some(held => held.uid === card.uid)) return current;
+  return [...current, card].slice(0, max);
+}
+
+// Adds as many `incoming` cards as fit under `max`; whatever doesn't fit is
+// returned as `overflow`, for the reward screen's replace step to resolve one
+// at a time. Pure so the reward flow can call it once flights land, and the
+// tests can check fit/overflow without touching React state.
+export function bankTactics(hand, incoming, max = TACTIC_HAND_MAX) {
+  const current = hand ?? [];
+  const room = Math.max(0, max - current.length);
+  return {
+    hand: [...current, ...incoming.slice(0, room)],
+    overflow: incoming.slice(room),
+  };
+}
+
 export function tacticBooster(rng, count = 3) {
   const weighted = [
     ...TACTIC_LIST.filter(card => card.tier === 'common'),
@@ -290,6 +315,13 @@ export function npcTacticChoices(rng, roster, map) {
 
 export function npcTactic(rng, roster, map) {
   return npcTacticChoices(rng, roster, map)[0];
+}
+
+// How many maps each side picks before the decider(s): one each in a Bo3,
+// two each from a Bo5 up. Picks alternate, higher seed first, so a Bo5 runs
+// A B A B and the fifth dealt map is the decider.
+export function mapPicksPerSide(bestOf) {
+  return bestOf >= 5 ? 2 : 1;
 }
 
 export function chooseNpcMap(maps, roster, masteryByName = {}) {
