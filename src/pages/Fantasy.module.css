@@ -97,3 +97,24 @@ h4 { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 
   .slot { grid-template-columns: minmax(0, 1fr) 44px; }
   .slot .micro { grid-column: 1 / -1; }
 }
+
+.stepper { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.step { min-height: 44px; border: 0; background: var(--surface); color: var(--muted); font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.1em; font-weight: 700; cursor: pointer; }
+.step[data-on='true'] { background: var(--accent); color: var(--accent-ink); }
+
+.help { color: var(--muted); line-height: 1.5; margin: 0 0 12px; max-width: 60ch; }
+.help strong { color: var(--ink); }
+.warn { color: var(--ink); background: var(--accent-soft); padding: 10px 12px; margin: 12px 0; line-height: 1.5; }
+.big { font-size: 20px; margin: 0 0 8px; }
+.big strong { font-size: 32px; font-variant-numeric: tabular-nums; }
+.how { color: var(--muted); line-height: 1.5; margin: 4px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; max-width: 56ch; }
+.how strong { color: var(--ink); }
+
+.panel .primary { margin-top: 20px; align-self: stretch; }
+.panel .secondary { align-self: start; }
+.slotCard { padding: 4px 0; }
+.slotTools { display: flex; gap: 6px; flex-wrap: wrap; justify-content: end; }
+.slotTools select { min-height: 36px; background: var(--surface); border: 1px solid var(--line-bracket); color: var(--ink); padding: 0 6px; max-width: 150px; }
+.secondary[data-on='true'] { background: var(--accent); color: var(--accent-ink); }
+.stamp[data-hot='dim'] { color: var(--muted); }
+.stamp[data-hot='false'] { background: var(--win-soft); color: var(--win); }
