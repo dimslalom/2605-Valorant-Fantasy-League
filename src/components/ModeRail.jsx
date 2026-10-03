@@ -21,12 +21,6 @@ const ICON = {
       <path d="M6 3.5H3.5v2a3 3 0 0 0 2.7 3" /><path d="M14 3.5h2.5v2a3 3 0 0 1-2.7 3" />
     </svg>
   ),
-  fantasy: (
-    <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
-      <path d="M3 16.5h14" /><path d="M5 16.5v-5" /><path d="M10 16.5v-10" /><path d="M15 16.5v-7" />
-      <path d="M3.5 7 8 4.5l4 2 4.5-3" />
-    </svg>
-  ),
   multiplayer: (
     <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6">
       <circle cx="7" cy="6.5" r="2.6" /><circle cx="14" cy="7.5" r="2" />
@@ -38,7 +32,6 @@ const ICON = {
 const RAIL = [
   { to: '/cards', key: 'library', label: 'Player Library' },
   { to: '/run', key: 'run', label: 'Gauntlet' },
-  { to: '/fantasy', key: 'fantasy', label: 'Fantasy' },
   { to: '/multiplayer', key: 'multiplayer', label: 'Multiplayer' },
 ];
 

@@ -6,9 +6,6 @@ import RouteErrorBoundary, { NotFound } from './components/RouteError';
 const Collection = lazy(() => import('./pages/Collection'));
 const PerfectRun = lazy(() => import('./pages/PerfectRun'));
 const Multiplayer = lazy(() => import('./pages/Multiplayer'));
-const Fantasy = lazy(() => import('./pages/Fantasy'));
-// Spike surface for the Rive runtime. Only exists in dev builds.
-const RiveLab = import.meta.env.DEV ? lazy(() => import('./pages/RiveLab')) : null;
 
 // domMax (not domAnimation) is required for layoutId and drag, both used by
 // the card-surface morphs. Loaded as its own async chunk so it doesn't sit in
@@ -41,8 +38,6 @@ export default function App() {
                   <Route path="/match" element={<Navigate to="/run" replace />} />
                   <Route path="/pack" element={<Navigate to="/run" replace />} />
                   <Route path="/run" element={<PerfectRun />} />
-                  <Route path="/fantasy" element={<Fantasy />} />
-                  {RiveLab && <Route path="/lab/rive" element={<RiveLab />} />}
                   <Route path="/multiplayer" element={<Multiplayer />} />
                   <Route path="/lobby/:code" element={<Multiplayer />} />
                   <Route path="*" element={<NotFound />} />

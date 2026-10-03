@@ -5,13 +5,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/',
-  // The feed lives in the Worker. In dev, read it from production (GET only)
-  // so the fantasy page has real data without running wrangler locally.
-  server: {
-    proxy: {
-      '/api/feed': { target: 'https://vctfantasy.dimas.works', changeOrigin: true },
-    },
-  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

@@ -1,5 +1,5 @@
 import { ECONOMY, PACK_ODDS, STARTER_MIX } from './rules.js';
-import { pickWeighted, rngFor, shuffle } from '../fantasy/rng.js';
+import { pickWeighted, rngFor, shuffle } from '../shared/rng.js';
 
 // Packs draw from a pool of { pid, tier } the player can actually receive (feed
 // players that have a card). Deterministic from (seed, pack number). Never gives

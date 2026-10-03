@@ -1,6 +1,6 @@
 import { VALUE } from './constants.js';
 import { fantasyRole } from './lineup.js';
-import { scoreSeries } from './scoring.js';
+import { scoreSeries } from '../shared/scoring.js';
 import { buildValueTable } from './values.js';
 
 // Builds a replayable campaign from finished feed matches (feed read format).

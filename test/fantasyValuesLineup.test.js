@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { OUTLOOK, VALUE } from '../src/engine/fantasy/constants.js';
 import { applyAutoSubs, autoLineup, fantasyRole, validLineup } from '../src/engine/fantasy/lineup.js';
-import { rngFor } from '../src/engine/fantasy/rng.js';
+import { rngFor } from '../src/engine/shared/rng.js';
 import { buildValueTable, expectedPoints, outlookOf, priorEP, stepValue, valueFromEP } from '../src/engine/fantasy/values.js';
 
 test('value curve: EP 30 is 4.0M, convex, and bounded', () => {

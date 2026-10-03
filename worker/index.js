@@ -442,8 +442,7 @@ function withSecurityHeaders(response) {
 function applySecurityHeaders(headers) {
   headers.set('Content-Security-Policy', [
     "default-src 'self'",
-    // 'wasm-unsafe-eval' lets the Rive runtime compile its self-hosted wasm.
-    "script-src 'self' 'wasm-unsafe-eval'",
+    "script-src 'self'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob:",

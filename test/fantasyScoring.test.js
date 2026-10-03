@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { normalizeMatch } from '../scripts/feed/normalize.js';
-import { mapMvps, scoreLineup, scoreMap, scoreSeries } from '../src/engine/fantasy/scoring.js';
+import { mapMvps, scoreLineup, scoreMap, scoreSeries } from '../src/engine/shared/scoring.js';
 
 const golden = JSON.parse(readFileSync(new URL('./fixtures/feed/match-753462.v2.json', import.meta.url), 'utf8'));
 const match = normalizeMatch(golden.data.segments[0]);

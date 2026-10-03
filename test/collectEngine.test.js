@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import cards from '../src/data/cards.json' with { type: 'json' };
 import { buildReplay } from '../src/engine/fantasy/replay.js';
-import { scoreSeries } from '../src/engine/fantasy/scoring.js';
+import { scoreSeries } from '../src/engine/shared/scoring.js';
 import { resolveCall, seriesFacts, streakMultiplier } from '../src/engine/collect/calls.js';
 import { buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
 import { openPack, starterCollection } from '../src/engine/collect/packs.js';

@@ -1,7 +1,7 @@
 import { resolveCall } from './calls.js';
 import { ECONOMY, TRACKED_MAX } from './rules.js';
 import { openPack, starterCollection } from './packs.js';
-import { scoreSeries } from '../fantasy/scoring.js';
+import { scoreSeries } from '../shared/scoring.js';
 
 // One player's collection game. State is plain data (saved as JSON):
 //   collection: pids you own          tracked: up to 10 of them that score points

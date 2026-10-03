@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import cards from '../../../../src/data/cards.json';
 import { buyPack, callRecord, createCollection, resolveSeries, setCall, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
-import { makeCardLookup } from '../../../../src/engine/fantasy/replay';
+import { makeCardLookup } from '../../../../src/engine/shared/cardLookup';
 import { fetchPlayers } from './feed';
 import { GameContext } from './gameContext';
 

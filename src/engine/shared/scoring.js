@@ -1,4 +1,4 @@
-import { SCORING } from './constants.js';
+import { SCORING } from './scoringRules.js';
 
 // Per-map fantasy points from one real stat row. Integers only, and the lines
 // sum exactly to the total so the UI can show why a player scored.
