@@ -4,7 +4,7 @@ import cards from '../src/data/cards.json' with { type: 'json' };
 import { buildReplay } from '../src/engine/fantasy/replay.js';
 import { scoreSeries } from '../src/engine/fantasy/scoring.js';
 import { resolveCall, seriesFacts, streakMultiplier } from '../src/engine/collect/calls.js';
-import { buyPack, createCollection, resolveMatchday, setCall, swapFee, swapTracked, totalScore } from '../src/engine/collect/game.js';
+import { buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
 import { openPack, starterCollection } from '../src/engine/collect/packs.js';
 import { CALL, ECONOMY, TRACKED_MAX } from '../src/engine/collect/rules.js';
 import { synthMatches } from './fixtures/fantasySynth.js';
@@ -86,7 +86,7 @@ test('packs never repeat a card you own and refund when the pool runs dry', () =
 test('Tracked: at most ten, swaps need a card you own, the first swaps are free, then they cost credits', () => {
   const r = replay();
   const pool = poolOf(r);
-  let s = createCollection({ seed: 5, pool });
+  let s = createCollection({ seed: 5, pool, now: 0 });
   assert.equal(s.tracked.length, TRACKED_MAX);
   const tierOf = pid => r.players[pid].card.palette;
   const outsider = pool.find(e => !s.collection.includes(e.pid)).pid;
@@ -108,7 +108,7 @@ test('Tracked: at most ten, swaps need a card you own, the first swaps are free,
 
 test('buying a pack costs credits and adds five new cards', () => {
   const pool = poolOf(replay());
-  let s = createCollection({ seed: 2, pool });
+  let s = createCollection({ seed: 2, pool, now: 0 });
   assert.throws(() => buyPack(s, pool), /not enough credits/);
   s = { ...s, credits: 800 };
   const { state, cards: got } = buyPack(s, pool);
@@ -120,7 +120,7 @@ test('buying a pack costs credits and adds five new cards', () => {
 test('a full replay: calls and Tracked points both land, credits track points, skipped calls do not break a streak', () => {
   const r = replay();
   const pool = poolOf(r);
-  let s = createCollection({ seed: 9, pool });
+  let s = createCollection({ seed: 9, pool, now: 0 });
   const teamOf = teamOfFn(r);
   let totalCredits = 0;
   for (const md of r.matchdays) {
@@ -143,10 +143,60 @@ test('a full replay: calls and Tracked points both land, credits track points, s
 test('Tracked scoring only counts the ten you track', () => {
   const r = replay();
   const pool = poolOf(r);
-  const s = createCollection({ seed: 4, pool });
+  const s = createCollection({ seed: 4, pool, now: 0 });
   const md = r.matchdays[0];
   const out = resolveMatchday(s, md, { teamOf: teamOfFn(r) });
   for (const line of out.report.trackedLines) assert.ok(s.tracked.includes(line.pid));
   const noneTracked = resolveMatchday({ ...s, tracked: [] }, md, { teamOf: teamOfFn(r) });
   assert.equal(noneTracked.report.trackedPoints, 0);
+});
+
+test('resolveSeries scores one match once: reveal is idempotent and pays credits', () => {
+  const r = replay();
+  const pool = poolOf(r);
+  let s = createCollection({ seed: 6, pool, now: 0 });
+  const series = r.matchdays[0].matches[0];
+  s = setCall(s, series.matchId, { winner: series.teams[0].tag });
+  const first = resolveSeries(s, series, { teamOf: teamOfFn(r) });
+  assert.equal(first.report.callPoints >= CALL.winner, true);
+  assert.equal(first.state.credits, first.report.total);
+  const again = resolveSeries(first.state, series, { teamOf: teamOfFn(r) });
+  assert.equal(again.state.credits, first.state.credits);   // no double pay
+  assert.equal(again.state.history.length, 1);
+  assert.deepEqual(callRecord(first.state), { made: 1, right: 1 });
+});
+
+test('a match scores the cards you were Tracking when it started, not the ones you swap to afterwards', () => {
+  const r = replay();
+  const pool = poolOf(r);
+  const tierOf = pid => r.players[pid].card.palette;
+  let s = createCollection({ seed: 3, pool, now: 0 });
+  const series = r.matchdays[0].matches[0];
+  const start = 1000;
+  const startedSeries = { ...series, startsAt: start };
+  // Track nobody who plays in this series at kick-off, then swap a participant in AFTER it started.
+  const inSeries = new Set(series.maps.flatMap(m => m.players.map(p => p.vlrId)));
+  const participant = [...inSeries][0];
+  s = { ...s, collection: [...new Set([...s.collection, participant])] };
+  s = { ...s, tracked: s.tracked.filter(p => !inSeries.has(p)), trackedLog: [{ t: 0, tracked: s.tracked.filter(p => !inSeries.has(p)) }] };
+  assert.ok(s.tracked.length > 0);
+  s = swapTracked(s, s.tracked[0], participant, tierOf, start + 500);   // swapped in after kick-off
+  assert.ok(!trackedAt(s, start).includes(participant));
+  assert.ok(trackedAt(s, start + 600).includes(participant));
+  const out = resolveSeries(s, startedSeries, { teamOf: teamOfFn(r) });
+  assert.ok(out.report.trackedLines.every(l => l.pid !== participant), 'the late swap must not score');
+});
+
+test('matches that started before you joined can be revealed but never score', () => {
+  const r = replay();
+  const pool = poolOf(r);
+  const series = { ...r.matchdays[0].matches[0], startsAt: 5000 };
+  const early = createCollection({ seed: 1, pool, now: 9000 });
+  const out = resolveSeries(early, series, { teamOf: teamOfFn(r) });
+  assert.equal(out.report.total, 0);
+  assert.equal(out.report.preJoin, true);
+  assert.equal(out.state.credits, 0);
+  assert.equal(out.state.streak, 0);
+  const joinedBefore = createCollection({ seed: 1, pool, now: 1000 });
+  assert.ok(resolveSeries(joinedBefore, series, { teamOf: teamOfFn(r) }).report.preJoin !== true);
 });

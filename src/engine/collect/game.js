@@ -9,11 +9,12 @@ import { scoreSeries } from '../fantasy/scoring.js';
 //   history: one entry per resolved matchday
 // The feed (replay/live) is passed in, never stored.
 
-export function createCollection({ seed, pool }) {
+export function createCollection({ seed, pool, now = Math.floor(Date.now() / 1000) }) {
   const collection = starterCollection(seed, pool);
   return {
     v: 1,
     seed,
+    createdAt: now,   // only matches that start after this score for you
     collection,
     tracked: collection.slice(0, TRACKED_MAX),
     credits: 0,
@@ -22,23 +23,36 @@ export function createCollection({ seed, pool }) {
     calls: {},
     history: [],
     freeSwaps: 3,
+    // Which ten were Tracked when: a match scores the set that was Tracked when it STARTED,
+    // so swapping after kick-off never changes a result already in motion.
+    trackedLog: [{ t: 0, tracked: collection.slice(0, TRACKED_MAX) }],
+    // Matches whose result you have revealed, with the report that scored them.
+    revealed: {},
   };
+}
+
+export function trackedAt(state, unix) {
+  let set = state.trackedLog[0].tracked;
+  for (const entry of state.trackedLog) if (entry.t <= unix) set = entry.tracked;
+  return set;
 }
 
 export const swapFee = tier => ECONOMY.swapBase + (ECONOMY.swapByTier[tier] ?? 0);
 
 // Swap a Tracked player for another card you own. The first few swaps are free;
 // after that it costs credits, more for better cards. Returns a new state.
-export function swapTracked(state, outPid, inPid, tierOf) {
+export function swapTracked(state, outPid, inPid, tierOf, now = Math.floor(Date.now() / 1000)) {
   if (!state.tracked.includes(outPid)) throw new Error('not tracked');
   if (!state.collection.includes(inPid)) throw new Error('you do not own that card');
   if (state.tracked.includes(inPid)) throw new Error('already tracked');
   const free = state.freeSwaps > 0;
   const fee = free ? 0 : swapFee(tierOf(inPid));
   if (state.credits < fee) throw new Error('not enough credits');
+  const tracked = state.tracked.map(p => (p === outPid ? inPid : p));
   return {
     ...state,
-    tracked: state.tracked.map(p => (p === outPid ? inPid : p)),
+    tracked,
+    trackedLog: [...state.trackedLog, { t: now, tracked }],
     credits: state.credits - fee,
     freeSwaps: free ? state.freeSwaps - 1 : state.freeSwaps,
   };
@@ -61,6 +75,54 @@ export function buyPack(state, pool) {
 
 export function setCall(state, matchId, call) {
   return { ...state, calls: { ...state.calls, [matchId]: call } };
+}
+
+// Resolve ONE finished series (the unit of a spoiler-guarded reveal). Scores your call
+// and the cards you were Tracking when it started, pays credits, updates the streak, and
+// records the report so it can never be scored twice. Returns { state, report }.
+export function resolveSeries(state, series, { teamOf }) {
+  if (state.revealed[series.matchId]) return { state, report: state.revealed[series.matchId] };
+  // Matches that started before you joined can be revealed but never score, so history is not free points.
+  if ((series.startsAt ?? Infinity) < (state.createdAt ?? 0)) {
+    const report = { matchId: series.matchId, callPoints: 0, trackedPoints: 0, total: 0, call: null, result: null, trackedLines: [], preJoin: true, winnerTag: series.teams[(series.winner ?? 1) - 1]?.tag ?? null };
+    return { state: { ...state, revealed: { ...state.revealed, [series.matchId]: report } }, report };
+  }
+  const tracked = trackedAt(state, series.startsAt ?? Number.MAX_SAFE_INTEGER);
+  const points = scoreSeries(series);
+  const trackedLines = tracked
+    .map(pid => ({ pid, total: points.get(pid)?.total }))
+    .filter(l => l.total != null)
+    .sort((a, b) => b.total - a.total);
+  const trackedPoints = trackedLines.reduce((sum, l) => sum + l.total, 0);
+
+  const call = state.calls[series.matchId];
+  let streak = state.streak;
+  let result = null;
+  if (call && call.winner != null) {
+    result = resolveCall(call, series, points, { tracked, teamOf, streak });
+    streak = result.winnerRight ? streak + 1 : 0;
+  }
+  const callPoints = result?.total ?? 0;
+  const report = {
+    matchId: series.matchId,
+    callPoints,
+    trackedPoints,
+    total: callPoints + trackedPoints,
+    call: call ?? null,
+    result,
+    trackedLines,
+    winnerTag: result?.facts.winnerTag ?? series.teams[(series.winner ?? 1) - 1]?.tag ?? null,
+  };
+  return {
+    state: {
+      ...state,
+      streak,
+      credits: state.credits + report.total * ECONOMY.creditsPerPoint,
+      revealed: { ...state.revealed, [series.matchId]: report },
+      history: [...state.history, { matchId: series.matchId, callPoints, trackedPoints, called: Boolean(result), right: Boolean(result?.winnerRight) }],
+    },
+    report,
+  };
 }
 
 // Resolve a matchday against its finished series. Returns { state, report }.
@@ -111,3 +173,7 @@ export function resolveMatchday(state, md, { teamOf }) {
 }
 
 export const totalScore = state => state.history.reduce((sum, h) => sum + h.callPoints + h.trackedPoints, 0);
+export const callRecord = state => ({
+  made: state.history.filter(h => h.called).length,
+  right: state.history.filter(h => h.right).length,
+});

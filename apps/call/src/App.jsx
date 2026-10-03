@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LayoutGroup, LazyMotion, MotionConfig } from 'motion/react';
 import Shell from './components/Shell';
+import { GameProvider } from './lib/game';
 
 const Today = lazy(() => import('./pages/Today'));
 const Collection = lazy(() => import('./pages/Collection'));
@@ -17,6 +18,7 @@ export default function App() {
     <LazyMotion features={loadFeatures} strict>
       <MotionConfig reducedMotion="user">
         <LayoutGroup>
+          <GameProvider>
           <BrowserRouter>
             <Routes>
               <Route element={<Shell />}>
@@ -28,6 +30,7 @@ export default function App() {
               </Route>
             </Routes>
           </BrowserRouter>
+          </GameProvider>
         </LayoutGroup>
       </MotionConfig>
     </LazyMotion>

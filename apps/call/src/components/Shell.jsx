@@ -1,4 +1,5 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 
 const TABS = [
   { to: '/', label: 'Today', end: true },
@@ -9,6 +10,10 @@ const TABS = [
 // The frame every screen sits in: wordmark, three tabs, and the legal line.
 // The structure follows valorantesports.com (schedule-first, a few flat tabs).
 export default function Shell() {
+  const { pathname } = useLocation();
+  // Every screen starts at the top, not wherever the last one was scrolled.
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+
   return (
     <div className="shell">
       <header className="bar">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useGame } from '../lib/gameContext';
 import MatchCard from '../components/MatchCard';
 import { fetchSchedule } from '../lib/feed';
 import { dayKey, longDay, todayKey } from '../lib/time';
@@ -6,16 +7,12 @@ import { dayKey, longDay, todayKey } from '../lib/time';
 // The events the feed tracks. Add Open Qualifiers and the 2027 events here as they appear.
 const EVENTS = [{ id: 2766, label: 'Champions' }];
 
-const REVEALED_KEY = 'opval-revealed';
-function loadRevealed() {
-  try { return new Set(JSON.parse(localStorage.getItem(REVEALED_KEY) ?? '[]')); } catch { return new Set(); }
-}
-
 export default function Today() {
   const [matches, setMatches] = useState(null);
   const [day, setDay] = useState(null);
   const [league, setLeague] = useState('all');
-  const [revealed, setRevealed] = useState(loadRevealed);
+  const { state, score, record } = useGame();
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
     let live = true;
@@ -24,11 +21,11 @@ export default function Today() {
     return () => { live = false; };
   }, []);
 
-  const reveal = id => {
-    const next = new Set(revealed).add(id);
-    setRevealed(next);
-    try { localStorage.setItem(REVEALED_KEY, JSON.stringify([...next])); } catch { /* storage blocked: reveal just will not persist */ }
-  };
+  // Keeps LIVE/locked states honest without a refresh.
+  useEffect(() => {
+    const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   const visible = useMemo(
     () => (matches ?? []).filter(m => m.startsAt && (league === 'all' || String(m.eventId) === league)),
@@ -48,11 +45,20 @@ export default function Today() {
   const prev = days.filter(d => d < current).pop();
   const next = days.find(d => d > current);
 
-  const card = m => <MatchCard key={m.matchId} match={m} eventLabel={m.eventLabel} revealed={revealed.has(m.matchId)} onReveal={() => reveal(m.matchId)} />;
+  const card = m => <MatchCard key={m.matchId} match={m} eventLabel={m.eventLabel} now={now} />;
 
   return (
     <section>
       <h1>{isToday ? 'Today' : longDay(current)}</h1>
+
+      {state && (
+        <div className="stats">
+          <div><span>Score</span><strong>{score}</strong></div>
+          <div><span>Credits</span><strong>{state.credits}</strong></div>
+          <div><span>Streak</span><strong>{state.streak}</strong></div>
+          <div><span>Calls right</span><strong>{record.right}/{record.made}</strong></div>
+        </div>
+      )}
 
       <div className="controls">
         <div className="day-switch">

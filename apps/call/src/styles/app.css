@@ -57,3 +57,50 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
   h1 { font-size: 28px; }
   .team .name { display: none; }
 }
+
+/* Shared controls */
+.primary, .secondary { min-height: 48px; padding: 0 20px; border: 0; font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; cursor: pointer; clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px)); }
+.primary { background: var(--accent); color: var(--accent-ink); }
+.secondary { background: var(--surface-alt); color: var(--ink); }
+.primary:disabled, .secondary:disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; }
+.error { color: var(--accent); margin: 12px 0; }
+
+/* Collection */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); margin-bottom: 12px; }
+.stats div { background: var(--surface); padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.stats span { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.stats strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.slot[data-picked='true'] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pack { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 28px 0 8px; }
+.opened { margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+.opened .secondary { margin-top: 12px; }
+.swapbar { position: sticky; bottom: 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 16px; background: var(--surface-hi); border-top: 1px solid var(--line-bracket); margin: 16px -16px 0; }
+.swapbar span { flex: 1 1 200px; line-height: 1.4; }
+
+/* Calling */
+.called { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; color: var(--win); }
+.callwrap { padding: 0 14px 12px; }
+.callbtn { width: 100%; min-height: 48px; border: 0; background: var(--surface-alt); color: var(--ink); font-weight: 600; cursor: pointer; text-align: left; padding: 0 14px; }
+.callbtn:hover { background: var(--surface-hi); }
+.call { background: var(--bg-sunken); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.call-title { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.call-title small { color: var(--win); margin-left: 6px; }
+.pick-row { display: flex; gap: 8px; }
+.pick { flex: 1; min-height: 52px; border: 1px solid var(--line-bracket); background: var(--surface); color: var(--ink); font-size: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.pick small { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.pick.small { font-size: 18px; min-height: 44px; }
+.pick[data-on='true'] { border-color: var(--accent); background: var(--accent-soft); }
+.star { min-height: 48px; background: var(--surface); color: var(--ink); border: 1px solid var(--line-bracket); padding: 0 12px; font: inherit; }
+.hint { color: var(--muted); font-size: var(--fs-label); line-height: 1.4; }
+.done { margin-top: 8px; width: 100%; }
+.locked { padding: 0 14px 12px; color: var(--muted); font-size: var(--fs-label); }
+.result { padding: 4px 14px 12px; border-top: 1px solid var(--line); }
+.result-line { font-weight: 700; margin-top: 10px; }
+.result-line[data-ok='true'] { color: var(--win); }
+.result-sub { color: var(--win); font-size: var(--fs-label); margin-top: 2px; }
+.tracked-lines { list-style: none; margin: 10px 0 4px; display: flex; flex-direction: column; gap: 4px; }
+.tracked-lines li { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.result-total { margin-top: 8px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); font-size: var(--fs-label); margin-top: 8px; }
+.reveal:disabled { opacity: 0.6; cursor: wait; }
