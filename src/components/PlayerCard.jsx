@@ -43,10 +43,12 @@ export default function PlayerCard({
   kit,
   portraitLoading = 'lazy',
   portraitFetchPriority = 'auto',
+  showSpecialties = true,
   // Outside a real drop surface, cards can still be picked up and will
   // spring back to their origin. SquadDock and PackRip opt out because their
   // parent wrappers already own purposeful drag gestures.
   canDrag = true,
+  pressScale = 0.97,
   // Opt-in shared-layout id (R2 - spring physics, PlayerCard only; see
   // src/lib/motion.js). Two call sites currently claim a given card's id at
   // once (a dock chip and CardFocusOverlay) - the one-owner rule is the
@@ -71,7 +73,7 @@ export default function PlayerCard({
   const showEditionTop = card.tier === 'prestige' || card.tier === 'iconic';
   const regionLogo = assetPath(`/assets/regions/${card.region.toLowerCase()}.png`);
   const bgSrc = assetPath(`/assets/card-bg/${card.palette}-bg.png`);
-  const specialties = getCardSpecialties(card);
+  const specialties = showSpecialties ? getCardSpecialties(card) : [];
   const specColor = SPEC_COLOR[card.palette] ?? SPEC_COLOR.gold;
 
   const {
@@ -99,7 +101,7 @@ export default function PlayerCard({
       // tilt in useCardTilt.js, which lives on the nested `.tilt` div below
       // and so never fights this one for the same `transform`.
       transition={{ layout: cardSpring, default: { duration: DUR.micro, ease: EASE.out } }}
-      whileTap={onClick ? { scale: 0.97 } : undefined}
+      whileTap={onClick ? { scale: pressScale } : undefined}
       drag={canDrag}
       dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
       dragElastic={0.2}

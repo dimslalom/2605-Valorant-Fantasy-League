@@ -81,7 +81,9 @@ export function GameProvider({ children }) {
     swap: (outPid, inPid) => Boolean(run(s => swapTracked(s, outPid, inPid, tierOf))),
     buy: () => run(s => buyPack(s, pool)),
     reveal: series => run(s => resolveSeries(s, series, { teamOf })),
-    resetForTesting: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } setSaved(null); },
+    // Dev server only (stripped from production builds): credits to test packs and storage.
+    ...(import.meta.env.DEV && { devCredits: n => run(s => ({ ...s, credits: s.credits + n })) }),
+    resetProgress: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } setSaved(null); },
   }), [run, pool, teamOf, tierOf]);
 
   const value = useMemo(() => ({

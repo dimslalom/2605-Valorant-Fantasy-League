@@ -22,10 +22,10 @@
 
 /* Groups the two flat body layers so they can leave as one unit (see
    PackTear's finishTear) instead of just cutting away the instant the top
-   foil's own flight finishes - it takes no size of its own (its children are
-   the absolutely-positioned layers, sized off .packWrap), just a transform
-   target. */
-.packBody { position: relative; }
+   foil's own flight finishes. It fills .packWrap so its absolutely-positioned
+   layers have a box to size against (position: relative here collapsed it to
+   1px and hid the pack art). */
+.packBody { position: absolute; inset: 0; }
 
 .layerInside,
 .layerFront {
@@ -52,40 +52,15 @@
   pointer-events: none;
 }
 
-/* Top-anchored, NOT inset:0/height:100% like the other two layers - the top
-   foil is a short torn-off flap, not a full card face. Stretching it to the
-   pack's full height forced its `transform-origin: bottom right` pivot down
-   into empty canvas far below the actual visible art, which is why the tear
-   read as an ungrounded "pop" instead of peeling from a corner. Sizing to
-   the art's own aspect ratio (width 100%, height auto) puts that pivot right
-   at the torn edge instead. */
-.tearStrip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 30;
-  transform-origin: bottom right;
-  cursor: grab;
-  touch-action: none;
-}
-.tearStrip:active { cursor: grabbing; }
-.tearStrip:focus-visible {
-  outline: var(--focus-ring) solid var(--accent);
-  outline-offset: var(--focus-offset);
-}
-
-.tearImg {
-  display: block;
-  width: 100%;
-  height: auto;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tearStrip { cursor: pointer; }
-}
+/* The foil strip: the same full-canvas art twice, clipped either side of the tear line (set in
+   PackTear.jsx). The attached piece rides with the body; the torn flap hinges on the line. */
+.foil { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+.foil img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+.flap { z-index: 40; will-change: transform; }
+.packWrap[role='button'] { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.packWrap img { -webkit-user-drag: none; }
+.packWrap[role='button']:active { cursor: grabbing; }
+.packWrap:focus-visible { outline: var(--focus-ring) solid var(--accent); outline-offset: var(--focus-offset); }
 
 @media (max-width: 680px) {
   .packWrap { width: calc(160px * var(--pack-scale, 1)); height: calc(226px * var(--pack-scale, 1)); }

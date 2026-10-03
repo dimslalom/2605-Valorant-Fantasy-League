@@ -29,8 +29,22 @@ function tone(frequency, duration, { endFrequency = frequency, gain = 0.012, typ
   oscillator.stop(now + duration + 0.01);
 }
 
-export function playUiSound(kind) {
+// `step` climbs a pentatonic scale, so a run of reveals rises in pitch (Balatro's scoring trick).
+export function playUiSound(kind, step = 0) {
   switch (kind) {
+    case 'reveal': {
+      const scale = [392, 440, 523.25, 587.33, 659.25, 784, 880];
+      tone(scale[step % scale.length], 0.12, { gain: 0.012, type: 'triangle' });
+      break;
+    }
+    case 'rattle':
+      tone(140, 0.05, { gain: 0.012, type: 'square' });
+      break;
+    case 'jackpot':
+      tone(70, 0.3, { endFrequency: 45, gain: 0.03, type: 'sine' });
+      tone(1046.5, 0.18, { gain: 0.01, type: 'triangle' });
+      tone(1568, 0.26, { gain: 0.007, type: 'triangle' });
+      break;
     case 'hover':
       // Browsers only allow audio after user activation. Do not create a
       // suspended context on the first hover; once a click/press has armed

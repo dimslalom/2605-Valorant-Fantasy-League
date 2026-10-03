@@ -1,17 +1,25 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import CardThumb from '../components/CardThumb';
+import Fan from '../components/Fan';
+import PackOpen from '../components/PackOpen';
 import { useGame } from '../lib/gameContext';
-import { ECONOMY, TRACKED_MAX } from '../../../../src/engine/collect/rules';
+import { ECONOMY } from '../../../../src/engine/collect/rules';
+
+const TIERS = ['icon', 'gold', 'silver', 'bronze'];
 
 // Storage plus the Tracked ten. Only Tracked cards earn points, so the whole game is
 // choosing which ten to Track; swapping costs credits after the first few free ones.
+const WIDE = '(min-width: 700px)';
+const useWide = () => useSyncExternalStore(cb => { const m = matchMedia(WIDE); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); }, () => matchMedia(WIDE).matches);
+
 export default function Collection() {
   const { ready, state, players, tierOf, swapFee, swap, buy, error } = useGame();
   const [pickedOut, setPickedOut] = useState(null);   // a Tracked card to remove
   const [pickedIn, setPickedIn] = useState(null);     // a stored card to bring in
   const [opened, setOpened] = useState(null);         // cards from the last pack
+  const wide = useWide();
 
-  if (!ready || !state) return <section><h1>Collection</h1><p className="note">Dealing your starter cards</p></section>;
+  if (!ready || !state) return <section><h1>Cards</h1><p className="note">Dealing your starter cards</p></section>;
 
   const trackedSet = new Set(state.tracked);
   const storage = state.collection.filter(pid => !trackedSet.has(pid));
@@ -27,53 +35,50 @@ export default function Collection() {
   };
 
   const cardOf = pid => players[pid]?.card;
+  // The Tracked ten as a hand of cards: one arc on wide screens, two arcs of five on a phone
+  // so every card stays big enough to tap.
+  const hand = state.tracked.filter(cardOf).sort((x, y) => cardOf(y).rating - cardOf(x).rating);
+  const rows = wide ? [hand] : [hand.slice(0, 5), hand.slice(5)];
+  const rating = hand.length ? Math.round(hand.reduce((t, pid) => t + cardOf(pid).rating, 0) / hand.length) : 0;
 
   return (
     <section>
-      <h1>Collection</h1>
+      <h1>Cards</h1>
 
-      <div className="stats">
-        <div><span>Credits</span><strong>{state.credits}</strong></div>
-        <div><span>Tracked</span><strong>{state.tracked.length}/{TRACKED_MAX}</strong></div>
-        <div><span>Free swaps</span><strong>{state.freeSwaps}</strong></div>
-        <div><span>Cards</span><strong>{state.collection.length}</strong></div>
+      <div className="hand-head">
+        <strong>{rating}</strong>
+        <span>Team rating</span>
+        <p>{state.freeSwaps > 0 ? `${state.freeSwaps} free swap${state.freeSwaps === 1 ? '' : 's'} left` : 'Swaps now cost credits'}</p>
       </div>
+      {rows.map((row, r) => (
+        <Fan key={r} pids={row} cardOf={cardOf} scale={wide ? 0.3 : 0.26} arc={wide ? 1.4 : 2.5} delay={r * 250} picked={pickedOut} onPick={pid => setPickedOut(pickedOut === pid ? null : pid)} />
+      ))}
 
-      <p className="note">Only your Tracked cards earn points when they play. To change who you Track, tap a Tracked card, then a card from storage.</p>
-
-      <h2 className="section">Tracked</h2>
-      <div className="grid">
-        {state.tracked.map(pid => cardOf(pid) && (
-          <div key={pid} className="slot" data-picked={pickedOut === pid}>
-            <CardThumb card={cardOf(pid)} scale={0.26} selected={pickedOut === pid} onClick={() => setPickedOut(pickedOut === pid ? null : pid)} />
-          </div>
-        ))}
-      </div>
-
-      <h2 className="section">Storage ({storage.length})</h2>
-      {storage.length === 0 && <p className="note">Nothing in storage yet. Open a pack to add cards.</p>}
-      <div className="grid">
-        {storage.map(pid => cardOf(pid) && (
-          <div key={pid} className="slot" data-picked={pickedIn === pid}>
-            <CardThumb card={cardOf(pid)} scale={0.26} selected={pickedIn === pid} onClick={() => setPickedIn(pickedIn === pid ? null : pid)} />
-          </div>
-        ))}
-      </div>
-
-      <div className="pack">
-        <button className="primary" onClick={openPack} disabled={state.credits < ECONOMY.packCost}>
-          Open a pack ({ECONOMY.packCost} credits)
-        </button>
-        {state.credits < ECONOMY.packCost && <span className="note">You earn credits from points. {ECONOMY.packCost - state.credits} more for a pack.</span>}
-      </div>
-
-      {opened && (
-        <div className="opened" role="status">
-          <h2 className="section">New cards</h2>
-          <div className="grid">{opened.map(pid => cardOf(pid) && <CardThumb key={pid} card={cardOf(pid)} scale={0.26} />)}</div>
-          <button className="secondary" onClick={() => setOpened(null)}>Close</button>
+      <div className="shelf-head">
+        <h2 className="section">Storage</h2>
+        <div className="shelf-pack">
+          {state.credits < ECONOMY.packCost && <span>{ECONOMY.packCost - state.credits} more credits</span>}
+          <button className="primary" onClick={openPack} disabled={state.credits < ECONOMY.packCost}>Open pack {ECONOMY.packCost} CR</button>
         </div>
-      )}
+      </div>
+      {storage.length === 0 && <p className="note">Empty. Cards from packs land here.</p>}
+      {TIERS.map(tier => {
+        const shelf = storage.filter(pid => cardOf(pid)?.palette === tier).sort((x, y) => cardOf(y).rating - cardOf(x).rating);
+        return shelf.length > 0 && (
+          <div key={tier} className="shelf">
+            <h3>{tier}<span>{shelf.length}</span></h3>
+            <div className="grid">
+              {shelf.map(pid => (
+                <div key={pid} className="slot" data-picked={pickedIn === pid}>
+                  <CardThumb card={cardOf(pid)} scale={0.26} selected={pickedIn === pid} onClick={() => setPickedIn(pickedIn === pid ? null : pid)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      {opened && <PackOpen key={state.packsOpened} pids={opened} cardOf={cardOf} onDone={() => setOpened(null)} />}
 
       {error && <p className="error" role="alert">{error}</p>}
 
@@ -85,7 +90,7 @@ export default function Collection() {
               <button className="primary" onClick={confirmSwap}>Confirm</button>
             </>
           ) : (
-            <span>{pickedOut != null ? 'Now pick a card from storage to bring in.' : 'Now pick a Tracked card to take out.'}</span>
+            <span>{pickedOut == null ? 'Now pick a Tracked card to take out.' : storage.length ? 'Now pick a card from storage to bring in.' : 'Storage is empty. Open a pack to get cards to swap in.'}</span>
           )}
           <button className="secondary" onClick={() => { setPickedOut(null); setPickedIn(null); }}>Cancel</button>
         </div>

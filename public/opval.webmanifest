@@ -1,0 +1,11 @@
+{
+  "name": "OpVAL",
+  "short_name": "OpVAL",
+  "description": "Call the winner of every VCT series and track your favourite players. A free fan game, no betting.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0f17",
+  "theme_color": "#0b0d14",
+  "icons": [{ "src": "/opval-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

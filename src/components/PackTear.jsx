@@ -1,84 +1,118 @@
 import { useEffect, useRef } from 'react';
-import { m, useMotionValue, useTransform, animate } from 'motion/react';
 import { assetPath } from '../lib/utils';
-import { DUR, EASE } from '../lib/motion';
 import { animate as animeAnimate, MS, ANIME_EASE } from '../lib/anime';
 import useReducedMotion from '../lib/useReducedMotion';
+import { playUiSound } from '../lib/gameAudio';
 import styles from './PackTear.module.css';
 
-// Drag distance (px) past which a release counts as a tear rather than a
-// bounce-back - also the domain's second stop, so the same curve driving the
-// live peel keeps running into the fling-off extreme once torn instead of a
-// second, independently-animated one fighting it for the same motion value.
-// Scaled to the pack's own 200px width, not an arbitrary round number - the
-// original 150/300 dragged the strip 1.5x the pack's own width before it
-// even tore, reading as way more horizontal travel than a peel needs.
-const TEAR_THRESHOLD = 70;
-const TEAR_FLY = 140;
-const EASE_TEAR = [0.25, 1, 0.5, 1]; // sharp, confident - no overshoot
-const SPECTATOR_DELAY = 260; // beat before a pack with no local hands on it tears itself
-
-// The universal pack-opening moment: three still images (inside foil, front
-// body, and the draggable top foil) in a 3D perspective box. A local player
-// drags the top foil right to tear it off; PackRip passes `interactive:
-// false` for a pack it's just narrating (a CPU roll, another player's turn
-// in Multiplayer) and this plays the identical tear on a short timer instead
-// of waiting on a pointer nobody's using.
+// The universal pack-opening moment: the inside and front of the pack, and the foil strip
+// across its top. Dragging tears the strip progressively: the tear line follows your finger
+// left to right, the torn piece curls up from that line (more if you pull upward), and a
+// partial tear stays torn. Once the tear reaches the far edge the piece comes free, follows
+// the pointer, and flies off along the direction you threw it.
 //
-// The tear-off is one imperative `animate(x, TEAR_FLY, ...)` call, not an
-// AnimatePresence `exit` - that's deliberate: with `drag` disabled (the
-// non-interactive path), a bound-via-style motion value's own `exit`
-// animation never actually runs, so nothing was ever telling PackRip the
-// tear had finished. Driving `x` imperatively both here and for the
-// drag-release snap-back works identically whether or not `drag` is live,
-// and `onComplete` is an unambiguous "the fling-off is done" signal for
-// `onTorn` - PackRip swaps to the card strip only once it fires.
-export default function PackTear({ interactive, onTorn }) {
-  const x = useMotionValue(0);
-  const rotateX = useTransform(x, [0, TEAR_THRESHOLD, TEAR_FLY], [0, -60, -110]);
-  const rotateY = useTransform(x, [0, TEAR_THRESHOLD, TEAR_FLY], [0, -45, -95]);
-  const rotateZ = useTransform(x, [0, TEAR_THRESHOLD, TEAR_FLY], [0, 15, 35]);
-  const opacity = useTransform(x, [TEAR_THRESHOLD, TEAR_FLY], [1, 0]);
-  const torn = useRef(false);
+// `interactive: false` (a CPU roll, another player's pack) plays the same tear on a timer.
+// Space/Enter tears it too. Reduced motion skips straight to torn. `front` (optional) replaces the
+// printed front art, so another app can brand the same pack.
+
+const ART_W = 595;
+const STRIP_H = 51;      // foil strip height in the 595x842 art
+const SPECTATOR_DELAY = 260;
+const AUTO_TEAR_MS = 420;
+const TAP = 6;           // px of travel before a press counts as a pull
+
+// A ragged vertical tear line at x, top to bottom: both pieces use the same points so they meet.
+const zig = (x, s) => [0, 1, 2, 3, 4, 5].map(k => [x + (k % 2 ? 3 : -2), (k / 5) * (s + 4)]);
+const poly = pts => `polygon(${pts.map(([x, y]) => `${x}px ${y}px`).join(',')})`;
+
+export default function PackTear({ interactive, onTorn, front }) {
+  const wrapRef = useRef(null);
   const bodyRef = useRef(null);
+  const restRef = useRef(null);
+  const flapRef = useRef(null);
+  const st = useRef({ tear: 0, lift: 0, done: false, finished: false, auto: false, drag: null, free: null, trail: [] });
   const reducedMotion = useReducedMotion();
 
-  // The top foil already flies off dramatically (the transforms above) -
-  // what used to just cut away was the flat front/inside body behind it,
-  // unmounting the instant the foil's own flight finished. Sending the body
-  // out on the same beat (drop + tip, same duration as the foil's fling-off)
-  // makes the whole pack read as one object leaving, not a foil animation
-  // with a body that vanished a frame later.
-  function finishTear() {
-    if (torn.current) return;
-    torn.current = true;
+  const size = () => {
+    const w = wrapRef.current.offsetWidth;
+    return { w, s: (w * STRIP_H) / ART_W };
+  };
+
+  // Paint the current tear: the attached piece right of the line, the torn piece left of it,
+  // hinged on the line and curled up by `lift` degrees.
+  const paint = (dx = 0, dy = 0, extraRot = 0) => {
+    const { w, s } = size();
+    const x = st.current.tear * w;
+    const line = zig(x, s);
+    restRef.current.style.clipPath = poly([[w, 0], [w, s + 4], ...[...line].reverse()]);
+    flapRef.current.style.clipPath = poly([[0, 0], ...line, [0, s + 4]]);
+    flapRef.current.style.transformOrigin = `${x}px ${s}px`;
+    flapRef.current.style.transform = `translate(${dx}px, ${dy}px) rotate(${-(st.current.lift + extraRot)}deg)`;
+    wrapRef.current.dataset.tearing = st.current.tear > 0 ? 'true' : 'false';
+  };
+
+  const finish = () => {
+    if (st.current.finished) return;
+    st.current.finished = true;
     if (bodyRef.current && !reducedMotion) {
-      animeAnimate(bodyRef.current, {
-        translateY: 60,
-        rotateX: 25,
-        opacity: [1, 0],
-        duration: MS.enter,
-        ease: ANIME_EASE.in,
-      });
+      animeAnimate(bodyRef.current, { translateY: 60, rotateX: 25, opacity: [1, 0], duration: MS.enter, ease: ANIME_EASE.in });
+      setTimeout(onTorn, MS.enter);
+    } else onTorn?.();
+  };
+
+  // The strip is free: throw it along velocity (px/ms) from wherever it was let go.
+  const fling = (vx, vy, from = { dx: 0, dy: 0 }) => {
+    if (st.current.done) return;
+    st.current.done = true;
+    playUiSound('lift');
+    if (reducedMotion) { flapRef.current.style.opacity = 0; finish(); return; }
+    const speed = Math.hypot(vx, vy);
+    const k = speed < 0.4 ? 0.4 / Math.max(speed, 0.01) : 1;   // a dead drop still gets tossed
+    const tx = from.dx + vx * k * 380;
+    const ty = from.dy + (vy * k - 0.25) * 380;
+    const spin = st.current.lift + 30 * Math.sign(vx || 1);
+    flapRef.current.animate(
+      [{ transform: flapRef.current.style.transform, opacity: 1 }, { transform: `translate(${tx}px, ${ty}px) rotate(${-spin}deg)`, opacity: 0 }],
+      { duration: 380, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)', fill: 'forwards' },
+    );
+    finish();
+  };
+
+  // Advance the tear to t (0..1) and curl the torn piece; past the end it comes free.
+  const tearTo = (t, pullUp = 0) => {
+    const s = st.current;
+    if (t > s.tear) {
+      if (Math.floor(t * 8) > Math.floor(s.tear * 8)) playUiSound('rattle');   // the foil crackles as it goes
+      s.tear = Math.min(1, t);
     }
-    animate(x, TEAR_FLY, { duration: DUR.enter, ease: EASE_TEAR, onComplete: onTorn });
-  }
+    s.lift = 10 + s.tear * 22 + Math.min(40, Math.max(0, pullUp) * 0.35);
+    paint();
+  };
+
+  const autoTear = () => {
+    if (st.current.done || st.current.auto) return;
+    if (reducedMotion) { fling(0.6, -0.3); return; }
+    st.current.auto = true;
+    const t0 = performance.now();
+    const start = st.current.tear;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / AUTO_TEAR_MS);
+      tearTo(start + (1 - start) * (1 - (1 - k) ** 2), k * 30);
+      if (k < 1) requestAnimationFrame(step);
+      else fling(0.9, -0.6);
+    };
+    requestAnimationFrame(step);
+  };
+
+  useEffect(() => { paint(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (interactive) return undefined;
-    const timer = setTimeout(finishTear, SPECTATOR_DELAY);
+    const timer = setTimeout(autoTear, SPECTATOR_DELAY);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactive]);
+  }, [interactive]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Space/Enter tears the pack even without focus on the tiny foil-drag
-  // handle below - this component only mounts for the duration of the tear
-  // moment, so scoping the listener to its own lifetime (rather than a
-  // page-level "primary action" hookup) keeps it correct everywhere PackRip
-  // is used without each caller having to wire it in. Skipped while focus
-  // sits on a control that already owns Space/Enter itself (the bar's
-  // buttons, a link, a text field) so e.g. tabbing to "Keep squad" and
-  // pressing Space doesn't also tear the pack out from under it.
+  // Space/Enter tears the pack without focusing the strip, unless focus is on a control that owns those keys.
   useEffect(() => {
     if (!interactive) return undefined;
     function onKey(e) {
@@ -86,45 +120,76 @@ export default function PackTear({ interactive, onTorn }) {
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'A') return;
       e.preventDefault();
-      finishTear();
+      autoTear();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interactive]);
+  }, [interactive]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleDragEnd() {
-    if (x.get() < TEAR_THRESHOLD) {
-      animate(x, 0, { duration: DUR.transform, ease: EASE.out });
-    } else {
-      finishTear();
+  const onDown = e => {
+    if (!interactive || st.current.done || st.current.auto) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    st.current.drag = { x: e.clientX, y: e.clientY, tear: st.current.tear, moved: false };
+    st.current.trail = [{ x: e.clientX, y: e.clientY, t: e.timeStamp }];
+  };
+
+  const onMove = e => {
+    const s = st.current;
+    if (!s.drag || s.done) return;
+    const dx = e.clientX - s.drag.x;
+    const dy = e.clientY - s.drag.y;
+    if (Math.hypot(dx, dy) > TAP) s.drag.moved = true;
+    s.trail = [...s.trail.slice(-4), { x: e.clientX, y: e.clientY, t: e.timeStamp }];
+    if (s.free) {
+      // Torn loose: the piece hangs from the pointer.
+      paint(e.clientX - s.free.x, e.clientY - s.free.y, Math.max(-20, Math.min(20, dx * 0.05)));
+      return;
     }
-  }
+    tearTo(s.drag.tear + Math.max(0, dx) / size().w, -dy);
+    if (s.tear >= 1) s.free = { x: e.clientX, y: e.clientY };
+  };
 
+  const onUp = e => {
+    const s = st.current;
+    if (!s.drag) return;
+    onMove(e);   // the release point counts, even if no move event landed there
+    const { moved } = s.drag;
+    s.drag = null;
+    if (s.free) {
+      const a = s.trail[0];
+      const dt = Math.max(1, e.timeStamp - a.t);
+      fling((e.clientX - a.x) / dt, (e.clientY - a.y) / dt, { dx: e.clientX - s.free.x, dy: e.clientY - s.free.y });
+      return;
+    }
+    if (!moved) { autoTear(); return; }                 // a tap tears it for you
+    s.lift = 6 + s.tear * 10;                           // let go mid-tear: the piece relaxes, stays torn
+    flapRef.current.style.transition = 'transform 220ms ease-out';
+    paint();
+    setTimeout(() => { if (flapRef.current) flapRef.current.style.transition = ''; }, 220);
+  };
+
+  const top = assetPath('/assets/pack/Card-Top.png');
   return (
-    <div className={styles.packWrap} data-pack-body="true" aria-hidden={!interactive}>
+    <div
+      ref={wrapRef}
+      className={styles.packWrap}
+      data-pack-body="true"
+      aria-hidden={!interactive}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? 'Tear the pack open' : undefined}
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+      onPointerCancel={onUp}
+      onDragStart={e => e.preventDefault()}   // never let the browser drag the art as an image
+    >
       <div ref={bodyRef} className={styles.packBody}>
-        <img className={styles.layerInside} src={assetPath('/assets/pack/Card-Inside.png')} alt="" />
-        <img className={styles.layerFront} src={assetPath('/assets/pack/Card-Front.png')} alt="" />
+        <img className={styles.layerInside} src={assetPath('/assets/pack/Card-Inside.png')} alt="" draggable={false} />
+        {front ? <div className={styles.layerFront}>{front}</div> : <img className={styles.layerFront} src={assetPath('/assets/pack/Card-Front.png')} alt="" draggable={false} />}
+        <div ref={restRef} className={styles.foil}><img src={top} alt="" draggable={false} /></div>
       </div>
-
-      <m.div
-        className={styles.tearStrip}
-        style={{ x, rotateX, rotateY, rotateZ, opacity }}
-        drag={interactive ? 'x' : false}
-        dragConstraints={interactive ? { left: 0, right: 100 } : undefined}
-        dragElastic={interactive ? 0.1 : undefined}
-        dragMomentum={false}
-        onDragEnd={interactive ? handleDragEnd : undefined}
-        role={interactive ? 'button' : undefined}
-        tabIndex={interactive ? 0 : undefined}
-        aria-label={interactive ? 'Tear the pack open' : undefined}
-        onKeyDown={interactive ? (e) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); finishTear(); }
-        } : undefined}
-      >
-        <img className={styles.tearImg} src={assetPath('/assets/pack/Card-Top.png')} alt="" draggable={false} />
-      </m.div>
+      <div ref={flapRef} className={`${styles.foil} ${styles.flap}`}><img src={top} alt="" draggable={false} /></div>
     </div>
   );
 }
