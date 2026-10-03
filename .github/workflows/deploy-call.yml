@@ -1,0 +1,45 @@
+name: Deploy VALCON
+
+# The call game is its own site (apps/call, Worker "valcon"). It deploys independently
+# of the old Gauntlet site, only when something it uses changes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/call/**'
+      - 'src/**'
+      - 'public/**'
+      - 'worker/feed/**'
+      - 'migrations/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-call.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: valcon
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run call:build
+      - run: npx wrangler deploy --config apps/call/wrangler.jsonc
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

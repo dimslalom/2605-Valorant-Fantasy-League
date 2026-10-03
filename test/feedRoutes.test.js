@@ -71,3 +71,12 @@ test('unknown public paths 404 and non-GET public paths 405', async () => {
   assert.equal((await call(e, 'GET', '/api/feed/matches/404')).status, 404);
   assert.equal((await call(e, 'POST', '/api/feed/meta', {})).status, 405);
 });
+
+test('players endpoint lists who the feed has seen, with handle and team', async () => {
+  const e = env();
+  await call(e, 'POST', '/internal/ingest', envelope({ matches: [finalMatch()] }));
+  const body = await (await call(e, 'GET', '/api/feed/players')).json();
+  assert.equal(body.players.length, 10);
+  assert.ok(body.players.every(p => Number.isInteger(p.vlrId) && p.handle));
+  assert.ok(!JSON.stringify(body).includes('real_name'));
+});

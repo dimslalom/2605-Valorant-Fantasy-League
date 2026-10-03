@@ -123,6 +123,15 @@ async function loadMatch(env, id) {
   };
 }
 
+// Every player the feed has seen: id, handle and current team tag. No real names, ever.
+async function getPlayers(env) {
+  const { results } = await env.DB
+    .prepare('SELECT vlr_id, handle, country, team_tag, status FROM feed_players ORDER BY team_tag, handle').all();
+  return reply({
+    players: results.map(p => ({ vlrId: p.vlr_id, handle: p.handle, country: p.country, teamTag: p.team_tag, status: p.status })),
+  }, 200, PUBLIC_CACHE);
+}
+
 async function getMatch(env, id) {
   const match = await loadMatch(env, id);
   return match ? reply(match, 200, PUBLIC_CACHE) : reply({ error: 'not found' }, 404);
@@ -144,6 +153,7 @@ export async function handleFeed(request, env, url) {
   if (request.method !== 'GET') return reply({ error: 'method not allowed' }, 405);
   if (path === '/api/feed/meta') return getMeta(env);
   if (path === '/api/feed/schedule') return getSchedule(env, url);
+  if (path === '/api/feed/players') return getPlayers(env);
   let m;
   if ((m = path.match(/^\/api\/feed\/matches\/(\d+)$/))) return getMatch(env, Number(m[1]));
   if ((m = path.match(/^\/api\/feed\/rounds\/([^/]+)$/))) return getRound(env, decodeURIComponent(m[1]));
