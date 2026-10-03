@@ -50,8 +50,32 @@ export function pickCandidates(listing, known, limit = MAX_PER_RUN) {
     .slice(0, limit);
 }
 
+// "2h 15m", "1d 3h", "1w 2d" -> minutes. Unknown formats count as far away.
+export function etaMinutes(text) {
+  if (!text) return Infinity;
+  const unit = { w: 10080, d: 1440, h: 60, m: 1 };
+  let total = 0;
+  let found = false;
+  for (const [, n, u] of String(text).matchAll(/(\d+)\s*([wdhm])/g)) { total += Number(n) * unit[u]; found = true; }
+  return found ? total : Infinity;
+}
+
+// Live matches every run; upcoming ones starting within the horizon that the feed does not
+// have yet. Placeholder playoff slots ("TBD") have no teams to call, so they are skipped.
+export function pickWindow(listing, known, { horizonMinutes = 48 * 60, limit = 10 } = {}) {
+  const real = row => row.match_id && ![row.team1?.name, row.team2?.name].some(n => !n || /^tbd$/i.test(n.trim()));
+  const picked = [];
+  for (const row of listing.filter(real)) {
+    const status = String(row.status ?? '').toLowerCase();
+    const stored = known.get(Number(row.match_id));
+    if (status === 'live') picked.push({ row, status: 'live' });
+    else if (status === 'upcoming' && etaMinutes(row.eta) <= horizonMinutes && (!stored || !stored.startsAt)) picked.push({ row, status: 'upcoming' });
+  }
+  return picked.slice(0, limit);
+}
+
 export async function runPoll({ clients, events, runId, limit = MAX_PER_RUN, log = console.log }) {
-  const summary = { fetched: 0, accepted: 0, pending: 0, rejected: 0, markupChanged: false };
+  const summary = { fetched: 0, accepted: 0, upcoming: 0, pending: 0, rejected: 0, markupChanged: false };
   for (const event of events) {
     const listing = (await clients.vlr(`/v2/events/matches?event_id=${event.id}`)).segments ?? [];
     const known = await clients.feed.known(event.id);
@@ -72,6 +96,20 @@ export async function runPoll({ clients, events, runId, limit = MAX_PER_RUN, log
         summary.markupChanged = true;
       }
       log(`  match ${row.match_id}: ${JSON.stringify(result)}`);
+    }
+  }
+  for (const event of events) {
+    const listing = (await clients.vlr(`/v2/events/matches?event_id=${event.id}`)).segments ?? [];
+    const known = await clients.feed.known(event.id);
+    const windowRows = pickWindow(listing, known);
+    log(`event ${event.id}: ${windowRows.length} live or upcoming to refresh`);
+    for (const { row, status } of windowRows) {
+      const detail = (await clients.vlr(`/v2/match/details?match_id=${row.match_id}`)).segments[0];
+      const match = normalizeMatch(detail, { status });
+      match.roundId = roundIdOf(event.id, match.startsAt);
+      const result = await clients.feed.ingest({ schemaVersion: 1, kind: 'matches', runId, source: { name: 'vlr.gg' }, matches: [match] });
+      summary.upcoming += result.accepted.length;
+      log(`  ${status} ${row.match_id}: ${JSON.stringify(result)}`);
     }
   }
   await clients.feed.ingest({ schemaVersion: 1, kind: 'heartbeat', runId });

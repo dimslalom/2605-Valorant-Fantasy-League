@@ -84,3 +84,26 @@ test('stats listed as ready but no player rows raises markupChanged', async () =
   const summary = await runPoll({ clients: clientsOf(fetchImpl), events: [{ id: 2766 }], runId: 't3', log: () => {} });
   assert.equal(summary.markupChanged, true);
 });
+
+import { etaMinutes, pickWindow } from '../scripts/feed/run.js';
+
+test('etaMinutes reads vlr countdowns', () => {
+  assert.equal(etaMinutes('2h 15m'), 135);
+  assert.equal(etaMinutes('1d 3h'), 1620);
+  assert.equal(etaMinutes('1w 2d'), 12960);
+  assert.equal(etaMinutes(''), Infinity);
+});
+
+test('pickWindow: live always, upcoming only inside the horizon and not already known, never TBD slots', () => {
+  const row = (id, status, eta, a = 'TL', b = 'PRX') => ({ match_id: String(id), status, eta, team1: { name: a }, team2: { name: b } });
+  const listing = [
+    row(1, 'LIVE', ''),
+    row(2, 'Upcoming', '3h 10m'),
+    row(3, 'Upcoming', '6d 1h'),
+    row(4, 'Upcoming', '2h', 'TBD', 'TBD'),
+    row(5, 'Upcoming', '1h'),
+    row(6, 'Completed', '1d'),
+  ];
+  const known = new Map([[5, { startsAt: 123 }]]);
+  assert.deepEqual(pickWindow(listing, known).map(p => [p.row.match_id, p.status]), [['1', 'live'], ['2', 'upcoming']]);
+});

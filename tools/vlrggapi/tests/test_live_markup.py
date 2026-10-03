@@ -95,6 +95,9 @@ def test_event_matches_listing_has_stats_ready_flag(monkeypatch):
     assert len(rows) == 34
     assert rows[0]["stats_ready"] is True
     assert any(not r["stats_ready"] for r in rows)  # TBD playoff slots
+    # Upcoming rows carry a countdown and the status word, which the feed job uses to pick matches.
+    assert any(r["status"] == "Upcoming" and r["eta"] for r in rows)
+    assert any(r["status"] == "LIVE" for r in rows)
     assert all(r["match_id"] for r in rows)
     cache_manager.clear_all()
 

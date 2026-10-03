@@ -1,4 +1,4 @@
-/* VALCON: its own look, built on the shared tokens (src/styles/tokens.css).
+/* OpVAL: its own look, built on the shared tokens (src/styles/tokens.css).
    Structure follows valorantesports.com: schedule-first, flat dark surfaces, a few tabs,
    spoiler-guarded results. Sharp corners and flat colour, no gradients or glows. */
 
@@ -8,7 +8,7 @@
 .shell { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); padding-left: var(--safe-l); padding-right: var(--safe-r); }
 
 .bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 24px; padding: 0 16px; min-height: 56px; background: var(--bg-deep); border-bottom: 1px solid var(--line); padding-top: var(--safe-t); }
-.wordmark { font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.24em; font-size: 15px; color: var(--ink); }
+.wordmark { font-family: var(--font-body); font-weight: 700; letter-spacing: 0.02em; font-size: 22px; color: var(--ink); }
 .wordmark::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 8px; background: var(--accent); clip-path: polygon(0 0, 100% 0, 100% 100%); }
 .tabs { display: flex; gap: 4px; margin-left: auto; }
 .tab { display: grid; place-items: center; min-height: 44px; padding: 0 14px; color: var(--muted); text-decoration: none; font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 2px solid transparent; }
@@ -47,11 +47,12 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 
 .legal { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: center; padding: 20px 16px calc(20px + var(--safe-b)); font-size: var(--fs-micro); color: var(--muted); border-top: 1px solid var(--line); }
 .legal a { color: inherit; }
+.note a { color: var(--ink); }
 .legal .rule { width: 1px; height: 12px; background: currentColor; opacity: 0.5; }
 
 @media (max-width: 420px) {
   .bar { gap: 8px; }
-  .wordmark { font-size: 13px; letter-spacing: 0.18em; }
+  .wordmark { font-size: 19px; }
   .tab { padding: 0 8px; font-size: 11px; }
   h1 { font-size: 28px; }
   .team .name { display: none; }

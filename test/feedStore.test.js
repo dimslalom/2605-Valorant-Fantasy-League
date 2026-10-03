@@ -75,3 +75,25 @@ test('an invalid match is rejected and writes nothing', async () => {
   assert.equal(res.rejected.length, 1);
   assert.equal(count(db, 'feed_matches'), 0);
 });
+
+test('an upcoming match takes its team tags from teams the feed already knows', async () => {
+  const db = d1();
+  await ingestMatches(db, { matches: [match([map(101, [11, 13], roster()), map(102, [11, 13], roster())])] });
+  const upcoming = {
+    matchId: 900, eventId: 2766, status: 'upcoming', bestOf: 3, startsAt: 1791000000, maps: [],
+    teams: [{ vlrTeamId: 1, name: 'XLG', tag: '' , score: null }, { vlrTeamId: 2, name: 'NS', tag: '', score: null }],
+  };
+  const res = await ingestMatches(db, { matches: [upcoming] });
+  assert.deepEqual(res.accepted, [900]);
+  const row = db.sqlite.prepare('SELECT team1_tag, team2_tag, status, stats_rank, starts_at FROM feed_matches WHERE match_id = 900').get();
+  assert.deepEqual([row.team1_tag, row.team2_tag, row.status, row.stats_rank, row.starts_at], ['XLG', 'NS', 'upcoming', 0, 1791000000]);
+});
+
+test('a finished match is never downgraded back to upcoming', async () => {
+  const db = d1();
+  await ingestMatches(db, { matches: [match([map(101, [11, 13], roster()), map(102, [11, 13], roster())])] });
+  const stale = { matchId: 753462, eventId: 2766, status: 'upcoming', bestOf: 3, maps: [], teams: [{ vlrTeamId: 1, name: 'XLG', tag: 'XLG' }, { vlrTeamId: 2, name: 'NS', tag: 'NS' }], contentHash: 'late' };
+  const res = await ingestMatches(db, { matches: [stale] });
+  assert.deepEqual(res.unchanged, [753462]);
+  assert.equal(db.sqlite.prepare('SELECT status FROM feed_matches WHERE match_id = 753462').get().status, 'final');
+});

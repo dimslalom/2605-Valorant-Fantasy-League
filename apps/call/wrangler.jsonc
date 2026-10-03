@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "valcon",
+  "name": "opval",
   "main": "worker/index.js",
   "compatibility_date": "2026-08-14",
   "compatibility_flags": ["nodejs_compat"],
@@ -8,14 +8,14 @@
 
   "observability": { "enabled": true },
 
-  "routes": [{ "pattern": "valcon.dimas.works", "custom_domain": true }],
+  "routes": [{ "pattern": "opval.dimas.works", "custom_domain": true }],
 
   // Static files are served straight from assets. Only HTML routes and the API run the
   // Worker, so card art and bundles do not count as Worker invocations.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/*", "!/assets/*", "!/favicon.svg", "!/legal.html"],
+    "run_worker_first": ["/*", "!/assets/*", "!/favicon.svg"],
     "not_found_handling": "none"
   },
 

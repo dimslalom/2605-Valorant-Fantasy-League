@@ -50,6 +50,19 @@ ON CONFLICT(vlr_id) DO UPDATE SET handle = excluded.handle, team_tag = excluded.
 
 const orNull = v => (v === undefined ? null : v);
 
+// Upcoming matches have no player rows, so the match page gives no team tag. Reuse the
+// tag the same team (by vlr id) already has in the feed.
+async function knownTag(db, teamId) {
+  if (teamId == null) return null;
+  const row = await db.prepare(
+    `SELECT tag FROM (
+       SELECT team1_tag AS tag FROM feed_matches WHERE team1_id = ?1 AND team1_tag != ''
+       UNION SELECT team2_tag AS tag FROM feed_matches WHERE team2_id = ?1 AND team2_tag != ''
+     ) LIMIT 1`,
+  ).bind(teamId).first();
+  return row?.tag ?? null;
+}
+
 // Ingest a `kind: "matches"` payload. Returns the per-match outcome lists.
 export async function ingestMatches(db, payload, now = Math.floor(Date.now() / 1000)) {
   const out = { accepted: [], unchanged: [], partial: [], rejected: [] };
@@ -76,6 +89,7 @@ export async function ingestMatches(db, payload, now = Math.floor(Date.now() / 1
     }
 
     const [t1 = {}, t2 = {}] = match.teams ?? [];
+    for (const t of [t1, t2]) if (!t.tag) t.tag = (await knownTag(db, t.vlrTeamId)) ?? '';
     const statements = [
       db.prepare(UPSERT_MATCH).bind(
         match.matchId, match.eventId, orNull(match.stage), orNull(match.series), orNull(match.bestOf),

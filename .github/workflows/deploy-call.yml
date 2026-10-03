@@ -1,6 +1,6 @@
-name: Deploy VALCON
+name: Deploy OpVAL
 
-# The call game is its own site (apps/call, Worker "valcon"). It deploys independently
+# The call game is its own site (apps/call, Worker "opval"). It deploys independently
 # of the old Gauntlet site, only when something it uses changes.
 
 on:
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: valcon
+  group: opval
   cancel-in-progress: false
 
 jobs:

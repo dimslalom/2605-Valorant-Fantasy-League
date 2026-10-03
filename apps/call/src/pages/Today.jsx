@@ -6,7 +6,7 @@ import { dayKey, longDay, todayKey } from '../lib/time';
 // The events the feed tracks. Add Open Qualifiers and the 2027 events here as they appear.
 const EVENTS = [{ id: 2766, label: 'Champions' }];
 
-const REVEALED_KEY = 'valcon-revealed';
+const REVEALED_KEY = 'opval-revealed';
 function loadRevealed() {
   try { return new Set(JSON.parse(localStorage.getItem(REVEALED_KEY) ?? '[]')); } catch { return new Set(); }
 }

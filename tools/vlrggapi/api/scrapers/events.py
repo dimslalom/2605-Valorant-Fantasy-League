@@ -207,6 +207,9 @@ async def vlr_event_matches(event_id: str):
             elif eta_el:
                 match_status = eta_el.text(strip=True)
 
+            # Countdown ("2h 15m") for upcoming matches, or time since for finished ones.
+            eta = eta_el.text(strip=True) if eta_el else ""
+
             note_el = elem.css_first(".match-item-note")
             note = note_el.text(strip=True) if note_el else ""
 
@@ -225,6 +228,7 @@ async def vlr_event_matches(event_id: str):
                 "url": match_url,
                 "date": current_date,
                 "status": match_status,
+                "eta": eta,
                 "note": note,
                 "event_series": event_series,
                 "stats_tags": stats_tags,

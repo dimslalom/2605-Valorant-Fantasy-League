@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 
 const TABS = [
   { to: '/', label: 'Today', end: true },
@@ -12,7 +12,7 @@ export default function Shell() {
   return (
     <div className="shell">
       <header className="bar">
-        <span className="wordmark">VALCON</span>
+        <span className="wordmark">OpVAL</span>
         <nav className="tabs" aria-label="Sections">
           {TABS.map(t => (
             <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `tab${isActive ? ' on' : ''}`}>
@@ -29,7 +29,7 @@ export default function Shell() {
         <span className="rule" aria-hidden="true" />
         <span>Data: vlr.gg</span>
         <span className="rule" aria-hidden="true" />
-        <a href="/legal.html">Legal</a>
+        <Link to="/legal">Legal</Link>
       </footer>
     </div>
   );

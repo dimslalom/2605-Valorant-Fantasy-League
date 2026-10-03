@@ -1,6 +1,6 @@
 import { handleFeed } from '../../../worker/feed/routes.js';
 
-// VALCON's Worker: a read-only window onto the shared feed database, plus the
+// OpVAL's Worker: a read-only window onto the shared feed database, plus the
 // leaderboard (added with the TABLE tab). Ingest stays on the old site's Worker, so
 // no secrets live here. Static files bypass this Worker entirely (see wrangler.jsonc).
 

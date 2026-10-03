@@ -47,8 +47,11 @@ const sideStats = (row, side) => {
   return { r2: toNum(s.rating), k: toInt(s.kills), d: toInt(s.deaths) };
 };
 
-export function normalizeMatch(segment, { roundId = null } = {}) {
-  const maps = (segment.maps ?? []).map((map, i) => {
+export function normalizeMatch(segment, { roundId = null, status: statusOverride = null } = {}) {
+  const status = String(statusOverride ?? segment.status ?? '').toLowerCase();
+  const finalMatch = status.includes('final');
+  // Live and upcoming matches carry no stats: partial live numbers would only mislead.
+  const maps = (finalMatch ? (segment.maps ?? []) : []).map((map, i) => {
     const perfRows = segment.performance?.by_map?.find(p => p.game_id === map.game_id)?.advanced_stats ?? [];
     const perf = new Map(perfRows.map(r => [perfKey(r.player, r.team_tag), r]));
     const players = [
@@ -78,7 +81,6 @@ export function normalizeMatch(segment, { roundId = null } = {}) {
     score: toInt(t.score),
   }));
   const winnerIdx = (segment.teams ?? []).findIndex(t => t.is_winner);
-  const status = String(segment.status ?? '').toLowerCase();
   const startsAt = unixOf(segment.start_utc);
   const bestOf = segment.best_of ?? null;
 
