@@ -48,4 +48,6 @@ test('content hash is stable for identical input and changes when stats change',
   const edited = JSON.parse(JSON.stringify(segment));
   edited.maps[0].players.team1[0].kills = '23';
   assert.notEqual(normalizeMatch(edited).contentHash, a);
+  const rescheduled = { ...segment, start_utc: '2026-10-01 09:00:00' };
+  assert.notEqual(normalizeMatch(rescheduled).contentHash, a);
 });

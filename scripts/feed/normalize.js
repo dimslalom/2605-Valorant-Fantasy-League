@@ -100,6 +100,6 @@ export function normalizeMatch(segment, { roundId = null, status: statusOverride
     roundId,
     maps,
   };
-  match.contentHash = createHash('sha1').update(JSON.stringify({ maps: match.maps, teams: match.teams, status: match.status })).digest('hex');
+  match.contentHash = createHash('sha1').update(JSON.stringify({ maps: match.maps, teams: match.teams, status: match.status, startsAt: match.startsAt })).digest('hex');
   return match;
 }

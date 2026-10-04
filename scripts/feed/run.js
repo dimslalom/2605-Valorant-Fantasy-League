@@ -60,8 +60,9 @@ export function etaMinutes(text) {
   return found ? total : Infinity;
 }
 
-// Live matches every run; upcoming ones starting within the horizon that the feed does not
-// have yet. Placeholder playoff slots ("TBD") have no teams to call, so they are skipped.
+// Refresh known upcoming matches every run, including ones moved beyond the usual
+// horizon. New matches enter the feed only when they are near.
+// Placeholder playoff slots ("TBD") have no teams to call, so they are skipped.
 export function pickWindow(listing, known, { horizonMinutes = 48 * 60, limit = 10 } = {}) {
   const real = row => row.match_id && ![row.team1?.name, row.team2?.name].some(n => !n || /^tbd$/i.test(n.trim()));
   const picked = [];
@@ -69,7 +70,8 @@ export function pickWindow(listing, known, { horizonMinutes = 48 * 60, limit = 1
     const status = String(row.status ?? '').toLowerCase();
     const stored = known.get(Number(row.match_id));
     if (status === 'live') picked.push({ row, status: 'live' });
-    else if (status === 'upcoming' && etaMinutes(row.eta) <= horizonMinutes && (!stored || !stored.startsAt)) picked.push({ row, status: 'upcoming' });
+    else if (status === 'upcoming' && stored?.status !== 'final'
+        && (stored || etaMinutes(row.eta) <= horizonMinutes)) picked.push({ row, status: 'upcoming' });
   }
   return picked.slice(0, limit);
 }

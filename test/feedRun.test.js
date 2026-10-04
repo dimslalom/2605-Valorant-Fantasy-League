@@ -72,6 +72,25 @@ test('a second poll fetches nothing: the match is already complete in the feed',
   assert.equal(again.fetched, 0);
 });
 
+test('a later poll updates a rescheduled upcoming match in the public schedule', async () => {
+  const w = world();
+  const original = structuredClone(golden);
+  original.data.segments[0].start_utc = '2026-10-04 05:00:00';
+  const listing = [{ match_id: '753462', stats_ready: false, status: 'Upcoming', eta: '4h', team1: { name: 'LOUD' }, team2: { name: 'Global Esports' } }];
+  const fetchImpl = async (input, init) => {
+    const url = new URL(input);
+    if (url.pathname === '/v2/events/matches') return Response.json({ data: { segments: listing } });
+    if (url.pathname === '/v2/match/details') return Response.json(original);
+    return w.fetchImpl(input, init);
+  };
+  const clients = clientsOf(fetchImpl);
+  await runPoll({ clients, events: [{ id: 2766 }], runId: 'before', log: () => {} });
+  original.data.segments[0].start_utc = '2026-10-04 09:00:00';
+  await runPoll({ clients, events: [{ id: 2766 }], runId: 'after', log: () => {} });
+  const schedule = await (await w.fetchImpl('https://feed.test/api/feed/schedule?event=2766')).json();
+  assert.equal(schedule.matches[0].startsAt, Date.parse('2026-10-04T09:00:00Z') / 1000);
+});
+
 test('stats listed as ready but no player rows raises markupChanged', async () => {
   const w = world();
   const broken = JSON.parse(JSON.stringify(golden));
@@ -94,7 +113,7 @@ test('etaMinutes reads vlr countdowns', () => {
   assert.equal(etaMinutes(''), Infinity);
 });
 
-test('pickWindow: live always, upcoming only inside the horizon and not already known, never TBD slots', () => {
+test('pickWindow: live always, known upcoming refreshes after rescheduling, never TBD slots', () => {
   const row = (id, status, eta, a = 'TL', b = 'PRX') => ({ match_id: String(id), status, eta, team1: { name: a }, team2: { name: b } });
   const listing = [
     row(1, 'LIVE', ''),
@@ -103,7 +122,8 @@ test('pickWindow: live always, upcoming only inside the horizon and not already 
     row(4, 'Upcoming', '2h', 'TBD', 'TBD'),
     row(5, 'Upcoming', '1h'),
     row(6, 'Completed', '1d'),
+    row(7, 'Upcoming', '6d'),
   ];
-  const known = new Map([[5, { startsAt: 123 }]]);
-  assert.deepEqual(pickWindow(listing, known).map(p => [p.row.match_id, p.status]), [['1', 'live'], ['2', 'upcoming']]);
+  const known = new Map([[5, { startsAt: 123, status: 'upcoming' }], [7, { startsAt: 456, status: 'upcoming' }]]);
+  assert.deepEqual(pickWindow(listing, known).map(p => [p.row.match_id, p.status]), [['1', 'live'], ['2', 'upcoming'], ['5', 'upcoming'], ['7', 'upcoming']]);
 });
