@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { normalizeMatch } from '../scripts/feed/normalize.js';
+import { normalizeMatch, unixOf } from '../scripts/feed/normalize.js';
 import { judgeMatch } from '../worker/feed/validate.js';
 
 // Golden output of the patched vlrggapi on the saved XLG vs NS Champions match.
@@ -50,4 +50,14 @@ test('content hash is stable for identical input and changes when stats change',
   assert.notEqual(normalizeMatch(edited).contentHash, a);
   const rescheduled = { ...segment, start_utc: '2026-10-01 09:00:00' };
   assert.notEqual(normalizeMatch(rescheduled).contentHash, a);
+});
+
+test('vlr data-utc-ts is US Eastern wall time, converted with daylight saving', () => {
+  const utc = (...p) => Date.UTC(...p) / 1000;
+  assert.equal(unixOf('2026-10-04 05:00:00'), utc(2026, 9, 4, 9, 0));     // EDT, UTC-4 (Champions Shanghai)
+  assert.equal(unixOf('2026-01-20 15:00:00'), utc(2026, 0, 20, 20, 0));   // EST, UTC-5 (Kickoff)
+  assert.equal(unixOf('2026-03-08 03:30:00'), utc(2026, 2, 8, 7, 30));    // just after the spring change
+  assert.equal(unixOf('2026-11-01 00:30:00'), utc(2026, 10, 1, 4, 30));   // before the autumn change
+  assert.equal(unixOf(''), null);
+  assert.equal(unixOf('not a date'), null);
 });

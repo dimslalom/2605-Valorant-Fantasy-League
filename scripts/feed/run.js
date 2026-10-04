@@ -40,12 +40,13 @@ export function makeClients({ vlrBase, feedBase, token, fetchImpl = fetch }) {
 
 // Which matches need (re)fetching: finished with stats published, and either
 // unknown to the feed or stored with worse stats than the listing now offers.
-export function pickCandidates(listing, known, limit = MAX_PER_RUN) {
+// `refetchFinal` re-fetches finished ones too (a one-off repair after a normalizer fix).
+export function pickCandidates(listing, known, limit = MAX_PER_RUN, { refetchFinal = false } = {}) {
   return listing
     .filter(row => row.match_id && row.stats_ready)
     .filter(row => {
       const stored = known.get(Number(row.match_id));
-      return !stored || stored.statsRank < 3;
+      return refetchFinal || !stored || stored.statsRank < 3;
     })
     .slice(0, limit);
 }
@@ -76,12 +77,12 @@ export function pickWindow(listing, known, { horizonMinutes = 48 * 60, limit = 1
   return picked.slice(0, limit);
 }
 
-export async function runPoll({ clients, events, runId, limit = MAX_PER_RUN, log = console.log }) {
+export async function runPoll({ clients, events, runId, limit = MAX_PER_RUN, refetchFinal = false, log = console.log }) {
   const summary = { fetched: 0, accepted: 0, upcoming: 0, pending: 0, rejected: 0, markupChanged: false };
   for (const event of events) {
     const listing = (await clients.vlr(`/v2/events/matches?event_id=${event.id}`)).segments ?? [];
     const known = await clients.feed.known(event.id);
-    const candidates = pickCandidates(listing, known, limit);
+    const candidates = pickCandidates(listing, known, limit, { refetchFinal });
     log(`event ${event.id}: ${listing.length} listed, ${candidates.length} to fetch`);
     for (const row of candidates) {
       const detail = (await clients.vlr(`/v2/match/details?match_id=${row.match_id}`)).segments[0];
@@ -128,7 +129,7 @@ async function main() {
   const config = JSON.parse(readFileSync(new URL('./events.json', import.meta.url), 'utf8'));
   const events = args.event ? [{ id: Number(args.event) }] : config.tracked;
   const runId = process.env.GITHUB_RUN_ID ? `gh-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT ?? 1}` : `local-${Date.now()}`;
-  const summary = await runPoll({ clients, events, runId, limit: Number(args.limit ?? MAX_PER_RUN) });
+  const summary = await runPoll({ clients, events, runId, limit: Number(args.limit ?? MAX_PER_RUN), refetchFinal: args['refetch-final'] === 'true' });
   console.log(JSON.stringify(summary));
   if (summary.markupChanged) {
     console.error('MARKUP_CHANGED: a finished match returned no player rows');

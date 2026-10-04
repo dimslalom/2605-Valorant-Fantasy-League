@@ -13,6 +13,10 @@ on:
       limit:
         description: 'Max matches to fetch this run'
         default: '6'
+      refetch_final:
+        description: 'Re-fetch finished matches too (one-off repair after a normalizer fix)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -49,4 +53,4 @@ jobs:
           VLR_API_BASE: http://127.0.0.1:3001
           FEED_BASE_URL: https://vctfantasy.dimas.works
           FEED_INGEST_TOKEN: ${{ secrets.FEED_INGEST_TOKEN }}
-        run: node scripts/feed/run.js --mode poll --limit "${{ inputs.limit || '6' }}"
+        run: node scripts/feed/run.js --mode poll --limit "${{ inputs.limit || '6' }}" --refetch-final "${{ inputs.refetch_final || 'false' }}"

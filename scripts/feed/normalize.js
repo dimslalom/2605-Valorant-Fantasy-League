@@ -11,7 +11,24 @@ const toNum = v => {
   const n = parseFloat(String(v ?? ''));
   return Number.isFinite(n) ? n : null;
 };
-const unixOf = utc => (utc ? Math.floor(Date.parse(`${utc.replace(' ', 'T')}Z`) / 1000) : null);
+// vlr.gg's data-utc-ts is NOT UTC: it is US Eastern wall time ("2026-10-04 05:00:00" is 05:00 in
+// New York, 09:00 UTC in October). Convert through America/New_York so daylight saving is right
+// (UTC-4 in summer, UTC-5 in winter).
+const NY = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York', hourCycle: 'h23',
+  year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+});
+const nyOffsetMs = ms => {
+  const p = Object.fromEntries(NY.formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - ms;
+};
+export const unixOf = eastern => {
+  if (!eastern) return null;
+  const wall = Date.parse(`${eastern.replace(' ', 'T')}Z`);   // the wall-clock reading, as if UTC
+  if (Number.isNaN(wall)) return null;
+  const guess = wall - nyOffsetMs(wall);
+  return Math.floor((wall - nyOffsetMs(guess)) / 1000);        // second pass settles DST edges
+};
 
 // The performance tab has no player link, so rows are joined by name + tag.
 const perfKey = (name, tag) => `${String(name).trim().toLowerCase()}|${String(tag).trim().toLowerCase()}`;

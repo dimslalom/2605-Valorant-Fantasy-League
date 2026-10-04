@@ -1,4 +1,5 @@
--- One-time OpVAL account reset: empty collection, two free packs, no progress.
+-- One-time OpVAL card reset: empty collection and two free packs; calls and progress are kept.
+-- Accounts without a save get a fresh one.
 -- Run only after deploying the free-pack code. Passwords and sessions are untouched.
 -- Incrementing every existing save version makes stale open tabs receive a 409.
 INSERT INTO saves (user_id, state, updated_at, version)
@@ -23,6 +24,14 @@ SELECT u.id,
   1
 FROM users AS u WHERE true
 ON CONFLICT(user_id) DO UPDATE SET
-  state = excluded.state,
+  -- Existing saves: only the card side resets (collection, Tracked, packs). Calls, revealed
+  -- results, history, credits, streak and the join time are kept.
+  state = json_set(saves.state,
+    '$.collection', json('[]'),
+    '$.tracked', json('[]'),
+    '$.trackedLog', json('[{"t":0,"tracked":[]}]'),
+    '$.packsOpened', 0,
+    '$.freePacks', 2,
+    '$.freeSwaps', 3),
   updated_at = excluded.updated_at,
   version = saves.version + 1;

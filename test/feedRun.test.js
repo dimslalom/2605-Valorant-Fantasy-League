@@ -88,7 +88,8 @@ test('a later poll updates a rescheduled upcoming match in the public schedule',
   original.data.segments[0].start_utc = '2026-10-04 09:00:00';
   await runPoll({ clients, events: [{ id: 2766 }], runId: 'after', log: () => {} });
   const schedule = await (await w.fetchImpl('https://feed.test/api/feed/schedule?event=2766')).json();
-  assert.equal(schedule.matches[0].startsAt, Date.parse('2026-10-04T09:00:00Z') / 1000);
+  // vlr's start_utc is US Eastern wall time: 09:00 in New York in October is 13:00 UTC.
+  assert.equal(schedule.matches[0].startsAt, Date.parse('2026-10-04T13:00:00Z') / 1000);
 });
 
 test('stats listed as ready but no player rows raises markupChanged', async () => {
@@ -126,4 +127,11 @@ test('pickWindow: live always, known upcoming refreshes after rescheduling, neve
   ];
   const known = new Map([[5, { startsAt: 123, status: 'upcoming' }], [7, { startsAt: 456, status: 'upcoming' }]]);
   assert.deepEqual(pickWindow(listing, known).map(p => [p.row.match_id, p.status]), [['1', 'live'], ['2', 'upcoming'], ['5', 'upcoming'], ['7', 'upcoming']]);
+});
+
+test('refetchFinal re-fetches finished matches that are already stored', () => {
+  const listing = [{ match_id: '1', stats_ready: true }, { match_id: '2', stats_ready: true }];
+  const known = new Map([[1, { statsRank: 3 }], [2, { statsRank: 3 }]]);
+  assert.equal(pickCandidates(listing, known).length, 0);
+  assert.equal(pickCandidates(listing, known, 6, { refetchFinal: true }).length, 2);
 });
