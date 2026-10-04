@@ -322,8 +322,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .matches-intro h1 { margin: 6px 0 0; }
 .matches-overview { display: flex; align-items: center; gap: 20px; padding: 14px 0; color: var(--muted); font: 600 var(--fs-label) var(--font-body); }
 .matches-overview strong { margin-right: 4px; color: var(--ink); font-family: var(--font-display); font-size: 23px; line-height: 1; }
-.matches-overview .link { margin-left: auto; color: var(--accent); font: 700 var(--fs-label) var(--font-mono); text-decoration: none; }
-.matches-overview .link:hover { text-decoration: underline; }
+.matches-overview .next-open { margin-left: auto; white-space: nowrap; }
 .matches-page .day-switch { margin: 16px 0 6px; }
 .matches-page .day-switch > div { flex: 1; text-align: center; }
 .matches-page .day-switch h2 { font: 700 26px/1 var(--font-display); text-transform: uppercase; }
@@ -462,7 +461,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 }
 @media (max-width: 600px) {
   .matches-overview { flex-wrap: wrap; gap: 8px 16px; }
-  .matches-overview .link { width: 100%; margin-left: 0; }
+  .matches-overview .next-open { width: 100%; margin-left: 0; }
   .analyst-rosters { grid-template-columns: 1fr; gap: 22px; }
   .call-commit { bottom: 0; padding-bottom: calc(20px + var(--safe-b)); }
 }
@@ -614,9 +613,23 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 
 /* Account sheet */
 .account { display: flex; flex-direction: column; gap: 14px; }
+.account-head { margin-bottom: 20px; }
+.account-head h2 { font-family: var(--font-display); font-size: 36px; line-height: 1; font-weight: 700; text-transform: uppercase; color: #fff; }
+.account-head p { margin-top: 10px; color: var(--muted); font-size: var(--fs-body); line-height: 1.45; }
+.account-head strong { color: #fff; }
 .account label { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.account input { min-height: 48px; padding: 0 14px; border: 2px solid var(--surface-alt); border-radius: 0; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; letter-spacing: 0; text-transform: none; }
-.account input:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+.account input {
+  min-height: 48px; padding: 0 20px; border-radius: 999px; color: #fff; font: inherit; font-size: 16px; letter-spacing: 0; text-transform: none; caret-color: #fff;
+  /* Recessed into the glass: dark well, soft shadow under the top edge, a lit lip along the bottom. */
+  border: 1px solid color-mix(in srgb, var(--ruby) 40%, black);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.28)), var(--surface);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.account input::placeholder { color: var(--faint); }
+.account input:focus { outline: none; border-color: color-mix(in srgb, var(--ruby) 80%, white); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), 0 0 0 3px color-mix(in srgb, var(--ruby) 45%, transparent); }
+/* Browser autofill paints its own light background; keep the well dark. */
+.account input:-webkit-autofill { -webkit-text-fill-color: #fff; box-shadow: inset 0 0 0 100px #14171f; caret-color: #fff; }
 .form-error { color: var(--accent); font-weight: 600; line-height: 1.4; }
 
 /* Matches header: the title on the left, the running event's logo on the right, or a
@@ -662,7 +675,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
   .hud.hud.hud { grid-template-columns: auto 1fr auto; grid-template-areas: "menu mark right" "tabs tabs tabs"; }
   .hud-tabs { justify-self: stretch; display: grid; grid-template-columns: 1fr 1fr; }
 }
-.account .code { padding: 16px; background: var(--surface); border: 2px solid var(--accent); font-family: var(--font-mono); font-size: 20px; font-weight: 700; letter-spacing: 0.08em; text-align: center; user-select: all; -webkit-user-select: all; }
+.account .code { padding: 16px; border-radius: var(--r-tile); color: #fff; border: 1px solid color-mix(in srgb, var(--ruby) 55%, black); background: linear-gradient(180deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.28)), var(--surface); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.1); font-family: var(--font-mono); font-size: 17px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; text-align: center; user-select: all; -webkit-user-select: all; }
 
 /* VALORANT's darker brand red (the bright one is #ff4655): the ruby every action and the HUD use. */
 :root { --ruby: #bd3944; }
@@ -705,3 +718,5 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .mhero p { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; }
 .mhero[style]::before { content: ''; position: absolute; z-index: -1; pointer-events: none; left: 50%; top: 40%; width: min(460px, 100%); height: 220px; translate: -50% -50%; background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--event) 30%, transparent), transparent 72%); filter: blur(18px); }
 @media (max-width: 420px) { .mhero img { height: 92px; } .mhero p { font-size: 26px; } }
+.gate { width: min(100%, 360px); text-align: left; }
+.gate-title { width: min(240px, 64vw); margin-bottom: 20px; }

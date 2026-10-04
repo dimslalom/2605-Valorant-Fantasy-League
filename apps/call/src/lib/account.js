@@ -10,14 +10,16 @@ async function api(method, path, body) {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
+  }).catch(() => null);
+  const data = await res?.json().catch(() => null);
+  if (!data) throw Object.assign(new Error("Can't reach the OpVAL server. Check your connection and try again."), { status: 0 });
   if (!res.ok) throw Object.assign(new Error(data.error ?? 'Something went wrong. Try again.'), { status: res.status, data });
   return data;
 }
 
 export function useAccount({ state, setSaved }) {
   const [user, setUser] = useState(null);
+  const [checked, setChecked] = useState(false); // has the first /me answered (or failed)?
   const [syncedFor, setSyncedFor] = useState(null); // username whose server save has been adopted
   const [notice, setNotice] = useState('');
   const [recoveryCode, setRecoveryCode] = useState(null); // shown once, until the player confirms they saved it
@@ -26,7 +28,7 @@ export function useAccount({ state, setSaved }) {
   const version = useRef(0); // its version
 
   useEffect(() => {
-    api('GET', '/api/auth/me').then(d => setUser(d.user), () => {});
+    api('GET', '/api/auth/me').then(d => setUser(d.user), () => {}).finally(() => setChecked(true));
   }, []);
 
   const adopt = useCallback(remote => {
@@ -78,7 +80,7 @@ export function useAccount({ state, setSaved }) {
   }, []);
 
   return {
-    user, notice, clearNotice: () => setNotice(''),
+    user, checked, notice, clearNotice: () => setNotice(''),
     recoveryCode, ackRecoveryCode: () => setRecoveryCode(null),
     signup: enter('/api/auth/signup'),
     login: enter('/api/auth/login'),

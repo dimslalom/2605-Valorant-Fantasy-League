@@ -14,8 +14,13 @@ export default defineConfig({
   server: {
     port: 5174,
     fs: { allow: [here('../..')] },
-    // In dev, read the live feed (GET only) so the app has real data without a local Worker.
-    proxy: { '/api/feed': { target: 'https://vctfantasy.dimas.works', changeOrigin: true } },
+    proxy: {
+      // In dev, read the live feed (GET only) so the app has real data.
+      '/api/feed': { target: 'https://vctfantasy.dimas.works', changeOrigin: true },
+      // Accounts and saves run on a local Worker with a local database: `npm run call:api`.
+      '/api/auth': 'http://localhost:8787',
+      '/api/save': 'http://localhost:8787',
+    },
   },
   build: {
     outDir: here('dist'),

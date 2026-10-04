@@ -12,6 +12,12 @@
       "autoPort": true
     },
     {
+      "name": "call-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "call:api"],
+      "port": 8787
+    },
+    {
       "name": "call-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

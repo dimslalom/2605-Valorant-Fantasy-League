@@ -46,8 +46,10 @@ function newRecoveryCode() {
 }
 const normalizeCode = code => (typeof code === 'string' ? code.toUpperCase().replace(/[^A-Z0-9]/g, '') : '');
 
-function sessionCookie(token, maxAge) {
-  return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+// Secure only over https: browsers refuse Secure cookies on plain-http localhost, which breaks `wrangler dev`.
+function sessionCookie(request, token, maxAge) {
+  const secure = new URL(request.url).protocol === 'https:' ? ' Secure;' : '';
+  return `${COOKIE}=${token}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${maxAge}`;
 }
 
 // Fixed-window counter in D1. Returns true once `key` has been hit more than `max` times in the window.
@@ -115,7 +117,7 @@ async function signup(request, env) {
     return reply({ error: 'That username is taken.' }, 409);
   }
   const token = await startSession(env, id);
-  return reply({ user: { username }, recoveryCode }, 201, { 'Set-Cookie': sessionCookie(token, SESSION_SECS) });
+  return reply({ user: { username }, recoveryCode }, 201, { 'Set-Cookie': sessionCookie(request, token, SESSION_SECS) });
 }
 
 async function login(request, env) {
@@ -125,13 +127,13 @@ async function login(request, env) {
   const ok = await checkPassword(password.slice(0, 128), row?.pw_hash ?? DUMMY);
   if (!row || !ok) return reply({ error: 'Wrong username or password.' }, 401);
   const token = await startSession(env, row.id);
-  return reply({ user: { username } }, 200, { 'Set-Cookie': sessionCookie(token, SESSION_SECS) });
+  return reply({ user: { username } }, 200, { 'Set-Cookie': sessionCookie(request, token, SESSION_SECS) });
 }
 
 async function logout(request, env) {
   const token = cookieToken(request);
   if (token) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await tokenHash(token)).run();
-  return reply({ ok: true }, 200, { 'Set-Cookie': sessionCookie('', 0) });
+  return reply({ ok: true }, 200, { 'Set-Cookie': sessionCookie(request, '', 0) });
 }
 
 // Signed in and knows the password: replace the recovery code (for accounts without one, or a lost one).
@@ -164,7 +166,7 @@ async function reset(request, env) {
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(row.id),
   ]);
   const session = await startSession(env, row.id);
-  return reply({ user: { username }, recoveryCode }, 200, { 'Set-Cookie': sessionCookie(session, SESSION_SECS) });
+  return reply({ user: { username }, recoveryCode }, 200, { 'Set-Cookie': sessionCookie(request, session, SESSION_SECS) });
 }
 
 async function getSave(user, env) {

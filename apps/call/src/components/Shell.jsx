@@ -7,7 +7,7 @@ import Sheet from './Sheet';
 
 // The game frame, laid out like NYT Games: a title screen first, then one task per screen
 // under one ruby glass HUD (menu, the two screens, score, credits, help). Everything that is not
-// playing (rules, legal, data credit, reset) lives behind the menu.
+// playing (rules, legal, data credit, account) lives behind the menu.
 
 const Icon = ({ d, size = 22 }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" aria-hidden="true"><path d={d} /></svg>
@@ -21,7 +21,7 @@ const ICONS = {
   legal: 'M6 3h9l3 3v15H6zM9 11h6M9 15h6',
   link: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-7 8-7s8 3 8 7',
-  reset: 'M4 12a8 8 0 1 0 2.3-5.7M4 3v4h4',
+  out: 'M10 4H4v16h6M16 8l4 4-4 4M20 12H9',
 };
 
 const TABS = [
@@ -60,13 +60,21 @@ function Stats() {
   );
 }
 
+// The title of a signed-out screen, with an optional line under it that belongs to the title.
+const Head = ({ title, children }) => (
+  <header className="account-head">
+    <h2>{title}</h2>
+    {children && <p>{children}</p>}
+  </header>
+);
+
 function RecoveryCode({ code, onDone }) {
   const { account } = useGame();
   const [copied, setCopied] = useState(false);
   const copy = () => navigator.clipboard?.writeText(code).then(() => setCopied(true), () => {});
   return (
     <div className="account">
-      <p className="note">This is your recovery code. If you forget your password, it is the <strong>only</strong> way back into your account. Save it somewhere safe. It is shown once.</p>
+      <Head title="Save your recovery code">If you forget your password, this is the <strong>only</strong> way back into your account. It is shown once.</Head>
       <p className="code" aria-label="Recovery code">{code}</p>
       <button className="secondary" onClick={copy}>{copied ? 'Copied' : 'Copy code'}</button>
       <button className="primary" onClick={() => { account.ackRecoveryCode(); onDone(); }}>I saved it</button>
@@ -111,7 +119,7 @@ function AccountForm({ onDone }) {
   if (mode === 'forgot') {
     return (
       <form className="account" onSubmit={run(async f => { await reset({ username: f.username, code: f.code, password: f.password }); })}>
-        <p className="note">Enter your username, the recovery code you saved at signup, and a new password.</p>
+        <Head title="Reset password">Enter your username, the recovery code you saved at signup, and a new password.</Head>
         <label>Username<input name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" required maxLength={20} /></label>
         <label>Recovery code<input name="code" autoComplete="off" autoCapitalize="characters" spellCheck="false" required maxLength={24} placeholder="XXXX-XXXX-XXXX-XXXX" /></label>
         <label>New password<input name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={128} /></label>
@@ -125,7 +133,7 @@ function AccountForm({ onDone }) {
   const signingUp = mode === 'signup';
   return (
     <form className="account" onSubmit={run(async f => { await (signingUp ? signup : login)({ username: f.username, password: f.password }); if (!signingUp) onDone(); })}>
-      <p className="note">{signingUp ? 'Create an account to keep your game across devices. Your current progress comes with you.' : 'Sign in to load your saved game.'}</p>
+      <Head title={signingUp ? 'Create account' : 'Sign in'} />
       <label>Username<input name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]+" /></label>
       <label>Password<input name="password" type="password" autoComplete={signingUp ? 'new-password' : 'current-password'} required minLength={signingUp ? 8 : 1} maxLength={128} /></label>
       {error}
@@ -133,6 +141,17 @@ function AccountForm({ onDone }) {
       <button type="button" className="ghost" onClick={() => go(signingUp ? 'login' : 'signup')}>{signingUp ? 'Have an account? Sign in' : 'New here? Create an account'}</button>
       {!signingUp && <button type="button" className="ghost" onClick={() => go('forgot')}>Forgot password?</button>}
     </form>
+  );
+}
+
+// Nothing in the game works without an account, so signed-out visitors get this instead of the app.
+function Gate() {
+  return (
+    <div className="splash">
+      <h1 className="splash-title gate-title"><img src="/opval-logo.svg" alt="OpVAL" /></h1>
+      <div className="gate"><AccountForm onDone={() => {}} /></div>
+      <Link className="ghost" to="/legal">Legal</Link>
+    </div>
   );
 }
 
@@ -150,7 +169,7 @@ function Splash({ onPlay, onHelp }) {
 
 export default function Shell() {
   const { pathname } = useLocation();
-  const { state, score, resetProgress, devCredits, account } = useGame();
+  const { state, score, devCredits, account } = useGame();
   const [splash, setSplash] = useState(() => !store('session', 'opval-played'));
   const [sheet, setSheet] = useState(null); // 'menu' | 'help' | 'stats' | 'account'
 
@@ -163,9 +182,10 @@ export default function Shell() {
     if (!store('local', 'opval-rules-seen')) { store('local', 'opval-rules-seen', '1'); setSheet('help'); }
   };
   const close = () => setSheet(null);
-  const reset = () => {
-    if (window.confirm(account.user ? 'Start over? Your cards, calls and points are wiped, including the copy saved to your account.' : 'Start over? Your cards, calls and points on this device are wiped.')) { resetProgress(); close(); }
-  };
+
+  const locked = pathname !== '/legal' && (!account.user || account.recoveryCode);
+  if (!account.checked) return <div className="shell"><p className="loading">Loading</p></div>;
+  if (locked) return <div className="shell"><Gate /></div>;
 
   return (
     <div className="shell">
@@ -199,17 +219,17 @@ export default function Shell() {
       {account.notice && <button className="toast" role="status" onClick={account.clearNotice}>{account.notice}</button>}
       <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left">
         <nav className="menu">
-          <button onClick={() => setSheet('account')}><Icon d={ICONS.user} />{account.user ? account.user.username : 'Sign in'}</button>
+          <button onClick={() => setSheet('account')}><Icon d={ICONS.user} />Account</button>
           <button onClick={() => setSheet('help')}><Icon d={ICONS.help} />How to play</button>
           <button onClick={() => setSheet('stats')}><Icon d={ICONS.stats} />Statistics</button>
           <Link to="/legal" onClick={close}><Icon d={ICONS.legal} />Legal</Link>
           <a href="https://www.vlr.gg" target="_blank" rel="noreferrer"><Icon d={ICONS.link} />Match data: vlr.gg</a>
           {import.meta.env.DEV && <button onClick={() => { devCredits(1000); close(); }}><Icon d={ICONS.stats} />Dev: +1000 credits</button>}
-          <button className="danger" onClick={reset}><Icon d={ICONS.reset} />Reset progress</button>
+          <button className="danger" onClick={async () => { await account.logout(); close(); }}><Icon d={ICONS.out} />Sign out</button>
         </nav>
         <p className="menu-foot">Free fan game. No betting and no real money. Not endorsed by Riot Games.</p>
       </Sheet>
-      <Sheet open={sheet === 'account'} onClose={close} title={account.recoveryCode ? 'Recovery code' : account.user ? 'Account' : 'Sign in'}><AccountForm onDone={close} /></Sheet>
+      <Sheet open={sheet === 'account'} onClose={close} title="Account"><AccountForm onDone={close} /></Sheet>
       <Sheet open={sheet === 'help'} onClose={close} title="How to play" size="guide"><HowTo onDone={close} /></Sheet>
       <Sheet open={sheet === 'stats'} onClose={close} title="Statistics"><Stats /></Sheet>
     </div>

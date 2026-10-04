@@ -91,7 +91,7 @@ export default function Today() {
         <span><strong>{openMatches.length}</strong> open</span>
         <span><strong>{callsMade}</strong> called</span>
         {live.length > 0 && <span><strong>{live.length}</strong> live</span>}
-        {nextOpenDay && nextOpenDay !== current && <button className="link" onClick={() => setDay(nextOpenDay)}>Next open →</button>}
+        {nextOpenDay && nextOpenDay !== current && <button type="button" className="secondary next-open" onClick={() => setDay(nextOpenDay)}>Next open</button>}
       </div>}
       <div className="day-switch">
         <button aria-label="Previous day with matches" disabled={!prev} onClick={() => setDay(prev)}>&larr;</button>

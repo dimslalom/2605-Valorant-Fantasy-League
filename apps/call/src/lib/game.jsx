@@ -57,7 +57,16 @@ export function GameProvider({ children }) {
   const starter = useMemo(() => (ready && pool.length >= 10 ? createCollection({ seed, pool }) : null), [ready, pool, seed]);
   const state = saved ?? starter;
 
-  const account = useAccount({ state, setSaved });
+  const accountHook = useAccount({ state, setSaved });
+  // Signing out also clears this device's copy, so the next account here starts fresh instead of inheriting it.
+  const account = useMemo(() => ({
+    ...accountHook,
+    logout: async () => {
+      await accountHook.logout();
+      try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ }
+      setSaved(null);
+    },
+  }), [accountHook]);
 
   useEffect(() => {
     if (!state) return;
@@ -86,7 +95,6 @@ export function GameProvider({ children }) {
     reveal: series => run(s => resolveSeries(s, series, { teamOf })),
     // Dev server only (stripped from production builds): credits to test packs and storage.
     ...(import.meta.env.DEV && { devCredits: n => run(s => ({ ...s, credits: s.credits + n })) }),
-    resetProgress: () => { try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ } setSaved(null); },
   }), [run, pool, teamOf, tierOf]);
 
   const value = useMemo(() => ({
