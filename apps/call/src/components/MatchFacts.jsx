@@ -11,7 +11,9 @@ function Start({ match, now, live }) {
   return (
     <>
       <time className="fact-time" dateTime={new Date(match.startsAt * 1000).toISOString()}>{timeOf(match.startsAt)}</time>
-      {live ? <span className="live">{match.status === 'live' ? 'Live' : 'Starting'}</span> : <small>{match.status === 'final' ? 'Final' : untilOf(match.startsAt, now)}</small>}
+      {/* A live match is already marked by its LIVE section and ruby glass, so it needs no tag;
+          one past its start time that the feed has not marked live yet says so in plain text. */}
+      {match.status === 'live' ? null : <small>{live ? 'Starting' : match.status === 'final' ? 'Final' : untilOf(match.startsAt, now)}</small>}
     </>
   );
 }

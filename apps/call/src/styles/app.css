@@ -22,7 +22,6 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .link { background: none; border: 0; color: var(--ink); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
 
 .match { background: var(--surface); margin-bottom: 10px; position: relative; }
-.live { background: var(--accent); color: var(--accent-ink); font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; font-weight: 700; padding: 2px 8px; }
 .when { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; color: var(--muted); }
 .teams { padding: 6px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
 .team { display: grid; grid-template-columns: 36px auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
@@ -476,7 +475,6 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .fact-start { display: flex; align-items: baseline; gap: 8px; }
 .fact-time { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1; font-variant-numeric: tabular-nums; }
 .fact-start small { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.08em; color: var(--muted); }
-.fact-start .live { align-self: center; }
 .strip-stage { margin-left: auto; min-width: 0; color: var(--muted); font-size: var(--fs-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fact-format { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.1em; }
 .strip .fact-format { }
@@ -591,7 +589,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
    1px border (transparent until picked), so picking never shifts content by a pixel. */
 :root { --r-tile: 10px; --r-sheet: 14px; }
 .match, .analyst-team, .outcome, .analyst-player, .analyst-comparison { border-radius: var(--r-tile); }
-.primary, .secondary, .chip, .live, .tracked-tag, .swap-cost { border-radius: 999px; }
+.primary, .secondary, .chip, .tracked-tag, .swap-cost { border-radius: 999px; }
 .icon, .day-switch button { border-radius: 50%; }
 .sheet { border-radius: var(--r-sheet); }
 .sheet[data-side='left'] { border-radius: 0 var(--r-sheet) var(--r-sheet) 0; }
@@ -780,10 +778,9 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 }
 
 /* A live match is ruby glass, the same material as the HUD, so it reads as "happening now" at a
-   glance. Muted text inside goes to light ink, and the Live tag inverts so it stays visible. */
+   glance. Muted text inside goes to light ink. */
 .match[data-status='live'] { --glass: var(--ruby); --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.4); }
 .match[data-status='live'] :is(.team .name, .strip-stage, .fact-start small, .callsum-score, .callsum-star small, .locked small, .callsum-none, .callbtn-go) { color: rgba(255, 255, 255, 0.78); }
-.match[data-status='live'] .live { background: #ffffff; color: var(--ruby); }
 .match[data-status='live'] :is(.callbtn, .locked) { background: rgba(0, 0, 0, 0.2); }
 /* Red team logos (T1, KC...) vanish on ruby: a dark backing tile keeps every logo legible. */
 .match[data-status='live'] .team .logo { box-sizing: border-box; padding: 4px; border-radius: 8px; background: rgba(0, 0, 0, 0.28); }
