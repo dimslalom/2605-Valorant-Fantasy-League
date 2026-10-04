@@ -678,8 +678,9 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
   margin: calc(8px + var(--safe-t)) auto calc(8px + var(--safe-b)) 8px;
   height: calc(100dvh - 16px - var(--safe-t) - var(--safe-b)); max-height: none; width: min(320px, calc(100vw - 48px));
   padding: 6px; border: 1px solid var(--line-bracket); border-radius: var(--r-sheet); background: var(--bg);
-  display: flex; flex-direction: column;
 }
+/* Only while open: a display value on a closed <dialog> overrides the browser's display: none. */
+.sheet.sheet[data-side='left'][open] { display: flex; flex-direction: column; }
 .sheet[data-side='left'] .sheet-head { --glass: var(--ruby); --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.4); position: relative; min-height: 64px; padding: 10px 8px 10px 18px; border-radius: 10px; }
 .sheet[data-side='left'] .menu-brand { width: 116px; }
 .sheet[data-side='left'] .sheet-head .icon { color: #fff; }
