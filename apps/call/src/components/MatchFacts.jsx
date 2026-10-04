@@ -4,16 +4,7 @@ import { timeOf, untilOf } from '../lib/time';
 
 // Each fact about a match gets its own slot and its own type, never one run-on string:
 // the start time is the headline, stage reads as a place in the event, and the format is
-// drawn as map pips (filled = maps needed to win).
-
-function Pips({ bestOf }) {
-  const need = Math.ceil(bestOf / 2);
-  return (
-    <span className="pips" aria-label={`Best of ${bestOf}, first to ${need}`}>
-      {Array.from({ length: bestOf }, (_, k) => <i key={k} data-need={k < need} />)}
-    </span>
-  );
-}
+// shown once, as "Bo3".
 
 function Start({ match, now, live }) {
   if (!match.startsAt) return null;
@@ -32,7 +23,7 @@ export function MatchHead({ match, now, live }) {
     <div className="mhead">
       <span className="fact-start"><Start match={match} now={now} live={live} /></span>
       <span className="mhead-title" aria-hidden="true">Call sheet</span>
-      {match.bestOf && <span className="fact-format">Bo{match.bestOf}<Pips bestOf={match.bestOf} /></span>}
+      {match.bestOf && <span className="fact-format">Bo{match.bestOf}</span>}
     </div>
   );
 }
@@ -55,7 +46,7 @@ export function MatchStrip({ match, eventLabel, now, live }) {
     <div className="strip">
       <span className="fact-start"><Start match={match} now={now} live={live} /></span>
       <span className="strip-stage">{match.stage ?? eventLabel}</span>
-      {match.bestOf && <span className="fact-format">Bo{match.bestOf}<Pips bestOf={match.bestOf} /></span>}
+      {match.bestOf && <span className="fact-format">Bo{match.bestOf}</span>}
     </div>
   );
 }
