@@ -29,7 +29,32 @@ function secure(response) {
   return out;
 }
 
+// The feed job (vlr.gg scraper) runs in GitHub Actions, but GitHub's own schedule is best-effort
+// and often skips hours. Cloudflare cron fires on time, so this starts that workflow every 15
+// minutes. Needs a GITHUB_DISPATCH_TOKEN secret (fine-grained, Actions: write on this repo);
+// without it the cron does nothing. The workflow's concurrency group queues overlapping runs.
+const FEED_WORKFLOW = 'https://api.github.com/repos/dimslalom/2605-Valorant-Fantasy-League/actions/workflows/feed.yml/dispatches';
+export async function dispatchFeed(env, fetchImpl = fetch) {
+  if (!env.GITHUB_DISPATCH_TOKEN) return 'skipped: no token';
+  const res = await fetchImpl(FEED_WORKFLOW, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.GITHUB_DISPATCH_TOKEN}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'opval-feed-cron',
+    },
+    body: JSON.stringify({ ref: 'main' }),
+  });
+  if (!res.ok) console.error(`feed dispatch failed: ${res.status} ${await res.text()}`);
+  return res.status;
+}
+
 export default {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(dispatchFeed(env));
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
 

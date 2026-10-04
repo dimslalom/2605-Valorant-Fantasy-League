@@ -29,5 +29,8 @@
     }
   ],
 
-  "vars": { "FEED_STALE_MINUTES": "120", "FEED_ATTRIBUTION": "Data: vlr.gg" }
+  "vars": { "FEED_STALE_MINUTES": "120", "FEED_ATTRIBUTION": "Data: vlr.gg" },
+
+  // Starts the GitHub feed workflow on time (see dispatchFeed in worker/index.js).
+  "triggers": { "crons": ["*/15 * * * *"] }
 }
