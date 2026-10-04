@@ -29,6 +29,7 @@
     "@rive-app/react-canvas": "4.36.0",
     "@rive-app/react-webgl2": "4.36.0",
     "@rive-app/webgl2": "2.44.0",
+    "@tabler/icons-react": "^3.48.0",
     "animejs": "^4.5.0",
     "flag-icons": "^7.5.0",
     "motion": "^12.43.0",

@@ -22,6 +22,7 @@ export const ECONOMY = {
   swapBase: 50,
   swapByTier: { bronze: 0, silver: 50, gold: 150, icon: 300 },
   duplicateRefund: 100,
+  freeStarterPacks: 2,
   starterCards: 10,
 };
 

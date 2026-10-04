@@ -19,8 +19,7 @@ export default function Collection() {
   const [opened, setOpened] = useState(null);         // cards from the last pack
   const wide = useWide();
 
-  if (!ready) return <section><h1>Cards</h1><p className="note">Dealing your starter cards</p></section>;
-  // Loaded, but too few players with cards to deal a starter hand (the player feed is down).
+  if (!ready) return <section><h1>Cards</h1><p className="note">Loading cards</p></section>;
   if (!state) return <section><h1>Cards</h1><p className="note" role="alert">Cards are unavailable right now. Try again in a few minutes.</p></section>;
 
   const trackedSet = new Set(state.tracked);
@@ -41,7 +40,8 @@ export default function Collection() {
   // so every card stays big enough to tap.
   const hand = state.tracked.filter(cardOf).sort((x, y) => cardOf(y).rating - cardOf(x).rating);
   const rows = wide ? [hand] : [hand.slice(0, 5), hand.slice(5)];
-  const rating = hand.length ? Math.round(hand.reduce((t, pid) => t + cardOf(pid).rating, 0) / hand.length) : 0;
+  const rating = hand.length ? Math.round(hand.reduce((t, pid) => t + cardOf(pid).rating, 0) / hand.length) : '-';
+  const freePacks = state.freePacks ?? 0;
 
   return (
     <section>
@@ -59,11 +59,11 @@ export default function Collection() {
       <div className="shelf-head">
         <h2 className="section">Storage</h2>
         <div className="shelf-pack">
-          {state.credits < ECONOMY.packCost && <span>{ECONOMY.packCost - state.credits} more credits</span>}
-          <button className="primary" onClick={openPack} disabled={state.credits < ECONOMY.packCost}>Open pack {ECONOMY.packCost} CR</button>
+          {freePacks > 0 ? <span>{freePacks} free pack{freePacks === 1 ? '' : 's'} left</span> : state.credits < ECONOMY.packCost && <span>{ECONOMY.packCost - state.credits} more credits</span>}
+          <button className="primary" onClick={openPack} disabled={!freePacks && state.credits < ECONOMY.packCost}>{freePacks ? 'Open free pack' : `Open pack ${ECONOMY.packCost} CR`}</button>
         </div>
       </div>
-      {storage.length === 0 && <p className="note">Empty. Cards from packs land here.</p>}
+      {storage.length === 0 && <p className="note">{state.collection.length ? 'Extra cards from packs land here.' : 'Open your free packs to build your team.'}</p>}
       {TIERS.map(tier => {
         const shelf = storage.filter(pid => cardOf(pid)?.palette === tier).sort((x, y) => cardOf(y).rating - cardOf(x).rating);
         return shelf.length > 0 && (

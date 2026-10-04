@@ -11,7 +11,7 @@ import { GameContext } from './gameContext';
 // local to this browser unless you sign in, which mirrors the save to your account (account.js).
 
 const SAVE_KEY = 'opval-save';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 function load() {
   try {
@@ -52,9 +52,9 @@ export function GameProvider({ children }) {
   const teamOf = useCallback(pid => players[pid]?.team ?? null, [players]);
   const tierOf = useCallback(pid => players[pid]?.card?.palette ?? 'bronze', [players]);
 
-  // First visit: the starter collection is dealt as soon as the pool is known, derived (not set in
-  // an effect) from a seed fixed for this visit, then saved with everything else below.
-  const starter = useMemo(() => (ready && pool.length >= 10 ? createCollection({ seed, pool }) : null), [ready, pool, seed]);
+  // First visit: start with two free packs and no cards. The account's server save
+  // replaces this temporary local state as soon as sign-in completes.
+  const starter = useMemo(() => (ready ? createCollection({ seed }) : null), [ready, seed]);
   const state = saved ?? starter;
 
   const accountHook = useAccount({ state, setSaved });

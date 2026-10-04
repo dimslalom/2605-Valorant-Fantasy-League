@@ -55,7 +55,7 @@ export function useAccount({ state, setSaved }) {
     if (body === sent.current) return undefined;
     const t = setTimeout(() => {
       api('PUT', '/api/save', { state, version: version.current }).then(
-        d => { sent.current = body; version.current = d.version; },
+        d => { sent.current = body; version.current = d.version; window.dispatchEvent(new Event('opval-save-synced')); },
         e => {
           if (e.status !== 409) return;
           adopt(e.data);

@@ -12,6 +12,10 @@ import { synthMatches } from './fixtures/fantasySynth.js';
 const replay = () => buildReplay({ matches: synthMatches(1), cards });
 const poolOf = r => Object.values(r.players).filter(p => p.card).map(p => ({ pid: p.pid, tier: p.card.palette }));
 const teamOfFn = r => pid => r.players[pid].team;
+const withCards = (state, pool) => {
+  const hand = starterCollection(state.seed, pool);
+  return { ...state, collection: hand, tracked: hand, freePacks: 0, trackedLog: [{ t: 0, tracked: hand }] };
+};
 
 test('streak multiplier grows 10% per right call and caps at 1.5', () => {
   assert.equal(streakMultiplier(0), 1);
@@ -63,7 +67,16 @@ test('against the grain: hedging pays a little only when you are right', () => {
   assert.equal(res.lines.againstGrain, CALL.againstGrain);
 });
 
-test('starter collection: ten distinct cards with the intended tier mix, deterministic', () => {
+test('new accounts start with no cards and two free packs', () => {
+  const state = createCollection({ seed: 7, now: 100 });
+  assert.deepEqual(state.collection, []);
+  assert.deepEqual(state.tracked, []);
+  assert.equal(state.freePacks, 2);
+  assert.equal(state.credits, 0);
+  assert.deepEqual(state.trackedLog, [{ t: 0, tracked: [] }]);
+});
+
+test('legacy starter hand helper remains deterministic for replay fixtures', () => {
   const pool = poolOf(replay());
   const a = starterCollection(7, pool);
   assert.equal(new Set(a).size, ECONOMY.starterCards);
@@ -86,7 +99,7 @@ test('packs never repeat a card you own and refund when the pool runs dry', () =
 test('Tracked: at most ten, swaps need a card you own, the first swaps are free, then they cost credits', () => {
   const r = replay();
   const pool = poolOf(r);
-  let s = createCollection({ seed: 5, pool, now: 0 });
+  let s = withCards(createCollection({ seed: 5, now: 0 }), pool);
   assert.equal(s.tracked.length, TRACKED_MAX);
   const tierOf = pid => r.players[pid].card.palette;
   const outsider = pool.find(e => !s.collection.includes(e.pid)).pid;
@@ -106,21 +119,32 @@ test('Tracked: at most ten, swaps need a card you own, the first swaps are free,
   assert.equal(new Set(after.tracked).size, TRACKED_MAX);
 });
 
-test('buying a pack costs credits and adds five new cards', () => {
+test('two free packs fill the tracked hand, then packs cost credits', () => {
   const pool = poolOf(replay());
-  let s = createCollection({ seed: 2, pool, now: 0 });
+  let s = createCollection({ seed: 2, now: 0 });
+  const first = buyPack(s, pool, 100);
+  s = first.state;
+  assert.equal(s.credits, 0);
+  assert.equal(s.freePacks, 1);
+  assert.deepEqual(s.tracked, first.cards);
+  assert.deepEqual(trackedAt(s, 99), []);
+  assert.deepEqual(trackedAt(s, 100), first.cards);
+  const second = buyPack(s, pool, 200);
+  s = second.state;
+  assert.equal(s.freePacks, 0);
+  assert.equal(s.collection.length, ECONOMY.packSize * 2);
+  assert.equal(s.tracked.length, TRACKED_MAX);
+  assert.equal(new Set(s.collection).size, s.collection.length);
   assert.throws(() => buyPack(s, pool), /not enough credits/);
-  s = { ...s, credits: 800 };
-  const { state, cards: got } = buyPack(s, pool);
-  assert.equal(state.credits, 800 - ECONOMY.packCost);
-  assert.equal(state.collection.length, s.collection.length + got.length);
-  assert.equal(new Set(state.collection).size, state.collection.length);
+  const paid = buyPack({ ...s, credits: 800 }, pool, 300);
+  assert.equal(paid.state.credits, 800 - ECONOMY.packCost);
+  assert.equal(paid.state.tracked.length, TRACKED_MAX);
 });
 
 test('a full replay: calls and Tracked points both land, credits track points, skipped calls do not break a streak', () => {
   const r = replay();
   const pool = poolOf(r);
-  let s = createCollection({ seed: 9, pool, now: 0 });
+  let s = withCards(createCollection({ seed: 9, now: 0 }), pool);
   const teamOf = teamOfFn(r);
   let totalCredits = 0;
   for (const md of r.matchdays) {
@@ -143,7 +167,7 @@ test('a full replay: calls and Tracked points both land, credits track points, s
 test('Tracked scoring only counts the ten you track', () => {
   const r = replay();
   const pool = poolOf(r);
-  const s = createCollection({ seed: 4, pool, now: 0 });
+  const s = withCards(createCollection({ seed: 4, now: 0 }), pool);
   const md = r.matchdays[0];
   const out = resolveMatchday(s, md, { teamOf: teamOfFn(r) });
   for (const line of out.report.trackedLines) assert.ok(s.tracked.includes(line.pid));
@@ -154,7 +178,7 @@ test('Tracked scoring only counts the ten you track', () => {
 test('resolveSeries scores one match once: reveal is idempotent and pays credits', () => {
   const r = replay();
   const pool = poolOf(r);
-  let s = createCollection({ seed: 6, pool, now: 0 });
+  let s = withCards(createCollection({ seed: 6, now: 0 }), pool);
   const series = r.matchdays[0].matches[0];
   s = setCall(s, series.matchId, { winner: series.teams[0].tag });
   const first = resolveSeries(s, series, { teamOf: teamOfFn(r) });
@@ -170,7 +194,7 @@ test('a match scores the cards you were Tracking when it started, not the ones y
   const r = replay();
   const pool = poolOf(r);
   const tierOf = pid => r.players[pid].card.palette;
-  let s = createCollection({ seed: 3, pool, now: 0 });
+  let s = withCards(createCollection({ seed: 3, now: 0 }), pool);
   const series = r.matchdays[0].matches[0];
   const start = 1000;
   const startedSeries = { ...series, startsAt: start };

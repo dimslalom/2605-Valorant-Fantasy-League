@@ -20,6 +20,7 @@ export default defineConfig({
       // Accounts and saves run on a local Worker with a local database: `npm run call:api`.
       '/api/auth': 'http://localhost:8787',
       '/api/save': 'http://localhost:8787',
+      '/api/leaderboard': 'http://localhost:8787',
     },
   },
   build: {

@@ -1,6 +1,7 @@
 // Accounts for OpVAL: /api/auth/{signup,login,logout,me,recovery,reset} and /api/save.
 // Sessions are an HttpOnly cookie holding a random token; the DB keeps only its hash.
 // CSRF: SameSite=Lax plus a JSON-only body (a cross-site form cannot send one).
+import { createCollection } from '../../../src/engine/collect/game.js';
 
 const COOKIE = 'opval_session';
 const SESSION_SECS = 60 * 60 * 24 * 30;
@@ -170,8 +171,60 @@ async function reset(request, env) {
 }
 
 async function getSave(user, env) {
-  const row = await env.DB.prepare('SELECT state, version FROM saves WHERE user_id = ?').bind(user.id).first();
-  return reply(row ? { state: JSON.parse(row.state), version: row.version } : { state: null, version: 0 });
+  let row = await env.DB.prepare('SELECT state, version FROM saves WHERE user_id = ?').bind(user.id).first();
+  if (!row) {
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    const initial = createCollection({ seed, now: now() });
+    await env.DB.prepare('INSERT INTO saves (user_id, state, updated_at, version) VALUES (?, ?, ?, 1) ON CONFLICT(user_id) DO NOTHING')
+      .bind(user.id, JSON.stringify(initial), now()).run();
+    row = await env.DB.prepare('SELECT state, version FROM saves WHERE user_id = ?').bind(user.id).first();
+  }
+  return reply({ state: JSON.parse(row.state), version: row.version });
+}
+
+// Rank scored results, not credits: credits can be spent and should never lower a rank.
+// The column comes only from this allowlist. A zero-score account stays unranked until
+// it reveals a result, while the caller still gets its own score in the response.
+async function leaderboard(user, env, url) {
+  const columns = { overall: 'overall_points', calls: 'call_points', cards: 'card_points' };
+  const board = url.searchParams.get('board') ?? 'overall';
+  const column = columns[board];
+  if (!column) return reply({ error: 'Unknown leaderboard.' }, 400);
+
+  const { results } = await env.DB.prepare(`
+    WITH scores AS (
+      SELECT s.user_id, u.username,
+        COALESCE(SUM(CASE WHEN json_valid(h.value) THEN
+          CASE WHEN json_type(h.value, '$.callPoints') IN ('integer', 'real')
+            THEN MAX(0, CAST(json_extract(h.value, '$.callPoints') AS INTEGER)) ELSE 0 END
+          ELSE 0 END), 0) AS call_points,
+        COALESCE(SUM(CASE WHEN json_valid(h.value) THEN
+          CASE WHEN json_type(h.value, '$.trackedPoints') IN ('integer', 'real')
+            THEN MAX(0, CAST(json_extract(h.value, '$.trackedPoints') AS INTEGER)) ELSE 0 END
+          ELSE 0 END), 0) AS card_points
+      FROM saves s
+      JOIN users u ON u.id = s.user_id
+      LEFT JOIN json_each(s.state, '$.history') h ON TRUE
+      GROUP BY s.user_id
+    ), totals AS (
+      SELECT user_id, username, call_points, card_points,
+        call_points + card_points AS overall_points FROM scores
+    ), ranked AS (
+      SELECT user_id, username, ${column} AS points,
+        RANK() OVER (ORDER BY ${column} DESC) AS rank,
+        ROW_NUMBER() OVER (ORDER BY ${column} DESC, username ASC) AS position
+      FROM totals WHERE ${column} > 0
+    )
+    SELECT user_id, username, points, rank, position FROM ranked
+    WHERE position <= 50 OR user_id = ?
+    ORDER BY position
+  `).bind(user.id).all();
+  const me = results.find(row => row.user_id === user.id);
+  return reply({
+    board,
+    entries: results.filter(row => row.position <= 50).map(({ username, points, rank }) => ({ username, points, rank })),
+    me: { username: user.username, points: me?.points ?? 0, rank: me?.rank ?? null },
+  }, 200, { 'Cache-Control': 'private, no-store' });
 }
 
 // The client sends the version it last saw (0 = none yet). A write only lands if that is still
@@ -184,11 +237,12 @@ async function putSave(request, user, env) {
     return reply({ error: 'bad save' }, 400);
   }
   const state = JSON.stringify(body.state);
-  const res = body.version === 0
-    ? await env.DB.prepare('INSERT INTO saves (user_id, state, updated_at, version) VALUES (?, ?, ?, 1) ON CONFLICT(user_id) DO NOTHING')
-      .bind(user.id, state, now()).run()
-    : await env.DB.prepare('UPDATE saves SET state = ?, updated_at = ?, version = version + 1 WHERE user_id = ? AND version = ?')
-      .bind(state, now(), user.id, body.version).run();
+  if (body.version === 0) {
+    const current = await getSave(user, env);
+    return reply(await current.json(), 409);
+  }
+  const res = await env.DB.prepare('UPDATE saves SET state = ?, updated_at = ?, version = version + 1 WHERE user_id = ? AND version = ?')
+    .bind(state, now(), user.id, body.version).run();
   if (res.meta.changes === 1) return reply({ ok: true, version: body.version + 1 });
   const current = await getSave(user, env);
   return reply(await current.json(), 409);
@@ -211,6 +265,11 @@ export async function handleAccounts(request, env, url) {
   if (path === '/api/auth/me' && method === 'GET') {
     const user = await currentUser(request, env);
     return reply({ user: user ? { username: user.username } : null });
+  }
+
+  if (path === '/api/leaderboard' && method === 'GET') {
+    const user = await currentUser(request, env);
+    return user ? leaderboard(user, env, url) : reply({ error: 'not signed in' }, 401);
   }
 
   if (path === '/api/save' && (method === 'GET' || method === 'PUT')) {

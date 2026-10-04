@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import {
+  IconCalendarEvent,
+  IconCards,
+  IconChartBar,
+  IconExternalLink,
+  IconFileText,
+  IconHelp,
+  IconLogout,
+  IconMenu2,
+  IconTrophy,
+  IconUser,
+} from '@tabler/icons-react';
 import { useGame } from '../lib/gameContext';
 import { longDay, todayKey } from '../lib/time';
 import HowTo from './HowTo';
@@ -9,24 +21,27 @@ import Sheet from './Sheet';
 // under one ruby glass HUD (menu, the two screens, score, credits, help). Everything that is not
 // playing (rules, legal, data credit, account) lives behind the menu.
 
-const Icon = ({ d, size = 22 }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" aria-hidden="true"><path d={d} /></svg>
-);
 const ICONS = {
-  menu: 'M3 6h18M3 12h18M3 18h12',
-  help: 'M9.2 9a3 3 0 1 1 4.2 2.8c-.9.4-1.4 1.1-1.4 2.2M12 17.5v.5',
-  stats: 'M5 20V12M12 20V5M19 20v-9',
-  matches: 'M4 4h16v16H4zM4 9h16M9 4v5M15 4v5',
-  cards: 'M7 3h11v15H7zM4 7v14h11',
-  legal: 'M6 3h9l3 3v15H6zM9 11h6M9 15h6',
-  link: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
-  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-7 8-7s8 3 8 7',
-  out: 'M10 4H4v16h6M16 8l4 4-4 4M20 12H9',
+  menu: IconMenu2,
+  help: IconHelp,
+  stats: IconChartBar,
+  matches: IconCalendarEvent,
+  cards: IconCards,
+  ranks: IconTrophy,
+  legal: IconFileText,
+  link: IconExternalLink,
+  user: IconUser,
+  out: IconLogout,
+};
+const Icon = ({ name, size = 22 }) => {
+  const Component = ICONS[name];
+  return <Component size={size} stroke={2} aria-hidden="true" />;
 };
 
 const TABS = [
   { to: '/', label: 'Matches', icon: 'matches', end: true },
   { to: '/collection', label: 'Cards', icon: 'cards' },
+  { to: '/leaderboard', label: 'Ranks', icon: 'ranks' },
 ];
 
 const store = (kind, key, value) => {
@@ -192,12 +207,11 @@ export default function Shell() {
       {splash ? <Splash onPlay={play} onHelp={() => setSheet('help')} /> : (
         <>
           <header className="hud">
-            <button className="icon" aria-label="Menu" onClick={() => setSheet('menu')}><Icon d={ICONS.menu} /></button>
-            <span className="wordmark"><img src="/opval-logo.svg" alt="OpVAL" /></span>
+            <button className="icon" aria-label="Menu" onClick={() => setSheet('menu')}><Icon name="menu" /></button>
             <nav className="hud-tabs" aria-label="Screens">
               {TABS.map(t => (
                 <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `hud-tab${isActive ? ' on' : ''}`}>
-                  <Icon d={ICONS[t.icon]} size={18} />
+                  <Icon name={t.icon} size={18} />
                   <span>{t.label}</span>
                 </NavLink>
               ))}
@@ -209,7 +223,7 @@ export default function Shell() {
                   <span className="chip-cr"><b>{state.credits}</b> CR</span>
                 </button>
               )}
-              <button className="icon" aria-label="How to play" onClick={() => setSheet('help')}><Icon d={ICONS.help} /></button>
+              <button className="icon" aria-label="How to play" onClick={() => setSheet('help')}><Icon name="help" /></button>
             </div>
           </header>
           <main className="page"><Outlet /></main>
@@ -217,16 +231,18 @@ export default function Shell() {
       )}
 
       {account.notice && <button className="toast" role="status" onClick={account.clearNotice}>{account.notice}</button>}
-      <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left">
+      <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left" head={<img className="menu-brand" src="/opval-logo.svg" alt="OpVAL" />}>
         <nav className="menu">
-          <button onClick={() => setSheet('account')}><Icon d={ICONS.user} />Account</button>
-          <button onClick={() => setSheet('help')}><Icon d={ICONS.help} />How to play</button>
-          <button onClick={() => setSheet('stats')}><Icon d={ICONS.stats} />Statistics</button>
-          <Link to="/legal" onClick={close}><Icon d={ICONS.legal} />Legal</Link>
-          <a href="https://www.vlr.gg" target="_blank" rel="noreferrer"><Icon d={ICONS.link} />Match data: vlr.gg</a>
-          {import.meta.env.DEV && <button onClick={() => { devCredits(1000); close(); }}><Icon d={ICONS.stats} />Dev: +1000 credits</button>}
-          <button className="danger" onClick={async () => { await account.logout(); close(); }}><Icon d={ICONS.out} />Sign out</button>
+          <button onClick={() => setSheet('account')}><Icon name="user" />Account</button>
+          <button onClick={() => setSheet('help')}><Icon name="help" />How to play</button>
+          <button onClick={() => setSheet('stats')}><Icon name="stats" />Statistics</button>
+          {import.meta.env.DEV && <button onClick={() => { devCredits(1000); close(); }}><Icon name="stats" />Dev: +1000 credits</button>}
         </nav>
+        <nav className="menu menu-minor" aria-label="About">
+          <Link to="/legal" onClick={close}><Icon name="legal" />Legal</Link>
+          <a href="https://www.vlr.gg" target="_blank" rel="noreferrer"><Icon name="link" />Match data: vlr.gg</a>
+        </nav>
+        {account.user && <button className="secondary menu-out" onClick={async () => { await account.logout(); close(); }}>Sign out</button>}
         <p className="menu-foot">Free fan game. No betting and no real money. Not endorsed by Riot Games.</p>
       </Sheet>
       <Sheet open={sheet === 'account'} onClose={close} title="Account"><AccountForm onDone={close} /></Sheet>

@@ -36,7 +36,7 @@ export default function HowTo({ onDone }) {
     <section className="guide-row">
       <div className="guide-copy">
         <h3>Track your ten</h3>
-        <p>Only Tracked cards earn player points. Swap with Storage in Cards.</p>
+        <p>Open your two free packs to build a team. Only Tracked cards earn player points. Swap with Storage in Cards.</p>
       </div>
       <div className="guide-swap" role="img" aria-label={`Swap a player from Storage into your ${TRACKED_MAX} Tracked cards`}>
         <span><small>Tracked</small><Player card={virtyy} /></span>

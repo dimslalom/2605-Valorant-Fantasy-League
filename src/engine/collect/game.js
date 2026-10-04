@@ -1,6 +1,6 @@
 import { resolveCall } from './calls.js';
 import { ECONOMY, TRACKED_MAX } from './rules.js';
-import { openPack, starterCollection } from './packs.js';
+import { openPack } from './packs.js';
 import { scoreSeries } from '../shared/scoring.js';
 
 // One player's collection game. State is plain data (saved as JSON):
@@ -9,23 +9,24 @@ import { scoreSeries } from '../shared/scoring.js';
 //   history: one entry per resolved matchday
 // The feed (replay/live) is passed in, never stored.
 
-export function createCollection({ seed, pool, now = Math.floor(Date.now() / 1000) }) {
-  const collection = starterCollection(seed, pool);
+export function createCollection({ seed, now = Math.floor(Date.now() / 1000) }) {
+  const collection = [];
   return {
     v: 1,
     seed,
     createdAt: now,   // only matches that start after this score for you
     collection,
-    tracked: collection.slice(0, TRACKED_MAX),
+    tracked: [],
     credits: 0,
     streak: 0,
     packsOpened: 0,
+    freePacks: ECONOMY.freeStarterPacks,
     calls: {},
     history: [],
     freeSwaps: 3,
     // Which ten were Tracked when: a match scores the set that was Tracked when it STARTED,
     // so swapping after kick-off never changes a result already in motion.
-    trackedLog: [{ t: 0, tracked: collection.slice(0, TRACKED_MAX) }],
+    trackedLog: [{ t: 0, tracked: [] }],
     // Matches whose result you have revealed, with the report that scored them.
     revealed: {},
   };
@@ -58,15 +59,21 @@ export function swapTracked(state, outPid, inPid, tierOf, now = Math.floor(Date.
   };
 }
 
-export function buyPack(state, pool) {
-  if (state.credits < ECONOMY.packCost) throw new Error('not enough credits');
+export function buyPack(state, pool, now = Math.floor(Date.now() / 1000)) {
+  if (!pool.length) throw new Error('Cards are unavailable right now. Try again later.');
+  const free = (state.freePacks ?? 0) > 0;
+  if (!free && state.credits < ECONOMY.packCost) throw new Error('not enough credits');
   const { cards, refund } = openPack(state.seed, state.packsOpened, pool, state.collection);
+  const tracked = [...state.tracked, ...cards.slice(0, TRACKED_MAX - state.tracked.length)];
   return {
     state: {
       ...state,
       collection: [...state.collection, ...cards],
-      credits: state.credits - ECONOMY.packCost + refund,
+      tracked,
+      trackedLog: tracked.length === state.tracked.length ? state.trackedLog : [...state.trackedLog, { t: now, tracked }],
+      credits: state.credits - (free ? 0 : ECONOMY.packCost) + refund,
       packsOpened: state.packsOpened + 1,
+      freePacks: free ? state.freePacks - 1 : 0,
     },
     cards,
     refund,

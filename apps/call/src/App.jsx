@@ -6,6 +6,7 @@ import { GameProvider } from './lib/game';
 
 const Today = lazy(() => import('./pages/Today'));
 const Collection = lazy(() => import('./pages/Collection'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Legal = lazy(() => import('./pages/Legal'));
 
 // PlayerCard (shared with the old site) animates with the `m` namespace under a
@@ -23,6 +24,7 @@ export default function App() {
               <Route element={<Shell />}>
                 <Route index element={<Suspense fallback={<p className="loading">Loading</p>}><Today /></Suspense>} />
                 <Route path="collection" element={<Suspense fallback={<p className="loading">Loading</p>}><Collection /></Suspense>} />
+                <Route path="leaderboard" element={<Suspense fallback={<p className="loading">Loading</p>}><Leaderboard /></Suspense>} />
                 <Route path="legal" element={<Suspense fallback={<p className="loading">Loading</p>}><Legal /></Suspense>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
