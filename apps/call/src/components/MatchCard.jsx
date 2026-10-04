@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { fetchMatch } from '../lib/feed';
 import { useGame } from '../lib/gameContext';
 import { colorsFor, logoFor } from '../lib/orgs';
-import { timeOf } from '../lib/time';
 import CallPanel from './CallPanel';
+import { CallSummary, MatchHead, MatchHero, MatchStrip } from './MatchFacts';
 import Sheet from './Sheet';
 
 function TeamRow({ team, score, win, dim }) {
@@ -49,20 +49,9 @@ export default function MatchCard({ match, eventLabel, now }) {
     setFailed(true);
   };
 
-  const callLine = () => {
-    if (!myCall?.winner) return null;
-    const bits = [`Your call: ${myCall.winner}`];
-    if (myCall.score) bits.push(`${myCall.score[0]}-${myCall.score[1]}`);
-    if (myCall.star && players[myCall.star]) bits.push(`star ${players[myCall.star].handle}`);
-    return bits.join(', ');
-  };
-
   return (
     <article className="match" data-status={live ? 'live' : match.status}>
-      <div className="match-top">
-        <span className="match-context">{match.stage ?? eventLabel}{match.bestOf && <> <span aria-hidden="true">/</span> Bo{match.bestOf}</>}</span>
-        <span className="match-timing">{match.startsAt && <time className="when">{timeOf(match.startsAt)}</time>}{live && <span className="live">{match.status === 'live' ? 'Live' : 'Starting'}</span>}</span>
-      </div>
+      <MatchStrip match={match} eventLabel={eventLabel} now={now} live={live} />
 
       <div className="teams">
         <TeamRow team={a} score={report ? a.score : null} win={winnerIdx === 0} dim={winnerIdx === 1} />
@@ -72,14 +61,14 @@ export default function MatchCard({ match, eventLabel, now }) {
       {!started && state && (
         <div className="callwrap">
           <button className="callbtn" data-called={Boolean(myCall?.winner)} onClick={() => setOpen(true)}>
-            <span><strong>{myCall?.winner ? callLine().replace('Your call: ', '') : 'No call'}</strong></span>
-            <span className="callbtn-go">{myCall?.winner ? 'Edit' : 'Make call'} <span aria-hidden="true">→</span></span>
+            {myCall?.winner ? <CallSummary call={myCall} players={players} /> : <span className="callsum-none">No call yet</span>}
+            <span className="callbtn-go">{myCall?.winner ? 'Edit' : 'Make call'} <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></span>
           </button>
-          <Sheet open={open} onClose={() => setOpen(false)} title={`${a.tag} vs ${b.tag}`} size="full" pickedSide={pickedSide} style={{
+          <Sheet open={open} onClose={() => setOpen(false)} title={`${a.tag} vs ${b.tag}`} head={<MatchHead match={match} now={now} live={live} />} size="full" pickedSide={pickedSide} style={{
             '--team-left-1': leftColors[0], '--team-left-2': leftColors[1] ?? leftColors[0], '--team-left-3': leftColors[2] ?? leftColors[0],
             '--team-right-1': rightColors[0], '--team-right-2': rightColors[1] ?? rightColors[0], '--team-right-3': rightColors[2] ?? rightColors[0],
           }}>
-            <p className="sheet-meta"><span>{timeOf(match.startsAt)}</span>{match.bestOf && <span>Bo{match.bestOf}</span>}{match.stage && <span>{match.stage}</span>}</p>
+            <MatchHero match={match} eventLabel={eventLabel} />
             <CallPanel match={match} call={myCall} players={players} tracked={state.tracked} onChange={c => setCall(match.matchId, c)} />
             <div className="call-commit">
               {myCall?.winner && <span className="call-saved">Saved</span>}
@@ -89,7 +78,9 @@ export default function MatchCard({ match, eventLabel, now }) {
         </div>
       )}
 
-      {started && !done && <p className="locked">{callLine() ?? 'Calls closed. You made no call on this one.'}</p>}
+      {started && !done && (
+        <div className="locked"><small>Locked</small>{myCall?.winner ? <CallSummary call={myCall} players={players} /> : <span className="callsum-none">No call made</span>}</div>
+      )}
 
       {guarded && (
         <button className="reveal" onClick={doReveal} disabled={busy} aria-busy={busy}>
@@ -106,19 +97,19 @@ export default function MatchCard({ match, eventLabel, now }) {
           {report.preJoin && <p className="muted">Played before you joined, so it does not score.</p>}
           {!report.preJoin && (
             <>
-              <p className="result-line" data-ok={report.result?.winnerRight}>
-                {report.result
-                  ? (report.result.winnerRight ? `You called it: ${report.call.winner}. +${report.callPoints}` : `You called ${report.call.winner}. Not this time, +${report.callPoints}`)
-                  : 'You made no call on this one.'}
-              </p>
-              {report.result?.scoreRight && <p className="result-sub">Exact score, nice.</p>}
-              {report.result?.starRight && <p className="result-sub">You picked the star.</p>}
-              {report.trackedLines.length > 0 ? (
-                <ul className="tracked-lines">
-                  {report.trackedLines.map(l => <li key={l.pid}><span>{players[l.pid]?.handle ?? l.pid}</span><strong>{sign(l.total)}</strong></li>)}
+              {report.call ? (
+                <ul className="verdict">
+                  <li data-ok={report.result.winnerRight}><small>Winner</small><b>{report.call.winner}</b><em>{report.result.winnerRight ? 'Right' : 'Miss'}</em></li>
+                  {report.call.score && <li data-ok={report.result.scoreRight}><small>Score</small><b>{report.call.score[0]}-{report.call.score[1]}</b><em>{report.result.scoreRight ? 'Right' : 'Miss'}</em></li>}
+                  {report.call.star && <li data-ok={report.result.starRight}><small>Star</small><b>{players[report.call.star]?.handle ?? report.call.star}</b><em>{report.result.starRight ? 'Right' : 'Miss'}</em></li>}
                 </ul>
-              ) : <p className="muted">None of your Tracked players were in this one.</p>}
-              <p className="result-total">{sign(report.total)} points</p>
+              ) : <p className="muted">No call on this one.</p>}
+              <dl className="ledger">
+                {report.call && <div><dt>Your call</dt><dd>{sign(report.callPoints)}</dd></div>}
+                {report.trackedLines.map(l => <div key={l.pid}><dt>{players[l.pid]?.handle ?? l.pid}<small>Tracked</small></dt><dd>{sign(l.total)}</dd></div>)}
+                {!report.trackedLines.length && <div className="ledger-empty"><dt>None of your Tracked players played</dt><dd /></div>}
+                <div className="ledger-total"><dt>Total</dt><dd>{sign(report.total)}</dd></div>
+              </dl>
             </>
           )}
         </div>

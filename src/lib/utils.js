@@ -45,11 +45,14 @@ const PLACEHOLDER_PHOTO = '/assets/players/placeholder.png';
  * The real vlr.gg photo wins - a bare head cutout is not "a normal picture of
  * the player". The head is only a fallback for cards that have no photo, where
  * it beats showing nothing. Full kit compositing is PlayerPortrait's job; at
- * thumbnail size it isn't worth the extra layers.
+ * thumbnail size it isn't worth the extra layers, so the grey placeholder heads
+ * use their pre-composited grey-N-body.png (scripts/grey_bodies.py): head plus
+ * neutral jersey. The bare head asset is only a neck and a flat shoulder stub.
  */
 export function thumbnailSrc(card) {
   const hasPhoto = Boolean(card.photo) && card.photo !== PLACEHOLDER_PHOTO;
-  return hasPhoto ? card.photo : (card.head ?? null);
+  if (hasPhoto) return card.photo;
+  return card.head?.includes('/grey-') ? card.head.replace(/\.png$/, '-body.png') : (card.head ?? null);
 }
 
 export function assetPath(path) {

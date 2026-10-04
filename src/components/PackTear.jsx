@@ -12,8 +12,8 @@ import styles from './PackTear.module.css';
 // the pointer, and flies off along the direction you threw it.
 //
 // `interactive: false` (a CPU roll, another player's pack) plays the same tear on a timer.
-// Space/Enter tears it too. Reduced motion skips straight to torn. `front` (optional) replaces the
-// printed front art, so another app can brand the same pack.
+// Space/Enter tears it too. Reduced motion skips straight to torn. Callers can
+// supply their own front and strip art without changing the tear interaction.
 
 const ART_W = 595;
 const STRIP_H = 51;      // foil strip height in the 595x842 art
@@ -25,7 +25,14 @@ const TAP = 6;           // px of travel before a press counts as a pull
 const zig = (x, s) => [0, 1, 2, 3, 4, 5].map(k => [x + (k % 2 ? 3 : -2), (k / 5) * (s + 4)]);
 const poly = pts => `polygon(${pts.map(([x, y]) => `${x}px ${y}px`).join(',')})`;
 
-export default function PackTear({ interactive, onTorn, front }) {
+export default function PackTear({
+  interactive,
+  onTorn,
+  front,
+  frontSrc = '/assets/pack/Card-Front.png',
+  topSrc = '/assets/pack/Card-Top.png',
+  insideSrc = '/assets/pack/Card-Inside.png',
+}) {
   const wrapRef = useRef(null);
   const bodyRef = useRef(null);
   const restRef = useRef(null);
@@ -168,7 +175,7 @@ export default function PackTear({ interactive, onTorn, front }) {
     setTimeout(() => { if (flapRef.current) flapRef.current.style.transition = ''; }, 220);
   };
 
-  const top = assetPath('/assets/pack/Card-Top.png');
+  const top = assetPath(topSrc);
   return (
     <div
       ref={wrapRef}
@@ -185,8 +192,8 @@ export default function PackTear({ interactive, onTorn, front }) {
       onDragStart={e => e.preventDefault()}   // never let the browser drag the art as an image
     >
       <div ref={bodyRef} className={styles.packBody}>
-        <img className={styles.layerInside} src={assetPath('/assets/pack/Card-Inside.png')} alt="" draggable={false} />
-        {front ? <div className={styles.layerFront}>{front}</div> : <img className={styles.layerFront} src={assetPath('/assets/pack/Card-Front.png')} alt="" draggable={false} />}
+        {insideSrc ? <img className={styles.layerInside} src={assetPath(insideSrc)} alt="" draggable={false} /> : <div className={styles.layerInside} data-blank="true" />}
+        {front ? <div className={styles.layerFront}>{front}</div> : <img className={styles.layerFront} src={assetPath(frontSrc)} alt="" draggable={false} />}
         <div ref={restRef} className={styles.foil}><img src={top} alt="" draggable={false} /></div>
       </div>
       <div ref={flapRef} className={`${styles.foil} ${styles.flap}`}><img src={top} alt="" draggable={false} /></div>

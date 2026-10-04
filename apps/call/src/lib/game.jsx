@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import cards from '../../../../src/data/cards.json';
 import { buyPack, callRecord, createCollection, resolveSeries, setCall, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
 import { makeCardLookup } from '../../../../src/engine/shared/cardLookup';
+import { useAccount } from './account';
 import { fetchPlayers } from './feed';
 import { GameContext } from './gameContext';
 
 // The one place the game's state lives: your save (localStorage), the players the feed
 // knows (joined to the designed cards), and the actions that change them. Everything is
-// local to this browser for now; trading and the leaderboard need accounts later.
+// local to this browser unless you sign in, which mirrors the save to your account (account.js).
 
 const SAVE_KEY = 'opval-save';
 const SAVE_VERSION = 1;
@@ -56,6 +57,8 @@ export function GameProvider({ children }) {
   const starter = useMemo(() => (ready && pool.length >= 10 ? createCollection({ seed, pool }) : null), [ready, pool, seed]);
   const state = saved ?? starter;
 
+  const account = useAccount({ state, setSaved });
+
   useEffect(() => {
     if (!state) return;
     try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, state })); } catch { /* storage blocked: progress will not persist */ }
@@ -87,11 +90,11 @@ export function GameProvider({ children }) {
   }), [run, pool, teamOf, tierOf]);
 
   const value = useMemo(() => ({
-    ready, players, pool, state, error, teamOf, tierOf, swapFee,
+    ready, players, pool, state, error, teamOf, tierOf, swapFee, account,
     score: state ? totalScore(state) : 0,
     record: state ? callRecord(state) : { made: 0, right: 0 },
     ...actions,
-  }), [ready, players, pool, state, error, teamOf, tierOf, actions]);
+  }), [ready, players, pool, state, error, teamOf, tierOf, account, actions]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

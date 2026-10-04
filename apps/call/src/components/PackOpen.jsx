@@ -128,7 +128,7 @@ export default function PackOpen({ pids, cardOf, onDone }) {
 
         {phase === 'pack' && (
           <div className="pk-pack">
-            <PackTear interactive onTorn={() => { playUiSound('impact'); setPhase('stack'); }} front={<div className="pk-front"><span className="pk-front-mark" /><strong>OpVAL</strong><span>{order.length} cards</span></div>} />
+            <PackTear interactive onTorn={() => { playUiSound('impact'); setPhase('stack'); }} frontSrc="/assets/pack/OpVAL-Front.png" topSrc="/assets/pack/OpVAL-Top.png" insideSrc={null} />
           </div>
         )}
 

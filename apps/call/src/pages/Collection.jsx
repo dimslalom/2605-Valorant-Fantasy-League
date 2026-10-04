@@ -19,7 +19,9 @@ export default function Collection() {
   const [opened, setOpened] = useState(null);         // cards from the last pack
   const wide = useWide();
 
-  if (!ready || !state) return <section><h1>Cards</h1><p className="note">Dealing your starter cards</p></section>;
+  if (!ready) return <section><h1>Cards</h1><p className="note">Dealing your starter cards</p></section>;
+  // Loaded, but too few players with cards to deal a starter hand (the player feed is down).
+  if (!state) return <section><h1>Cards</h1><p className="note" role="alert">Cards are unavailable right now. Try again in a few minutes.</p></section>;
 
   const trackedSet = new Set(state.tracked);
   const storage = state.collection.filter(pid => !trackedSet.has(pid));
@@ -86,7 +88,12 @@ export default function Collection() {
         <div className="swapbar" role="status">
           {pickedOut != null && pickedIn != null ? (
             <>
-              <span>Swap <strong>{players[pickedOut].handle}</strong> out, <strong>{players[pickedIn].handle}</strong> in. {free ? 'Free swap.' : `Costs ${fee} credits.`}</span>
+              <span className="swap-plan">
+                <span className="swap-side"><small>Out</small><b>{players[pickedOut].handle}</b></span>
+                <span className="swap-arrow" aria-hidden="true" />
+                <span className="swap-side"><small>In</small><b>{players[pickedIn].handle}</b></span>
+                <span className="swap-cost" data-free={free}>{free ? 'Free' : `${fee} CR`}</span>
+              </span>
               <button className="primary" onClick={confirmSwap}>Confirm</button>
             </>
           ) : (

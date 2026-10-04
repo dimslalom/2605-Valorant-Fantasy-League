@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { CALL, ECONOMY, TRACKED_MAX } from '../../../../src/engine/collect/rules';
 import { useGame } from '../lib/gameContext';
 import { longDay, todayKey } from '../lib/time';
+import HowTo from './HowTo';
 import Sheet from './Sheet';
 
 // The game frame, laid out like NYT Games: a title screen first, then one task per screen
-// under a slim HUD (menu, score, credits, stats, help) and a two-button dock. Everything that
-// is not playing (rules, legal, data credit, reset) lives behind the menu.
+// under one ruby glass HUD (menu, the two screens, score, credits, help). Everything that is not
+// playing (rules, legal, data credit, reset) lives behind the menu.
 
 const Icon = ({ d, size = 22 }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" aria-hidden="true"><path d={d} /></svg>
@@ -20,10 +20,11 @@ const ICONS = {
   cards: 'M7 3h11v15H7zM4 7v14h11',
   legal: 'M6 3h9l3 3v15H6zM9 11h6M9 15h6',
   link: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
+  user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-7 8-7s8 3 8 7',
   reset: 'M4 12a8 8 0 1 0 2.3-5.7M4 3v4h4',
 };
 
-const DOCK = [
+const TABS = [
   { to: '/', label: 'Matches', icon: 'matches', end: true },
   { to: '/collection', label: 'Cards', icon: 'cards' },
 ];
@@ -36,18 +37,6 @@ const store = (kind, key, value) => {
   } catch { /* storage blocked: the title screen and rules just show again */ }
   return null;
 };
-
-function HowTo() {
-  return (
-    <ol className="howto">
-      <li><strong>Call it.</strong> Pick the winner of a real VCT series before it starts. +{CALL.winner} if you are right. Nail the exact score for +{CALL.exactScore}, the star player for +{CALL.star}.</li>
-      <li><strong>Track ten.</strong> Only your {TRACKED_MAX} Tracked cards score when they play. Swap them in Cards.</li>
-      <li><strong>Reveal.</strong> Finished matches stay hidden until you reveal them, so nothing gets spoiled.</li>
-      <li><strong>Open packs.</strong> Points become credits. {ECONOMY.packCost} credits opens a pack of {ECONOMY.packSize}.</li>
-      <li className="muted">A wrong call costs nothing. Right calls in a row build a streak bonus.</li>
-    </ol>
-  );
-}
 
 function Stats() {
   const { state, score, record } = useGame();
@@ -71,11 +60,86 @@ function Stats() {
   );
 }
 
+function RecoveryCode({ code, onDone }) {
+  const { account } = useGame();
+  const [copied, setCopied] = useState(false);
+  const copy = () => navigator.clipboard?.writeText(code).then(() => setCopied(true), () => {});
+  return (
+    <div className="account">
+      <p className="note">This is your recovery code. If you forget your password, it is the <strong>only</strong> way back into your account. Save it somewhere safe. It is shown once.</p>
+      <p className="code" aria-label="Recovery code">{code}</p>
+      <button className="secondary" onClick={copy}>{copied ? 'Copied' : 'Copy code'}</button>
+      <button className="primary" onClick={() => { account.ackRecoveryCode(); onDone(); }}>I saved it</button>
+    </div>
+  );
+}
+
+function AccountForm({ onDone }) {
+  const { account } = useGame();
+  const { user, login, signup, reset, newCode, logout } = account;
+  const [mode, setMode] = useState('login'); // login | signup | forgot
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  const run = fn => async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.currentTarget));
+    setBusy(true); setErr('');
+    try { await fn(f); } catch (x) { setErr(x.message); }
+    setBusy(false);
+  };
+  const go = m => { setMode(m); setErr(''); };
+  const error = err && <p className="form-error" role="alert">{err}</p>;
+
+  if (account.recoveryCode) return <RecoveryCode code={account.recoveryCode} onDone={onDone} />;
+
+  if (user) {
+    return (
+      <>
+        <p className="note">Signed in as <strong>{user.username}</strong>. Your cards, calls and points save to your account, so any device you sign in on picks up where you left off.</p>
+        <form className="account" onSubmit={run(f => newCode(f.password))}>
+          <p className="note">Lost your recovery code, or never got one? Make a new one. The old one stops working.</p>
+          <label>Password<input name="password" type="password" autoComplete="current-password" required maxLength={128} /></label>
+          {error}
+          <button className="secondary" disabled={busy}>New recovery code</button>
+        </form>
+        <button className="secondary" onClick={async () => { await logout(); onDone(); }}>Sign out</button>
+      </>
+    );
+  }
+
+  if (mode === 'forgot') {
+    return (
+      <form className="account" onSubmit={run(async f => { await reset({ username: f.username, code: f.code, password: f.password }); })}>
+        <p className="note">Enter your username, the recovery code you saved at signup, and a new password.</p>
+        <label>Username<input name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" required maxLength={20} /></label>
+        <label>Recovery code<input name="code" autoComplete="off" autoCapitalize="characters" spellCheck="false" required maxLength={24} placeholder="XXXX-XXXX-XXXX-XXXX" /></label>
+        <label>New password<input name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={128} /></label>
+        {error}
+        <button className="primary" disabled={busy}>Set new password</button>
+        <button type="button" className="ghost" onClick={() => go('login')}>Back to sign in</button>
+      </form>
+    );
+  }
+
+  const signingUp = mode === 'signup';
+  return (
+    <form className="account" onSubmit={run(async f => { await (signingUp ? signup : login)({ username: f.username, password: f.password }); if (!signingUp) onDone(); })}>
+      <p className="note">{signingUp ? 'Create an account to keep your game across devices. Your current progress comes with you.' : 'Sign in to load your saved game.'}</p>
+      <label>Username<input name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]+" /></label>
+      <label>Password<input name="password" type="password" autoComplete={signingUp ? 'new-password' : 'current-password'} required minLength={signingUp ? 8 : 1} maxLength={128} /></label>
+      {error}
+      <button className="primary" disabled={busy}>{signingUp ? 'Create account' : 'Sign in'}</button>
+      <button type="button" className="ghost" onClick={() => go(signingUp ? 'login' : 'signup')}>{signingUp ? 'Have an account? Sign in' : 'New here? Create an account'}</button>
+      {!signingUp && <button type="button" className="ghost" onClick={() => go('forgot')}>Forgot password?</button>}
+    </form>
+  );
+}
+
 function Splash({ onPlay, onHelp }) {
   return (
     <div className="splash">
-      <div className="splash-mark" aria-hidden="true" />
-      <h1 className="splash-title">OpVAL</h1>
+      <h1 className="splash-title"><img src="/opval-logo.svg" alt="OpVAL" /></h1>
       <p className="splash-tag">Pick who wins each VCT series, and score when the players you track play well.</p>
       <button className="primary big" onClick={onPlay}>Play</button>
       <button className="ghost" onClick={onHelp}>How to play</button>
@@ -86,9 +150,9 @@ function Splash({ onPlay, onHelp }) {
 
 export default function Shell() {
   const { pathname } = useLocation();
-  const { state, score, resetProgress, devCredits } = useGame();
+  const { state, score, resetProgress, devCredits, account } = useGame();
   const [splash, setSplash] = useState(() => !store('session', 'opval-played'));
-  const [sheet, setSheet] = useState(null); // 'menu' | 'help' | 'stats'
+  const [sheet, setSheet] = useState(null); // 'menu' | 'help' | 'stats' | 'account'
 
   // Every screen starts at the top, not wherever the last one was scrolled.
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
@@ -100,7 +164,7 @@ export default function Shell() {
   };
   const close = () => setSheet(null);
   const reset = () => {
-    if (window.confirm('Start over? Your cards, calls and points on this device are wiped.')) { resetProgress(); close(); }
+    if (window.confirm(account.user ? 'Start over? Your cards, calls and points are wiped, including the copy saved to your account.' : 'Start over? Your cards, calls and points on this device are wiped.')) { resetProgress(); close(); }
   };
 
   return (
@@ -109,7 +173,15 @@ export default function Shell() {
         <>
           <header className="hud">
             <button className="icon" aria-label="Menu" onClick={() => setSheet('menu')}><Icon d={ICONS.menu} /></button>
-            <span className="wordmark">OpVAL</span>
+            <span className="wordmark"><img src="/opval-logo.svg" alt="OpVAL" /></span>
+            <nav className="hud-tabs" aria-label="Screens">
+              {TABS.map(t => (
+                <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `hud-tab${isActive ? ' on' : ''}`}>
+                  <Icon d={ICONS[t.icon]} size={18} />
+                  <span>{t.label}</span>
+                </NavLink>
+              ))}
+            </nav>
             <div className="hud-right">
               {state && (
                 <button className="chip" aria-label={`${score} points, ${state.credits} credits. Open stats`} onClick={() => setSheet('stats')}>
@@ -121,19 +193,13 @@ export default function Shell() {
             </div>
           </header>
           <main className="page"><Outlet /></main>
-          <nav className="dock" aria-label="Screens">
-            {DOCK.map(t => (
-              <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `dock-btn${isActive ? ' on' : ''}`}>
-                <Icon d={ICONS[t.icon]} size={24} />
-                <span>{t.label}</span>
-              </NavLink>
-            ))}
-          </nav>
         </>
       )}
 
+      {account.notice && <button className="toast" role="status" onClick={account.clearNotice}>{account.notice}</button>}
       <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left">
         <nav className="menu">
+          <button onClick={() => setSheet('account')}><Icon d={ICONS.user} />{account.user ? account.user.username : 'Sign in'}</button>
           <button onClick={() => setSheet('help')}><Icon d={ICONS.help} />How to play</button>
           <button onClick={() => setSheet('stats')}><Icon d={ICONS.stats} />Statistics</button>
           <Link to="/legal" onClick={close}><Icon d={ICONS.legal} />Legal</Link>
@@ -143,7 +209,8 @@ export default function Shell() {
         </nav>
         <p className="menu-foot">Free fan game. No betting and no real money. Not endorsed by Riot Games.</p>
       </Sheet>
-      <Sheet open={sheet === 'help'} onClose={close} title="How to play"><HowTo /></Sheet>
+      <Sheet open={sheet === 'account'} onClose={close} title={account.recoveryCode ? 'Recovery code' : account.user ? 'Account' : 'Sign in'}><AccountForm onDone={close} /></Sheet>
+      <Sheet open={sheet === 'help'} onClose={close} title="How to play" size="guide"><HowTo onDone={close} /></Sheet>
       <Sheet open={sheet === 'stats'} onClose={close} title="Statistics"><Stats /></Sheet>
     </div>
   );

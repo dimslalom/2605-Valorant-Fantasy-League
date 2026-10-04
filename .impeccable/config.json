@@ -154,6 +154,36 @@
         ],
         "createdAt": "2026-09-11T02:41:58.134Z",
         "reason": "mobile step-down of the tacticMark glyph icon (not prose/label text); matches existing off-ramp icon glyphs in this codebase (.packBurst 80px, .replaceArrow 30px, .tacticBack b 48px) - the ramp governs typographic hierarchy, not decorative icon sizing"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c9ad6b",
+        "createdAt": "2026-10-04T04:03:03.663Z",
+        "reason": "VCT Champions Shanghai logo gold, sampled from the logo file; user asked for a gold glow behind it"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#9468f2",
+        "createdAt": "2026-10-04T04:03:03.740Z",
+        "reason": "Third-party VCT event brand colour sampled from its logo file (apps/call/src/lib/events.js), used only for the glow behind that event logo"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#f25a1a",
+        "createdAt": "2026-10-04T04:03:03.814Z",
+        "reason": "Third-party VCT event brand colour sampled from its logo file (apps/call/src/lib/events.js), used only for the glow behind that event logo"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#18d0d0",
+        "createdAt": "2026-10-04T04:03:03.895Z",
+        "reason": "Third-party VCT event brand colour sampled from its logo file (apps/call/src/lib/events.js), used only for the glow behind that event logo"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#e2385a",
+        "createdAt": "2026-10-04T04:03:03.976Z",
+        "reason": "Third-party VCT event brand colour sampled from its logo file (apps/call/src/lib/events.js), used only for the glow behind that event logo"
       }
     ]
   }

@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import { EVENTS, currentEvents } from '../lib/events';
 import MatchCard from '../components/MatchCard';
 import { fetchSchedule } from '../lib/feed';
 import { useGame } from '../lib/gameContext';
 import { dayKey, longDay, todayKey } from '../lib/time';
 
-// The events the feed tracks. Add Open Qualifiers and the 2027 events here as they appear.
-const EVENTS = [{ id: 2766, label: 'Champions' }];
+// An event's logo, or its name until the logo file exists.
+function EventLogo({ event }) {
+  const [ok, setOk] = useState(true);
+  return ok
+    ? <img className="event-logo" src={event.logo} alt={event.name} onError={() => setOk(false)} />
+    : <span className="event-name">{event.name}</span>;
+}
 
 export default function Today() {
   const { state } = useGame();
@@ -13,13 +19,14 @@ export default function Today() {
   const [feedFailed, setFeedFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [day, setDay] = useState(null);
+  const [eventId, setEventId] = useState(null);   // null = every event
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   useEffect(() => {
     let live = true;
     Promise.all(EVENTS.map(async ev => {
       const schedule = await fetchSchedule(ev.id);
-      return schedule?.map(m => ({ ...m, eventLabel: ev.label, eventId: ev.id })) ?? null;
+      return schedule?.map(m => ({ ...m, eventLabel: ev.name, eventId: ev.id })) ?? null;
     })).then(parts => {
       if (!live) return;
       setFeedFailed(parts.every(part => part === null));
@@ -36,9 +43,14 @@ export default function Today() {
     return () => clearInterval(t);
   }, []);
 
+  // Events with matches right now. One shows as a logo; several (Kickoff, Stages: one per
+  // league) become a selector that filters the schedule.
+  const running = currentEvents(EVENTS, matches ?? [], now);
+  // The glow behind the header follows the event on show: the only one running, or the picked one.
+  const glow = running.length === 1 ? running[0] : running.find(ev => ev.id === eventId);
   const visible = useMemo(
-    () => (matches ?? []).filter(m => m.startsAt),
-    [matches],
+    () => (matches ?? []).filter(m => m.startsAt && (eventId == null || m.eventId === eventId)),
+    [matches, eventId],
   );
   const days = useMemo(() => [...new Set(visible.map(m => dayKey(m.startsAt)))].sort(), [visible]);
 
@@ -61,8 +73,19 @@ export default function Today() {
 
   return (
     <section className="matches-page">
-      <header className="matches-intro">
-        <div><p className="matches-eyebrow">VCT Champions</p><h1>Matches</h1></div>
+      <header className="matches-intro" style={glow ? { '--event': glow.color } : undefined}>
+        <h1>Matches</h1>
+        {running.length === 1 && <EventLogo event={running[0]} />}
+        {running.length > 1 && (
+          <div className="event-pick" role="group" aria-label="Event">
+            <button aria-pressed={eventId == null} onClick={() => { setEventId(null); setDay(null); }}>All</button>
+            {running.map(ev => (
+              <button key={ev.id} aria-pressed={eventId === ev.id} aria-label={ev.name} onClick={() => { setEventId(ev.id); setDay(null); }}>
+                <EventLogo event={ev} />
+              </button>
+            ))}
+          </div>
+        )}
       </header>
       {matches != null && <div className="matches-overview" aria-label="Call status">
         <span><strong>{openMatches.length}</strong> open</span>

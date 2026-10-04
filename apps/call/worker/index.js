@@ -1,7 +1,8 @@
 import { handleFeed } from '../../../worker/feed/routes.js';
+import { handleAccounts } from './accounts.js';
 
-// OpVAL's Worker: a read-only window onto the shared feed database, plus the
-// leaderboard (added with the TABLE tab). Ingest stays on the old site's Worker, so
+// OpVAL's Worker: a read-only window onto the shared feed database, plus accounts
+// and cloud saves (accounts.js). Ingest stays on the old site's Worker, so
 // no secrets live here. Static files bypass this Worker entirely (see wrangler.jsonc).
 
 const CSP = [
@@ -34,7 +35,10 @@ export default {
 
     // Read-only feed. handleFeed also knows the ingest path, so only the public prefix is routed here.
     if (url.pathname.startsWith('/api/feed/')) return secure(await handleFeed(request, env, url));
-    if (url.pathname.startsWith('/api/')) return secure(Response.json({ error: 'not found' }, { status: 404 }));
+    if (url.pathname.startsWith('/api/')) {
+      const res = await handleAccounts(request, env, url);
+      return secure(res ?? Response.json({ error: 'not found' }, { status: 404 }));
+    }
 
     // HTML routes: the app shell for any client-side route.
     const wantsHtml = request.method === 'GET' && (request.headers.get('Accept') ?? '').includes('text/html');

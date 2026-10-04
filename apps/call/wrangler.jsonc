@@ -15,7 +15,7 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/*", "!/assets/*", "!/favicon.svg", "!/opval-icon.svg", "!/opval.webmanifest"],
+    "run_worker_first": ["/*", "!/assets/*", "!/favicon.svg", "!/opval-icon.svg", "!/opval-logo.svg", "!/opval.webmanifest"],
     "not_found_handling": "none"
   },
 

@@ -1,0 +1,221 @@
+// Accounts for OpVAL: /api/auth/{signup,login,logout,me,recovery,reset} and /api/save.
+// Sessions are an HttpOnly cookie holding a random token; the DB keeps only its hash.
+// CSRF: SameSite=Lax plus a JSON-only body (a cross-site form cannot send one).
+
+const COOKIE = 'opval_session';
+const SESSION_SECS = 60 * 60 * 24 * 30;
+const MAX_SAVE_BYTES = 256 * 1024;
+const USERNAME = /^[a-z0-9_]{3,20}$/;
+const PBKDF2_ITERATIONS = 100_000; // Workers rejects more than this
+
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+const unhex = s => Uint8Array.from(s.match(/../g) ?? [], h => parseInt(h, 16));
+const now = () => Math.floor(Date.now() / 1000);
+const reply = (body, status = 200, headers) => Response.json(body, { status, headers });
+
+async function derive(password, salt) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITERATIONS }, key, 256));
+}
+
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return `${hex(salt)}:${hex(await derive(password, salt))}`;
+}
+
+async function checkPassword(password, stored) {
+  const [salt, want] = stored.split(':');
+  const got = await derive(password, unhex(salt));
+  const exp = unhex(want);
+  let diff = got.length ^ exp.length;
+  for (let i = 0; i < got.length; i += 1) diff |= got[i] ^ exp[i];
+  return diff === 0;
+}
+
+// Burned on unknown usernames so a miss costs the same as a wrong password.
+const DUMMY = `${'00'.repeat(16)}:${'00'.repeat(32)}`;
+
+const tokenHash = async token => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
+
+// Recovery code: 16 characters from a 32-letter alphabet (80 bits), shown once as XXXX-XXXX-XXXX-XXXX.
+// Only its hash is stored. Using it resets the password and issues a fresh code.
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function newRecoveryCode() {
+  const raw = [...crypto.getRandomValues(new Uint8Array(16))].map(b => CODE_CHARS[b & 31]).join('');
+  return raw.match(/.{4}/g).join('-');
+}
+const normalizeCode = code => (typeof code === 'string' ? code.toUpperCase().replace(/[^A-Z0-9]/g, '') : '');
+
+function sessionCookie(token, maxAge) {
+  return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+}
+
+// Fixed-window counter in D1. Returns true once `key` has been hit more than `max` times in the window.
+// ponytail: counts attempts, so someone can lock a username out for the window; per-IP limits
+// stay the main guard. Move to Cloudflare's rate-limit binding if D1 write volume matters.
+async function limited(env, key, max, windowSecs) {
+  const t = now();
+  const row = await env.DB.prepare(
+    `INSERT INTO rate_limits (key, n, reset_at) VALUES (?, 1, ?)
+     ON CONFLICT(key) DO UPDATE SET
+       n = CASE WHEN reset_at <= ? THEN 1 ELSE n + 1 END,
+       reset_at = CASE WHEN reset_at <= ? THEN ? ELSE reset_at END
+     RETURNING n`,
+  ).bind(key, t + windowSecs, t, t, t + windowSecs).first();
+  return row.n > max;
+}
+const ip = request => request.headers.get('CF-Connecting-IP') ?? 'local';
+const tooMany = () => reply({ error: 'Too many attempts. Try again later.' }, 429);
+
+async function startSession(env, userId) {
+  const token = hex(crypto.getRandomValues(new Uint8Array(32)));
+  await env.DB.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
+    .bind(await tokenHash(token), userId, now() + SESSION_SECS).run();
+  return token;
+}
+
+function cookieToken(request) {
+  const m = (request.headers.get('Cookie') ?? '').match(new RegExp(`(?:^|;\\s*)${COOKIE}=([0-9a-f]{64})`));
+  return m?.[1] ?? null;
+}
+
+async function currentUser(request, env) {
+  const token = cookieToken(request);
+  if (!token) return null;
+  return env.DB.prepare(
+    'SELECT u.id, u.username FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?',
+  ).bind(await tokenHash(token), now()).first();
+}
+
+async function readJson(request, maxBytes = 4096) {
+  if (!(request.headers.get('Content-Type') ?? '').startsWith('application/json')) return null;
+  const text = await request.text();
+  if (text.length > maxBytes) return null;
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+function credentials(body) {
+  const username = typeof body?.username === 'string' ? body.username.trim().toLowerCase() : '';
+  const password = typeof body?.password === 'string' ? body.password : '';
+  return { username, password };
+}
+
+async function signup(request, env) {
+  if (await limited(env, `signup:${ip(request)}`, 5, 3600)) return tooMany();
+  const { username, password } = credentials(await readJson(request));
+  if (!USERNAME.test(username)) return reply({ error: 'Username: 3 to 20 letters, numbers or underscores.' }, 400);
+  if (password.length < 8 || password.length > 128) return reply({ error: 'Password: 8 to 128 characters.' }, 400);
+  const recoveryCode = newRecoveryCode();
+  let id;
+  try {
+    const row = await env.DB.prepare('INSERT INTO users (username, pw_hash, recovery_hash, created_at) VALUES (?, ?, ?, ?) RETURNING id')
+      .bind(username, await hashPassword(password), await tokenHash(normalizeCode(recoveryCode)), now()).first();
+    id = row.id;
+  } catch {
+    return reply({ error: 'That username is taken.' }, 409);
+  }
+  const token = await startSession(env, id);
+  return reply({ user: { username }, recoveryCode }, 201, { 'Set-Cookie': sessionCookie(token, SESSION_SECS) });
+}
+
+async function login(request, env) {
+  const { username, password } = credentials(await readJson(request));
+  if (await limited(env, `login:ip:${ip(request)}`, 20, 900) || await limited(env, `login:user:${username}`, 8, 900)) return tooMany();
+  const row = USERNAME.test(username) ? await env.DB.prepare('SELECT id, pw_hash FROM users WHERE username = ?').bind(username).first() : null;
+  const ok = await checkPassword(password.slice(0, 128), row?.pw_hash ?? DUMMY);
+  if (!row || !ok) return reply({ error: 'Wrong username or password.' }, 401);
+  const token = await startSession(env, row.id);
+  return reply({ user: { username } }, 200, { 'Set-Cookie': sessionCookie(token, SESSION_SECS) });
+}
+
+async function logout(request, env) {
+  const token = cookieToken(request);
+  if (token) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await tokenHash(token)).run();
+  return reply({ ok: true }, 200, { 'Set-Cookie': sessionCookie('', 0) });
+}
+
+// Signed in and knows the password: replace the recovery code (for accounts without one, or a lost one).
+async function newCode(request, user, env) {
+  const { password } = credentials(await readJson(request));
+  if (await limited(env, `code:${user.id}`, 8, 900)) return tooMany();
+  const row = await env.DB.prepare('SELECT pw_hash FROM users WHERE id = ?').bind(user.id).first();
+  if (!await checkPassword(password.slice(0, 128), row.pw_hash)) return reply({ error: 'Wrong password.' }, 401);
+  const recoveryCode = newRecoveryCode();
+  await env.DB.prepare('UPDATE users SET recovery_hash = ? WHERE id = ?').bind(await tokenHash(normalizeCode(recoveryCode)), user.id).run();
+  return reply({ recoveryCode });
+}
+
+async function reset(request, env) {
+  const body = await readJson(request);
+  const { username, password } = credentials(body);
+  if (await limited(env, `reset:ip:${ip(request)}`, 10, 3600) || await limited(env, `reset:user:${username}`, 5, 3600)) return tooMany();
+  if (password.length < 8 || password.length > 128) return reply({ error: 'Password: 8 to 128 characters.' }, 400);
+  const row = USERNAME.test(username) ? await env.DB.prepare('SELECT id, recovery_hash FROM users WHERE username = ?').bind(username).first() : null;
+  const given = await tokenHash(normalizeCode(body?.code));
+  // Compare against a dummy when the user or code is missing so every failure costs the same.
+  const want = row?.recovery_hash ?? '0'.repeat(64);
+  let diff = given.length ^ want.length;
+  for (let i = 0; i < given.length; i += 1) diff |= given.charCodeAt(i) ^ want.charCodeAt(i);
+  if (!row?.recovery_hash || diff !== 0) return reply({ error: 'Wrong username or recovery code.' }, 401);
+  // New password and a fresh code (the old one is spent), every old session signed out.
+  const recoveryCode = newRecoveryCode();
+  await env.DB.batch([
+    env.DB.prepare('UPDATE users SET pw_hash = ?, recovery_hash = ? WHERE id = ?').bind(await hashPassword(password), await tokenHash(normalizeCode(recoveryCode)), row.id),
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(row.id),
+  ]);
+  const session = await startSession(env, row.id);
+  return reply({ user: { username }, recoveryCode }, 200, { 'Set-Cookie': sessionCookie(session, SESSION_SECS) });
+}
+
+async function getSave(user, env) {
+  const row = await env.DB.prepare('SELECT state, version FROM saves WHERE user_id = ?').bind(user.id).first();
+  return reply(row ? { state: JSON.parse(row.state), version: row.version } : { state: null, version: 0 });
+}
+
+// The client sends the version it last saw (0 = none yet). A write only lands if that is still
+// current; otherwise the server copy comes back in a 409 and the client adopts it. Two devices
+// never overwrite each other silently.
+async function putSave(request, user, env) {
+  const body = await readJson(request, MAX_SAVE_BYTES);
+  if (!body || typeof body.state !== 'object' || body.state === null || !Array.isArray(body.state.collection)
+    || !Number.isInteger(body.version) || body.version < 0) {
+    return reply({ error: 'bad save' }, 400);
+  }
+  const state = JSON.stringify(body.state);
+  const res = body.version === 0
+    ? await env.DB.prepare('INSERT INTO saves (user_id, state, updated_at, version) VALUES (?, ?, ?, 1) ON CONFLICT(user_id) DO NOTHING')
+      .bind(user.id, state, now()).run()
+    : await env.DB.prepare('UPDATE saves SET state = ?, updated_at = ?, version = version + 1 WHERE user_id = ? AND version = ?')
+      .bind(state, now(), user.id, body.version).run();
+  if (res.meta.changes === 1) return reply({ ok: true, version: body.version + 1 });
+  const current = await getSave(user, env);
+  return reply(await current.json(), 409);
+}
+
+export async function handleAccounts(request, env, url) {
+  const path = url.pathname;
+  const method = request.method;
+
+  if (path === '/api/auth/signup' && method === 'POST') return signup(request, env);
+  if (path === '/api/auth/login' && method === 'POST') return login(request, env);
+  if (path === '/api/auth/logout' && method === 'POST') return logout(request, env);
+  if (path === '/api/auth/reset' && method === 'POST') return reset(request, env);
+
+  if (path === '/api/auth/recovery' && method === 'POST') {
+    const user = await currentUser(request, env);
+    return user ? newCode(request, user, env) : reply({ error: 'not signed in' }, 401);
+  }
+
+  if (path === '/api/auth/me' && method === 'GET') {
+    const user = await currentUser(request, env);
+    return reply({ user: user ? { username: user.username } : null });
+  }
+
+  if (path === '/api/save' && (method === 'GET' || method === 'PUT')) {
+    const user = await currentUser(request, env);
+    if (!user) return reply({ error: 'not signed in' }, 401);
+    return method === 'GET' ? getSave(user, env) : putSave(request, user, env);
+  }
+
+  return null;
+}

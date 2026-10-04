@@ -1,5 +1,11 @@
 {
   "tracked": [
-    { "id": 2766, "name": "Valorant Champions 2026", "kind": "live" }
+    { "id": 2766, "name": "Valorant Champions 2026", "kind": "live" },
+    { "id": 2765, "name": "Valorant Masters London 2026", "kind": "archive" },
+    { "id": 2760, "name": "Valorant Masters Santiago 2026", "kind": "archive" },
+    { "id": 2682, "name": "VCT 2026: Americas Kickoff", "kind": "archive" },
+    { "id": 2684, "name": "VCT 2026: EMEA Kickoff", "kind": "archive" },
+    { "id": 2683, "name": "VCT 2026: Pacific Kickoff", "kind": "archive" },
+    { "id": 2685, "name": "VCT 2026: China Kickoff", "kind": "archive" }
   ]
 }

@@ -2,15 +2,22 @@ import { useMemo } from 'react';
 import { CALL } from '../../../../src/engine/collect/rules';
 import { STAT_KEYS, STAT_LABELS_FULL } from '../../../../src/data/statFields';
 import { assetPath, thumbnailSrc } from '../../../../src/lib/utils';
+import Split from '../../../../src/components/Split';
+import { glassVars } from '../lib/ink';
 import { colorsFor, logoFor } from '../lib/orgs';
 
 const SCORES = { 1: [], 3: [[2, 0], [2, 1]], 5: [[3, 0], [3, 1], [3, 2]] };
+// Outcomes named the way fans say them, keyed by the loser's map count.
+const OUTCOME_NAMES = { 3: ['Sweep', 'Goes the distance'], 5: ['Sweep', 'Drops a map', 'Goes the distance'] };
+// One block per map in the series: the winner's maps but the last, then the loser's, then the
+// winner's closer, then empty slots. Every row has the same length, so tiles line up.
+const mapSlots = (won, lost, bestOf) => [...Array(won - 1).fill('w'), ...Array(lost).fill('l'), 'w', ...Array(bestOf - won - lost).fill('')];
 const average = (items, read) => items.length ? Math.round(items.reduce((sum, item) => sum + read(item), 0) / items.length) : null;
 
 function PlayerRow({ player, tracked, selected, disabled, onPick }) {
   const image = thumbnailSrc(player.card);
   return (
-    <button className="analyst-player" data-selected={selected} aria-pressed={selected} disabled={disabled} onClick={onPick}>
+    <button className="analyst-player" data-selected={selected} aria-pressed={selected} disabled={disabled} onClick={onPick} style={glassVars(colorsFor(player.team)[0])}>
       <span className="analyst-portrait">
         {image ? <img src={assetPath(image)} alt="" loading="lazy" /> : <span>{player.handle.slice(0, 2)}</span>}
       </span>
@@ -55,12 +62,12 @@ export default function CallPanel({ match, call, onChange, players, tracked }) {
             const logo = logoFor(team.tag);
             const selected = winnerIdx === i;
             return (
-              <button key={team.tag} className="analyst-team" data-org={team.tag} data-selected={selected} aria-pressed={selected} style={{ '--team-color': colorsFor(team.tag)[0] }} onClick={() => setWinner(team.tag)}>
+              <button key={team.tag} className="analyst-team" data-org={team.tag} data-selected={selected} aria-pressed={selected} style={{ '--team-color': colorsFor(team.tag)[0], ...glassVars(colorsFor(team.tag)[0]) }} onClick={() => setWinner(team.tag)}>
                 <span className="analyst-team-identity">
                   {logo ? <img src={logo} alt="" /> : <span className="analyst-logo-fallback">{team.tag.slice(0, 3)}</span>}
                   <span><strong>{team.name}</strong><small>{team.tag}</small></span>
                 </span>
-                <span className="analyst-team-data"><b>{rating ?? '—'}</b><small>Avg rating</small></span>
+                <span className="analyst-team-data"><b>{rating ?? '-'}</b><small>Avg rating</small></span>
                 <span className="analyst-team-data"><b>{trackedCount}</b><small>Tracked</small></span>
               </button>
             );
@@ -73,9 +80,9 @@ export default function CallPanel({ match, call, onChange, players, tracked }) {
             const right = profiles[1].stats[key];
             return (
               <div key={key} className="analyst-stat-row">
-                <strong data-lead={left != null && right != null && left > right}>{left ?? '—'}</strong>
+                <strong data-lead={left != null && right != null && left > right}>{left ?? '-'}</strong>
                 <span>{STAT_LABELS_FULL[key]}</span>
-                <strong data-lead={left != null && right != null && right > left}>{right ?? '—'}</strong>
+                <strong data-lead={left != null && right != null && right > left}>{right ?? '-'}</strong>
               </div>
             );
           })}
@@ -84,17 +91,27 @@ export default function CallPanel({ match, call, onChange, players, tracked }) {
 
       {picked && options.length > 0 && <section className="analyst-section" aria-labelledby="score-heading">
         <div className="analyst-heading"><h3 id="score-heading">Score</h3><span>+{CALL.exactScore}</span></div>
-        <div className="analyst-score-options">
-          {options.map(pair => {
+        <div className="outcomes" style={{ '--n': options.length }}>
+          {options.map((pair, k) => {
             const score = scoreFor(pair);
             const selected = sameScore(call.score, score);
-            return <button key={pair.join('-')} className="analyst-score" data-selected={selected} aria-pressed={selected} onClick={() => onChange({ ...call, score: selected ? null : score })}>{a.tag} {score[0]}–{score[1]} {b.tag}</button>;
+            const loser = winnerIdx === 0 ? b.tag : a.tag;
+            const name = (OUTCOME_NAMES[match.bestOf] ?? OUTCOME_NAMES[3])[k];
+            return (
+              <button key={pair.join('-')} className="outcome" data-selected={selected} aria-pressed={selected} aria-label={`${name}: ${call.winner} wins ${pair[0]} to ${pair[1]}`}
+                style={{ ...glassVars(colorsFor(call.winner)[0]), '--lose': colorsFor(loser)[0] }}
+                onClick={() => onChange({ ...call, score: selected ? null : score })}>
+                <span className="outcome-maps" aria-hidden="true">{mapSlots(pair[0], pair[1], match.bestOf ?? 3).map((m, i) => <i key={i} data-m={m} />)}</span>
+                <span className="outcome-score">{pair[0]}<i />{pair[1]}</span>
+                <span className="outcome-name">{name}</span>
+              </button>
+            );
           })}
         </div>
       </section>}
 
       <section className="analyst-section" aria-labelledby="star-heading">
-        <div className="analyst-heading"><h3 id="star-heading">Star</h3><span>{picked ? `+${CALL.star} first · +${CALL.starTop3} top 3` : 'Winner first'}</span></div>
+        <div className="analyst-heading"><h3 id="star-heading">Star</h3>{picked ? <Split parts={[`+${CALL.star} first`, `+${CALL.starTop3} top 3`]} /> : <span>Winner first</span>}</div>
         <div className="analyst-rosters">
           {profiles.map(({ team, roster }) => (
             <div key={team.tag} className="analyst-roster">

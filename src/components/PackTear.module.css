@@ -47,6 +47,7 @@
      transparency instead of letting it read as torn paper. */
   background: var(--pack-face-bg, var(--surface-hi));
 }
+.layerInside[data-blank='true'] { background: transparent; }
 .layerFront {
   z-index: 30;
   pointer-events: none;
