@@ -90,7 +90,7 @@ const matchRow = r => ({
     { id: r.team1_id, name: r.team1_name, tag: r.team1_tag, score: r.score1 },
     { id: r.team2_id, name: r.team2_name, tag: r.team2_tag, score: r.score2 },
   ],
-  winner: r.winner,
+  winner: r.winner, forfeit: !!r.forfeit, firstFinalAt: r.first_final_at,
 });
 
 async function getSchedule(env, url) {
@@ -102,7 +102,7 @@ async function getSchedule(env, url) {
   return reply({ event, matches: results.map(matchRow) }, 200, PUBLIC_CACHE);
 }
 
-async function loadMatch(env, id) {
+export async function loadMatch(env, id) {
   const match = await env.DB.prepare('SELECT * FROM feed_matches WHERE match_id = ?1').bind(id).first();
   if (!match) return null;
   const maps = (await env.DB
@@ -114,6 +114,7 @@ async function loadMatch(env, id) {
     ...matchRow(match),
     maps: maps.map(m => ({
       gameId: m.game_id, mapNo: m.map_no, map: m.map_name, pickedBy: m.picked_by, score: [m.score1, m.score2],
+      halves: { t1: { atk: m.t1_atk, def: m.t1_def }, t2: { atk: m.t2_atk, def: m.t2_def } },
       players: rows.filter(p => p.game_id === m.game_id).map(p => ({
         vlrId: p.vlr_id, handle: p.handle, side: p.side, teamTag: p.team_tag, agent: p.agent, r2: p.r2, acs: p.acs,
         k: p.k, d: p.d, a: p.a, kast: p.kast, adr: p.adr, hs: p.hs, fk: p.fk, fd: p.fd,

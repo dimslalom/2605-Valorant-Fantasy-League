@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   IconCalendarEvent,
   IconCards,
+  IconGridDots,
   IconChartBar,
   IconExternalLink,
   IconFileText,
@@ -26,6 +27,7 @@ const ICONS = {
   help: IconHelp,
   stats: IconChartBar,
   matches: IconCalendarEvent,
+  bingo: IconGridDots,
   cards: IconCards,
   ranks: IconTrophy,
   legal: IconFileText,
@@ -41,7 +43,7 @@ const Icon = ({ name, size = 22 }) => {
 const TABS = [
   { to: '/', label: 'Matches', icon: 'matches', end: true },
   { to: '/collection', label: 'Cards', icon: 'cards' },
-  { to: '/leaderboard', label: 'Ranks', icon: 'ranks' },
+  { to: '/bingo', label: 'Bingo', icon: 'bingo' },
 ];
 
 const store = (kind, key, value) => {
@@ -233,6 +235,7 @@ export default function Shell() {
       {account.notice && <button className="toast" role="status" onClick={account.clearNotice}>{account.notice}</button>}
       <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left" head={<img className="menu-brand" src="/opval-logo.svg" alt="OpVAL" />}>
         <nav className="menu">
+          <Link to="/leaderboard" onClick={close}><Icon name="ranks" />Leaderboard</Link>
           <button onClick={() => setSheet('account')}><Icon name="user" />Account</button>
           <button onClick={() => setSheet('help')}><Icon name="help" />How to play</button>
           <button onClick={() => setSheet('stats')}><Icon name="stats" />Statistics</button>

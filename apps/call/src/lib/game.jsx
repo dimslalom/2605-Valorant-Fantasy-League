@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import cards from '../../../../src/data/cards.json';
-import { buyPack, callRecord, createCollection, resolveSeries, setCall, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
+import { buyBingoCard, buyPack, callRecord, createCollection, resolveSeries, setCall, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
 import { makeCardLookup } from '../../../../src/engine/shared/cardLookup';
 import { useAccount } from './account';
 import { fetchPlayers } from './feed';
@@ -92,6 +92,7 @@ export function GameProvider({ children }) {
     call: (matchId, call) => run(s => setCall(s, matchId, call)),
     swap: (outPid, inPid) => Boolean(run(s => swapTracked(s, outPid, inPid, tierOf))),
     buy: () => run(s => buyPack(s, pool)),
+    buyBingoCard: () => Boolean(run(s => buyBingoCard(s))),
     reveal: series => run(s => resolveSeries(s, series, { teamOf })),
     // Dev server only (stripped from production builds): credits to test packs and storage.
     ...(import.meta.env.DEV && { devCredits: n => run(s => ({ ...s, credits: s.credits + n })) }),

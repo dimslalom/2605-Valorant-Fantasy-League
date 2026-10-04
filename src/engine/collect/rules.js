@@ -26,6 +26,9 @@ export const ECONOMY = {
   starterCards: 10,
 };
 
+// Bingo: one card a day is free, extras cost credits, and the cap keeps a day's cards bounded.
+export const BINGO = { freeCards: 1, cardCost: 100, maxCards: 5 };
+
 // Pack odds by card tier (a gold card is about 13% of the pool, so this is generous).
 export const PACK_ODDS = { gold: 0.14, silver: 0.38, bronze: 0.48 };
 

@@ -1,5 +1,5 @@
 import { resolveCall } from './calls.js';
-import { ECONOMY, TRACKED_MAX } from './rules.js';
+import { BINGO, ECONOMY, TRACKED_MAX } from './rules.js';
 import { openPack } from './packs.js';
 import { scoreSeries } from '../shared/scoring.js';
 
@@ -57,6 +57,12 @@ export function swapTracked(state, outPid, inPid, tierOf, now = Math.floor(Date.
     credits: state.credits - fee,
     freeSwaps: free ? state.freeSwaps - 1 : state.freeSwaps,
   };
+}
+
+// Pay for one extra bingo card. The card itself lives on the server; this only takes the credits.
+export function buyBingoCard(state) {
+  if (state.credits < BINGO.cardCost) throw new Error('not enough credits');
+  return { ...state, credits: state.credits - BINGO.cardCost };
 }
 
 export function buyPack(state, pool, now = Math.floor(Date.now() / 1000)) {

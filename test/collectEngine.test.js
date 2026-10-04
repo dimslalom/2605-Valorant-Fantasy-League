@@ -4,9 +4,9 @@ import cards from '../src/data/cards.json' with { type: 'json' };
 import { buildReplay } from '../src/engine/fantasy/replay.js';
 import { scoreSeries } from '../src/engine/shared/scoring.js';
 import { resolveCall, seriesFacts, streakMultiplier } from '../src/engine/collect/calls.js';
-import { buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
+import { buyBingoCard, buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
 import { openPack, starterCollection } from '../src/engine/collect/packs.js';
-import { CALL, ECONOMY, TRACKED_MAX } from '../src/engine/collect/rules.js';
+import { BINGO, CALL, ECONOMY, TRACKED_MAX } from '../src/engine/collect/rules.js';
 import { synthMatches } from './fixtures/fantasySynth.js';
 
 const replay = () => buildReplay({ matches: synthMatches(1), cards });
@@ -223,4 +223,12 @@ test('matches that started before you joined can be revealed but never score', (
   assert.equal(out.state.streak, 0);
   const joinedBefore = createCollection({ seed: 1, pool, now: 1000 });
   assert.ok(resolveSeries(joinedBefore, series, { teamOf: teamOfFn(r) }).report.preJoin !== true);
+});
+
+test('an extra bingo card costs its credits and cannot be bought without them', () => {
+  const s = createCollection({ seed: 1, now: 0 });
+  assert.throws(() => buyBingoCard({ ...s, credits: BINGO.cardCost - 1 }), /not enough credits/);
+  const paid = buyBingoCard({ ...s, credits: BINGO.cardCost + 7 });
+  assert.equal(paid.credits, 7);
+  assert.equal(buyBingoCard({ ...s, credits: BINGO.cardCost }).credits, 0);
 });

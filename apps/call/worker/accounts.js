@@ -1,7 +1,8 @@
-// Accounts for OpVAL: /api/auth/{signup,login,logout,me,recovery,reset} and /api/save.
+// Accounts for OpVAL: /api/auth/{signup,login,logout,me,recovery,reset}, /api/save, /api/leaderboard and /api/bingo{,/score,/leaderboard}.
 // Sessions are an HttpOnly cookie holding a random token; the DB keeps only its hash.
 // CSRF: SameSite=Lax plus a JSON-only body (a cross-site form cannot send one).
 import { createCollection } from '../../../src/engine/collect/game.js';
+import { handleBingo, MAX_BINGO_BYTES } from './bingo.js';
 
 const COOKIE = 'opval_session';
 const SESSION_SECS = 60 * 60 * 24 * 30;
@@ -270,6 +271,13 @@ export async function handleAccounts(request, env, url) {
   if (path === '/api/leaderboard' && method === 'GET') {
     const user = await currentUser(request, env);
     return user ? leaderboard(user, env, url) : reply({ error: 'not signed in' }, 401);
+  }
+
+  if (/^\/api\/bingo(\/score|\/leaderboard)?$/.test(path) && (method === 'GET' || (method === 'PUT' && path === '/api/bingo'))) {
+    const user = await currentUser(request, env);
+    if (!user) return reply({ error: 'not signed in' }, 401);
+    const body = method === 'PUT' ? await readJson(request, MAX_BINGO_BYTES) : null;
+    return handleBingo(user, env, url, method, body);
   }
 
   if (path === '/api/save' && (method === 'GET' || method === 'PUT')) {

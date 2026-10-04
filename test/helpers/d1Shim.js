@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 // A tiny shim over node:sqlite that mimics the D1 surface the store uses.
 export function d1() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const file of ['0002_feed.sql', '0003_accounts.sql', '0004_account_hardening.sql', '0005_recovery_codes.sql']) {
+  for (const file of ['0002_feed.sql', '0003_accounts.sql', '0004_account_hardening.sql', '0005_recovery_codes.sql', '0006_bingo_cards.sql', '0007_bingo_slots.sql']) {
     sqlite.exec(readFileSync(new URL(`../../migrations/${file}`, import.meta.url), 'utf8'));
   }
   const stmt = sql => {
