@@ -14,7 +14,7 @@ export default function Sheet({ open, onClose, title, head, side, size, pickedSi
   }, [open]);
 
   return (
-    <dialog ref={ref} className="sheet" data-side={side} data-size={size} data-picked-side={pickedSide} style={style} onClose={onClose} onClick={e => { if (e.target === ref.current) onClose(); }} aria-label={title}>
+    <dialog ref={ref} className="sheet" data-side={side} data-size={size} data-picked-side={pickedSide} style={style} onClose={() => { if (open) onClose(); }} onClick={e => { if (e.target === ref.current) onClose(); }} aria-label={title}>
       <div className="sheet-head">
         <h2 className={size === 'full' ? 'sr' : undefined}>{title}</h2>
         {head}
