@@ -51,28 +51,19 @@ export function pickCandidates(listing, known, limit = MAX_PER_RUN, { refetchFin
     .slice(0, limit);
 }
 
-// "2h 15m", "1d 3h", "1w 2d" -> minutes. Unknown formats count as far away.
-export function etaMinutes(text) {
-  if (!text) return Infinity;
-  const unit = { w: 10080, d: 1440, h: 60, m: 1 };
-  let total = 0;
-  let found = false;
-  for (const [, n, u] of String(text).matchAll(/(\d+)\s*([wdhm])/g)) { total += Number(n) * unit[u]; found = true; }
-  return found ? total : Infinity;
-}
-
-// Refresh known upcoming matches every run, including ones moved beyond the usual
-// horizon. New matches enter the feed only when they are near.
-// Placeholder playoff slots ("TBD") have no teams to call, so they are skipped.
-export function pickWindow(listing, known, { horizonMinutes = 48 * 60, limit = 10 } = {}) {
+// Live matches and every upcoming match with both teams known, refreshed every run (so a
+// reschedule is picked up). Placeholder playoff slots ("TBD") have no teams to call, so they
+// wait until the bracket fills them in.
+export function pickWindow(listing, known, { limit = 10 } = {}) {
   const real = row => row.match_id && ![row.team1?.name, row.team2?.name].some(n => !n || /^tbd$/i.test(n.trim()));
   const picked = [];
   for (const row of listing.filter(real)) {
     const status = String(row.status ?? '').toLowerCase();
     const stored = known.get(Number(row.match_id));
     if (status === 'live') picked.push({ row, status: 'live' });
-    else if (status === 'upcoming' && stored?.status !== 'final'
-        && (stored || etaMinutes(row.eta) <= horizonMinutes)) picked.push({ row, status: 'upcoming' });
+    // Every upcoming match whose teams are known enters the feed as soon as vlr lists it, however far
+    // ahead (a playoff schedule is published days early and players want to see and call it).
+    else if (status === 'upcoming' && stored?.status !== 'final') picked.push({ row, status: 'upcoming' });
   }
   return picked.slice(0, limit);
 }

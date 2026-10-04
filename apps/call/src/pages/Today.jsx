@@ -37,6 +37,16 @@ export default function Today() {
     return () => { live = false; };
   }, [reloadKey]);
 
+  // The schedule refreshes itself: every 2 minutes while the page is visible, and at once when you
+  // come back to it (the feed updates every 15 minutes). The old matches stay on screen until the
+  // new ones arrive, so nothing flickers.
+  useEffect(() => {
+    const refresh = () => { if (document.visibilityState === 'visible') setReloadKey(key => key + 1); };
+    const t = setInterval(refresh, 120000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', refresh); };
+  }, []);
+
   // Keeps LIVE/locked states honest without a refresh.
   useEffect(() => {
     const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 30000);

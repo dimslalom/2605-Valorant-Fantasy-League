@@ -105,16 +105,9 @@ test('stats listed as ready but no player rows raises markupChanged', async () =
   assert.equal(summary.markupChanged, true);
 });
 
-import { etaMinutes, pickWindow } from '../scripts/feed/run.js';
+import { pickWindow } from '../scripts/feed/run.js';
 
-test('etaMinutes reads vlr countdowns', () => {
-  assert.equal(etaMinutes('2h 15m'), 135);
-  assert.equal(etaMinutes('1d 3h'), 1620);
-  assert.equal(etaMinutes('1w 2d'), 12960);
-  assert.equal(etaMinutes(''), Infinity);
-});
-
-test('pickWindow: live always, known upcoming refreshes after rescheduling, never TBD slots', () => {
+test('pickWindow: live always, every decided upcoming match however far ahead, never TBD slots', () => {
   const row = (id, status, eta, a = 'TL', b = 'PRX') => ({ match_id: String(id), status, eta, team1: { name: a }, team2: { name: b } });
   const listing = [
     row(1, 'LIVE', ''),
@@ -126,7 +119,8 @@ test('pickWindow: live always, known upcoming refreshes after rescheduling, neve
     row(7, 'Upcoming', '6d'),
   ];
   const known = new Map([[5, { startsAt: 123, status: 'upcoming' }], [7, { startsAt: 456, status: 'upcoming' }]]);
-  assert.deepEqual(pickWindow(listing, known).map(p => [p.row.match_id, p.status]), [['1', 'live'], ['2', 'upcoming'], ['5', 'upcoming'], ['7', 'upcoming']]);
+  // 3 is six days out and unknown: it still enters (a playoff schedule published early). 4 is TBD.
+  assert.deepEqual(pickWindow(listing, known).map(p => [p.row.match_id, p.status]), [['1', 'live'], ['2', 'upcoming'], ['3', 'upcoming'], ['5', 'upcoming'], ['7', 'upcoming']]);
 });
 
 test('refetchFinal re-fetches finished matches that are already stored', () => {
