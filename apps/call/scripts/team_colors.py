@@ -17,6 +17,8 @@ OVERRIDES = {
     "GE": ["#cf3347", "#f3f4f5", "#3157a8"],
     "FUT": ["#15203b", "#d73750"],
     "KC": ["#2e68dc", "#f0f3fb"],
+    "VIT": ["#ffe500"],
+    "PRX": ["#ff69b4"],
 }
 
 
@@ -47,6 +49,8 @@ logos = {}
 for card in json.loads(CARDS.read_text()):
     if card.get("org") and card.get("org_logo"):
         logos.setdefault(card["org"], ROOT / "public" / card["org_logo"].lstrip("/"))
+for tag, team in json.loads((ROOT / "src/data/teams.json").read_text()).items():
+    logos[tag] = ROOT / "public" / team["logo"].lstrip("/")
 
 colors = {tag: [primary(path)] for tag, path in sorted(logos.items()) if path.exists()}
 colors.update(OVERRIDES)

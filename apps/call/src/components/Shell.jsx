@@ -17,6 +17,8 @@ import { useGame } from '../lib/gameContext';
 import { longDay, todayKey } from '../lib/time';
 import HowTo from './HowTo';
 import Sheet from './Sheet';
+import MatchDashboard from './MatchDashboard';
+import useBingoUpdate from '../lib/useBingoUpdate';
 
 // The game frame, laid out like NYT Games: a title screen first, then one task per screen
 // under one ruby glass HUD (menu, the two screens, score, credits, help). Everything that is not
@@ -190,6 +192,9 @@ export default function Shell() {
   const [splash, setSplash] = useState(() => !store('session', 'opval-played'));
   const [sheet, setSheet] = useState(null); // 'menu' | 'help' | 'stats' | 'account'
 
+  const { bingo, needsBingo } = useBingoUpdate(account.user?.username, pathname);
+  const updates = { '/collection': state?.freePacks ?? 0, '/bingo': needsBingo ? 1 : 0 };
+
   // Every screen starts at the top, not wherever the last one was scrolled.
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
 
@@ -215,6 +220,7 @@ export default function Shell() {
                 <NavLink key={t.to} to={t.to} end={t.end} className={({ isActive }) => `hud-tab${isActive ? ' on' : ''}`}>
                   <Icon name={t.icon} size={18} />
                   <span>{t.label}</span>
+                  {updates[t.to] > 0 && <span className="tab-update" aria-label={t.to === '/collection' ? `${updates[t.to]} free packs available` : 'Weekly bingo selection needed'}>{updates[t.to] > 99 ? '99+' : updates[t.to]}</span>}
                 </NavLink>
               ))}
             </nav>
@@ -228,7 +234,8 @@ export default function Shell() {
               <button className="icon" aria-label="How to play" onClick={() => setSheet('help')}><Icon name="help" /></button>
             </div>
           </header>
-          <main className="page"><Outlet /></main>
+          {import.meta.env.DEV && sessionStorage.getItem('opval-offline-preview') === '1' && <div className="offline-banner" role="status">Offline test account · Sample matches and standings · Reload to reset</div>}
+          <main className={`page${pathname === '/' ? ' page-dashboard' : ''}`}><Outlet />{pathname === '/' && <MatchDashboard bingo={bingo} needsBingo={needsBingo} />}</main>
         </>
       )}
 

@@ -1,0 +1,242 @@
+{
+  "100T": {
+    "name": "100 Thieves",
+    "logo": "/assets/orgs/100t.png",
+    "source": "https://www.vlr.gg/team/120/100-thieves"
+  },
+  "AG": {
+    "name": "All Gamers",
+    "logo": "/assets/orgs/ag.png",
+    "source": "https://www.vlr.gg/team/1119/all-gamers"
+  },
+  "BBL": {
+    "name": "BBL Esports",
+    "logo": "/assets/orgs/bbl.png",
+    "source": "https://www.vlr.gg/team/397/bbl-esports"
+  },
+  "BLG": {
+    "name": "Bilibili Gaming",
+    "logo": "/assets/orgs/blg.png",
+    "source": "https://www.vlr.gg/team/12010/bilibili-gaming"
+  },
+  "C9": {
+    "name": "Cloud9",
+    "logo": "/assets/orgs/c9.png",
+    "source": "https://www.vlr.gg/team/188/cloud9"
+  },
+  "DFM": {
+    "name": "DetonatioN FocusMe",
+    "logo": "/assets/orgs/dfm.png",
+    "source": "https://www.vlr.gg/team/278/detonation-focusme"
+  },
+  "DRG": {
+    "name": "Dragon Ranger Gaming",
+    "logo": "/assets/orgs/drg.png",
+    "source": "https://www.vlr.gg/team/11981/dragon-ranger-gaming"
+  },
+  "EDG": {
+    "name": "EDward Gaming",
+    "logo": "/assets/orgs/edg.png",
+    "source": "https://www.vlr.gg/team/1120/edward-gaming"
+  },
+  "EG": {
+    "name": "Evil Geniuses",
+    "logo": "/assets/orgs/eg.png",
+    "source": "https://www.vlr.gg/team/5248/evil-geniuses"
+  },
+  "ENVY": {
+    "name": "ENVY",
+    "logo": "/assets/orgs/envy.png",
+    "source": "https://www.vlr.gg/team/427/envy"
+  },
+  "FNC": {
+    "name": "FNATIC",
+    "logo": "/assets/orgs/fnc.png",
+    "source": "https://www.vlr.gg/team/2593/fnatic"
+  },
+  "FPX": {
+    "name": "FunPlus Phoenix",
+    "logo": "/assets/orgs/fpx.png",
+    "source": "https://www.vlr.gg/team/11328/funplus-phoenix"
+  },
+  "FS": {
+    "name": "FULL SENSE",
+    "logo": "/assets/orgs/fs.png",
+    "source": "https://www.vlr.gg/team/4050/full-sense"
+  },
+  "FUR": {
+    "name": "FURIA",
+    "logo": "/assets/orgs/fur.png",
+    "source": "https://www.vlr.gg/team/2406/furia"
+  },
+  "FUT": {
+    "name": "FUT Esports",
+    "logo": "/assets/orgs/fut.png",
+    "source": "https://www.vlr.gg/team/1184/fut-esports"
+  },
+  "G2": {
+    "name": "G2 Esports",
+    "logo": "/assets/orgs/g2.png",
+    "source": "https://www.vlr.gg/team/11058/g2-esports"
+  },
+  "GE": {
+    "name": "Global Esports",
+    "logo": "/assets/orgs/ge.png",
+    "source": "https://www.vlr.gg/team/918/global-esports"
+  },
+  "GEN": {
+    "name": "Gen.G",
+    "logo": "/assets/orgs/gen.png",
+    "source": "https://www.vlr.gg/team/17/gen-g"
+  },
+  "GX": {
+    "name": "GIANTX",
+    "logo": "/assets/orgs/gx.png",
+    "source": "https://www.vlr.gg/team/14419/giantx"
+  },
+  "JDG": {
+    "name": "JD Gaming",
+    "logo": "/assets/orgs/jdg.png",
+    "source": "https://www.vlr.gg/team/13576/jd-gaming"
+  },
+  "KC": {
+    "name": "Karmine Corp",
+    "logo": "/assets/orgs/kc.png",
+    "source": "https://www.vlr.gg/team/8877/karmine-corp"
+  },
+  "KRX": {
+    "name": "KIWOOM DRX",
+    "logo": "/assets/orgs/krx.png",
+    "source": "https://www.vlr.gg/team/8185/kiwoom-drx"
+  },
+  "KR\u00dc": {
+    "name": "KR\u00dc Esports",
+    "logo": "/assets/orgs/kr.png",
+    "source": "https://www.vlr.gg/team/2355/kr-esports"
+  },
+  "LEV": {
+    "name": "LEVIAT\u00c1N",
+    "logo": "/assets/orgs/lev.png",
+    "source": "https://www.vlr.gg/team/2359/leviat-n"
+  },
+  "LOUD": {
+    "name": "LOUD",
+    "logo": "/assets/orgs/loud.png",
+    "source": "https://www.vlr.gg/team/6961/loud"
+  },
+  "M8": {
+    "name": "Gentle Mates",
+    "logo": "/assets/orgs/m8.png",
+    "source": "https://www.vlr.gg/team/12694/gentle-mates"
+  },
+  "MIBR": {
+    "name": "MIBR",
+    "logo": "/assets/orgs/mibr.png",
+    "source": "https://www.vlr.gg/team/7386/mibr"
+  },
+  "NAVI": {
+    "name": "Natus Vincere",
+    "logo": "/assets/orgs/navi.png",
+    "source": "https://www.vlr.gg/team/4915/natus-vincere"
+  },
+  "NOVA": {
+    "name": "Nova Esports",
+    "logo": "/assets/orgs/nova.png",
+    "source": "https://www.vlr.gg/team/12064/nova-esports"
+  },
+  "NRG": {
+    "name": "NRG",
+    "logo": "/assets/orgs/nrg.png",
+    "source": "https://www.vlr.gg/team/1034/nrg"
+  },
+  "NS": {
+    "name": "Nongshim RedForce",
+    "logo": "/assets/orgs/ns.png",
+    "source": "https://www.vlr.gg/team/11060/nongshim-redforce"
+  },
+  "PCF": {
+    "name": "PCIFIC Esports",
+    "logo": "/assets/orgs/pcf.png",
+    "source": "https://www.vlr.gg/team/3478/pcific-esports"
+  },
+  "PRX": {
+    "name": "Paper Rex",
+    "logo": "/assets/orgs/prx.png",
+    "source": "https://www.vlr.gg/team/624/paper-rex"
+  },
+  "RRQ": {
+    "name": "Rex Regum Qeon",
+    "logo": "/assets/orgs/rrq.png",
+    "source": "https://www.vlr.gg/team/878/rex-regum-qeon"
+  },
+  "SEN": {
+    "name": "Sentinels",
+    "logo": "/assets/orgs/sen.png",
+    "source": "https://www.vlr.gg/team/2/sentinels"
+  },
+  "T1": {
+    "name": "T1",
+    "logo": "/assets/orgs/t1.png",
+    "source": "https://www.vlr.gg/team/14/t1"
+  },
+  "TE": {
+    "name": "Trace Esports",
+    "logo": "/assets/orgs/te.png",
+    "source": "https://www.vlr.gg/team/12685/trace-esports"
+  },
+  "TEC": {
+    "name": "Titan Esports Club",
+    "logo": "/assets/orgs/tec.png",
+    "source": "https://www.vlr.gg/team/14137/titan-esports-club"
+  },
+  "TH": {
+    "name": "Team Heretics",
+    "logo": "/assets/orgs/th.png",
+    "source": "https://www.vlr.gg/team/1001/team-heretics"
+  },
+  "TL": {
+    "name": "Team Liquid",
+    "logo": "/assets/orgs/tl.png",
+    "source": "https://www.vlr.gg/team/474/team-liquid"
+  },
+  "TS": {
+    "name": "Team Secret",
+    "logo": "/assets/orgs/ts.png",
+    "source": "https://www.vlr.gg/team/6199/team-secret"
+  },
+  "TYL": {
+    "name": "TYLOO",
+    "logo": "/assets/orgs/tyl.png",
+    "source": "https://www.vlr.gg/team/731/tyloo"
+  },
+  "ULF": {
+    "name": "ULF Esports",
+    "logo": "/assets/orgs/ulf.png",
+    "source": "https://www.vlr.gg/team/18019/ulf-esports"
+  },
+  "VIT": {
+    "name": "Team Vitality",
+    "logo": "/assets/orgs/vit.png",
+    "source": "https://www.vlr.gg/team/2059/team-vitality"
+  },
+  "VL": {
+    "name": "VARREL",
+    "logo": "/assets/orgs/vl.png",
+    "source": "https://www.vlr.gg/team/11229/varrel"
+  },
+  "WOL": {
+    "name": "Wolves Esports",
+    "logo": "/assets/orgs/wol.png",
+    "source": "https://www.vlr.gg/team/13790/wolves-esports"
+  },
+  "XLG": {
+    "name": "Xi Lai Gaming",
+    "logo": "/assets/orgs/xlg.png",
+    "source": "https://www.vlr.gg/team/13581/xi-lai-gaming"
+  },
+  "ZETA": {
+    "name": "ZETA DIVISION",
+    "logo": "/assets/orgs/zeta.png",
+    "source": "https://www.vlr.gg/team/5448/zeta-division"
+  }
+}

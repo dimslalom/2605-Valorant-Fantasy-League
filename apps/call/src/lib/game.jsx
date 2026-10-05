@@ -11,7 +11,7 @@ import { GameContext } from './gameContext';
 // knows (joined to the designed cards), and the actions that change them. Everything is
 // local to this browser unless you sign in, which mirrors the save to your account (account.js).
 
-const SAVE_KEY = 'opval-save';
+const SAVE_KEY = import.meta.env.DEV && (new URLSearchParams(location.search).get('offline') === '1' || sessionStorage.getItem('opval-offline-preview') === '1') ? 'opval-offline-save' : 'opval-save';
 const SAVE_VERSION = 2;
 
 function load() {
