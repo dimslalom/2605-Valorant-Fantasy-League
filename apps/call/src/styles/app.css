@@ -319,6 +319,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .matches-overview { display: flex; align-items: center; gap: 20px; padding: 14px 0; color: var(--muted); font: 600 var(--fs-label) var(--font-body); }
 .matches-overview strong { margin-right: 4px; color: var(--ink); font-family: var(--font-display); font-size: 23px; line-height: 1; }
 .matches-overview .next-open { margin-left: auto; white-space: nowrap; }
+.matches-overview .next-open[hidden] { display: inline-flex; visibility: hidden; } /* keep its height so the list below never jumps */
 /* One day switcher for every page that has days (Matches, Bingo). */
 .day-switch { margin: 16px 0 6px; }
 .day-switch > div { flex: 1; text-align: center; }
@@ -455,6 +456,12 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 @media (min-width: 560px) {
   .teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
   .team + .team { padding-left: 14px; }
+  /* Mirror the second team so the two scores face each other across the middle. */
+  .team + .team { grid-template-columns: auto minmax(0, 1fr) 42px; text-align: right; }
+  .team + .team .logo { grid-column: 3; }
+  .team + .team .score { grid-column: 1; }
+  /* Wider tiles on desktop: give the call tiles more height so the star photo reads bigger. */
+  .verdict .verdict-art { flex-basis: 140px; }
 }
 @media (max-width: 600px) {
   .matches-overview { flex-wrap: wrap; gap: 8px 16px; }
@@ -463,6 +470,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
   .call-commit { bottom: 0; padding-bottom: calc(20px + var(--safe-b)); }
 }
 @media (max-width: 420px) {
+  .verdict li { padding: 8px 10px; }
   .day-switch h2 { font-size: 22px; }
   .analyst-heading { align-items: start; flex-direction: column; gap: 4px; }
   .analyst-team { padding: 10px; }
@@ -472,13 +480,12 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 
 /* Match facts: every fact in its own slot, never one run-on line. The time is the headline;
    stage is plain text; the format is shown once, as "Bo3". */
-.strip { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
+.strip { display: flex; align-items: baseline; gap: 14px; padding: 12px 14px; }
 .fact-start { display: flex; align-items: baseline; gap: 8px; }
 .fact-time { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1; font-variant-numeric: tabular-nums; }
 .fact-start small { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.08em; color: var(--muted); }
 .strip-stage { margin-left: auto; min-width: 0; color: var(--muted); font-size: var(--fs-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fact-format { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.1em; }
-.strip .fact-format { }
 
 
 /* Your call as parts: team, score box, star. */
@@ -489,25 +496,43 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .callsum-score { display: inline-flex; align-items: center; color: var(--muted); font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1; font-variant-numeric: tabular-nums; }
 .callsum-score i { width: 7px; height: 2px; margin: 0 5px; background: currentColor; opacity: 0.6; }
 .callsum-star { display: inline-flex; flex-direction: column; min-width: 0; line-height: 1.1; font-weight: 600; }
-.callsum-star small, .locked small, .verdict small, .ledger dt small, .swap-side small { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.callsum-star small, .locked small, .verdict small, .swap-side small { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .callsum-none { color: var(--muted); }
 .locked { display: flex; align-items: center; gap: 14px; padding: 14px; }
 
-/* Result: a verdict per part of your call, then a points ledger. */
+/* Result: your call (points beside the picks that earned them), then Tracked, then the total.
+   Portraits are bare cutouts, no tile or border. A missed pick dims. */
 .result { padding: 0 14px 14px; }
-.verdict { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-.verdict li { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.verdict b { font-family: var(--font-display); font-size: 20px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.verdict em { font-style: normal; font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.verdict li[data-ok='true'] em { color: var(--win); }
-.ledger { margin-top: 14px; }
-.ledger > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; }
-.ledger dt { display: flex; align-items: baseline; gap: 8px; }
-.ledger dd { font-family: var(--font-display); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; }
-.ledger-empty dt { color: var(--muted); font-size: var(--fs-label); }
-.ledger > .ledger-total { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line-bracket); }
-.ledger-total dt { font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.ledger-total dd { font-size: 34px; color: var(--win); }
+.result-part { margin-top: 16px; }
+/* Points as headings: the number first, then what earned it in plain words. */
+.sum { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.sum b { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
+.sum span { color: var(--muted); font-size: var(--fs-label); }
+.sum-total { margin: 18px 0 0; }
+.sum-total b { font-size: 40px; color: var(--win); }
+.face { width: 34px; height: 35px; flex-shrink: 0; object-fit: cover; object-position: center 12%; }
+.verdict { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.verdict li { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); }
+.verdict li[data-ok='false'] :is(.verdict-art, .verdict-name) { opacity: 0.5; }
+/* A right pick is green glass; that is the whole verdict, so no Right/Miss words on screen. */
+.verdict li[data-ok='true'] { --glass: var(--win); --glass-ink: #0b0d14; --glass-shadow: rgba(255, 255, 255, 0.35); }
+.verdict li[data-ok='true'] small { color: inherit; opacity: 0.7; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Every tile: label and name top-left, then the pick big and centred (logo, photo, or the score itself). */
+.verdict li small { order: -2; }
+.verdict-name { order: -1; }
+.verdict-art { flex: 1 0 96px; display: flex; align-items: center; justify-content: center; min-width: 0; }
+.verdict-art img { width: 84px; height: 84px; object-fit: contain; }
+.verdict-art b { font-family: var(--font-display); font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; }
+/* The star's photo fills the tile under its label and name, down to the bottom edge, so it is
+   never cut mid-chest and the text never sits on it. */
+.verdict li.verdict-star { position: relative; overflow: hidden; }
+.verdict-face { position: absolute; inset: 50px 0 0; }
+/* The cutouts carry ~25% empty space above the head, so the photo is drawn taller than its box and
+   that empty top runs up behind the label; the tile clips the sides. */
+.verdict-face .face { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: auto; height: 135%; max-width: none; object-fit: contain; }
+.verdict-star :is(small, .verdict-name) { position: relative; z-index: 1; }
+.verdict-name { font-family: var(--font-display); font-size: 15px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Swap plan: out, arrow, in, then the cost on its own. */
 .swap-plan { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -550,7 +575,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
    Main actions are ruby pills; picked tiles keep softer rounded corners. */
 .primary { --glass: var(--ruby); --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.4); }
 .secondary { --glass: #3a4157; --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.45); }
-:is(.hud, .match[data-status='live'], .bingo-matches button[aria-pressed='true'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty),
+:is(.hud, .match[data-status='live'], .bingo-matches button[aria-pressed='true'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty, .verdict li[data-ok='true']),
 :is(.analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true']):hover {
   position: relative;
   isolation: isolate;
@@ -563,7 +588,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
     linear-gradient(180deg, color-mix(in srgb, var(--glass) 78%, black), var(--glass) 52%, color-mix(in srgb, var(--glass) 92%, white));
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 -1px 1px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.45);
 }
-:is(.hud, .match[data-status='live'], .bingo-matches button[aria-pressed='true'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty)::before {
+:is(.hud, .match[data-status='live'], .bingo-matches button[aria-pressed='true'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty, .verdict li[data-ok='true'])::before {
   content: '';
   position: absolute;
   z-index: -1;
