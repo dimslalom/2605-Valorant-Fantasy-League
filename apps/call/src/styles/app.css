@@ -380,7 +380,8 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .analyst-player:hover { background: rgba(255, 255, 255, 0.05); }
 .analyst-player:disabled { opacity: 0.52; cursor: default; }
 .analyst-player[data-selected='true'] { background: var(--accent-soft); }
-.analyst-portrait { display: grid; place-items: center; width: 42px; height: 46px; flex-shrink: 0; overflow: hidden; background: var(--surface-alt); color: var(--muted); font: 700 var(--fs-micro) var(--font-mono); }
+/* Inset 5px inside a 10px-radius row, so its corners take the row's radius minus that gap. */
+.analyst-portrait { display: grid; place-items: center; width: 42px; height: 46px; flex-shrink: 0; overflow: hidden; border-radius: calc(var(--r-tile) - 5px); background: var(--surface-alt); color: var(--muted); font: 700 var(--fs-micro) var(--font-mono); }
 .analyst-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; }
 .analyst-player-name { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .analyst-player-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-label); }
@@ -505,7 +506,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .result { padding: 0 14px 14px; }
 .result-part { margin-top: 16px; }
 /* Your call and your cards sit side by side; swipe snaps from one page to the other. */
-.swipe-track { position: relative; display: flex; gap: 24px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.swipe-track { position: relative; display: flex; align-items: flex-start; gap: 24px; overflow-x: auto; overflow-y: hidden; transition: height var(--dur-transform) var(--ease-out); scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .swipe-track::-webkit-scrollbar { display: none; }
 .swipe-page { flex: 0 0 100%; min-width: 0; padding-bottom: 8px; scroll-snap-align: start; }
 .swipe-dots { display: flex; justify-content: center; margin-top: 6px; }
@@ -710,7 +711,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 }
 /* Only while open: a display value on a closed <dialog> overrides the browser's display: none. */
 .sheet.sheet[data-side='left'][open] { display: flex; flex-direction: column; }
-.sheet[data-side='left'] .sheet-head { --glass: var(--ruby); --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.4); position: relative; min-height: 64px; padding: 10px 8px 10px 18px; border-radius: 10px; }
+.sheet[data-side='left'] .sheet-head { --glass: var(--ruby); --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.4); position: relative; min-height: 64px; padding: 10px 8px 10px 18px; border-radius: calc(var(--r-sheet) - 6px); }
 .sheet[data-side='left'] .menu-brand { width: 116px; }
 .sheet[data-side='left'] .sheet-head .icon { color: #fff; }
 .sheet[data-side='left'] .sheet-head .icon:hover { background: rgba(255, 255, 255, 0.14); }
@@ -828,14 +829,18 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .bingo-matches button { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); color: var(--ink); text-align: left; font-family: var(--font-display); font-size: 20px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
 .bingo-matches button small { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; color: var(--muted); }
 .bingo-matches button:disabled { opacity: 0.45; cursor: default; }
-.bingo-cols { display: grid; grid-template-columns: minmax(0, 1fr) auto 32px; gap: 12px; margin: 26px 0 0; font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.bingo-cols span:last-child { text-align: right; }
 .bingo-cluster { margin-top: 22px; }
 .bingo-cluster h2.section { margin-top: 0; }
-.bingo-hint { margin: -4px 0 6px; font-size: var(--fs-label); color: var(--muted); line-height: 1.4; }
-.bingo-cluster ul { list-style: none; margin: 0; padding: 0; }
-.bingo-cluster li button:disabled { opacity: 0.4; cursor: default; }
-.bingo-cluster li small { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.bingo-cluster ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+/* A square option: a small bingo cell. Points pill, the line, then a bar filled to its hit rate. */
+.bsq { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%; height: 100%; min-height: 128px; padding: 12px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); color: var(--ink); text-align: left; cursor: pointer; }
+.bsq:not(:disabled):hover { background: var(--surface-hi); }
+.bsq:disabled { opacity: 0.4; cursor: default; }
+.bsq-label { font-family: var(--font-display); font-size: 18px; line-height: 1.05; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
+.bsq-odds { display: grid; gap: 5px; width: 100%; margin-top: auto; }
+.bsq-odds i { display: block; height: 4px; border-radius: 999px; background: linear-gradient(90deg, var(--ink) calc(var(--rate) * 100%), rgba(255, 255, 255, 0.1) 0); }
+.bsq-odds small, .bsq-note { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.bsq-note { margin-top: auto; }
 
 /* A live match is ruby glass, the same material as the HUD, so it reads as "happening now" at a
    glance. Muted text inside goes to light ink. */
@@ -869,15 +874,19 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .bcell-match { min-width: 0; white-space: nowrap; font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
 .bteams > span { display: inline-flex; align-items: center; gap: 4px; }
 .bteams img { width: 16px; height: 16px; object-fit: contain; }
-.bcell-pts { flex-shrink: 0; display: inline-flex; align-items: baseline; gap: 3px; padding: 3px 9px; border-radius: 999px; background: var(--surface-alt); }
+/* Corner chips (points, Started) sit 4px in from the tile's corner with the tile's radius minus that
+   gap, so their curve runs parallel to the tile's instead of a pill fighting the corner. */
+.bcell-pts { flex-shrink: 0; display: inline-flex; align-items: baseline; gap: 3px; padding: 4px 9px; border-radius: calc(var(--r-tile) - 4px); background: var(--surface-alt); }
+.bcell .bcell-top { margin: -10px -10px 0; }
+.bsq .bcell-pts { margin: -8px 0 0 -8px; background: var(--surface); }
 .bcell-pts b { font-family: var(--font-display); font-size: 20px; line-height: 1; font-variant-numeric: tabular-nums; }
 .bcell-pts small { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.bcell-pts[data-rare='true'] b, .bingo-cluster li b[data-rare='true'] { color: var(--gold); }
+.bcell-pts[data-rare='true'] b { color: var(--gold); }
 /* Centred between the points and the matchup: spare space splits above and below the condition
    instead of pooling under a short one. */
 .bcell-label { margin: auto 0; font-family: var(--font-display); font-size: clamp(18px, 5.6vw, 24px); line-height: 1.02; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
 .bcell[data-locked='true'] :is(.bcell-pts, .bcell-label, .bcell-match) { opacity: 0.45; }
-.bcell-lock { padding: 3px 9px; border-radius: 999px; background: var(--surface-alt); font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.bcell-lock { padding: 4px 9px; border-radius: calc(var(--r-tile) - 4px); background: var(--surface-alt); font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .bcard-add { flex: 0 0 min(60%, 240px); scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 360px; margin-top: 32px; border: 1px solid transparent; border-radius: var(--r-tile); background: rgba(0, 0, 0, 0.22); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45); color: var(--muted); font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 .bcard-add svg { box-sizing: content-box; padding: 10px; border-radius: 50%; background: var(--surface-alt); color: var(--ink); }
 .bcard-add b { padding: 3px 10px; border-radius: 999px; background: var(--surface-alt); color: var(--gold); letter-spacing: 0.1em; }
@@ -885,12 +894,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .bcard-add:disabled { opacity: 0.5; cursor: default; }
 /* Picker: the selected match is slate glass (like the event selector); square rows are tiles. */
 .bingo-matches button { --glass: #3a4157; --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.45); }
-.bingo-cluster li button { display: grid; grid-template-columns: minmax(0, 1fr) auto 32px; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 6px 10px; border: 1px solid transparent; border-radius: var(--r-tile); background: transparent; color: var(--ink); text-align: left; }
-.bingo-cluster li button:not(:disabled):hover { background: var(--surface); }
-.bingo-cluster ul { display: flex; flex-direction: column; gap: 2px; }
-.bingo-cluster li b { font-family: var(--font-display); font-size: 24px; text-align: right; font-variant-numeric: tabular-nums; }
-.bingo-cols { padding: 0 10px; }
-@media (max-width: 420px) { .bcell { min-height: 158px; padding: 12px; } }
+@media (max-width: 420px) { .bcell { min-height: 158px; padding: 12px; } .bcell .bcell-top { margin: -8px -8px 0; } }
 /* A matchup never wraps (Split wraps by default, for sentences): logos and tags stay on one line. */
 .bingo-matches .bteams { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
 .bcards .bteams, .bingo-matches .bteams { flex-wrap: nowrap; white-space: nowrap; }

@@ -1,4 +1,4 @@
-import { Children, useRef, useState } from 'react';
+import { Children, useEffect, useRef, useState } from 'react';
 import { fetchMatch } from '../lib/feed';
 import { useGame } from '../lib/gameContext';
 import { assetPath, thumbnailSrc } from '../../../../src/lib/utils';
@@ -20,11 +20,20 @@ function Swipe({ children }) {
   const pages = Children.toArray(children);
   const track = useRef(null);
   const [at, setAt] = useState(0);
+  const [height, setHeight] = useState();
+  // The strip takes the height of the page you are on, so a short page leaves no gap above the dots.
+  useEffect(() => {
+    const page = track.current?.children[at];
+    if (!page) return undefined;
+    const watch = new ResizeObserver(() => setHeight(page.offsetHeight));
+    watch.observe(page);
+    return () => watch.disconnect();
+  }, [at, pages.length]);
   if (pages.length < 2) return pages;
   const go = i => track.current.scrollTo({ left: track.current.children[i].offsetLeft, behavior: 'smooth' });
   return (
     <div className="swipe">
-      <div className="swipe-track" ref={track} onScroll={e => setAt(Math.round((e.currentTarget.scrollLeft / e.currentTarget.scrollWidth) * pages.length))}>
+      <div className="swipe-track" ref={track} style={{ height }} onScroll={e => setAt(Math.round((e.currentTarget.scrollLeft / e.currentTarget.scrollWidth) * pages.length))}>
         {pages.map(page => <div className="swipe-page" key={page.key}>{page}</div>)}
       </div>
       <div className="swipe-dots">

@@ -9,12 +9,12 @@ import { logoFor } from '../lib/orgs';
 import { longDay, timeOf } from '../lib/time';
 
 const CLUSTERS = [
-  { id: 'close', label: 'Close map', hint: 'Overtime and long maps. These tend to hit together.' },
-  { id: 'stomp', label: 'Stomp', hint: 'Lopsided, short maps. Never together with a close map.' },
-  { id: 'star', label: 'Star player', hint: 'One player carries the map.' },
-  { id: 'chaos', label: 'Chaos', hint: 'Aces, clutches, first kills. Mostly independent.' },
-  { id: 'agent', label: 'Agent', hint: 'Who tops ACS on the map.' },
-  { id: 'side', label: 'Side', hint: 'One side runs away with a half.' },
+  { id: 'close', label: 'Close map' },
+  { id: 'stomp', label: 'Stomp' },
+  { id: 'star', label: 'Star player' },
+  { id: 'chaos', label: 'Chaos' },
+  { id: 'agent', label: 'Agent' },
+  { id: 'side', label: 'Side' },
 ];
 const EMPTY = Array(SIZE * SIZE).fill(null);
 const sameCell = (a, b) => a?.square === b?.square && a?.matchId === b?.matchId;
@@ -261,18 +261,20 @@ export default function Bingo() {
             <Tags match={m} />
           </button>)}
         </div>
-        <div className="bingo-cols" aria-hidden="true"><span>Square</span><span>Chance</span><span>Pts</span></div>
+        {/* Each square looks like the cell it becomes on your card: its points, its line, and a bar
+            filled to how often it hits a series, so risk reads without reading. */}
         {CLUSTERS.map(cl => <div key={cl.id} className="bingo-cluster">
           <h2 className="section">{cl.label}</h2>
-          <p className="bingo-hint">{cl.hint}</p>
           <ul>
             {SQUARES.filter(s => s.cluster === cl.id).map(s => {
               const taken = used.some(c => sameCell(c, { square: s.id, matchId }));
               const fits = !pickMatch || available(s.id, pickMatch);
-              return <li key={s.id}><button type="button" disabled={!pickMatch || taken || !fits} onClick={() => choose(s.id)}>
-                <span className="bingo-row-label">{s.label}</span>
-                <small>{taken ? 'In use' : !fits ? 'Bo3 only' : pct(s.seriesRate)}</small>
-                <b data-rare={s.points >= RARE}>{s.points}</b>
+              return <li key={s.id}><button type="button" className="bsq" disabled={!pickMatch || taken || !fits} onClick={() => choose(s.id)}>
+                <span className="bcell-pts" data-rare={s.points >= RARE}><b>{s.points}</b><small>pts</small></span>
+                <span className="bsq-label">{s.label}</span>
+                {taken || !fits
+                  ? <small className="bsq-note">{taken ? 'In use' : 'Bo3 only'}</small>
+                  : <span className="bsq-odds" style={{ '--rate': s.seriesRate }}><i /><small>Hits {pct(s.seriesRate)}</small></span>}
               </button></li>;
             })}
           </ul>
