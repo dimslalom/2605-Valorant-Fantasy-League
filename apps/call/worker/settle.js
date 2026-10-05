@@ -1,4 +1,5 @@
-import { resolveSeries, trackedAt } from '../../../src/engine/collect/game.js';
+import { rescoreCalls, resolveSeries, trackedAt } from '../../../src/engine/collect/game.js';
+import { CALL_RULES } from '../../../src/engine/collect/rules.js';
 import { loadMatch } from '../../../worker/feed/routes.js';
 import { ensureWallet } from './wallet.js';
 
@@ -30,11 +31,13 @@ export async function settleAll(env,at=Math.floor(Date.now()/1000)) {
       if(m.starts_at<(state.createdAt??0)||state.revealed?.[m.match_id]) continue;
       if(state.calls?.[m.match_id]?.winner!=null||await inMatch(m.match_id,trackedAt(state,m.starts_at))) due.push(m);
     }
-    if(!due.length) continue;
+    // A save scored under older call values is due even with nothing new: rescoring it pays the difference.
+    if(!due.length&&(state.callRules??1)>=CALL_RULES) continue;
     const wallet=await ensureWallet(env.DB,row.user_id,at);
     state={...state,credits:wallet.balance};
-    teams??=new Map((await env.DB.prepare('SELECT vlr_id,team_tag FROM feed_players').all()).results.map(p=>[p.vlr_id,p.team_tag]));
     const before=state.credits;
+    state=rescoreCalls(state);
+    teams??=new Map((await env.DB.prepare('SELECT vlr_id,team_tag FROM feed_players').all()).results.map(p=>[p.vlr_id,p.team_tag]));
     for(const m of due) {
       if(!cache.has(m.match_id)) cache.set(m.match_id,await loadMatch(env,m.match_id));
       const series=cache.get(m.match_id);
