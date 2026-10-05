@@ -1,5 +1,5 @@
 import cards from '../../../../src/data/cards.json';
-import { BINGO, ECONOMY, TRACKED_MAX } from '../../../../src/engine/collect/rules';
+import { ECONOMY, TRACKED_MAX } from '../../../../src/engine/collect/rules';
 import { assetPath, thumbnailSrc } from '../../../../src/lib/utils';
 import { logoFor } from '../lib/orgs';
 
@@ -9,6 +9,11 @@ const valyn = cards.find(card => card.id === 'g2-valyn-gold-001');
 function Team({ tag }) {
   const logo = logoFor(tag);
   return <span className="guide-team">{logo && <img src={logo} alt="" />}<b>{tag}</b></span>;
+}
+
+function Logo({ tag }) {
+  const logo = logoFor(tag);
+  return logo ? <img src={logo} alt="" /> : null;
 }
 
 function Player({ card }) {
@@ -48,12 +53,14 @@ export default function HowTo({ onDone }) {
     <section className="guide-row">
       <div className="guide-copy">
         <h3>Play bingo</h3>
-        <p>Pick four events for the same Monday-to-Monday week. A match square can cover the week or name one match for more points. The first card is free; extra cards unlock after payout calibration and cost {BINGO.cardCost} CR.</p>
+        <p>Pick four squares before Monday. Name a match to earn more. Lines and a full card pay again.</p>
       </div>
-      <div className="guide-bingo" role="img" aria-label="Example bingo card: four squares, the rare one worth 6 points">
-        {[['3', 'An ace'], ['2', '25+ kills'], ['6', '30+ kills'], ['4', 'Yoru tops']].map(([pts, label]) => (
-          <span key={label} data-rare={Number(pts) >= 5}><b>{pts}</b><small>{label}</small></span>
-        ))}
+      {/* A mini weekly card in the real card's language: short names, the target as logos, a hit in green glass. */}
+      <div className="guide-bingo" role="img" aria-label="Example weekly bingo card: Overtime in NRG against T1 for 5 points has hit; 13-5 stomp in any match for 2; Player joins for 5; Ace for 3">
+        <span data-hit="true"><b>5</b><small>Overtime</small><i><Logo tag="NRG" /><Logo tag="T1" /></i></span>
+        <span><b>2</b><small>13-5 stomp</small><i><Logo tag="LOUD" /><Logo tag="G2" /><Logo tag="PRX" /><em>+5</em></i></span>
+        <span data-rare="true"><b>5</b><small>Player joins</small><i><em>Riot GCD</em></i></span>
+        <span><b>3</b><small>Ace</small><i><Logo tag="PRX" /><Logo tag="LOUD" /></i></span>
       </div>
     </section>
 

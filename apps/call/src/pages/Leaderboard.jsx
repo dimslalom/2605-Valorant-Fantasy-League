@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGame } from '../lib/gameContext';
+import { weekKey } from '../lib/weeklyBingo';
 
 const BOARDS = [
   { id: 'overall', label: 'Overall' },
   { id: 'calls', label: 'Calls' },
   { id: 'cards', label: 'Cards' },
+  { id: 'bingo', label: 'Bingo' },
 ];
 const number = value => new Intl.NumberFormat().format(value);
 
@@ -22,10 +24,12 @@ export default function Leaderboard() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/leaderboard?board=${board}`, { signal, cache: 'no-store' });
+      // Bingo ranks the week being played now; the other boards are all-time.
+      const url = board === 'bingo' ? `/api/weekly-bingo/leaderboard?week=${weekKey(Math.floor(Date.now() / 1000))}` : `/api/leaderboard?board=${board}`;
+      const response = await fetch(url, { signal, cache: 'no-store' });
       if (!response.ok) throw new Error('Standings are unavailable. Try again.');
       const next = await response.json();
-      if (ticket === request.current) setData(next);
+      if (ticket === request.current) setData({ ...next, board });
     } catch (cause) {
       if (ticket === request.current && cause.name !== 'AbortError') setError(cause.message);
     } finally {
@@ -50,7 +54,7 @@ export default function Leaderboard() {
 
   return <section className="leaderboard-page">
     <header className="leaderboard-head"><h1>Leaderboard</h1></header>
-    <div className="leaderboard-switch" role="group" aria-label="Ranking by">
+    <div className="leaderboard-switch" role="group" aria-label="Ranking by" style={{ '--n': BOARDS.length }}>
       {BOARDS.map(option => <button key={option.id} type="button" className={board === option.id ? 'primary' : undefined} aria-pressed={board === option.id} onClick={() => setBoard(option.id)}>{option.label}</button>)}
     </div>
 
@@ -58,8 +62,8 @@ export default function Leaderboard() {
     {!error && !shown && <p className="leaderboard-message" role="status">{loading ? 'Loading standings' : 'No standings yet'}</p>}
     {!error && shown && shown.entries.length === 0 && <div className="leaderboard-empty">
       <strong>No scores yet</strong>
-      <p>Reveal a finished match to enter.</p>
-      <Link className="secondary" to="/">Matches</Link>
+      <p>{board === 'bingo' ? 'Submit a weekly card to enter.' : 'Reveal a finished match to enter.'}</p>
+      {board === 'bingo' ? <Link className="secondary" to="/bingo">Bingo</Link> : <Link className="secondary" to="/">Matches</Link>}
     </div>}
     {!error && shown && shown.entries.length > 0 && <>
       <div className="leaderboard-columns" aria-hidden="true"><span>Player</span><span>Pts</span></div>

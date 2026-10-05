@@ -22,6 +22,9 @@ export default defineConfig({
       '/api/save': 'http://localhost:8787',
       '/api/leaderboard': 'http://localhost:8787',
       '/api/bingo': 'http://localhost:8787',
+      '/api/weekly-bingo': 'http://localhost:8787',
+      '/api/game': 'http://localhost:8787',
+      '/api/roster': 'http://localhost:8787',
     },
   },
   build: {

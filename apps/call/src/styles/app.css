@@ -595,7 +595,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
    Main actions are ruby pills; picked tiles keep softer rounded corners. */
 .primary { --glass: var(--ruby); --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.4); }
 .secondary { --glass: #3a4157; --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.45); }
-:is(.hud, .match[data-status='live'], .bingo-matches button[aria-pressed='true'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty, .verdict li[data-ok='true'], .swipe-dots button[aria-current='true'] i),
+:is(.hud, .match[data-status='live'], .bingo-targets button[aria-pressed='true'], .bcell[data-state='hit'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty, .verdict li[data-ok='true'], .guide-bingo span[data-hit='true'], .swipe-dots button[aria-current='true'] i),
 :is(.analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true']):hover {
   position: relative;
   isolation: isolate;
@@ -608,7 +608,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
     linear-gradient(180deg, color-mix(in srgb, var(--glass) 78%, black), var(--glass) 52%, color-mix(in srgb, var(--glass) 92%, white));
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 -1px 1px rgba(255, 255, 255, 0.14), 0 2px 6px rgba(0, 0, 0, 0.45);
 }
-:is(.hud, .match[data-status='live'], .bingo-matches button[aria-pressed='true'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty, .verdict li[data-ok='true'], .swipe-dots button[aria-current='true'] i)::before {
+:is(.hud, .match[data-status='live'], .bingo-targets button[aria-pressed='true'], .bcell[data-state='hit'], .sheet[data-side='left'] .sheet-head, .primary:not(:disabled), .secondary:not(:disabled), .event-pick button[aria-pressed='true'], .analyst-team[data-selected='true'], .analyst-player[data-selected='true'], .outcome[data-selected='true'], .leaderboard-entry:first-child, .leaderboard-entry[data-self='true'], .leaderboard-own, .leaderboard-empty, .verdict li[data-ok='true'], .guide-bingo span[data-hit='true'], .swipe-dots button[aria-current='true'] i)::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -823,29 +823,24 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 /* Bingo: real printed cards. Each card is a white sheet on the dark app, swiped like a hand of cards.
    Ink is near-black, the header band and the point numerals are the ruby ink, and a started match gets a
    rubber stamp. The paper tones are local to the card, so the app's own tokens stay untouched. */
-.bingo-utc { margin: 0 0 18px; text-align: center; font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .bingo-bar { display: flex; gap: 12px; margin-top: 6px; }
 .bingo-bar > button { flex: 1 1 0; }
 .bingo-bar small { margin-left: 8px; font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.1em; opacity: 0.85; }
-.bingo-message { margin: 12px 0 0; color: var(--muted); line-height: 1.4; }
 
-.bingo-pick { padding-bottom: 8px; }
-.bingo-pick h2.section:first-child { margin-top: 4px; }
-.bingo-matches { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
-.bingo-matches button { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); color: var(--ink); text-align: left; font-family: var(--font-display); font-size: 20px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-.bingo-matches button small { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: 0.14em; color: var(--muted); }
-.bingo-matches button:disabled { opacity: 0.45; cursor: default; }
 .bingo-cluster { margin-top: 22px; }
 .bingo-cluster h2.section { margin-top: 0; }
 .bingo-cluster ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-/* A square option: a small bingo cell. Points pill, the line, then a bar filled to its hit rate. */
-.bsq { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%; height: 100%; min-height: 128px; padding: 12px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); color: var(--ink); text-align: left; cursor: pointer; }
+/* A square option: a small bingo cell, points chip in the corner and the line. */
+.bsq { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; width: 100%; height: 100%; min-height: 112px; padding: 12px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); color: var(--ink); text-align: left; cursor: pointer; }
 .bsq:not(:disabled):hover { background: var(--surface-hi); }
 .bsq:disabled { opacity: 0.4; cursor: default; }
 .bsq-label { font-family: var(--font-display); font-size: 18px; line-height: 1.05; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
-.bsq-odds { display: grid; gap: 5px; width: 100%; margin-top: auto; }
-.bsq-odds i { display: block; height: 4px; border-radius: 999px; background: linear-gradient(90deg, var(--ink) calc(var(--rate) * 100%), rgba(255, 255, 255, 0.1) 0); }
-.bsq-odds small, .bsq-note { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.bsq-pts { display: flex; align-items: baseline; gap: 6px; }
+.bsq-more { font: 700 16px/1 var(--font-display); color: var(--muted); font-variant-numeric: tabular-nums; }
+.bsq-more::before { content: '\2192'; margin-right: 5px; font-size: 13px; }
+.bsq-more[data-rare='true'] { color: var(--gold); }
+.bsq-rule { font-size: var(--fs-label); line-height: 1.3; color: var(--muted); }
+.bsq-note { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .bsq-note { margin-top: auto; }
 
 /* A live match is ruby glass, the same material as the HUD, so it reads as "happening now" at a
@@ -861,13 +856,6 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
    HUD's pressed-in look) that ask to be filled; filled cells are plain tiles, matchup with logos
    top left, a points chip top right (gold when rare), the condition as the headline. Glass stays
    reserved for choosing (the selected match in the picker), not for content. */
-.bcards { display: flex; gap: 14px; margin: 0 -16px; padding: 6px 16px 18px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-.bcards::-webkit-scrollbar { display: none; }
-.bcard { flex: 0 0 min(88%, 380px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 10px; min-width: 0; transition: opacity var(--dur-transform) var(--ease-out), transform var(--dur-transform) var(--ease-out); }
-.bcard[data-front='false'] { opacity: 0.5; transform: scale(0.97); }
-.bcard-meta { display: flex; align-items: baseline; justify-content: space-between; padding: 0 2px; }
-.bcard-meta b { font-family: var(--font-display); font-size: 22px; text-transform: uppercase; }
-.bcard-meta span { font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 /* Every row as tall as the tallest tile, so the four tiles are always identical, whatever the text. */
 .bcard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
 .bcell { position: relative; display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 168px; padding: 14px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface); color: var(--ink); text-align: left; }
@@ -891,30 +879,67 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 /* Centred between the points and the matchup: spare space splits above and below the condition
    instead of pooling under a short one. */
 .bcell-label { margin: auto 0; font-family: var(--font-display); font-size: clamp(18px, 5.6vw, 24px); line-height: 1.02; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
-.bcell[data-locked='true'] :is(.bcell-pts, .bcell-label, .bcell-match) { opacity: 0.45; }
+/* Weekly bingo. The headline is whatever the week waits on (lock, end of play, results), the
+   dates under it; then the card slots, the 2x2 card, and one action. */
+.bingo-head { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; margin: 8px 0 22px; }
+.bingo-next svg { transform: scaleX(-1); }
+.bingo-head .icon:disabled { opacity: 0.3; }
+.bingo-phase { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.bingo-phase strong { font: 700 clamp(44px, 12vw, 64px)/0.9 var(--font-display); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.bingo-week { display: grid; gap: 6px; width: min(260px, 70vw); margin-top: 10px; }
+.bingo-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.bingo-days i { height: 6px; border-radius: 3px; background: var(--surface-alt); }
+.bingo-days i[data-state='done'] { background: var(--ink); }
+.bingo-days i[data-state='today'] { background: var(--ruby); }
+.bingo-dates { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.bingo-pips { display: inline-flex; gap: 4px; }
+.bingo-pips i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: 0.5; }
+.bingo-pips i[data-on='true'] { background: var(--ink); opacity: 1; }
+/* Any match: the week's teams as a row of logos, then +N. */
+.bcrowd { display: inline-flex; align-items: center; gap: 6px; }
+.bcrowd img, .bcrowd i { width: 18px; height: 18px; object-fit: contain; }
+.bcrowd i { display: grid; place-items: center; font-style: normal; font-size: 8px; background: var(--surface-alt); border-radius: 4px; }
+.bcrowd small { margin-left: 2px; font-size: inherit; }
+.bingo-targets .bcrowd img { width: 20px; height: 20px; }
+.bingo-slots button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.bingo-slots button small { font-size: 10px; letter-spacing: 0.1em; opacity: 0.8; }
+.bingo-slots button:disabled { opacity: 0.45; cursor: default; }
+.bingo-card { margin: 18px 0; }
+.bcell[data-state='hit'] { --glass: var(--win); --glass-ink: #0b0d14; --glass-shadow: rgba(255, 255, 255, 0.35); }
+.bcell[data-state='hit'] .bcell-pts { background: rgba(0, 0, 0, 0.14); }
+.bcell[data-state='hit'] :is(.bcell-pts small, .bcell-match) { color: inherit; opacity: 0.75; }
+.bcell[data-state='hit'] .bcell-pts b { color: inherit; }
+.bcell[data-state='miss'] :is(.bcell-pts, .bcell-label, .bcell-match) { opacity: 0.4; }
+.bcell-match { display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+.bcell-match a { margin-left: auto; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.primary.big.bingo-submit { width: 100%; max-width: none; }
+.bingo-saved { text-align: center; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--win); }
+/* Picker step two: any match or one named match, each with what it pays. */
+.sheet-head:has(.bingo-back) h2 { flex: 1; }
+.bingo-back { order: -1; }
+.bingo-targets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bingo-targets button { --glass: #3a4157; --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 64px; padding: 12px 16px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface-alt); color: var(--ink); text-align: left; cursor: pointer; }
+.bingo-targets button:not([aria-pressed='true']):hover { background: var(--surface-hi); }
+.bingo-target-what { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.bingo-target-what b, .bingo-targets .bteams { font: 700 20px/1 var(--font-display); text-transform: uppercase; }
+.bingo-target-what small { font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .bcell-lock { padding: 4px 9px; border-radius: calc(var(--r-tile) - 4px); background: var(--surface-alt); font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.bcard-add { flex: 0 0 min(60%, 240px); scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 360px; margin-top: 32px; border: 1px solid transparent; border-radius: var(--r-tile); background: rgba(0, 0, 0, 0.22); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45); color: var(--muted); font-family: var(--font-mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-.bcard-add svg { box-sizing: content-box; padding: 10px; border-radius: 50%; background: var(--surface-alt); color: var(--ink); }
-.bcard-add b { padding: 3px 10px; border-radius: 999px; background: var(--surface-alt); color: var(--gold); letter-spacing: 0.1em; }
-.bcard-add:not(:disabled):hover { background: rgba(0, 0, 0, 0.3); color: var(--ink); }
-.bcard-add:disabled { opacity: 0.5; cursor: default; }
 /* Picker: the selected match is slate glass (like the event selector); square rows are tiles. */
-.bingo-matches button { --glass: #3a4157; --glass-ink: #ffffff; --glass-shadow: rgba(0, 0, 0, 0.45); }
 @media (max-width: 420px) { .bcell { min-height: 158px; padding: 12px; } .bcell .bcell-top { margin: -8px -8px 0; } }
 /* A matchup never wraps (Split wraps by default, for sentences): logos and tags stay on one line. */
-.bingo-matches .bteams { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-.bcards .bteams, .bingo-matches .bteams { flex-wrap: nowrap; white-space: nowrap; }
+.bcell-match .bteams, .bingo-targets .bteams { flex-wrap: nowrap; white-space: nowrap; }
 
 /* How to play: a mini bingo card in the real card's tile style (rare points in gold). */
 .guide-bingo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 5px; }
-.guide-bingo > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 7px 9px; border-radius: 8px; background: var(--surface); }
-.guide-bingo b { font: 700 22px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.guide-bingo > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 7px 9px; border: 1px solid transparent; border-radius: 8px; background: var(--surface); }
+.guide-bingo b { font: 700 20px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 .guide-bingo span[data-rare='true'] b { color: var(--gold); }
-.guide-bingo small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: 700 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
-.weekly-bingo .bcard-grid { margin: 1.5rem 0; }
-.weekly-cell { display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; min-height: 11rem; padding: 1rem; gap: .75rem; }
-.weekly-cell select, .roster-page input { width: 100%; min-width: 0; padding: .55rem; color: inherit; background: var(--surface, #201b24); border: 1px solid currentColor; }
-.weekly-cell a { font-size: .8rem; }
+.guide-bingo small { overflow-wrap: anywhere; font: 700 13px/1.05 var(--font-display); text-transform: uppercase; }
+.guide-bingo i { display: flex; align-items: center; gap: 3px; min-height: 12px; font-style: normal; }
+.guide-bingo i img { width: 12px; height: 12px; object-fit: contain; }
+.guide-bingo em { font: 700 10px var(--font-mono); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.guide-bingo span[data-hit='true'] { --glass: var(--win); --glass-ink: #0b0d14; --glass-shadow: rgba(255, 255, 255, 0.35); }
+.roster-page input { width: 100%; min-width: 0; padding: .55rem; color: inherit; background: var(--surface, #201b24); border: 1px solid currentColor; }
 .roster-page { max-width: 62rem; margin-inline: auto; }
 .roster-list { list-style: none; padding: 0; }
 .roster-list li { padding: .8rem 0; border-bottom: 1px solid #ffffff30; line-height: 1.6; }
