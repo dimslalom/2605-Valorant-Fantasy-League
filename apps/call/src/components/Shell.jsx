@@ -236,7 +236,7 @@ export default function Shell() {
       <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left" head={<img className="menu-brand" src="/opval-logo.svg" alt="OpVAL" />}>
         <nav className="menu">
           <Link to="/leaderboard" onClick={close}><Icon name="ranks" />Leaderboard</Link>
-          <Link to="/roster" onClick={close}><Icon name="matches" />Roster Hub</Link>
+          <Link to="/roster" onClick={close}><Icon name="matches" />Rosters</Link>
           <button onClick={() => setSheet('account')}><Icon name="user" />Account</button>
           <button onClick={() => setSheet('help')}><Icon name="help" />How to play</button>
           <button onClick={() => setSheet('stats')}><Icon name="stats" />Statistics</button>

@@ -17,6 +17,8 @@ export default defineConfig({
     proxy: {
       // In dev, read the live feed (GET only) so the app has real data.
       '/api/feed': { target: 'https://vctfantasy.dimas.works', changeOrigin: true },
+      // Roster data is public and read-only too: read the live sources.
+      '/api/roster': { target: 'https://opval.dimas.works', changeOrigin: true },
       // Accounts and saves run on a local Worker with a local database: `npm run call:api`.
       '/api/auth': 'http://localhost:8787',
       '/api/save': 'http://localhost:8787',
@@ -24,7 +26,6 @@ export default defineConfig({
       '/api/bingo': 'http://localhost:8787',
       '/api/weekly-bingo': 'http://localhost:8787',
       '/api/game': 'http://localhost:8787',
-      '/api/roster': 'http://localhost:8787',
     },
   },
   build: {

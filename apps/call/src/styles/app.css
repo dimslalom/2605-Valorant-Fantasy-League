@@ -939,8 +939,65 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .guide-bingo i img { width: 12px; height: 12px; object-fit: contain; }
 .guide-bingo em { font: 700 10px var(--font-mono); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .guide-bingo span[data-hit='true'] { --glass: var(--win); --glass-ink: #0b0d14; --glass-shadow: rgba(255, 255, 255, 0.35); }
-.roster-page input { width: 100%; min-width: 0; padding: .55rem; color: inherit; background: var(--surface, #201b24); border: 1px solid currentColor; }
-.roster-page { max-width: 62rem; margin-inline: auto; }
-.roster-list { list-style: none; padding: 0; }
-.roster-list li { padding: .8rem 0; border-bottom: 1px solid #ffffff30; line-height: 1.6; }
-.roster-list a { margin-left: .5rem; }
+
+/* Rosters: what settles Bingo's roster squares first, then VLR moves by day, then contracts as
+   team tiles with a bar per player running to the year the contract ends. */
+.roster-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.roster-sources { display: flex; flex-wrap: wrap; gap: 8px; }
+.roster-sources a, .roster-unmatched { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: 999px; background: var(--surface-alt); color: var(--ink); text-decoration: none; font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.roster-sources a i { width: 7px; height: 7px; border-radius: 50%; background: var(--win); }
+.roster-sources a[data-ok='false'] i { background: var(--accent); }
+.roster-sources small { color: var(--muted); font: inherit; }
+.roster-unmatched { cursor: pointer; color: var(--gold); }
+.roster-search { width: 100%; min-height: 44px; margin-top: 18px; padding: 0 18px; border: 1px solid var(--line-bracket); border-radius: 999px; background: var(--surface); color: var(--ink); font: inherit; }
+.roster-search::placeholder { color: var(--muted); }
+.roster-block { margin-top: 30px; }
+.crest { width: 24px; height: 24px; flex-shrink: 0; object-fit: contain; }
+.crest-mono { display: grid; place-items: center; border-radius: 6px; background: var(--surface-alt); color: var(--muted); font: 700 9px var(--font-mono); letter-spacing: 0.04em; }
+.crest-none { border-radius: 50%; border: 1px solid var(--muted); opacity: 0.4; width: 14px; height: 14px; margin: 5px; }
+.move-arrow { flex-shrink: 0; width: 14px; height: 9px; background: var(--muted); clip-path: polygon(0 40%, 60% 40%, 60% 0, 100% 50%, 60% 100%, 60% 60%, 0 60%); }
+.roster-who { display: flex; flex-direction: column; min-width: 0; color: var(--ink); text-decoration: none; }
+.roster-who b { font: 700 19px/1.05 var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-who small { color: var(--muted); font-size: var(--fs-label); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.roster-events li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto auto; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface); }
+.roster-verb { font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--win); }
+.roster-verb[data-kind='roster_depart'] { color: var(--accent); }
+.roster-verb[data-kind='contract_change'] { color: var(--gold); }
+.roster-years { display: inline-flex; align-items: center; gap: 6px; font: 700 16px var(--font-display); font-variant-numeric: tabular-nums; }
+.roster-src { color: var(--muted); font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.roster-bingo { color: var(--muted); font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; text-underline-offset: 3px; }
+.roster-day { margin-top: 14px; }
+.roster-day h3 { margin: 0 0 6px; font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.roster-moves { list-style: none; margin: 0; padding: 0; }
+.roster-moves li { display: grid; grid-template-columns: minmax(110px, 180px) minmax(0, 1fr); align-items: center; gap: 14px; min-height: 44px; }
+.roster-moves li > .roster-move + .roster-move { grid-column: 2; }
+.roster-moves .roster-who { flex: 0 1 auto; }
+.roster-move { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.roster-move small { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--fs-label); }
+.roster-move[data-type='left'] .move-arrow { background: var(--accent); }
+.roster-move[data-type='joined'] .move-arrow { background: var(--win); }
+.roster-more { margin-top: 12px; }
+.roster-block .tier-switch { margin-bottom: 14px; }
+.roster-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.roster-team { padding: 14px; border: 1px solid transparent; border-radius: var(--r-tile); background: var(--surface); }
+.roster-team header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.roster-team header b { font: 700 19px/1 var(--font-display); text-transform: uppercase; }
+.roster-years-axis, .roster-team li { display: grid; grid-template-columns: minmax(0, 1fr) 128px; align-items: center; gap: 10px; }
+.roster-axis { display: grid; grid-template-columns: repeat(4, 1fr); }
+.roster-axis small { text-align: right; font: 700 10px var(--font-mono); color: var(--muted); }
+.roster-team ul { list-style: none; margin: 4px 0 0; padding: 0; }
+.roster-team li { min-height: 26px; font-size: var(--fs-label); }
+.roster-team li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-bar { position: relative; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); }
+.roster-bar i { position: absolute; inset: 0 auto 0 0; width: calc(var(--span) / var(--n) * 100%); border-radius: inherit; background: var(--ink); }
+.roster-bar[data-ending='true'] i { background: var(--accent); }
+.roster-unmatched-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.roster-unmatched-list li { display: flex; flex-direction: column; gap: 2px; }
+.roster-unmatched-list small { color: var(--muted); }
+@media (max-width: 420px) {
+  .roster-events li { grid-template-columns: 24px minmax(0, 1fr) auto; }
+  .roster-events .roster-years, .roster-events .roster-src { grid-column: 2 / -1; }
+  .roster-move small { display: none; }
+  .roster-block .tier-switch button { padding: 0 4px; letter-spacing: 0.03em; }
+}
