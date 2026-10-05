@@ -7,5 +7,8 @@
   "orientation": "portrait",
   "background_color": "#0d0f17",
   "theme_color": "#0b0d14",
-  "icons": [{ "src": "/opval-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [
+    { "src": "/opval-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/opval-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
 }
