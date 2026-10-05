@@ -7,7 +7,7 @@ This replaces the playable daily bingo page. Historical `bingo_cards` rows remai
 1. Apply D1 migration `0010_weekly_bingo_roster_wallet.sql` (and any later pending migrations) to the shared database before deploying either Worker.
 2. Deploy the feed Worker, the OpVAL Worker and static app. Keep the existing feed ingest token in the GitHub Actions workflow. The scheduled workflow now polls the VLR transfer log and all four published Riot GCD region sheets after its match poll.
 3. Watch `/api/roster/status` for fresh reads and unresolved identities. The first valid Riot snapshot only establishes a baseline. A changed row produces a ranked event only after the next successful identical read.
-4. Launch with one free card per Monday-to-Monday UTC week. It earns credits when all scheduled matches and Riot source coverage settle. The weekly leaderboard sums a player's cards.
+4. Launch with one free card per Monday-to-Monday UTC week. Players submit during the current week. The card locks immediately and earns credits after eligible matches and Riot source coverage settle. The weekly leaderboard sums a player's cards.
 5. Cron records four or more settled weeks, replays four legal extra cards per submitted free card, calibrates a points-to-credits rate on three weeks and validates it on the fourth. Paid slots are enabled only when the held-out mean gross payout is 90–110 credits and the replay sample minimum is met. Inspect `/api/weekly-bingo/calibration` for progress. Future weekly rows inherit the approved rate.
 
 ## Source and timing rules
@@ -15,7 +15,7 @@ This replaces the playable daily bingo page. Historical `bingo_cards` rows remai
 - VLR transfers are discovery and browsing data. They never settle ranked roster squares.
 - Riot GCD is the settlement source. `first_seen_at` means OpVAL's first successful observation, not a public announcement time. The source is a live sheet and has no guaranteed timestamped change log.
 - A Riot read gap longer than three hours keeps an affected week pending. A missed transient sheet change cannot be reconstructed from the current published sheet; restore source history or reconcile the gap before closing such a week.
-- The eligible match schedule is frozen at Monday 00:00 UTC. A match moved outside the week is neutral; later added matches do not enter the frozen slate.
+- Cards are immutable after submission. Match squares score only on matches starting at least one hour after submission. Named picks must already be listed at submission. General picks can cover matches listed later in the week if our feed first saw them at least one hour before kickoff. Official roster squares score only on changes first observed after submission. Each card keeps its submission-time points. A match moved outside the week is neutral.
 - Each distinct official snapshot retains its contract rows and every successful read retains a timestamp. `/api/roster/snapshots` and `/api/roster/snapshots/:id` expose the audit trail.
 - Credit balances and card ownership are authoritative on the server after a one-time opening balance from the last save. Existing signed-in browser state refreshes from the server on tab visibility and after a bingo purchase.
 

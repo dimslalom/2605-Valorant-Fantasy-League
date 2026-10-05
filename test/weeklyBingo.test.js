@@ -8,13 +8,13 @@ import { ensureWallet, postWallet } from '../apps/call/worker/wallet.js';
 
 const monday=Date.parse('2026-10-05T00:00:00Z')/1000;
 const sq=(square,matchId=null)=>({square,matchId});
-test('UTC week boundaries and future submission window',()=>{
+test('UTC week boundaries and current-week submission window',()=>{
   assert.equal(weekKey(monday-1),'2026-09-28');
   assert.equal(weekKey(monday),'2026-10-05');
   assert.deepEqual(weekBounds('2026-10-05'),[monday,monday+604800]);
   assert.equal(weekBounds('2026-10-06'),null);
-  assert.equal(nextEditableWeek(monday-1),'2026-10-05');
-  assert.equal(nextEditableWeek(monday),'2026-10-12');
+  assert.equal(nextEditableWeek(monday-1),'2026-09-28');
+  assert.equal(nextEditableWeek(monday),'2026-10-05');
 });
 test('unique events across cards; named match must be frozen schedule member',()=>{
   const matches=[{matchId:3,bestOf:3}],catalog=weeklyCatalog(1);
@@ -31,6 +31,30 @@ test('weekly general hits any scheduled match; named void is neutral',()=>{
   assert.deepEqual(score.cells.map(x=>x.state),['hit','free','hit','miss']);
   assert.equal(score.complete,true);
   assert.equal(score.cells[0].evidence.matchId,1);
+});
+test('a midweek card cannot score earlier results or earlier roster observations',()=>{
+  const schedule=[{matchId:1,bestOf:3,startsAt:monday+3600},{matchId:2,bestOf:3,startsAt:monday+3*3600}];
+  const result={state:'final',finalAt:monday+4*3600,maps:[{score1:13,score2:12,players:[]}]};
+  const cells=[sq('ot'),sq('roster_add'),sq('contract_change'),sq('roster_depart')];
+  const events=[{changeType:'roster_add',firstSeenAt:monday+1800,player:'A',team:'B',sourceUrl:'https://example.test'}];
+  const before=scoreWeeklyCard(cells,schedule,{1:result,2:{state:'pending'}},events,weeklyCatalog(schedule),false,monday+2*3600,false);
+  assert.equal(before.cells[0].state,'pending','earlier finished match is ineligible');
+  assert.equal(before.cells[1].state,'pending','earlier official observation is ineligible');
+  const after=scoreWeeklyCard(cells,schedule,{1:result,2:result},[...events,{...events[0],firstSeenAt:monday+3*3600}],weeklyCatalog(schedule),true,monday+2*3600,true);
+  assert.equal(after.cells[0].evidence.matchId,2);
+  assert.equal(after.cells[1].evidence.observedAt,monday+3*3600);
+});
+test('general match picks work while the published slate is empty',async()=>{
+  const db=d1(),env={DB:db},user={id:1,username:'alpha'};
+  db.sqlite.prepare("INSERT INTO users(id,username,pw_hash,created_at) VALUES(1,'alpha','x',0)").run();
+  const week='2026-10-05',url=new URL('https://x.test/api/weekly-bingo');
+  const chosen=[sq('ot'),sq('ace'),sq('roster_add'),sq('contract_change')];
+  assert.equal((await handleWeeklyBingo(user,env,url,'PUT',{week,slot:1,version:0,cells:chosen},monday+60)).status,200);
+  const early=scoreWeeklyCard(chosen,[],{},[],weeklyCatalog([]),false,monday+60,false);
+  assert.equal(early.cells[0].state,'pending');
+  const tooLate=await handleWeeklyBingo({id:2,username:'other'},env,url,'PUT',
+    {week,slot:1,version:0,cells:[sq('ot',3),sq('ace'),sq('roster_add'),sq('contract_change')]},monday+60);
+  assert.equal(tooLate.status,400,'named picks require a known eligible match');
 });
 test('roster-only cards work without matches and contract direction uses published dates',()=>{
   const cells=[sq('roster_add'),sq('roster_depart'),sq('contract_extend'),sq('multi_team_change')];
@@ -94,7 +118,7 @@ test('an interrupted first snapshot resumes as a baseline without fake events',a
   assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM roster_snapshot_rows').first()).n,40);
   assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM roster_contracts').first()).n,40);
 });
-test('weekly API locks at Monday and wallet opening is idempotent',async()=>{
+test('current-week card locks on submission and later listed matches can score',async()=>{
   const db=d1(),env={DB:db},user={id:1,username:'alpha'};
   db.sqlite.prepare("INSERT INTO users(id,username,pw_hash,created_at) VALUES(1,'alpha','x',0)").run();
   db.sqlite.prepare('INSERT INTO saves(user_id,state,updated_at,version) VALUES(1,?,0,1)').run(JSON.stringify({credits:120,collection:[]}));
@@ -105,20 +129,28 @@ test('weekly API locks at Monday and wallet opening is idempotent',async()=>{
   assert.equal((await ensureWallet(db,1,103)).balance,20);
   const week='2026-10-05';
   db.sqlite.prepare(`INSERT INTO feed_matches(match_id,event_id,best_of,starts_at,status,updated_at)
-    VALUES(9,1,3,?,'upcoming',0)`).run(monday+3600);
+    VALUES(9,1,3,?,'upcoming',0)`).run(monday+7200);
   const get=async t=>handleWeeklyBingo(user,env,new URL(`https://x.test/api/weekly-bingo?week=${week}`),'GET',null,t);
-  assert.equal((await (await get(monday-1)).json()).locked,false);
+  assert.equal((await (await get(monday+10)).json()).locked,false);
   const put=await handleWeeklyBingo(user,env,new URL('https://x.test/api/weekly-bingo'),'PUT',
-    {week,slot:1,version:0,cells:[sq('ace'),sq('ot',9),sq('roster_add'),sq('contract_change')]},monday-1);
+    {week,slot:1,version:0,cells:[sq('ace'),sq('ot',9),sq('roster_add'),sq('contract_change')]},monday+10);
   assert.equal(put.status,200);
+  const frozenCatalog=JSON.parse(db.sqlite.prepare('SELECT catalog FROM weekly_bingo_cards WHERE user_id=1 AND week=?').get(week).catalog);
   db.sqlite.prepare(`INSERT INTO feed_matches(match_id,event_id,best_of,starts_at,status,updated_at,first_seen_at)
-    VALUES(10,1,3,?,'upcoming',?,?)`).run(monday+7200,monday+10,monday+10);
-  const locked=await (await get(monday+20)).json();
-  assert.equal(locked.locked,true);
-  assert.deepEqual(locked.matches.map(m=>m.matchId),[9],'a newly discovered match cannot enter the frozen schedule');
+    VALUES(10,1,3,?,'upcoming',?,?)`).run(monday+10800,monday+20,monday+20);
+  const current=await (await get(monday+30)).json();
+  assert.equal(current.locked,false);
+  assert.deepEqual(current.matches.map(m=>m.matchId),[9,10],'a newly listed match joins the current week');
+  assert.equal(current.cards[0].locked_at,monday+10);
+  assert.deepEqual(current.cards[0].catalog,frozenCatalog,'the submitted card keeps its original point values');
   const late=await handleWeeklyBingo(user,env,new URL('https://x.test/api/weekly-bingo'),'PUT',
-    {week,slot:1,version:1,cells:[sq('ace'),sq('ot',9),sq('roster_add'),sq('contract_change')]},monday);
+    {week,slot:1,version:1,cells:[sq('ace'),sq('ot',10),sq('roster_add'),sq('contract_change')]},monday+30);
   assert.equal(late.status,409);
+  assert.match((await late.json()).error,/locked/);
+  db.sqlite.prepare(`INSERT INTO feed_matches(match_id,event_id,best_of,starts_at,status,updated_at,first_seen_at)
+    VALUES(11,1,3,?,'final',?,?)`).run(monday+1800,monday+30,monday+20);
+  assert.deepEqual((await (await get(monday+40)).json()).matches.map(m=>m.matchId),[9,10],
+    'a late listed already started match cannot enter the slate');
 });
 
 test('server game actions reject forged saves and award only validated state changes',async()=>{
@@ -175,9 +207,9 @@ test('paid-card debit and card creation are atomic; no duplicated event across c
   db.sqlite.prepare("INSERT INTO users(id,username,pw_hash,created_at) VALUES(1,'alpha','x',0)").run();
   db.sqlite.prepare('INSERT INTO saves(user_id,state,updated_at,version) VALUES(1,?,0,1)').run(JSON.stringify({credits:150,collection:[]}));
   db.sqlite.prepare(`INSERT INTO feed_matches(match_id,event_id,best_of,starts_at,status,updated_at)
-    VALUES(9,1,3,?,'upcoming',0)`).run(monday+3600);
+    VALUES(9,1,3,?,'upcoming',0)`).run(monday+7200);
   const url=new URL('https://x.test/api/weekly-bingo');
-  const put=(slot,cells)=>handleWeeklyBingo(user,env,url,'PUT',{week,slot,version:0,cells},monday-1);
+  const put=(slot,cells)=>handleWeeklyBingo(user,env,url,'PUT',{week,slot,version:0,cells},monday+10);
   assert.equal((await put(1,[sq('ace'),sq('ot'),sq('roster_add'),sq('contract_change')])).status,200);
   db.sqlite.prepare('UPDATE weekly_bingo_weeks SET paid_enabled=1').run();
   assert.equal((await put(2,[sq('ace'),sq('k30'),sq('c3'),sq('c4')])).status,400);

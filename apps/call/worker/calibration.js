@@ -1,25 +1,27 @@
-import { scoreWeeklyCard, WEEKLY_SQUARES, weekKey } from '../src/lib/weeklyBingo.js';
+import { scoreWeeklyCard, WEEKLY_SQUARES, weekKey, MATCH_LEAD_TIME } from '../src/lib/weeklyBingo.js';
 import { ensureWeek, weeklyContext } from './weeklyBingo.js';
 
 const hash=s=>[...s].reduce((n,c)=>(Math.imul(n,33)+c.charCodeAt(0))>>>0,5381);
 async function replayWeek(db,key,t) {
   const week=await ensureWeek(db,key,t),ctx=await weeklyContext(db,week,t);
   if (!ctx.rosterComplete||Object.values(ctx.results).some(r=>r.state==='pending')) return [];
-  const free=(await db.prepare('SELECT user_id,cells FROM weekly_bingo_cards WHERE week=? AND slot=1').bind(key).all()).results;
+  const free=(await db.prepare('SELECT user_id,cells,locked_at,updated_at,catalog FROM weekly_bingo_cards WHERE week=? AND slot=1').bind(key).all()).results;
   const scores=[];
   for (const row of free) {
+    const lockedAt=row.locked_at??row.updated_at;
+    const eligibleMatches=week.matches.filter(m=>m.startsAt>=lockedAt+MATCH_LEAD_TIME);
     const owned=new Set(JSON.parse(row.cells).map(c=>c.square));
-    const choices=WEEKLY_SQUARES.filter(s=>!owned.has(s.id) && (s.scope==='roster'||week.matches.some(m=>!s.bestOf||m.bestOf===s.bestOf)))
+    const choices=WEEKLY_SQUARES.filter(s=>!owned.has(s.id) && (s.scope==='roster'||eligibleMatches.some(m=>!s.bestOf||m.bestOf===s.bestOf)))
       .sort((a,b)=>hash(`${key}:${row.user_id}:${a.id}`)-hash(`${key}:${row.user_id}:${b.id}`));
     if (choices.length<16) continue;
     for (let slot=2;slot<=5;slot++) {
       const cells=choices.slice((slot-2)*4,(slot-1)*4).map(s=>{
-        const eligible=week.matches.filter(m=>!s.bestOf||m.bestOf===s.bestOf);
+        const eligible=eligibleMatches.filter(m=>!s.bestOf||m.bestOf===s.bestOf);
         const pick=s.scope==='match'&&eligible.length&&hash(`${key}:${row.user_id}:${s.id}:target`)%2===0
           ? eligible[hash(`${key}:${row.user_id}:${s.id}:match`)%eligible.length].matchId:null;
         return {square:s.id,matchId:pick};
       });
-      scores.push(scoreWeeklyCard(cells,week.matches,ctx.results,ctx.rosterEvents,week.points,true).total);
+      scores.push(scoreWeeklyCard(cells,week.matches,ctx.results,ctx.rosterEvents,row.catalog?JSON.parse(row.catalog):week.points,true,lockedAt,true).total);
     }
   }
   return scores;

@@ -9,7 +9,8 @@ export const weekBounds = key => {
   const start = Date.parse(`${key}T00:00:00Z`) / 1000;
   return Number.isFinite(start) && weekKey(start) === key ? [start,start+WEEK] : null;
 };
-export const nextEditableWeek = unix => weekKey(weekStart(unix)+WEEK);
+export const nextEditableWeek = unix => weekKey(unix);
+export const MATCH_LEAD_TIME = 3600;
 export const ROSTER_SQUARES = [
   { id:'roster_add', label:'Riot GCD adds a player to a team', cluster:'roster', points:5 },
   { id:'roster_depart', label:'Riot GCD removes a player from a team', cluster:'roster', points:5 },
@@ -35,7 +36,8 @@ export function weeklyCatalog(matches, observations = []) {
     }
     const named=summary.get(`${s.id}:0`);
     const seriesP=(20*s.seriesRate+(named?.hits??0))/(20+(named?.trials??0));
-    const exposure=list.filter(m=>!s.bestOf||m.bestOf===s.bestOf).length;
+    // A week with no published slate still needs usable, stable opening odds.
+    const exposure=Math.max(1,list.filter(m=>!s.bestOf||m.bestOf===s.bestOf).length);
     const base=1-(1-seriesP)**exposure;
     const weekly=summary.get(`${s.id}:${exposure}`);
     const p=(4*base+(weekly?.hits??0))/(4+(weekly?.trials??0));
@@ -53,10 +55,8 @@ export function validateWeeklyCard(cells, others, matches, catalog) {
     used.add(cell.square);
     if (sq.scope === 'roster' && cell.matchId != null) return 'Roster squares cannot name a match.';
     if (sq.scope === 'match') {
-      if (!matches.length) return 'No eligible matches this week.';
       if (cell.matchId != null && !ids.has(cell.matchId)) return 'Named match is not on this week’s schedule.';
       if (cell.matchId != null && sq.bestOf && matches.find(m=>m.matchId===cell.matchId)?.bestOf !== sq.bestOf) return 'Square does not fit that match.';
-      if (cell.matchId == null && sq.bestOf && !matches.some(m=>m.bestOf===sq.bestOf)) return 'No eligible match for that square.';
     }
   }
   return null;
@@ -88,17 +88,18 @@ export function rosterEvidence(square,events) {
   });
   return matches.length?[matches[0]]:null;
 }
-export function scoreWeeklyCard(cells, schedule, results, rosterEvents, catalog, rosterComplete) {
+export function scoreWeeklyCard(cells, schedule, results, rosterEvents, catalog, rosterComplete, lockedAt=0, weekEnded=false) {
   const details = cells.map(c => {
     const sq = weeklyById[c.square];
     if (sq.scope === 'roster') {
-      const matched = rosterEvidence(c.square,rosterEvents);
+      const matched = rosterEvidence(c.square,rosterEvents.filter(e=>e.firstSeenAt>=lockedAt));
       const event=matched?.at(-1);
       return event ? {state:'hit',at:event.firstSeenAt,evidence:{sourceUrl:event.sourceUrl,player:event.player,team:event.team,observedAt:event.firstSeenAt}}
         : {state:rosterComplete?'miss':'pending'};
     }
-    const matches = c.matchId == null ? schedule.filter(m=>!sq.bestOf||m.bestOf===sq.bestOf) : schedule.filter(m=>m.matchId===c.matchId);
-    if (!matches.length) return {state:'free'};
+    const matches = schedule.filter(m=>m.startsAt==null||m.startsAt>=lockedAt+MATCH_LEAD_TIME)
+      .filter(m=>c.matchId == null ? !sq.bestOf||m.bestOf===sq.bestOf : m.matchId===c.matchId);
+    if (!matches.length) return {state:c.matchId!=null||weekEnded?'free':'pending'};
     const eligible = matches.map(m=>({match:m,result:results[m.matchId]}));
     const hit = eligible.find(({result})=>result?.state==='final' && matchHit(c.square,result));
     if (hit) return {state:'hit',at:hit.result.finalAt,evidence:{matchId:hit.match.matchId,finalAt:hit.result.finalAt}};

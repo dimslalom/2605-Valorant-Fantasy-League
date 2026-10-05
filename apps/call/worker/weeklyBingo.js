@@ -1,15 +1,15 @@
 import { loadMatch } from '../../../worker/feed/routes.js';
 import { BINGO } from '../../../src/engine/collect/rules.js';
 import { resultOf } from '../src/lib/bingoSlate.js';
-import { weekBounds, nextEditableWeek, weeklyCatalog, validateWeeklyCard, scoreWeeklyCard, matchHit, rosterEvidence, WEEKLY_SQUARES } from '../src/lib/weeklyBingo.js';
+import { weekBounds, nextEditableWeek, weeklyCatalog, validateWeeklyCard, scoreWeeklyCard, matchHit, rosterEvidence, WEEKLY_SQUARES, MATCH_LEAD_TIME } from '../src/lib/weeklyBingo.js';
 import { ensureWallet } from './wallet.js';
 
 const now = () => Math.floor(Date.now()/1000);
 const reply = (body,status=200) => Response.json(body,{status,headers:{'Cache-Control':'private, no-store'}});
 const parse = row => ({...row,cells:JSON.parse(row.cells)});
-async function schedule(db,from,to,freeze=false) {
+async function schedule(db,from,to) {
   const {results}=await db.prepare(`SELECT match_id AS matchId,best_of AS bestOf,starts_at AS startsAt,status,team1_tag AS team1Tag,team2_tag AS team2Tag
-    FROM feed_matches WHERE starts_at>=? AND starts_at<? AND (?=0 OR COALESCE(first_seen_at,0)<=?) ORDER BY starts_at,match_id`).bind(from,to,freeze?1:0,from).all();
+    FROM feed_matches WHERE starts_at>=? AND starts_at<? AND COALESCE(first_seen_at,0)<=starts_at-? ORDER BY starts_at,match_id`).bind(from,to,MATCH_LEAD_TIME).all();
   return results;
 }
 async function catalogFor(db,games) {
@@ -23,28 +23,27 @@ export async function ensureWeek(db,key,t=now()) {
   const [from,to]=bounds;
   let row=await db.prepare('SELECT * FROM weekly_bingo_weeks WHERE week=?').bind(key).first();
   if (!row) {
-    const games=await schedule(db,from,to,t>=from);
+    const games=await schedule(db,from,to);
     const calibrated=await db.prepare('SELECT payout_rate FROM bingo_calibration WHERE passed=1 ORDER BY id DESC LIMIT 1').first();
     const paid=!!calibrated && t<from;
     await db.prepare(`INSERT INTO weekly_bingo_weeks(week,starts_at,ends_at,schedule,catalog,payout_rate,paid_enabled,locked_at)
-      VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING`).bind(key,from,to,JSON.stringify(games),JSON.stringify(await catalogFor(db,games)),paid?calibrated.payout_rate:1,paid?1:0,t>=from?t:null).run();
+      VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING`).bind(key,from,to,JSON.stringify(games),JSON.stringify(await catalogFor(db,games)),paid?calibrated.payout_rate:1,paid?1:0,t>=to?t:null).run();
     row=await db.prepare('SELECT * FROM weekly_bingo_weeks WHERE week=?').bind(key).first();
   }
-  if (!row.locked_at && t>=from) {
-    const games=await schedule(db,from,to,true);
-    await db.prepare('UPDATE weekly_bingo_weeks SET schedule=?,catalog=?,locked_at=? WHERE week=? AND locked_at IS NULL')
-      .bind(JSON.stringify(games),JSON.stringify(await catalogFor(db,games)),t,key).run();
-    row=await db.prepare('SELECT * FROM weekly_bingo_weeks WHERE week=?').bind(key).first();
-  } else if (!row.locked_at) {
+  if (t<to || !row.locked_at) {
     const games=await schedule(db,from,to);
-    await db.prepare('UPDATE weekly_bingo_weeks SET schedule=?,catalog=? WHERE week=? AND locked_at IS NULL')
-      .bind(JSON.stringify(games),JSON.stringify(await catalogFor(db,games)),key).run();
-    row={...row,schedule:JSON.stringify(games),catalog:JSON.stringify(await catalogFor(db,games))};
+    const frozen=JSON.stringify(games),lockedAt=t>=to?(row.locked_at??t):null;
+    if (frozen!==row.schedule || lockedAt!==row.locked_at) {
+      const catalog=JSON.stringify(await catalogFor(db,games));
+      await db.prepare('UPDATE weekly_bingo_weeks SET schedule=?,catalog=?,locked_at=? WHERE week=?')
+        .bind(frozen,catalog,lockedAt,key).run();
+      row={...row,schedule:frozen,catalog,locked_at:lockedAt};
+    }
   }
   return {...row,matches:JSON.parse(row.schedule),points:JSON.parse(row.catalog)};
 }
 async function cards(db,userId,key) {
-  return (await db.prepare('SELECT slot,cells,version,updated_at FROM weekly_bingo_cards WHERE user_id=? AND week=? ORDER BY slot').bind(userId,key).all()).results.map(parse);
+  return (await db.prepare('SELECT slot,cells,version,updated_at,locked_at,catalog FROM weekly_bingo_cards WHERE user_id=? AND week=? ORDER BY slot').bind(userId,key).all()).results.map(r=>({...parse(r),catalog:r.catalog?JSON.parse(r.catalog):null}));
 }
 export async function weeklyContext(db,week,t=now()) {
   const results={};
@@ -63,14 +62,14 @@ export async function weeklyContext(db,week,t=now()) {
 async function scored(db,userId,week,t=now()) {
   const mine=await cards(db,userId,week.week);
   const ctx=await weeklyContext(db,week,t);
-  return {cards:mine.map(c=>({slot:c.slot,...scoreWeeklyCard(c.cells,week.matches,ctx.results,ctx.rosterEvents,week.points,ctx.rosterComplete)})),rosterComplete:ctx.rosterComplete};
+  return {cards:mine.map(c=>({slot:c.slot,...scoreWeeklyCard(c.cells,week.matches,ctx.results,ctx.rosterEvents,c.catalog??week.points,ctx.rosterComplete,c.locked_at??c.updated_at,t>=week.ends_at)})),rosterComplete:ctx.rosterComplete};
 }
 async function board(db,week,t) {
-  const rows=(await db.prepare(`SELECT c.user_id,u.username,c.slot,c.cells FROM weekly_bingo_cards c JOIN users u ON u.id=c.user_id WHERE c.week=?`).bind(week.week).all()).results;
+  const rows=(await db.prepare(`SELECT c.user_id,u.username,c.slot,c.cells,c.catalog,c.locked_at,c.updated_at FROM weekly_bingo_cards c JOIN users u ON u.id=c.user_id WHERE c.week=?`).bind(week.week).all()).results;
   const ctx=await weeklyContext(db,week,t);
   const totals=new Map();
   for (const row of rows) {
-    const score=scoreWeeklyCard(JSON.parse(row.cells),week.matches,ctx.results,ctx.rosterEvents,week.points,ctx.rosterComplete);
+    const score=scoreWeeklyCard(JSON.parse(row.cells),week.matches,ctx.results,ctx.rosterEvents,row.catalog?JSON.parse(row.catalog):week.points,ctx.rosterComplete,row.locked_at??row.updated_at,t>=week.ends_at);
     const prev=totals.get(row.user_id)??{userId:row.user_id,username:row.username,points:0,firstLineAt:null};
     prev.points+=score.total;
     if (score.firstLineAt!=null) prev.firstLineAt=prev.firstLineAt==null?score.firstLineAt:Math.min(prev.firstLineAt,score.firstLineAt);
@@ -82,8 +81,8 @@ async function board(db,week,t) {
 }
 export async function handleWeeklyBingo(user,env,url,method,body,t=now()) {
   const key=method==='PUT' ? body?.week : url.searchParams.get('week')??nextEditableWeek(t);
-  const requested=weekBounds(key),next=weekBounds(nextEditableWeek(t));
-  if (!requested || requested[0]>next[0] || requested[0]<t-52*7*86400) return reply({error:'Week is not available'},400);
+  const requested=weekBounds(key),current=weekBounds(nextEditableWeek(t));
+  if (!requested || requested[0]>current[0] || requested[0]<t-52*7*86400) return reply({error:'Week is not available'},400);
   const week=await ensureWeek(env.DB,key,t);
   if (!week) return reply({error:'bad week'},400);
   if (method==='GET' && url.pathname==='/api/weekly-bingo') {
@@ -99,25 +98,22 @@ export async function handleWeeklyBingo(user,env,url,method,body,t=now()) {
     return reply({week:key,entries:entries.slice(0,50).map(({username,points,rank})=>({username,points,rank})),me:{username:user.username,points:own?.points??0,rank:own?.rank??null}});
   }
   if (method!=='PUT'||url.pathname!=='/api/weekly-bingo') return reply({error:'method not allowed'},405);
-  if (week.locked_at||t>=week.starts_at) return reply({error:'Week is locked'},409);
-  if (key!==nextEditableWeek(t)) return reply({error:'Cards can only be submitted for the next week'},400);
+  if (t>=week.ends_at) return reply({error:'Week is over'},409);
+  if (key!==nextEditableWeek(t)) return reply({error:'Cards can only be submitted for this week'},400);
   const {slot,cells,version}=body??{};
   if (!Number.isInteger(slot)||slot<1||slot>(week.paid_enabled?BINGO.maxCards:1)||!Number.isInteger(version)||version<0) return reply({error:'bad card'},400);
   const mine=await cards(env.DB,user.id,key);
   const old=mine.find(c=>c.slot===slot);
   if ((old?.version??0)!==version) return reply({error:'Card changed elsewhere',card:old??{slot,cells:null,version:0}},409);
+  if (old) return reply({error:'Submitted cards are locked'},409);
   if (!old&&slot!==mine.length+1) return reply({error:'Fill cards in order'},400);
   const clean=Array.isArray(cells)?cells.map(c=>({square:c?.square,matchId:c?.matchId??null})):cells;
-  const problem=validateWeeklyCard(clean,mine.filter(c=>c.slot!==slot),week.matches,week.points);
+  const eligible=week.matches.filter(m=>m.startsAt>=t+MATCH_LEAD_TIME);
+  const problem=validateWeeklyCard(clean,mine.filter(c=>c.slot!==slot),eligible,week.points);
   if (problem) return reply({error:problem},400);
-  if (old) {
-    const res=await env.DB.prepare('UPDATE weekly_bingo_cards SET cells=?,version=version+1,updated_at=? WHERE user_id=? AND week=? AND slot=? AND version=?')
-      .bind(JSON.stringify(clean),t,user.id,key,slot,version).run();
-    return res.meta.changes?reply({ok:true,slot,version:version+1}):reply({error:'Card changed elsewhere'},409);
-  }
   if (slot===1) {
-    const res=await env.DB.prepare('INSERT INTO weekly_bingo_cards(user_id,week,slot,cells,version,updated_at) VALUES(?,?,?,?,1,?) ON CONFLICT DO NOTHING')
-      .bind(user.id,key,slot,JSON.stringify(clean),t).run();
+    const res=await env.DB.prepare('INSERT INTO weekly_bingo_cards(user_id,week,slot,cells,version,updated_at,locked_at,catalog) VALUES(?,?,?,?,1,?,?,?) ON CONFLICT DO NOTHING')
+      .bind(user.id,key,slot,JSON.stringify(clean),t,t,JSON.stringify(week.points)).run();
     return res.meta.changes?reply({ok:true,slot,version:1}):reply({error:'Card changed elsewhere'},409);
   }
   // Paid cards stay disabled until the calibration gate sets paid_enabled on a future week.
@@ -130,9 +126,9 @@ export async function handleWeeklyBingo(user,env,url,method,body,t=now()) {
         SELECT user_id,?,-?,balance-?,? FROM wallets WHERE user_id=? AND balance>=?`).bind(keyOf,BINGO.cardCost,BINGO.cardCost,t,user.id,BINGO.cardCost),
       env.DB.prepare(`UPDATE wallets SET balance=(SELECT balance_after FROM wallet_entries WHERE user_id=? AND entry_key=?)
         WHERE user_id=? AND changes()=1`).bind(user.id,keyOf,user.id),
-      env.DB.prepare(`INSERT INTO weekly_bingo_cards(user_id,week,slot,cells,version,updated_at)
-        SELECT ?,?,?,?,1,? WHERE EXISTS(SELECT 1 FROM wallet_entries WHERE user_id=? AND entry_key=?)`)
-        .bind(user.id,key,slot,JSON.stringify(clean),t,user.id,keyOf),
+      env.DB.prepare(`INSERT INTO weekly_bingo_cards(user_id,week,slot,cells,version,updated_at,locked_at,catalog)
+        SELECT ?,?,?,?,1,?,?,? WHERE EXISTS(SELECT 1 FROM wallet_entries WHERE user_id=? AND entry_key=?)`)
+        .bind(user.id,key,slot,JSON.stringify(clean),t,t,JSON.stringify(week.points),user.id,keyOf),
     ]);
   } catch { return reply({error:'Purchase conflicted; reload your cards'},409); }
   const purchased=await env.DB.prepare('SELECT version FROM weekly_bingo_cards WHERE user_id=? AND week=? AND slot=?').bind(user.id,key,slot).first();
@@ -148,9 +144,9 @@ export async function settleWeeklyBingo(env,t=now()) {
     const week=await ensureWeek(env.DB,key,t);
     const ctx=await weeklyContext(env.DB,week,t);
     if (!ctx.rosterComplete||Object.values(ctx.results).some(r=>r.state==='pending')) continue;
-    const rows=(await env.DB.prepare('SELECT user_id,slot,cells FROM weekly_bingo_cards WHERE week=?').bind(key).all()).results;
+    const rows=(await env.DB.prepare('SELECT user_id,slot,cells,catalog,locked_at,updated_at FROM weekly_bingo_cards WHERE week=?').bind(key).all()).results;
     for (const row of rows) {
-      const result=scoreWeeklyCard(JSON.parse(row.cells),week.matches,ctx.results,ctx.rosterEvents,week.points,true);
+      const result=scoreWeeklyCard(JSON.parse(row.cells),week.matches,ctx.results,ctx.rosterEvents,row.catalog?JSON.parse(row.catalog):week.points,true,row.locked_at??row.updated_at,true);
       if (!result.complete) continue;
       const credits=Math.floor(result.total*week.payout_rate);
       await ensureWallet(env.DB,row.user_id,t);

@@ -4,7 +4,7 @@ import Sheet from '../components/Sheet';
 import { useGame } from '../lib/gameContext';
 import { logoFor } from '../lib/orgs';
 import { timeOf } from '../lib/time';
-import { nextEditableWeek, weeklyById } from '../lib/weeklyBingo';
+import { nextEditableWeek, weeklyById, MATCH_LEAD_TIME } from '../lib/weeklyBingo';
 
 const blank = () => [null, null, null, null];
 const sign = n => (n > 0 ? `+${n}` : String(n));
@@ -94,7 +94,6 @@ export default function Bingo() {
   }, [load]);
 
   const saved = data?.cards.find(c => c.slot === slot);
-  const dirty = JSON.stringify(cells) !== JSON.stringify(saved?.cells ?? blank());
   const full = cells.every(c => c?.square);
   const usedElsewhere = useMemo(() => new Set(data?.cards.filter(c => c.slot !== slot).flatMap(c => c.cells.map(x => x.square)) ?? []), [data, slot]);
   const result = score?.cards.find(c => c.slot === slot);
@@ -123,18 +122,18 @@ export default function Bingo() {
   const phase = !data ? null
     : data.settled ? { big: 'Final', small: 'Results are in' }
     : data.ended ? { big: 'Settling', small: 'Waiting on final results' }
-    : data.locked || now >= data.startsAt ? { big: left(data.endsAt - now), small: 'Left to play' }
-    : { big: left(data.startsAt - now), small: 'To lock' };
+    : { big: left(data.endsAt - now), small: 'Left this week' };
   // Seven pips for the week: played days fill, today is ruby; before lock they wait empty.
   const played = data ? Math.max(0, Math.min(7, Math.ceil((now - data.startsAt) / 86400))) : 0;
-  const open = data && !data.locked && now < data.startsAt;
+  const canAdd = data && !data.ended;
+  const open = canAdd && !saved;
   const settledWeeks = Math.min(calibration?.settledWeeks ?? 0, CALIBRATION_WEEKS);
 
   const choose = (i, cell) => { setCells(prev => prev.map((c, n) => (n === i ? cell : c))); setPicking(null); };
-  const eligible = sq => (data?.matches ?? []).filter(m => !sq.bestOf || m.bestOf === sq.bestOf);
-  const pointsOf = cell => cell?.square && data?.catalog[cell.square]?.[cell.matchId == null ? 'general' : 'named'];
+  const eligible = sq => (data?.matches ?? []).filter(m => m.startsAt >= now + MATCH_LEAD_TIME && (!sq.bestOf || m.bestOf === sq.bestOf));
+  const pointsOf = cell => cell?.square && (saved?.catalog ?? data?.catalog)?.[cell.square]?.[cell.matchId == null ? 'general' : 'named'];
   const slots = data?.rules.paidEnabled
-    ? Array.from({ length: Math.min(data.rules.maxCards, Math.max(1, data.cards.length + (open ? 1 : 0))) }, (_, n) => n + 1)
+    ? Array.from({ length: Math.min(data.rules.maxCards, Math.max(1, data.cards.length + (canAdd ? 1 : 0))) }, (_, n) => n + 1)
     : [1];
 
   return <section className="bingo-page">
@@ -168,7 +167,7 @@ export default function Bingo() {
         {cells.map((cell, i) => {
           const sq = weeklyById[cell?.square];
           const out = result?.cells[i];
-          const state = !open && out ? out.state : undefined;
+          const state = saved && out ? out.state : undefined;
           const match = cell?.matchId != null && data.matches.find(m => m.matchId === cell.matchId);
           const Cell = open ? 'button' : 'div';
           const pts = pointsOf(cell);
@@ -191,11 +190,12 @@ export default function Bingo() {
         })}
       </div>
 
-      {open && (dirty || !saved) && <button type="button" className="primary big bingo-submit" onClick={save} disabled={busy || !full}>
-        {busy ? 'Saving' : saved ? 'Update card' : slot > 1 ? `Buy card ${data.rules.cardCost} CR` : 'Submit card'}
+      {open && <button type="button" className="primary big bingo-submit" onClick={save} disabled={busy || !full}>
+        {busy ? 'Submitting' : slot > 1 ? `Buy and lock card · ${data.rules.cardCost} CR` : 'Submit and lock card'}
       </button>}
-      {open && saved && !dirty && <p className="bingo-saved">Saved</p>}
-      {result && !open && <p className="sum sum-total"><b>{sign(result.total)}</b><span>{result.complete ? 'this week' : 'so far'}</span></p>}
+      {open && <p className="bingo-saved">Picks lock on submission. Matches must start at least one hour later.</p>}
+      {saved && <p className="bingo-saved">Card locked · only later matches and official roster observations can score</p>}
+      {result && saved && <p className="sum sum-total"><b>{sign(result.total)}</b><span>{result.complete ? 'this week' : 'so far'}</span></p>}
     </>}
 
     <Sheet open={picking != null} onClose={() => setPicking(null)}
@@ -208,7 +208,7 @@ export default function Bingo() {
           <ul>
             {list.map(s => {
               const inUse = usedElsewhere.has(s.id) || cells.some((c, n) => n !== picking.i && c?.square === s.id);
-              const fits = s.scope === 'roster' || eligible(s).length > 0;
+              const fits = true;
               const pts = data.catalog[s.id]?.general;
               return <li key={s.id}><button type="button" className="bsq" disabled={inUse || !fits}
                 onClick={() => (s.scope === 'roster' ? choose(picking.i, { square: s.id, matchId: null }) : setPicking({ i: picking.i, square: s.id }))}>
@@ -218,7 +218,7 @@ export default function Bingo() {
                 </span>
                 <span className="bsq-label">{nameOf(s)}</span>
                 <small className="bsq-rule">{s.label}</small>
-                {(inUse || !fits) && <small className="bsq-note">{inUse ? 'In use' : 'No match fits'}</small>}
+                {inUse && <small className="bsq-note">In use</small>}
               </button></li>;
             })}
           </ul>
