@@ -83,6 +83,17 @@ test('a confirmed team move can also confirm a contract end change',async()=>{
   const types=(await db.prepare('SELECT change_type FROM roster_events ORDER BY change_type').all()).results.map(r=>r.change_type);
   assert.deepEqual(types,['contract_change','roster_add','roster_depart']);
 });
+test('an interrupted first snapshot resumes as a baseline without fake events',async()=>{
+  const db=d1(),rows=Array.from({length:40},(_,i)=>({player:`Player${i}`,team:`Team${i}`,league:'AMERICAS',contractEnd:'2027'}));
+  await ingestContracts(db,{contracts:rows},100);
+  db.sqlite.exec('DELETE FROM roster_contracts');
+  db.sqlite.exec("DELETE FROM roster_snapshot_rows WHERE identity_key != 'player0|americas'");
+  const retry=await ingestContracts(db,{contracts:rows},200);
+  assert.equal(retry.baseline,true);
+  assert.equal(retry.events,0);
+  assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM roster_snapshot_rows').first()).n,40);
+  assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM roster_contracts').first()).n,40);
+});
 test('weekly API locks at Monday and wallet opening is idempotent',async()=>{
   const db=d1(),env={DB:db},user={id:1,username:'alpha'};
   db.sqlite.prepare("INSERT INTO users(id,username,pw_hash,created_at) VALUES(1,'alpha','x',0)").run();

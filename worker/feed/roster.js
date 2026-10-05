@@ -35,21 +35,25 @@ export async function ingestContracts(db,body,t=now()) {
   if (input.size===0) throw new Error('no unambiguous contract rows');
   const canonical=JSON.stringify([...input].sort((a,b)=>a[0].localeCompare(b[0])));
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical)))).map(x=>x.toString(16).padStart(2,'0')).join('');
-  const before=(await db.prepare('SELECT COUNT(*) AS n FROM roster_snapshots').first()).n;
-  const inserted=await db.prepare('INSERT INTO roster_snapshots(source,content_hash,observed_at,row_count) VALUES(?,?,?,?) ON CONFLICT DO NOTHING')
+  await db.prepare('INSERT INTO roster_snapshots(source,content_hash,observed_at,row_count) VALUES(?,?,?,?) ON CONFLICT DO NOTHING')
     .bind('riot-gcd',hash,t,input.size).run();
   const snapshot=await db.prepare('SELECT id FROM roster_snapshots WHERE source=? AND content_hash=?').bind('riot-gcd',hash).first();
-  if (inserted.meta.changes) for (const [id,r] of input) await db.prepare(`INSERT INTO roster_snapshot_rows(snapshot_id,identity_key,player,team,league,contract_end)
-    VALUES(?,?,?,?,?,?)`).bind(snapshot.id,id,r.player,r.team,r.league,r.contractEnd).run();
+  const packed=JSON.stringify([...input].map(([id,r])=>({id,...r})));
+  await db.prepare(`INSERT INTO roster_snapshot_rows(snapshot_id,identity_key,player,team,league,contract_end)
+    SELECT ?,json_extract(value,'$.id'),json_extract(value,'$.player'),json_extract(value,'$.team'),
+      json_extract(value,'$.league'),json_extract(value,'$.contractEnd') FROM json_each(?) WHERE true
+    ON CONFLICT DO NOTHING`).bind(snapshot.id,packed).run();
   await db.prepare('INSERT INTO roster_source_checks(observed_at,snapshot_id) VALUES(?,?) ON CONFLICT DO NOTHING').bind(t,snapshot.id).run();
   for (const a of ambiguous) await db.prepare(`INSERT INTO roster_unresolved(identity_key,reason,raw_row,observed_at) VALUES(?,?,?,?)
     ON CONFLICT(identity_key) DO UPDATE SET reason=excluded.reason,raw_row=excluded.raw_row,observed_at=excluded.observed_at`)
     .bind(a.key==='missing'?`missing:${JSON.stringify(a.row).slice(0,80)}`:a.key,'Ambiguous or missing player identity',JSON.stringify(a.row),t).run();
   for (const id of input.keys()) await db.prepare('DELETE FROM roster_unresolved WHERE identity_key=?').bind(id).run();
   const existing=(await db.prepare('SELECT * FROM roster_contracts').all()).results;
-  if (!before) {
-    for (const [id,r] of input) await db.prepare(`INSERT INTO roster_contracts(identity_key,player,team,league,contract_end,source_url,updated_at)
-      VALUES(?,?,?,?,?,?,?)`).bind(id,r.player,r.team,r.league,r.contractEnd,GCD_URL,t).run();
+  if (!existing.length) {
+    await db.prepare(`INSERT INTO roster_contracts(identity_key,player,team,league,contract_end,source_url,updated_at)
+      SELECT json_extract(value,'$.id'),json_extract(value,'$.player'),json_extract(value,'$.team'),
+        json_extract(value,'$.league'),json_extract(value,'$.contractEnd'),?,? FROM json_each(?) WHERE true
+      ON CONFLICT DO NOTHING`).bind(GCD_URL,t,packed).run();
     return {baseline:true,rows:input.size,unresolved:ambiguous.length,events:0};
   }
   const known=new Map(existing.map(r=>[r.identity_key,{player:r.player,team:r.team,league:r.league,contractEnd:r.contract_end}]));
