@@ -13,6 +13,7 @@ const OUTCOME_NAMES = { 3: ['Sweep', 'Goes the distance'], 5: ['Sweep', 'Drops a
 // winner's closer, then empty slots. Every row has the same length, so tiles line up.
 const mapSlots = (won, lost, bestOf) => [...Array(won - 1).fill('w'), ...Array(lost).fill('l'), 'w', ...Array(bestOf - won - lost).fill('')];
 const average = (items, read) => items.length ? Math.round(items.reduce((sum, item) => sum + read(item), 0) / items.length) : null;
+const ROSTER_WINDOW_S = 60 * 86400;
 
 function PlayerRow({ player, tracked, selected, disabled, onPick }) {
   const image = thumbnailSrc(player.card);
@@ -34,8 +35,12 @@ export default function CallPanel({ match, call, onChange, players, tracked }) {
   const options = SCORES[match.bestOf] ?? SCORES[3];
   const mine = useMemo(() => new Set(tracked), [tracked]);
   const profiles = useMemo(() => [a, b].map(team => {
-    const roster = Object.values(players)
-      .filter(player => player.card && player.team === team.tag)
+    const tagged = Object.values(players).filter(player => player.card && player.team === team.tag);
+    // A player who left keeps the team's tag until they play elsewhere, so keep only those who
+    // played for it near its latest match. ponytail: 60-day window; use transfers once the feed has them.
+    const latest = Math.max(0, ...tagged.map(player => player.lastPlayedAt ?? 0));
+    const roster = tagged
+      .filter(player => player.lastPlayedAt == null || player.lastPlayedAt >= latest - ROSTER_WINDOW_S)
       .sort((left, right) => right.card.rating - left.card.rating);
     return {
       team,

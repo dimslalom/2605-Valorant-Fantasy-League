@@ -42,7 +42,7 @@ export function GameProvider({ children }) {
     const entries = [];
     for (const p of feedPlayers ?? []) {
       const card = lookup(p.handle, p.teamTag);
-      byId[p.vlrId] = { pid: p.vlrId, handle: p.handle, team: p.teamTag, card };
+      byId[p.vlrId] = { pid: p.vlrId, handle: p.handle, team: p.teamTag, lastPlayedAt: p.lastPlayedAt, card };
       if (card) entries.push({ pid: p.vlrId, tier: card.palette });
     }
     return { players: byId, pool: entries };

@@ -127,9 +127,11 @@ export async function loadMatch(env, id) {
 // Every player the feed has seen: id, handle and current team tag. No real names, ever.
 async function getPlayers(env) {
   const { results } = await env.DB
-    .prepare('SELECT vlr_id, handle, country, team_tag, status FROM feed_players ORDER BY team_tag, handle').all();
+    .prepare('SELECT vlr_id, handle, country, team_tag, status, last_played_at FROM feed_players ORDER BY team_tag, handle').all();
   return reply({
-    players: results.map(p => ({ vlrId: p.vlr_id, handle: p.handle, country: p.country, teamTag: p.team_tag, status: p.status })),
+    players: results.map(p => ({
+      vlrId: p.vlr_id, handle: p.handle, country: p.country, teamTag: p.team_tag, status: p.status, lastPlayedAt: p.last_played_at,
+    })),
   }, 200, PUBLIC_CACHE);
 }
 

@@ -97,3 +97,17 @@ test('a finished match is never downgraded back to upcoming', async () => {
   assert.deepEqual(res.unchanged, [753462]);
   assert.equal(db.sqlite.prepare('SELECT status FROM feed_matches WHERE match_id = 753462').get().status, 'final');
 });
+
+test('players carry when they last played for their team, and an older match never moves them back', async () => {
+  const db = d1();
+  const tagOf = id => db.sqlite.prepare('SELECT team_tag, last_played_at FROM feed_players WHERE vlr_id = ?').get(id);
+  await ingestMatches(db, { matches: [match([map(101, [11, 13], roster()), map(102, [11, 13], roster())])] });
+  assert.deepEqual({ ...tagOf(1) }, { team_tag: 'XLG', last_played_at: 1790841900 });
+  // Player 1 moves to NS in a later match...
+  const moved = roster().map(p => (p.vlrId === 1 ? { ...p, teamTag: 'NS' } : p));
+  await ingestMatches(db, { matches: [match([map(201, [11, 13], moved), map(202, [11, 13], moved)], { matchId: 2, startsAt: 1790900000, contentHash: 'b' })] });
+  assert.deepEqual({ ...tagOf(1) }, { team_tag: 'NS', last_played_at: 1790900000 });
+  // ...and a re-sent older match (new stats, new hash) does not put them back on XLG.
+  await ingestMatches(db, { matches: [match([map(101, [12, 13], roster()), map(102, [11, 13], roster())], { contentHash: 'h9' })] });
+  assert.deepEqual({ ...tagOf(1) }, { team_tag: 'NS', last_played_at: 1790900000 });
+});

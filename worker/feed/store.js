@@ -40,12 +40,16 @@ SELECT ?1, json_extract(value, '$.vlrId'), ?2, json_extract(value, '$.side'), js
   json_extract(value, '$.sides')
 FROM json_each(?3)`;
 
+// ?3 is when the match started. A re-ingested older match never overwrites a newer team tag.
 const UPSERT_PLAYERS = `
-INSERT INTO feed_players (vlr_id, handle, country, team_tag, first_seen_at, updated_at)
+INSERT INTO feed_players (vlr_id, handle, country, team_tag, first_seen_at, updated_at, last_played_at)
 SELECT json_extract(value, '$.vlrId'), json_extract(value, '$.handle'), json_extract(value, '$.country'),
-  json_extract(value, '$.teamTag'), ?1, ?1
+  json_extract(value, '$.teamTag'), ?1, ?1, ?3
 FROM json_each(?2) WHERE true
-ON CONFLICT(vlr_id) DO UPDATE SET handle = excluded.handle, team_tag = excluded.team_tag,
+ON CONFLICT(vlr_id) DO UPDATE SET handle = excluded.handle,
+  team_tag = CASE WHEN excluded.last_played_at >= COALESCE(feed_players.last_played_at, 0)
+    THEN excluded.team_tag ELSE feed_players.team_tag END,
+  last_played_at = MAX(COALESCE(feed_players.last_played_at, 0), excluded.last_played_at),
   country = COALESCE(excluded.country, feed_players.country), updated_at = excluded.updated_at`;
 
 const orNull = v => (v === undefined ? null : v);
@@ -113,7 +117,7 @@ export async function ingestMatches(db, payload, now = Math.floor(Date.now() / 1
         }));
         statements.push(db.prepare('DELETE FROM feed_player_maps WHERE game_id = ?1').bind(map.gameId));
         statements.push(db.prepare(INSERT_PLAYER_MAPS).bind(map.gameId, match.matchId, JSON.stringify(rows)));
-        statements.push(db.prepare(UPSERT_PLAYERS).bind(now, JSON.stringify(map.players)));
+        statements.push(db.prepare(UPSERT_PLAYERS).bind(now, JSON.stringify(map.players), match.startsAt ?? now));
       }
     });
 
