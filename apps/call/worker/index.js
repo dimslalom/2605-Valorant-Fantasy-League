@@ -1,5 +1,6 @@
 import { handleFeed } from '../../../worker/feed/routes.js';
 import { handleAccounts } from './accounts.js';
+import { settleAll } from './settle.js';
 
 // OpVAL's Worker: a read-only window onto the shared feed database, plus accounts
 // and cloud saves (accounts.js). Ingest stays on the old site's Worker, so
@@ -53,6 +54,7 @@ export async function dispatchFeed(env, fetchImpl = fetch) {
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(dispatchFeed(env));
+    ctx.waitUntil(settleAll(env).catch(e => console.error(`settle failed: ${e.stack ?? e}`)));
   },
 
   async fetch(request, env) {

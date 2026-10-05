@@ -192,21 +192,24 @@ async function leaderboard(user, env, url) {
   const column = columns[board];
   if (!column) return reply({ error: 'Unknown leaderboard.' }, 400);
 
+  // Points come from the save's history plus calls the server settled that the save has not
+  // picked up yet (call_settlements, see settle.js). Once revealed, only history counts them.
   const { results } = await env.DB.prepare(`
-    WITH scores AS (
-      SELECT s.user_id, u.username,
-        COALESCE(SUM(CASE WHEN json_valid(h.value) THEN
-          CASE WHEN json_type(h.value, '$.callPoints') IN ('integer', 'real')
-            THEN MAX(0, CAST(json_extract(h.value, '$.callPoints') AS INTEGER)) ELSE 0 END
-          ELSE 0 END), 0) AS call_points,
-        COALESCE(SUM(CASE WHEN json_valid(h.value) THEN
-          CASE WHEN json_type(h.value, '$.trackedPoints') IN ('integer', 'real')
-            THEN MAX(0, CAST(json_extract(h.value, '$.trackedPoints') AS INTEGER)) ELSE 0 END
-          ELSE 0 END), 0) AS card_points
-      FROM saves s
-      JOIN users u ON u.id = s.user_id
-      LEFT JOIN json_each(s.state, '$.history') h ON TRUE
-      GROUP BY s.user_id
+    WITH points AS (
+      SELECT s.user_id,
+        CASE WHEN json_valid(h.value) AND json_type(h.value, '$.callPoints') IN ('integer', 'real')
+          THEN MAX(0, CAST(json_extract(h.value, '$.callPoints') AS INTEGER)) ELSE 0 END AS call_points,
+        CASE WHEN json_valid(h.value) AND json_type(h.value, '$.trackedPoints') IN ('integer', 'real')
+          THEN MAX(0, CAST(json_extract(h.value, '$.trackedPoints') AS INTEGER)) ELSE 0 END AS card_points
+      FROM saves s, json_each(s.state, '$.history') h
+      UNION ALL
+      SELECT x.user_id, x.call_points, x.tracked_points
+      FROM call_settlements x JOIN saves s ON s.user_id = x.user_id
+      WHERE json_type(s.state, '$.revealed."' || x.match_id || '"') IS NULL
+    ), scores AS (
+      SELECT p.user_id, u.username, SUM(p.call_points) AS call_points, SUM(p.card_points) AS card_points
+      FROM points p JOIN users u ON u.id = p.user_id
+      GROUP BY p.user_id
     ), totals AS (
       SELECT user_id, username, call_points, card_points,
         call_points + card_points AS overall_points FROM scores

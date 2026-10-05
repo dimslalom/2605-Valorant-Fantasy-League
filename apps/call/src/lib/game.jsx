@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import cards from '../../../../src/data/cards.json';
-import { buyBingoCard, buyPack, callRecord, createCollection, resolveSeries, setCall, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
+import { buyBingoCard, buyPack, callRecord, createCollection, resolveSeries, setCall, settleCalls, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
 import { makeCardLookup } from '../../../../src/engine/shared/cardLookup';
 import { useAccount } from './account';
-import { fetchPlayers } from './feed';
+import { fetchMatch, fetchPlayers } from './feed';
 import { GameContext } from './gameContext';
 
 // The one place the game's state lives: your save (localStorage), the players the feed
@@ -67,6 +67,20 @@ export function GameProvider({ children }) {
       setSaved(null);
     },
   }), [accountHook]);
+
+  // Calls on finished matches settle when the game loads, so credits and points never wait on a
+  // reveal tap. Signed in, this waits for the server save so it settles that copy, not a stale one.
+  // Reports stay unseen: the match card is still spoiler-guarded until you reveal it.
+  const pending = state ? Object.keys(state.calls).filter(id => !state.revealed[id]).join() : '';
+  const canSettle = ready && accountHook.checked && (!accountHook.user || accountHook.synced);
+  useEffect(() => {
+    if (!canSettle || !pending) return undefined;
+    let live = true;
+    Promise.all(pending.split(',').map(fetchMatch)).then(list => {
+      if (live) setSaved(s => (s ? settleCalls(s, list.filter(Boolean), { teamOf }) : s));
+    });
+    return () => { live = false; };
+  }, [canSettle, pending, teamOf]);
 
   useEffect(() => {
     if (!state) return;

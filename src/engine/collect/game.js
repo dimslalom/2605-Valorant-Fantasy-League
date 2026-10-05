@@ -94,7 +94,12 @@ export function setCall(state, matchId, call) {
 // and the cards you were Tracking when it started, pays credits, updates the streak, and
 // records the report so it can never be scored twice. Returns { state, report }.
 export function resolveSeries(state, series, { teamOf }) {
-  if (state.revealed[series.matchId]) return { state, report: state.revealed[series.matchId] };
+  const done = state.revealed[series.matchId];
+  if (done?.unseen) {
+    const report = { ...done, unseen: false };   // already scored by settleCalls: revealing only lifts the guard
+    return { state: { ...state, revealed: { ...state.revealed, [series.matchId]: report } }, report };
+  }
+  if (done) return { state, report: done };
   // Matches that started before you joined can be revealed but never score, so history is not free points.
   if ((series.startsAt ?? Infinity) < (state.createdAt ?? 0)) {
     const report = { matchId: series.matchId, callPoints: 0, trackedPoints: 0, total: 0, call: null, result: null, trackedLines: [], preJoin: true, winnerTag: series.teams[(series.winner ?? 1) - 1]?.tag ?? null };
@@ -136,6 +141,20 @@ export function resolveSeries(state, series, { teamOf }) {
     },
     report,
   };
+}
+
+// Score every finished series you called but have not revealed, oldest first so the streak runs
+// in match order. Points and credits count now; the report stays `unseen`, so the match card is
+// still spoiler-guarded until you reveal it. `series` is any list of fetched series.
+export function settleCalls(state, series, { teamOf }) {
+  const due = series
+    .filter(s => s.status === 'final' && state.calls[s.matchId]?.winner != null && !state.revealed[s.matchId])
+    .sort((a, b) => (a.startsAt ?? 0) - (b.startsAt ?? 0));
+  for (const s of due) {
+    const { state: next, report } = resolveSeries(state, s, { teamOf });
+    state = { ...next, revealed: { ...next.revealed, [s.matchId]: { ...report, unseen: true } } };
+  }
+  return state;
 }
 
 // Resolve a matchday against its finished series. Returns { state, report }.

@@ -80,7 +80,7 @@ export function useAccount({ state, setSaved }) {
   }, []);
 
   return {
-    user, checked, notice, clearNotice: () => setNotice(''),
+    user, checked, synced, notice, clearNotice: () => setNotice(''),
     recoveryCode, ackRecoveryCode: () => setRecoveryCode(null),
     signup: enter('/api/auth/signup'),
     login: enter('/api/auth/login'),

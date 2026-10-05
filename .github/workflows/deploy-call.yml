@@ -39,6 +39,12 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run call:build
+      # The Gauntlet deploy also applies migrations, but runs in parallel; apply here so this
+      # Worker never goes live before its tables exist. Migrations are idempotent (IF NOT EXISTS).
+      - run: npx wrangler d1 migrations apply vfl-daily-scores --remote --config apps/call/wrangler.jsonc
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - run: npx wrangler deploy --config apps/call/wrangler.jsonc
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

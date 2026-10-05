@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import { fetchMatch } from '../lib/feed';
 import { useGame } from '../lib/gameContext';
+import { assetPath, thumbnailSrc } from '../../../../src/lib/utils';
 import { colorsFor, logoFor } from '../lib/orgs';
 import CallPanel from './CallPanel';
+import Fan from './Fan';
 import { CallSummary, MatchHead, MatchHero, MatchStrip } from './MatchFacts';
 import Sheet from './Sheet';
+
+// A player's cutout portrait, bare on the card (no tile), or nothing when the card has no image.
+function Face({ player }) {
+  const image = player && thumbnailSrc(player.card);
+  return image ? <img className="face" src={assetPath(image)} alt="" loading="lazy" /> : null;
+}
 
 function TeamRow({ team, score, win, dim }) {
   const logo = logoFor(team.tag);
@@ -33,7 +41,7 @@ export default function MatchCard({ match, eventLabel, now }) {
   const live = match.status === 'live' || (match.status === 'upcoming' && started);
   const done = match.status === 'final';
   const report = state?.revealed[match.matchId];
-  const guarded = done && !report;
+  const guarded = done && (!report || report.unseen);
   const myCall = state?.calls[match.matchId];
   const pickedSide = myCall?.winner === a.tag ? 'left' : myCall?.winner === b.tag ? 'right' : undefined;
   const leftColors = colorsFor(a.tag);
@@ -54,8 +62,8 @@ export default function MatchCard({ match, eventLabel, now }) {
       <MatchStrip match={match} eventLabel={eventLabel} now={now} live={live} />
 
       <div className="teams">
-        <TeamRow team={a} score={report ? a.score : null} win={winnerIdx === 0} dim={winnerIdx === 1} />
-        <TeamRow team={b} score={report ? b.score : null} win={winnerIdx === 1} dim={winnerIdx === 0} />
+        <TeamRow team={a} score={report && !guarded ? a.score : null} win={winnerIdx === 0} dim={winnerIdx === 1} />
+        <TeamRow team={b} score={report && !guarded ? b.score : null} win={winnerIdx === 1} dim={winnerIdx === 0} />
       </div>
 
       {!started && state && (
@@ -92,24 +100,54 @@ export default function MatchCard({ match, eventLabel, now }) {
       )}
       {failed && <p className="error">Could not load the result. Try again.</p>}
 
-      {report && (
+      {report && !guarded && (
         <div className="result">
           {report.preJoin && <p className="muted">Played before you joined, so it does not score.</p>}
           {!report.preJoin && (
             <>
               {report.call ? (
-                <ul className="verdict">
-                  <li data-ok={report.result.winnerRight}><small>Winner</small><b>{report.call.winner}</b><em>{report.result.winnerRight ? 'Right' : 'Miss'}</em></li>
-                  {report.call.score && <li data-ok={report.result.scoreRight}><small>Score</small><b>{report.call.score[0]}-{report.call.score[1]}</b><em>{report.result.scoreRight ? 'Right' : 'Miss'}</em></li>}
-                  {report.call.star && <li data-ok={report.result.starRight}><small>Star</small><b>{players[report.call.star]?.handle ?? report.call.star}</b><em>{report.result.starRight ? 'Right' : 'Miss'}</em></li>}
-                </ul>
+                <section className="result-part">
+                  {/* Each part is headed by what it earned. Alone, the call needs no heading: the total says it. */}
+                  {report.trackedLines.length > 0 && <h3 className="sum"><b>{sign(report.callPoints)}</b><span>from your call</span></h3>}
+                  <ul className="verdict">
+                    <li data-ok={report.result.winnerRight}>
+                      <small>Winner</small>
+                      <span className="verdict-art">{logoFor(report.call.winner) ? <img src={logoFor(report.call.winner)} alt="" /> : <b>{report.call.winner}</b>}</span>
+                      <b className="verdict-name">{report.call.winner}</b>
+                      <span className="sr-only">{report.result.winnerRight ? 'Right' : 'Miss'}</span>
+                    </li>
+                    {report.call.score && (
+                      <li data-ok={report.result.scoreRight}>
+                        <small>Score</small>
+                        <span className="verdict-art"><b>{report.call.score[0]}-{report.call.score[1]}</b></span>
+                        <span className="sr-only">{report.result.scoreRight ? 'Right' : 'Miss'}</span>
+                      </li>
+                    )}
+                    {report.call.star && (
+                      <li className="verdict-star" data-ok={report.result.starRight}>
+                        <small>Star</small>
+                        <span className="verdict-art verdict-face"><Face player={players[report.call.star]} /></span>
+                        <b className="verdict-name">{players[report.call.star]?.handle ?? report.call.star}</b>
+                        <span className="sr-only">{report.result.starRight ? 'Right' : 'Miss'}</span>
+                      </li>
+                    )}
+                  </ul>
+                </section>
               ) : <p className="muted">No call on this one.</p>}
-              <dl className="ledger">
-                {report.call && <div><dt>Your call</dt><dd>{sign(report.callPoints)}</dd></div>}
-                {report.trackedLines.map(l => <div key={l.pid}><dt>{players[l.pid]?.handle ?? l.pid}<small>Tracked</small></dt><dd>{sign(l.total)}</dd></div>)}
-                {!report.trackedLines.length && <div className="ledger-empty"><dt>None of your Tracked players played</dt><dd /></div>}
-                <div className="ledger-total"><dt>Total</dt><dd>{sign(report.total)}</dd></div>
-              </dl>
+              {report.trackedLines.length > 0 && (
+                <section className="result-part">
+                  <h3 className="sum"><b>{sign(report.trackedLines.reduce((n, l) => n + l.total, 0))}</b><span>from your cards</span></h3>
+                  {/* Your Tracked cards as a hand, best scorer in the middle, each tagged with its points. */}
+                  <Fan
+                    pids={[...report.trackedLines].filter(l => players[l.pid]?.card).sort((x, y) => y.total - x.total).map(l => l.pid)}
+                    cardOf={pid => players[pid].card}
+                    scale={0.24}
+                    arc={2}
+                    tagOf={pid => ({ label: sign(report.trackedLines.find(l => l.pid === pid).total) })}
+                  />
+                </section>
+              )}
+              <p className="sum sum-total"><b>{sign(report.total)}</b><span>this match</span></p>
             </>
           )}
         </div>

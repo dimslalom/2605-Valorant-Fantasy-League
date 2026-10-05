@@ -4,7 +4,7 @@ import cards from '../src/data/cards.json' with { type: 'json' };
 import { buildReplay } from '../src/engine/fantasy/replay.js';
 import { scoreSeries } from '../src/engine/shared/scoring.js';
 import { resolveCall, seriesFacts, streakMultiplier } from '../src/engine/collect/calls.js';
-import { buyBingoCard, buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
+import { buyBingoCard, buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, settleCalls, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
 import { openPack, starterCollection } from '../src/engine/collect/packs.js';
 import { BINGO, CALL, ECONOMY, TRACKED_MAX } from '../src/engine/collect/rules.js';
 import { synthMatches } from './fixtures/fantasySynth.js';
@@ -231,4 +231,22 @@ test('an extra bingo card costs its credits and cannot be bought without them', 
   const paid = buyBingoCard({ ...s, credits: BINGO.cardCost + 7 });
   assert.equal(paid.credits, 7);
   assert.equal(buyBingoCard({ ...s, credits: BINGO.cardCost }).credits, 0);
+});
+
+test('settleCalls scores unrevealed calls once, keeps every call, and leaves the reveal guarded', () => {
+  const r = replay();
+  let s = withCards(createCollection({ seed: 6, now: 0 }), poolOf(r));
+  const [a, b] = r.matchdays[0].matches;
+  s = setCall(s, a.matchId, { winner: a.teams[0].tag });
+  s = setCall(s, 'later', { winner: 'X' });   // a call on a match that has not finished
+  const settled = settleCalls(s, [{ ...a, status: 'final' }, { ...b, status: 'final' }], { teamOf: teamOfFn(r) });
+  assert.deepEqual(settled.calls, s.calls);
+  assert.equal(settled.revealed[a.matchId].unseen, true);
+  assert.equal(settled.revealed[b.matchId], undefined);   // no call on b: left for the reveal tap
+  assert.equal(settled.credits, settled.revealed[a.matchId].total);
+  assert.equal(settleCalls(settled, [{ ...a, status: 'final' }], { teamOf: teamOfFn(r) }), settled);
+  const shown = resolveSeries(settled, a, { teamOf: teamOfFn(r) });
+  assert.equal(shown.report.unseen, false);
+  assert.equal(shown.state.credits, settled.credits);   // revealing does not pay twice
+  assert.equal(shown.state.history.length, 1);
 });
