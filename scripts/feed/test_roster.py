@@ -11,6 +11,13 @@ class RosterParserTests(unittest.TestCase):
         body = ''.join(f'<tr><td>AMERICAS</td><td>T{i}</td><td>P{i}</td><td>PLAYER</td><td>2027</td><td>Active</td></tr>' for i in range(30))
         self.assertEqual(len(parse_gcd(f'<table>{head}{body}</table>')), 30)
 
+    def test_china_active_player_and_season_end(self):
+        head = '<tr><td>League</td><td>Team</td><td>Official Tournament Handle</td><td>Role</td><td>End Date (Month Day, Year)</td><td>Roster Status</td></tr>'
+        body = ''.join(f'<tr><td>CN</td><td>T{i}</td><td>P{i}</td><td>ACTIVE PLAYER</td><td>2027 Season End</td><td>Active</td></tr>' for i in range(30))
+        rows = parse_gcd(f'<table>{head}{body}</table>')
+        self.assertEqual(len(rows), 30)
+        self.assertEqual(rows[0]['contractEnd'], '2027 Season End')
+
     def test_markup_failure_is_loud(self):
         with self.assertRaises(ValueError):
             parse_gcd('<table><tr><td>Unknown</td></tr></table>')

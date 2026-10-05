@@ -81,7 +81,7 @@ def parse_gcd(html):
                     continue
                 if not cells[player] or not cells[team]:
                     continue
-                if role is not None and (role >= len(cells) or cells[role].upper() != 'PLAYER'):
+                if role is not None and (role >= len(cells) or cells[role].upper() not in ('PLAYER', 'ACTIVE PLAYER')):
                     continue
                 if status is not None and status < len(cells) and cells[status].lower() != 'active':
                     continue

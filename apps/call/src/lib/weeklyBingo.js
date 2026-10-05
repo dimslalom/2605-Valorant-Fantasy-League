@@ -74,7 +74,13 @@ export function rosterEvidence(square,events) {
   const matches=events.filter(e=>{
     if(square==='contract_extend'||square==='contract_shorten') {
       if(e.changeType!=='contract_change'||!e.oldEnd||!e.newEnd) return false;
-      const oldEnd=Date.parse(e.oldEnd),newEnd=Date.parse(e.newEnd);
+      const order=s=>{
+        const parsed=Date.parse(s);
+        if(Number.isFinite(parsed)) return parsed;
+        const season=String(s).match(/\b(20\d{2}) Season End\b/i);
+        return season?Date.UTC(Number(season[1]),11,31):NaN;
+      };
+      const oldEnd=order(e.oldEnd),newEnd=order(e.newEnd);
       if(!Number.isFinite(oldEnd)||!Number.isFinite(newEnd)) return false;
       return square==='contract_extend' ? newEnd>oldEnd : newEnd<oldEnd;
     }

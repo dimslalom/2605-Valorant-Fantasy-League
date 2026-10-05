@@ -41,6 +41,11 @@ test('roster-only cards work without matches and contract direction uses publish
   ];
   const score=scoreWeeklyCard(cells,[],{},events,weeklyCatalog([]),true);
   assert.deepEqual(score.cells.map(x=>x.state),['hit','miss','hit','hit']);
+  const china=scoreWeeklyCard([sq('contract_extend'),sq('contract_shorten'),sq('roster_add'),sq('roster_depart')],[],{},[
+    {changeType:'contract_change',oldEnd:'2027 Season End',newEnd:'2028 Season End',firstSeenAt:12,player:'C',team:'CN',sourceUrl:'https://example.test'},
+  ],weeklyCatalog([]),true);
+  assert.equal(china.cells[0].state,'hit');
+  assert.equal(china.cells[1].state,'miss');
 });
 test('Riot snapshot baseline, two-read confirmation and ambiguous identity exclusion',async()=>{
   const db=d1();
