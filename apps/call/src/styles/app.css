@@ -911,3 +911,11 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .guide-bingo b { font: 700 22px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 .guide-bingo span[data-rare='true'] b { color: var(--gold); }
 .guide-bingo small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: 700 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.weekly-bingo .bcard-grid { margin: 1.5rem 0; }
+.weekly-cell { display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; min-height: 11rem; padding: 1rem; gap: .75rem; }
+.weekly-cell select, .roster-page input { width: 100%; min-width: 0; padding: .55rem; color: inherit; background: var(--surface, #201b24); border: 1px solid currentColor; }
+.weekly-cell a { font-size: .8rem; }
+.roster-page { max-width: 62rem; margin-inline: auto; }
+.roster-list { list-style: none; padding: 0; }
+.roster-list li { padding: .8rem 0; border-bottom: 1px solid #ffffff30; line-height: 1.6; }
+.roster-list a { margin-left: .5rem; }

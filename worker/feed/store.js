@@ -7,8 +7,8 @@ import { judgeMatch } from './validate.js';
 const UPSERT_MATCH = `
 INSERT INTO feed_matches (match_id, event_id, stage, series, best_of, starts_at, est_end_at, status, stats_rank,
   team1_id, team2_id, team1_name, team2_name, team1_tag, team2_tag, score1, score2, winner, round_id, patch,
-  content_hash, first_final_at, ingested_at, updated_at)
-VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24)
+  content_hash, first_final_at, ingested_at, updated_at, first_seen_at)
+VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?24)
 ON CONFLICT(match_id) DO UPDATE SET
   event_id = excluded.event_id, stage = excluded.stage, series = excluded.series, best_of = excluded.best_of,
   starts_at = excluded.starts_at, est_end_at = excluded.est_end_at, status = excluded.status,

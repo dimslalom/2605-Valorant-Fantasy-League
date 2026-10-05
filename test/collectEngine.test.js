@@ -4,7 +4,7 @@ import cards from '../src/data/cards.json' with { type: 'json' };
 import { buildReplay } from '../src/engine/fantasy/replay.js';
 import { scoreSeries } from '../src/engine/shared/scoring.js';
 import { resolveCall, seriesFacts, streakMultiplier } from '../src/engine/collect/calls.js';
-import { buyBingoCard, buyPack, callRecord, createCollection, resolveMatchday, resolveSeries, setCall, settleCalls, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
+import { buyBingoCard, buyPack, callRecord, createCollection, rescoreCalls, resolveMatchday, resolveSeries, setCall, settleCalls, swapFee, swapTracked, totalScore, trackedAt } from '../src/engine/collect/game.js';
 import { openPack, starterCollection } from '../src/engine/collect/packs.js';
 import { BINGO, CALL, ECONOMY, TRACKED_MAX } from '../src/engine/collect/rules.js';
 import { synthMatches } from './fixtures/fantasySynth.js';
@@ -249,4 +249,25 @@ test('settleCalls scores unrevealed calls once, keeps every call, and leaves the
   assert.equal(shown.report.unseen, false);
   assert.equal(shown.state.credits, settled.credits);   // revealing does not pay twice
   assert.equal(shown.state.history.length, 1);
+});
+
+test('rescoreCalls moves a rule-1 save to the current call values once, keeping the streak multiplier', () => {
+  // Rule 1: winner 10 + exact score 10 + star top-3 5 + backing 2 x 2 = 29, x1.2 streak = 35.
+  const result = { winnerRight: true, scoreRight: true, starRight: false, multiplier: 1.2, total: 35,
+    lines: { winner: 10, exactScore: 10, star: 5, backing: 4, againstGrain: 0 } };
+  const old = { ...createCollection({ seed: 1, now: 0 }), credits: 100 };
+  delete old.callRules;
+  old.revealed = { 7: { matchId: 7, callPoints: 35, trackedPoints: 40, total: 75, result },
+    8: { matchId: 8, callPoints: 0, trackedPoints: 0, total: 0, result: null, preJoin: true } };
+  old.history = [{ matchId: 7, callPoints: 35, trackedPoints: 40, called: true, right: true }];
+
+  const s = rescoreCalls(old);
+  const want = Math.round((CALL.winner + CALL.exactScore + CALL.starTop3 + 2 * CALL.backing) * 1.2);
+  assert.equal(s.revealed[7].callPoints, want);
+  assert.equal(s.revealed[7].total, want + 40);
+  assert.equal(s.history[0].callPoints, want);
+  assert.equal(s.credits, 100 + want - 35);
+  assert.deepEqual(s.revealed[8], old.revealed[8]);
+  assert.equal(rescoreCalls(s), s);   // once only
+  assert.equal(totalScore(s), want + 40);
 });

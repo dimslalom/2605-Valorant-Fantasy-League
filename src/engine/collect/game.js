@@ -1,5 +1,5 @@
 import { resolveCall } from './calls.js';
-import { BINGO, ECONOMY, TRACKED_MAX } from './rules.js';
+import { BINGO, CALL, CALL_RULES, ECONOMY, TRACKED_MAX } from './rules.js';
 import { openPack } from './packs.js';
 import { scoreSeries } from '../shared/scoring.js';
 
@@ -94,6 +94,7 @@ export function setCall(state, matchId, call) {
 // and the cards you were Tracking when it started, pays credits, updates the streak, and
 // records the report so it can never be scored twice. Returns { state, report }.
 export function resolveSeries(state, series, { teamOf }) {
+  state = rescoreCalls(state);   // an old save is rescored before anything new is scored on it
   const done = state.revealed[series.matchId];
   if (done?.unseen) {
     const report = { ...done, unseen: false };   // already scored by settleCalls: revealing only lifts the guard
@@ -155,6 +156,40 @@ export function settleCalls(state, series, { teamOf }) {
     state = { ...next, revealed: { ...next.revealed, [s.matchId]: { ...report, unseen: true } } };
   }
   return state;
+}
+
+// Rescore every scored call under the current CALL values, keeping which parts were right and
+// the streak multiplier it had, and pay the difference in credits. A save without `callRules` is
+// on rule 1 (backing paid 2 per Tracked player, which recovers the count). resolveSeries calls
+// this first, so a save never holds a report from newer rules without being marked.
+export function rescoreCalls(state) {
+  if ((state.callRules ?? 1) >= CALL_RULES) return state;
+  const revealed = { ...state.revealed };
+  const callPoints = {};
+  let credits = state.credits;
+  for (const [id, report] of Object.entries(state.revealed)) {
+    const result = report.result;
+    if (!result) continue;
+    const old = result.lines;
+    const lines = {
+      winner: old.winner > 0 ? CALL.winner : 0,
+      exactScore: old.exactScore > 0 ? CALL.exactScore : 0,
+      star: result.starRight ? CALL.star : old.star > 0 ? CALL.starTop3 : 0,
+      backing: Math.min(CALL.backingCap, (old.backing / 2) * CALL.backing),
+      againstGrain: old.againstGrain > 0 ? CALL.againstGrain : 0,
+    };
+    const total = Math.round(Object.values(lines).reduce((a, b) => a + b, 0) * result.multiplier);
+    credits += (total - report.callPoints) * ECONOMY.creditsPerPoint;
+    callPoints[id] = total;
+    revealed[id] = { ...report, callPoints: total, total: total + report.trackedPoints, result: { ...result, lines, total } };
+  }
+  return {
+    ...state,
+    callRules: CALL_RULES,
+    credits,
+    revealed,
+    history: state.history.map(h => (h.matchId in callPoints ? { ...h, callPoints: callPoints[h.matchId] } : h)),
+  };
 }
 
 // Resolve a matchday against its finished series. Returns { state, report }.

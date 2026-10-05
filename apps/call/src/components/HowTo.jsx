@@ -48,7 +48,7 @@ export default function HowTo({ onDone }) {
     <section className="guide-row">
       <div className="guide-copy">
         <h3>Play bingo</h3>
-        <p>Fill a card with four moments from a day's matches. Rare ones pay more; a full line or card pays a bonus. {BINGO.freeCards === 1 ? 'One card a day is free' : `${BINGO.freeCards} cards a day are free`}, extras are {BINGO.cardCost} CR.</p>
+        <p>Pick four events for the same Monday-to-Monday week. A match square can cover the week or name one match for more points. The first card is free; extra cards unlock after payout calibration and cost {BINGO.cardCost} CR.</p>
       </div>
       <div className="guide-bingo" role="img" aria-label="Example bingo card: four squares, the rare one worth 6 points">
         {[['3', 'An ace'], ['2', '25+ kills'], ['6', '30+ kills'], ['4', 'Yoru tops']].map(([pts, label]) => (

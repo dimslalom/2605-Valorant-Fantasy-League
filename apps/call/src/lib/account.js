@@ -66,13 +66,31 @@ export function useAccount({ state, setSaved }) {
     return () => clearTimeout(t);
   }, [user, synced, state, adopt]);
 
-  // ponytail: a second device is only noticed on its next upload; add a refetch on tab focus if that bites.
+  useEffect(() => {
+    if (!user || !synced) return undefined;
+    const refresh = () => api('GET', '/api/save').then(adopt, () => {});
+    const visible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('opval-wallet-changed', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => { window.removeEventListener('opval-wallet-changed', refresh); document.removeEventListener('visibilitychange', visible); };
+  }, [user, synced, adopt]);
+
 
   const enter = useCallback(path => async fields => {
     const d = await api('POST', path, fields);
     setUser(d.user);
     if (d.recoveryCode) setRecoveryCode(d.recoveryCode);
   }, []);
+  const perform = useCallback(async (op, fields = {}) => {
+    try {
+      const result = await api('POST', '/api/game/action', { op, ...fields, version: version.current, requestId: crypto.randomUUID() });
+      adopt(result);
+      return result;
+    } catch (e) {
+      if (e.status === 409 && e.data?.state) adopt(e.data);
+      throw e;
+    }
+  }, [adopt]);
   const logout = useCallback(async () => {
     await api('POST', '/api/auth/logout', {}).catch(() => {});
     setUser(null);
@@ -80,7 +98,7 @@ export function useAccount({ state, setSaved }) {
   }, []);
 
   return {
-    user, checked, synced, notice, clearNotice: () => setNotice(''),
+    user, checked, synced, perform, notice, clearNotice: () => setNotice(''),
     recoveryCode, ackRecoveryCode: () => setRecoveryCode(null),
     signup: enter('/api/auth/signup'),
     login: enter('/api/auth/login'),

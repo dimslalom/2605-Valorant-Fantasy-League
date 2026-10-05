@@ -81,7 +81,7 @@ export default function MatchCard({ match, eventLabel, now }) {
     setBusy(true);
     setFailed(false);
     const detail = await fetchMatch(match.matchId);
-    if (detail && reveal(detail)) { setBusy(false); return; }
+    if (detail && await reveal(detail)) { setBusy(false); return; }
     setBusy(false);
     setFailed(true);
   };

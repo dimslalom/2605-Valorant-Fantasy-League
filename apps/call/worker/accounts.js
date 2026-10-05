@@ -3,6 +3,10 @@
 // CSRF: SameSite=Lax plus a JSON-only body (a cross-site form cannot send one).
 import { createCollection } from '../../../src/engine/collect/game.js';
 import { handleBingo, MAX_BINGO_BYTES } from './bingo.js';
+import { handleWeeklyBingo } from './weeklyBingo.js';
+import { ensureWallet } from './wallet.js';
+import { gameAction } from './gameActions.js';
+import { calibrationStatus } from './calibration.js';
 
 const COOKIE = 'opval_session';
 const SESSION_SECS = 60 * 60 * 24 * 30;
@@ -180,7 +184,9 @@ async function getSave(user, env) {
       .bind(user.id, JSON.stringify(initial), now()).run();
     row = await env.DB.prepare('SELECT state, version FROM saves WHERE user_id = ?').bind(user.id).first();
   }
-  return reply({ state: JSON.parse(row.state), version: row.version });
+  const state = JSON.parse(row.state);
+  state.credits = (await ensureWallet(env.DB, user.id)).balance;
+  return reply({ state, version: row.version });
 }
 
 // Rank scored results, not credits: credits can be spent and should never lower a rank.
@@ -236,20 +242,13 @@ async function leaderboard(user, env, url) {
 // never overwrite each other silently.
 async function putSave(request, user, env) {
   const body = await readJson(request, MAX_SAVE_BYTES);
-  if (!body || typeof body.state !== 'object' || body.state === null || !Array.isArray(body.state.collection)
-    || !Number.isInteger(body.version) || body.version < 0) {
-    return reply({ error: 'bad save' }, 400);
-  }
-  const state = JSON.stringify(body.state);
-  if (body.version === 0) {
-    const current = await getSave(user, env);
-    return reply(await current.json(), 409);
-  }
-  const res = await env.DB.prepare('UPDATE saves SET state = ?, updated_at = ?, version = version + 1 WHERE user_id = ? AND version = ?')
-    .bind(state, now(), user.id, body.version).run();
-  if (res.meta.changes === 1) return reply({ ok: true, version: body.version + 1 });
+  if (!body || !Number.isInteger(body.version) || body.version < 1) return reply({ error: 'bad save' }, 400);
   const current = await getSave(user, env);
-  return reply(await current.json(), 409);
+  const remote = await current.json();
+  if (body.version !== remote.version || JSON.stringify(body.state) !== JSON.stringify(remote.state)) {
+    return reply({ ...remote, error: 'Game actions must be saved through the server' }, 409);
+  }
+  return reply({ ok: true, version: remote.version });
 }
 
 export async function handleAccounts(request, env, url) {
@@ -276,11 +275,28 @@ export async function handleAccounts(request, env, url) {
     return user ? leaderboard(user, env, url) : reply({ error: 'not signed in' }, 401);
   }
 
-  if (/^\/api\/bingo(\/score|\/leaderboard)?$/.test(path) && (method === 'GET' || (method === 'PUT' && path === '/api/bingo'))) {
+  if (path === '/api/weekly-bingo/calibration' && method === 'GET') {
+    const user = await currentUser(request, env);
+    return user ? reply(await calibrationStatus(env.DB)) : reply({ error: 'not signed in' }, 401);
+  }
+
+  if (/^\/api\/weekly-bingo(\/score|\/leaderboard)?$/.test(path) && (method === 'GET' || (method === 'PUT' && path === '/api/weekly-bingo'))) {
+    const user = await currentUser(request, env);
+    if (!user) return reply({ error: 'not signed in' }, 401);
+    const body = method === 'PUT' ? await readJson(request, MAX_BINGO_BYTES) : null;
+    return handleWeeklyBingo(user, env, url, method, body);
+  }
+
+  if (/^\/api\/bingo(\/score|\/leaderboard)?$/.test(path) && method === 'GET') {
     const user = await currentUser(request, env);
     if (!user) return reply({ error: 'not signed in' }, 401);
     const body = method === 'PUT' ? await readJson(request, MAX_BINGO_BYTES) : null;
     return handleBingo(user, env, url, method, body);
+  }
+
+  if (path === '/api/game/action' && method === 'POST') {
+    const user = await currentUser(request, env);
+    return user ? gameAction(user, env, await readJson(request, 4096)) : reply({ error: 'not signed in' }, 401);
   }
 
   if (path === '/api/save' && (method === 'GET' || method === 'PUT')) {

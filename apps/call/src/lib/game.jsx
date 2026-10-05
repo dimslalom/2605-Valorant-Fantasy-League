@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import cards from '../../../../src/data/cards.json';
-import { buyBingoCard, buyPack, callRecord, createCollection, resolveSeries, setCall, settleCalls, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
+import { buyPack, callRecord, createCollection, rescoreCalls, resolveSeries, setCall, settleCalls, swapFee, swapTracked, totalScore } from '../../../../src/engine/collect/game';
+import { CALL_RULES } from '../../../../src/engine/collect/rules';
 import { makeCardLookup } from '../../../../src/engine/shared/cardLookup';
 import { useAccount } from './account';
 import { fetchMatch, fetchPlayers } from './feed';
@@ -69,18 +70,20 @@ export function GameProvider({ children }) {
   }), [accountHook]);
 
   // Calls on finished matches settle when the game loads, so credits and points never wait on a
-  // reveal tap. Signed in, this waits for the server save so it settles that copy, not a stale one.
+  // reveal tap, and a save scored under older call values is rescored first (credits topped up).
+  // Signed in, this waits for the server save so it settles that copy, not a stale one.
   // Reports stay unseen: the match card is still spoiler-guarded until you reveal it.
   const pending = state ? Object.keys(state.calls).filter(id => !state.revealed[id]).join() : '';
-  const canSettle = ready && accountHook.checked && (!accountHook.user || accountHook.synced);
+  const stale = Boolean(saved) && (saved.callRules ?? 1) < CALL_RULES;
+  const canSettle = ready && accountHook.checked && !accountHook.user;
   useEffect(() => {
-    if (!canSettle || !pending) return undefined;
+    if (!canSettle || (!pending && !stale)) return undefined;
     let live = true;
-    Promise.all(pending.split(',').map(fetchMatch)).then(list => {
-      if (live) setSaved(s => (s ? settleCalls(s, list.filter(Boolean), { teamOf }) : s));
+    Promise.all(pending ? pending.split(',').map(fetchMatch) : []).then(list => {
+      if (live) setSaved(s => (s ? settleCalls(rescoreCalls(s), list.filter(Boolean), { teamOf }) : s));
     });
     return () => { live = false; };
-  }, [canSettle, pending, teamOf]);
+  }, [canSettle, pending, stale, teamOf]);
 
   useEffect(() => {
     if (!state) return;
@@ -102,15 +105,20 @@ export function GameProvider({ children }) {
     }
   }, [state]);
 
+  const remote = useCallback(async (op, fields) => {
+    try {
+      const result = await accountHook.perform(op, fields);
+      setError('');
+      return result;
+    } catch (e) { setError(e.message); return null; }
+  }, [accountHook.perform]);
   const actions = useMemo(() => ({
-    call: (matchId, call) => run(s => setCall(s, matchId, call)),
-    swap: (outPid, inPid) => Boolean(run(s => swapTracked(s, outPid, inPid, tierOf))),
-    buy: () => run(s => buyPack(s, pool)),
-    buyBingoCard: () => Boolean(run(s => buyBingoCard(s))),
-    reveal: series => run(s => resolveSeries(s, series, { teamOf })),
-    // Dev server only (stripped from production builds): credits to test packs and storage.
-    ...(import.meta.env.DEV && { devCredits: n => run(s => ({ ...s, credits: s.credits + n })) }),
-  }), [run, pool, teamOf, tierOf]);
+    call: (matchId, call) => accountHook.user ? remote('call', { matchId, call }) : run(s => setCall(s, matchId, call)),
+    swap: (outPid, inPid) => accountHook.user ? remote('swap', { outPid, inPid }) : Boolean(run(s => swapTracked(s, outPid, inPid, tierOf))),
+    buy: () => accountHook.user ? remote('pack') : run(s => buyPack(s, pool)),
+    reveal: series => accountHook.user ? remote('reveal', { matchId: series.matchId }) : run(s => resolveSeries(s, series, { teamOf })),
+    ...(import.meta.env.DEV && !accountHook.user && { devCredits: n => run(s => ({ ...s, credits: s.credits + n })) }),
+  }), [accountHook.user, remote, run, tierOf, pool, teamOf]);
 
   const value = useMemo(() => ({
     ready, players, pool, state, error, teamOf, tierOf, swapFee, account,

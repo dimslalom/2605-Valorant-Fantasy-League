@@ -14,22 +14,20 @@ const call = (e, method, path, body, cookie, ip) => {
 const cookieOf = res => res.headers.get('Set-Cookie').split(';')[0];
 const save = { collection: [{ pid: 1 }], credits: 5 };
 
-test('signup, me, save round trip, logout', async () => {
+test('signup, me, authoritative save, logout', async () => {
   const e = env();
   const res = await call(e, 'POST', '/api/auth/signup', { username: 'Dimas_1', password: 'correct horse' });
   assert.equal(res.status, 201);
   assert.match(res.headers.get('Set-Cookie'), /HttpOnly; Secure; SameSite=Lax/);
   const cookie = cookieOf(res);
-
   assert.deepEqual(await (await call(e, 'GET', '/api/auth/me', undefined, cookie)).json(), { user: { username: 'dimas_1' } });
   const initial = await (await call(e, 'GET', '/api/save', undefined, cookie)).json();
   assert.equal(initial.version, 1);
   assert.deepEqual(initial.state.collection, []);
   assert.equal(initial.state.freePacks, 2);
-  assert.equal((await call(e, 'PUT', '/api/save', { state: save, version: 0 }, cookie)).status, 409);
-  assert.equal((await call(e, 'PUT', '/api/save', { state: save, version: 1 }, cookie)).status, 200);
-  assert.deepEqual(await (await call(e, 'GET', '/api/save', undefined, cookie)).json(), { state: save, version: 2 });
-
+  assert.equal((await call(e, 'PUT', '/api/save', { state: save, version: 1 }, cookie)).status, 409);
+  assert.deepEqual(await (await call(e, 'GET', '/api/save', undefined, cookie)).json(), initial);
+  assert.deepEqual(await (await call(e, 'PUT', '/api/save', initial, cookie)).json(), {ok:true,version:1});
   await call(e, 'POST', '/api/auth/logout', {}, cookie);
   assert.deepEqual(await (await call(e, 'GET', '/api/auth/me', undefined, cookie)).json(), { user: null });
   assert.equal((await call(e, 'GET', '/api/save', undefined, cookie)).status, 401);
@@ -85,22 +83,15 @@ test('unknown paths fall through', async () => {
   assert.equal(await call(env(), 'GET', '/api/nothing'), null);
 });
 
-test('two devices: a stale write is refused and gets the server copy back', async () => {
+test('two devices: stale or forged game writes are refused', async () => {
   const e = env();
   const cookie = cookieOf(await call(e, 'POST', '/api/auth/signup', { username: 'alice', password: 'longenough' }));
-  const put = (state, version) => call(e, 'PUT', '/api/save', { state, version }, cookie);
-  const a1 = { collection: [1] };
-  const b1 = { collection: [1, 2] };
-
-  await call(e, 'GET', '/api/save', undefined, cookie);
-  assert.deepEqual(await (await put(a1, 1)).json(), { ok: true, version: 2 });
-  assert.deepEqual(await (await put(b1, 2)).json(), { ok: true, version: 3 }); // device B
-  const stale = await put({ collection: [9] }, 2);                              // device A, still on v2
-  assert.equal(stale.status, 409);
-  assert.deepEqual(await stale.json(), { state: b1, version: 3 });
-  // a second device that never saw a save cannot overwrite the first one's either
-  assert.equal((await put({ collection: [7] }, 0)).status, 409);
-  assert.deepEqual(await (await call(e, 'GET', '/api/save', undefined, cookie)).json(), { state: b1, version: 3 });
+  const initial = await (await call(e, 'GET', '/api/save', undefined, cookie)).json();
+  const action = await call(e, 'POST', '/api/game/action', {op:'pack',version:1,requestId:'pack-action-1'}, cookie);
+  assert.equal(action.status, 400); // no feed card pool in this fixture
+  assert.equal((await call(e, 'PUT', '/api/save', { state: {...initial.state, credits:999}, version:1 }, cookie)).status, 409);
+  assert.equal((await call(e, 'PUT', '/api/save', { state: initial.state, version:0 }, cookie)).status, 400);
+  assert.deepEqual(await (await call(e, 'GET', '/api/save', undefined, cookie)).json(), initial);
 });
 
 test('login and signup are rate limited', async () => {
@@ -175,24 +166,18 @@ test('a signed-in user can replace the recovery code with their password', async
   assert.equal((await call(e, 'POST', '/api/auth/reset', { username: 'alice', code: fresh, password: 'new-password' })).status, 200);
 });
 
-test('leaderboards rank saved result points, break score ties fairly, and update after a save', async () => {
+test('leaderboards rank server-settled result points and break ties fairly', async () => {
   const e = env();
   const alice = cookieOf(await call(e, 'POST', '/api/auth/signup', { username: 'alice', password: 'longenough' }));
   const bob = cookieOf(await call(e, 'POST', '/api/auth/signup', { username: 'bobby', password: 'longenough' }));
   await call(e, 'POST', '/api/auth/signup', { username: 'carol', password: 'longenough' });
-  const state = history => ({ collection: [], history, credits: 0 });
-  const a = state([{ callPoints: 12, trackedPoints: 8 }]);
-  const b = state([{ callPoints: 12, trackedPoints: 3 }]);
   await call(e, 'GET', '/api/save', undefined, alice);
   await call(e, 'GET', '/api/save', undefined, bob);
-  const carol = cookieOf(await call(e, 'POST', '/api/auth/login', { username: 'carol', password: 'longenough' }));
-  await call(e, 'GET', '/api/save', undefined, carol);
-  await call(e, 'PUT', '/api/save', { state: a, version: 1 }, alice);
-  await call(e, 'PUT', '/api/save', { state: b, version: 1 }, bob);
-  await call(e, 'PUT', '/api/save', { state: state(['not a result']), version: 1 }, carol);
-
+  const state = history => ({ collection: [], history, credits: 0 });
+  const userId = name => e.DB.sqlite.prepare('SELECT id FROM users WHERE username=?').get(name).id;
+  e.DB.sqlite.prepare('UPDATE saves SET state=? WHERE user_id=?').run(JSON.stringify(state([{ callPoints: 12, trackedPoints: 8 }])), userId('alice'));
+  e.DB.sqlite.prepare('UPDATE saves SET state=? WHERE user_id=?').run(JSON.stringify(state([{ callPoints: 12, trackedPoints: 3 }])), userId('bobby'));
   const get = (board, cookie = alice) => call(e, 'GET', `/api/leaderboard?board=${board}`, undefined, cookie);
-  assert.equal((await get('overall')).status, 200);
   assert.deepEqual((await (await get('overall')).json()).entries, [
     { username: 'alice', points: 20, rank: 1 },
     { username: 'bobby', points: 15, rank: 2 },
@@ -204,8 +189,7 @@ test('leaderboards rank saved result points, break score ties fairly, and update
   assert.deepEqual((await (await get('cards')).json()).entries.map(x => x.points), [8, 3]);
   assert.equal((await get('nonsense')).status, 400);
   assert.equal((await call(e, 'GET', '/api/leaderboard')).status, 401);
-
-  await call(e, 'PUT', '/api/save', { state: state([{ callPoints: 12, trackedPoints: 23 }]), version: 2 }, bob);
+  e.DB.sqlite.prepare('UPDATE saves SET state=? WHERE user_id=?').run(JSON.stringify(state([{ callPoints: 12, trackedPoints: 23 }])),userId('bobby'));
   const after = await (await get('overall')).json();
   assert.equal(after.entries[0].username, 'bobby');
   assert.deepEqual(after.me, { username: 'alice', points: 20, rank: 2 });
@@ -215,7 +199,8 @@ test('leaderboard includes your place outside the top 50 without showing zero-sc
   const e = env();
   const cookie = cookieOf(await call(e, 'POST', '/api/auth/signup', { username: 'alice', password: 'longenough' }));
   await call(e, 'GET', '/api/save', undefined, cookie);
-  await call(e, 'PUT', '/api/save', { state: { collection: [], history: [{ callPoints: 1, trackedPoints: 0 }] }, version: 1 }, cookie);
+  const me = e.DB.sqlite.prepare("SELECT id FROM users WHERE username='alice'").get().id;
+  e.DB.sqlite.prepare('UPDATE saves SET state=? WHERE user_id=?').run(JSON.stringify({collection:[],history:[{callPoints:1,trackedPoints:0}]}),me);
   const insertUser = e.DB.sqlite.prepare('INSERT INTO users (username, pw_hash, created_at) VALUES (?, ?, 1) RETURNING id');
   const insertSave = e.DB.sqlite.prepare('INSERT INTO saves (user_id, state, updated_at, version) VALUES (?, ?, 1, 1)');
   for (let n = 0; n < 50; n += 1) {

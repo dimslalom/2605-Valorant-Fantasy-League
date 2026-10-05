@@ -1,6 +1,7 @@
 import { isAuthorized } from './auth.js';
 import { ingestMatches, recordSource } from './store.js';
 import { MAX_BODY_BYTES, validateEnvelope } from './validate.js';
+import { ingestTransfers, ingestContracts } from './roster.js';
 
 // Feed routes: POST /internal/ingest (bearer) and read-only GET /api/feed/*.
 // Raw stats only. Points are computed by the client's shared scoring module,
@@ -52,6 +53,16 @@ async function postIngest(request, env) {
     const result = await ingestMatches(env.DB, body, now);
     await recordSource(env.DB, 'matches', { ok: true }, now);
     return reply(result);
+  }
+  if (body.kind === 'transfers' || body.kind === 'contracts') {
+    try {
+      const result = body.kind === 'transfers' ? await ingestTransfers(env.DB, body, now) : await ingestContracts(env.DB, body, now);
+      await recordSource(env.DB, body.kind, { ok: true }, now);
+      return reply(result);
+    } catch (error) {
+      await recordSource(env.DB, body.kind, { ok: false, error: error.message }, now);
+      return reply({ error: error.message }, 400);
+    }
   }
   if (body.kind === 'heartbeat') {
     await recordSource(env.DB, 'heartbeat', { ok: true }, now);

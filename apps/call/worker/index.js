@@ -1,6 +1,9 @@
 import { handleFeed } from '../../../worker/feed/routes.js';
+import { getRoster } from '../../../worker/feed/roster.js';
 import { handleAccounts } from './accounts.js';
 import { settleAll } from './settle.js';
+import { settleWeeklyBingo } from './weeklyBingo.js';
+import { calibratePaid } from './calibration.js';
 
 // OpVAL's Worker: a read-only window onto the shared feed database, plus accounts
 // and cloud saves (accounts.js). Ingest stays on the old site's Worker, so
@@ -54,6 +57,7 @@ export async function dispatchFeed(env, fetchImpl = fetch) {
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(dispatchFeed(env));
+    ctx.waitUntil((async () => { await settleWeeklyBingo(env); await calibratePaid(env); })().catch(e => console.error(`weekly bingo settlement/calibration failed: ${e.stack ?? e}`)));
     ctx.waitUntil(settleAll(env).catch(e => console.error(`settle failed: ${e.stack ?? e}`)));
   },
 
@@ -61,6 +65,7 @@ export default {
     const url = new URL(request.url);
 
     // Read-only feed. handleFeed also knows the ingest path, so only the public prefix is routed here.
+    if (url.pathname.startsWith('/api/roster/')) return secure(await getRoster(env.DB, url.pathname, url));
     if (url.pathname.startsWith('/api/feed/')) return secure(await handleFeed(request, env, url));
     if (url.pathname.startsWith('/api/')) {
       const res = await handleAccounts(request, env, url);

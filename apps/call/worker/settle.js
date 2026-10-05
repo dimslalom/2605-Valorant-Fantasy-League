@@ -1,41 +1,62 @@
-import { settleCalls } from '../../../src/engine/collect/game.js';
+import { resolveSeries, trackedAt } from '../../../src/engine/collect/game.js';
 import { loadMatch } from '../../../worker/feed/routes.js';
+import { ensureWallet } from './wallet.js';
 
-// Scores calls on finished matches for every account, so the leaderboard never waits on a reveal tap.
-// It only writes call_settlements, never the save: an open tab may hold newer calls, and a save
-// conflict makes that tab reload from the server and drop them. The game moves these points into
-// the save (and pays the credits) the next time the player opens it (settleCalls in game.jsx).
-// ponytail: re-scores a player's unrevealed calls each run while any is new; fine at this size.
-export async function settleAll(env, now = Math.floor(Date.now() / 1000)) {
-  const { results } = await env.DB.prepare(`
-    SELECT s.user_id, s.state,
-      SUM(NOT EXISTS (SELECT 1 FROM call_settlements x WHERE x.user_id = s.user_id AND x.match_id = m.match_id)) AS fresh
-    FROM saves s, json_each(s.state, '$.calls') c
-    JOIN feed_matches m ON m.match_id = CAST(c.key AS INTEGER)
-    WHERE m.status = 'final' AND json_extract(c.value, '$.winner') IS NOT NULL
-      AND json_type(s.state, '$.revealed."' || c.key || '"') IS NULL
-    GROUP BY s.user_id HAVING fresh > 0`).all();
-  if (!results.length) return 0;
-
-  const teams = new Map((await env.DB.prepare('SELECT vlr_id, team_tag FROM feed_players').all())
-    .results.map(p => [p.vlr_id, p.team_tag]));
-  const teamOf = pid => teams.get(Number(pid)) ?? null;
-  const matches = new Map();
-  const upsert = env.DB.prepare(`INSERT INTO call_settlements (user_id, match_id, call_points, tracked_points, settled_at)
-    VALUES (?, ?, ?, ?, ?) ON CONFLICT (user_id, match_id) DO UPDATE SET
-    call_points = excluded.call_points, tracked_points = excluded.tracked_points, settled_at = excluded.settled_at`);
-
-  const writes = [];
-  for (const row of results) {
-    const state = JSON.parse(row.state);
-    const open = Object.keys(state.calls).filter(id => !state.revealed[id]);
-    for (const id of open) if (!matches.has(id)) matches.set(id, await loadMatch(env, Number(id)));
-    const settled = settleCalls(state, open.map(id => matches.get(id)).filter(Boolean), { teamOf });
-    for (const id of open) {
-      const r = settled.revealed[id];
-      if (r) writes.push(upsert.bind(row.user_id, Number(id), r.callPoints, r.trackedPoints, now));
+// Score every finished match that has either a call or a tracked player. The server
+// records unrevealed reports so credits and rankings no longer depend on opening a tab.
+export async function settleAll(env,at=Math.floor(Date.now()/1000)) {
+  const users=(await env.DB.prepare('SELECT user_id,state,version FROM saves').all()).results;
+  if (!users.length) return 0;
+  const finals=(await env.DB.prepare(`SELECT match_id,starts_at FROM feed_matches WHERE status='final' AND stats_rank>=3
+    ORDER BY starts_at,match_id`).all()).results;
+  if (!finals.length) return 0;
+  const participants=new Map();
+  let teams;
+  const inMatch=async(matchId,pids)=>{
+    if(!pids.length) return false;
+    if(!participants.has(matchId)) {
+      const rows=(await env.DB.prepare('SELECT DISTINCT vlr_id FROM feed_player_maps WHERE match_id=?').bind(matchId).all()).results;
+      participants.set(matchId,new Set(rows.map(r=>r.vlr_id)));
     }
+    return pids.some(pid=>participants.get(matchId).has(pid));
+  };
+  const cache=new Map();
+  let settled=0;
+  for(const row of users) {
+    let state=JSON.parse(row.state);
+    if(!Array.isArray(state.trackedLog)) continue;
+    const due=[];
+    for(const m of finals) {
+      if(m.starts_at<(state.createdAt??0)||state.revealed?.[m.match_id]) continue;
+      if(state.calls?.[m.match_id]?.winner!=null||await inMatch(m.match_id,trackedAt(state,m.starts_at))) due.push(m);
+    }
+    if(!due.length) continue;
+    const wallet=await ensureWallet(env.DB,row.user_id,at);
+    state={...state,credits:wallet.balance};
+    teams??=new Map((await env.DB.prepare('SELECT vlr_id,team_tag FROM feed_players').all()).results.map(p=>[p.vlr_id,p.team_tag]));
+    const before=state.credits;
+    for(const m of due) {
+      if(!cache.has(m.match_id)) cache.set(m.match_id,await loadMatch(env,m.match_id));
+      const series=cache.get(m.match_id);
+      if(!series) continue;
+      const outcome=resolveSeries(state,series,{teamOf:pid=>teams.get(Number(pid))??null});
+      state={...outcome.state,revealed:{...outcome.state.revealed,[m.match_id]:{...outcome.report,unseen:true}}};
+    }
+    const delta=state.credits-before;
+    const key=`call-settle:${row.version}`;
+    try {
+      const steps=[env.DB.prepare('UPDATE saves SET state=?,version=version+1,updated_at=? WHERE user_id=? AND version=?')
+        .bind(JSON.stringify(state),at,row.user_id,row.version)];
+      if(delta) steps.push(
+        env.DB.prepare(`INSERT INTO wallet_entries(user_id,entry_key,amount,balance_after,created_at)
+          SELECT user_id,?,?,balance+?,? FROM wallets WHERE user_id=? AND changes()=1`).bind(key,delta,delta,at,row.user_id),
+        env.DB.prepare(`UPDATE wallets SET balance=(SELECT balance_after FROM wallet_entries WHERE user_id=? AND entry_key=?)
+          WHERE user_id=? AND balance=(SELECT balance_after-amount FROM wallet_entries WHERE user_id=? AND entry_key=?)`)
+          .bind(row.user_id,key,row.user_id,row.user_id,key),
+      );
+      const result=await env.DB.batch(steps);
+      settled+=result?.[0]?.meta?.changes??0;
+    } catch { /* concurrent action changed the save; cron retries */ }
   }
-  if (writes.length) await env.DB.batch(writes);
-  return writes.length;
+  return settled;
 }

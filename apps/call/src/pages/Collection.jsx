@@ -31,13 +31,13 @@ export default function Collection() {
   const fee = pickedIn != null ? (free ? 0 : swapFee(tierOf(pickedIn))) : 0;
 
   const close = () => { setPickedOut(null); setPickedIn(null); setFrom(null); setTier('all'); };
-  const confirmSwap = () => { if (swap(pickedOut, pickedIn)) close(); };
+  const confirmSwap = async () => { if (await swap(pickedOut, pickedIn)) close(); };
   const startFrom = (side, pid) => {
     setFrom(side);
     if (side === 'tracked') setPickedOut(pid); else setPickedIn(pid);
   };
-  const openPack = () => {
-    const result = buy();
+  const openPack = async () => {
+    const result = await buy();
     if (result) setOpened(result.cards);
   };
 
