@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Children, useRef, useState } from 'react';
 import { fetchMatch } from '../lib/feed';
 import { useGame } from '../lib/gameContext';
 import { assetPath, thumbnailSrc } from '../../../../src/lib/utils';
@@ -12,6 +12,26 @@ import Sheet from './Sheet';
 function Face({ player }) {
   const image = player && thumbnailSrc(player.card);
   return image ? <img className="face" src={assetPath(image)} alt="" loading="lazy" /> : null;
+}
+
+// Side-by-side pages that snap on swipe (your call, then your cards), with dots to show where
+// you are and to click across without a touch screen. One page renders plain.
+function Swipe({ children }) {
+  const pages = Children.toArray(children);
+  const track = useRef(null);
+  const [at, setAt] = useState(0);
+  if (pages.length < 2) return pages;
+  const go = i => track.current.scrollTo({ left: track.current.children[i].offsetLeft, behavior: 'smooth' });
+  return (
+    <div className="swipe">
+      <div className="swipe-track" ref={track} onScroll={e => setAt(Math.round((e.currentTarget.scrollLeft / e.currentTarget.scrollWidth) * pages.length))}>
+        {pages.map(page => <div className="swipe-page" key={page.key}>{page}</div>)}
+      </div>
+      <div className="swipe-dots">
+        {pages.map((page, i) => <button key={page.key} aria-label={`Page ${i + 1} of ${pages.length}`} aria-current={at === i} onClick={() => go(i)}><i /></button>)}
+      </div>
+    </div>
+  );
 }
 
 function TeamRow({ team, score, win, dim }) {
@@ -105,48 +125,50 @@ export default function MatchCard({ match, eventLabel, now }) {
           {report.preJoin && <p className="muted">Played before you joined, so it does not score.</p>}
           {!report.preJoin && (
             <>
-              {report.call ? (
-                <section className="result-part">
-                  {/* Each part is headed by what it earned. Alone, the call needs no heading: the total says it. */}
-                  {report.trackedLines.length > 0 && <h3 className="sum"><b>{sign(report.callPoints)}</b><span>from your call</span></h3>}
-                  <ul className="verdict">
-                    <li data-ok={report.result.winnerRight}>
-                      <small>Winner</small>
-                      <span className="verdict-art">{logoFor(report.call.winner) ? <img src={logoFor(report.call.winner)} alt="" /> : <b>{report.call.winner}</b>}</span>
-                      <b className="verdict-name">{report.call.winner}</b>
-                      <span className="sr-only">{report.result.winnerRight ? 'Right' : 'Miss'}</span>
-                    </li>
-                    {report.call.score && (
-                      <li data-ok={report.result.scoreRight}>
-                        <small>Score</small>
-                        <span className="verdict-art"><b>{report.call.score[0]}-{report.call.score[1]}</b></span>
-                        <span className="sr-only">{report.result.scoreRight ? 'Right' : 'Miss'}</span>
+              <Swipe>
+                {report.call ? (
+                  <section className="result-part">
+                    {/* Each part is headed by what it earned. Alone, the call needs no heading: the total says it. */}
+                    {report.trackedLines.length > 0 && <h3 className="sum"><b>{sign(report.callPoints)}</b><span>from your call</span></h3>}
+                    <ul className="verdict">
+                      <li data-ok={report.result.winnerRight}>
+                        <small>Winner</small>
+                        <span className="verdict-art">{logoFor(report.call.winner) ? <img src={logoFor(report.call.winner)} alt="" /> : <b>{report.call.winner}</b>}</span>
+                        <b className="verdict-name">{report.call.winner}</b>
+                        <span className="sr-only">{report.result.winnerRight ? 'Right' : 'Miss'}</span>
                       </li>
-                    )}
-                    {report.call.star && (
-                      <li className="verdict-star" data-ok={report.result.starRight}>
-                        <small>Star</small>
-                        <span className="verdict-art verdict-face"><Face player={players[report.call.star]} /></span>
-                        <b className="verdict-name">{players[report.call.star]?.handle ?? report.call.star}</b>
-                        <span className="sr-only">{report.result.starRight ? 'Right' : 'Miss'}</span>
-                      </li>
-                    )}
-                  </ul>
-                </section>
-              ) : <p className="muted">No call on this one.</p>}
-              {report.trackedLines.length > 0 && (
-                <section className="result-part">
-                  <h3 className="sum"><b>{sign(report.trackedLines.reduce((n, l) => n + l.total, 0))}</b><span>from your cards</span></h3>
-                  {/* Your Tracked cards as a hand, best scorer in the middle, each tagged with its points. */}
-                  <Fan
-                    pids={[...report.trackedLines].filter(l => players[l.pid]?.card).sort((x, y) => y.total - x.total).map(l => l.pid)}
-                    cardOf={pid => players[pid].card}
-                    scale={0.24}
-                    arc={2}
-                    tagOf={pid => ({ label: sign(report.trackedLines.find(l => l.pid === pid).total) })}
-                  />
-                </section>
-              )}
+                      {report.call.score && (
+                        <li data-ok={report.result.scoreRight}>
+                          <small>Score</small>
+                          <span className="verdict-art"><b>{report.call.score[0]}-{report.call.score[1]}</b></span>
+                          <span className="sr-only">{report.result.scoreRight ? 'Right' : 'Miss'}</span>
+                        </li>
+                      )}
+                      {report.call.star && (
+                        <li className="verdict-star" data-ok={report.result.starRight}>
+                          <small>Star</small>
+                          <span className="verdict-art verdict-face"><Face player={players[report.call.star]} /></span>
+                          <b className="verdict-name">{players[report.call.star]?.handle ?? report.call.star}</b>
+                          <span className="sr-only">{report.result.starRight ? 'Right' : 'Miss'}</span>
+                        </li>
+                      )}
+                    </ul>
+                  </section>
+                ) : <p className="muted">No call on this one.</p>}
+                {report.trackedLines.length > 0 && (
+                  <section className="result-part">
+                    <h3 className="sum"><b>{sign(report.trackedLines.reduce((n, l) => n + l.total, 0))}</b><span>from your cards</span></h3>
+                    {/* Your Tracked cards as a hand, best scorer in the middle, each tagged with its points. */}
+                    <Fan
+                      pids={[...report.trackedLines].filter(l => players[l.pid]?.card).sort((x, y) => y.total - x.total).map(l => l.pid)}
+                      cardOf={pid => players[pid].card}
+                      scale={0.24}
+                      arc={2}
+                      tagOf={pid => ({ label: sign(report.trackedLines.find(l => l.pid === pid).total) })}
+                    />
+                  </section>
+                )}
+              </Swipe>
               <p className="sum sum-total"><b>{sign(report.total)}</b><span>this match</span></p>
             </>
           )}
