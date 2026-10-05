@@ -39,7 +39,7 @@ export async function calibratePaid(env,t=Math.floor(Date.now()/1000)) {
   const holdoutMean=mean(validation)*rate;
   const passed=training.length>=12&&validation.length>=4&&rate>0&&holdoutMean>=90&&holdoutMean<=110;
   await db.prepare(`INSERT INTO bingo_calibration(checked_at,training_weeks,holdout_week,training_mean,holdout_mean,payout_rate,passed,notes)
-    VALUES(?,?,?,?,?,?,?,?)`).bind(t,3,holdout,trainMean,holdoutMean,rate,passed,
+    VALUES(?,?,?,?,?,?,?,?)`).bind(t,3,holdout,trainMean,holdoutMean,rate,passed?1:0,
       `Synthetic legal card replay: ${training.length} training / ${validation.length} holdout paid cards`).run();
   if (passed) {
     const next=weekKey(t+7*86400);
