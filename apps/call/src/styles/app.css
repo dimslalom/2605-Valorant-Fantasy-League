@@ -836,8 +836,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .bsq:disabled { opacity: 0.4; cursor: default; }
 .bsq-label { font-family: var(--font-display); font-size: 18px; line-height: 1.05; font-weight: 700; text-transform: uppercase; overflow-wrap: anywhere; }
 .bsq-pts { display: flex; align-items: baseline; gap: 6px; }
-.bsq-more { font: 700 16px/1 var(--font-display); color: var(--muted); font-variant-numeric: tabular-nums; }
-.bsq-more::before { content: '\2192'; margin-right: 5px; font-size: 13px; }
+.bsq-more { display: inline-flex; align-items: center; gap: 4px; font: 700 16px/1 var(--font-display); color: var(--muted); font-variant-numeric: tabular-nums; }
 .bsq-more[data-rare='true'] { color: var(--gold); }
 .bsq-rule { font-size: var(--fs-label); line-height: 1.3; color: var(--muted); }
 .bsq-note { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
@@ -882,7 +881,6 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 /* Weekly bingo. The headline is whatever the week waits on (lock, end of play, results), the
    dates under it; then the card slots, the 2x2 card, and one action. */
 .bingo-head { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; margin: 8px 0 22px; }
-.bingo-next svg { transform: scaleX(-1); }
 .bingo-head .icon:disabled { opacity: 0.3; }
 .bingo-phase { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .bingo-phase strong { font: 700 clamp(44px, 12vw, 64px)/0.9 var(--font-display); text-transform: uppercase; font-variant-numeric: tabular-nums; }
@@ -897,6 +895,7 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .bingo-pips i[data-on='true'] { background: var(--ink); opacity: 1; }
 /* Any match: the week's teams as a row of logos, then +N. */
 .bcrowd { display: inline-flex; align-items: center; gap: 6px; }
+.bcrowd-empty { font-size: var(--fs-micro); letter-spacing: .1em; text-transform: uppercase; }
 .bcrowd img, .bcrowd i { width: 18px; height: 18px; object-fit: contain; }
 .bcrowd i { display: grid; place-items: center; font-style: normal; font-size: 8px; background: var(--surface-alt); border-radius: 4px; }
 .bcrowd small { margin-left: 2px; font-size: inherit; }
@@ -913,7 +912,17 @@ h2.section { font-family: var(--font-mono); font-size: var(--fs-label); letter-s
 .bcell-match { display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
 .bcell-match a { margin-left: auto; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .primary.big.bingo-submit { width: 100%; max-width: none; }
-.bingo-saved { text-align: center; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--win); }
+.primary.big.bingo-submit { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.bingo-cost { padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.22); font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.1em; }
+.bingo-locked { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; }
+.bingo-soon { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font: 700 var(--fs-micro) var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.bingo-targets button:disabled { opacity: 0.5; cursor: default; }
+.bcell-match a { display: inline-flex; }
+.bingo-search { display: flex; align-items: center; gap: 10px; padding: 0 14px; margin: 4px 0 20px; min-height: 48px; border: 1px solid var(--surface-hi); border-radius: var(--r-tile); background: var(--surface-alt); color: var(--muted); }
+.bingo-search:focus-within { border-color: var(--ruby); color: var(--ink); }
+.bingo-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: 700 var(--fs-label) var(--font-mono); }
+.bingo-search input::placeholder { color: var(--muted); opacity: 1; }
+.bingo-picker-note { margin: 4px 0 16px; color: var(--muted); font-size: var(--fs-label); line-height: 1.4; }
 /* Picker step two: any match or one named match, each with what it pays. */
 .sheet-head:has(.bingo-back) h2 { flex: 1; }
 .bingo-back { order: -1; }

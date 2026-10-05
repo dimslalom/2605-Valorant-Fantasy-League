@@ -53,7 +53,7 @@ export default function HowTo({ onDone }) {
     <section className="guide-row">
       <div className="guide-copy">
         <h3>Play bingo</h3>
-        <p>Pick four squares before Monday. Name a match to earn more. Lines and a full card pay again.</p>
+        <p>Pick four squares during this week and lock your card. Later matches and official roster changes can score. Name a match to earn more. Lines and a full card pay again.</p>
       </div>
       {/* A mini weekly card in the real card's language: short names, the target as logos, a hit in green glass. */}
       <div className="guide-bingo" role="img" aria-label="Example weekly bingo card: Overtime in NRG against T1 for 5 points has hit; 13-5 stomp in any match for 2; Player joins for 5; Ace for 3">
