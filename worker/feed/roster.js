@@ -7,18 +7,22 @@ const reply=(x,status=200)=>Response.json(x,{status,headers:{'Cache-Control':'pu
 
 export async function ingestTransfers(db,body,t=now()) {
   if (!Array.isArray(body.transfers)||body.transfers.length>500) throw new Error('bad transfers');
-  let accepted=0;
+  const valid=[];
   for (const item of body.transfers) {
     const day=norm(item.day), vlrId=Number(item.vlrId), handle=norm(item.handle);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)||!Number.isSafeInteger(vlrId)||vlrId<=0||!handle||!Array.isArray(item.moves)) continue;
     const moves=JSON.stringify(item.moves);
     const txnKey=`${day}:${vlrId}:${moves}`;
     const sourceUrl=typeof item.sourceUrl==='string'&&item.sourceUrl.startsWith('https://www.vlr.gg/')?item.sourceUrl:VLR_URL;
-    const res=await db.prepare(`INSERT INTO feed_transfers(txn_key,day,vlr_id,handle,country,moves,seen_at,source_url)
-      VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING`).bind(txnKey,day,vlrId,handle,norm(item.country)||null,moves,t,sourceUrl).run();
-    accepted+=res.meta.changes;
+    valid.push({txnKey,day,vlrId,handle,country:norm(item.country)||null,moves,sourceUrl});
   }
-  return {accepted};
+  if (!valid.length) return {accepted:0};
+  const res=await db.prepare(`INSERT INTO feed_transfers(txn_key,day,vlr_id,handle,country,moves,seen_at,source_url)
+    SELECT json_extract(value,'$.txnKey'),json_extract(value,'$.day'),json_extract(value,'$.vlrId'),
+      json_extract(value,'$.handle'),json_extract(value,'$.country'),json_extract(value,'$.moves'),?,
+      json_extract(value,'$.sourceUrl') FROM json_each(?) WHERE true ON CONFLICT DO NOTHING`)
+    .bind(t,JSON.stringify(valid)).run();
+  return {accepted:res.meta.changes};
 }
 const rowOf=r=>({player:norm(r.player),team:norm(r.team),league:norm(r.league),contractEnd:norm(r.contractEnd)||null});
 export async function ingestContracts(db,body,t=now()) {
@@ -47,7 +51,8 @@ export async function ingestContracts(db,body,t=now()) {
   for (const a of ambiguous) await db.prepare(`INSERT INTO roster_unresolved(identity_key,reason,raw_row,observed_at) VALUES(?,?,?,?)
     ON CONFLICT(identity_key) DO UPDATE SET reason=excluded.reason,raw_row=excluded.raw_row,observed_at=excluded.observed_at`)
     .bind(a.key==='missing'?`missing:${JSON.stringify(a.row).slice(0,80)}`:a.key,'Ambiguous or missing player identity',JSON.stringify(a.row),t).run();
-  for (const id of input.keys()) await db.prepare('DELETE FROM roster_unresolved WHERE identity_key=?').bind(id).run();
+  await db.prepare(`DELETE FROM roster_unresolved WHERE identity_key IN
+    (SELECT json_extract(value,'$.id') FROM json_each(?))`).bind(packed).run();
   const existing=(await db.prepare('SELECT * FROM roster_contracts').all()).results;
   if (!existing.length) {
     await db.prepare(`INSERT INTO roster_contracts(identity_key,player,team,league,contract_end,source_url,updated_at)

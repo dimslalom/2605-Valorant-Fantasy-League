@@ -95,7 +95,7 @@ def parse_gcd(html):
 
 
 def post(kind, values, run_id):
-    with httpx.Client(timeout=30) as client:
+    with httpx.Client(timeout=90) as client:
         response = client.post(f'{BASE}/internal/ingest', headers={'Authorization': f'Bearer {TOKEN}'},
                                json={'schemaVersion': 1, 'kind': kind, 'runId': run_id,
                                      'source': {'name': 'riot-gcd' if kind == 'contracts' else 'vlr.gg'}, kind: values})
