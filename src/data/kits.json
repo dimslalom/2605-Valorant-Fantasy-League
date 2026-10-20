@@ -87,7 +87,7 @@
     "neckCx": 200.5,
     "neckW": 68,
     "donor": "Kohliii",
-    "donorId": "ast-kohliii-bronze-001"
+    "donorId": "10758"
   },
   "ATN": {
     "plate": "/assets/kits/atn.png",
@@ -106,15 +106,6 @@
     "neckW": 169,
     "donor": "Blossi",
     "donorId": "atnr-blossi-bronze-001"
-  },
-  "AlQadsiah Esports": {
-    "plate": "/assets/kits/alqadsiahesports.png",
-    "collarY": 257,
-    "neckY": 257,
-    "neckCx": 197.0,
-    "neckW": 63,
-    "donor": "sickrey",
-    "donorId": "alqadsiahesports-sickrey-silver-001"
   },
   "BAM": {
     "plate": "/assets/kits/bam.png",
@@ -151,15 +142,6 @@
     "neckW": 77,
     "donor": "Crewen",
     "donorId": "bbl-crewen-silver-001"
-  },
-  "BESTIA": {
-    "plate": "/assets/kits/bestia.png",
-    "collarY": 308,
-    "neckY": 308,
-    "neckCx": 188.0,
-    "neckW": 91,
-    "donor": "david",
-    "donorId": "bestia-david-silver-001"
   },
   "BFG": {
     "plate": "/assets/kits/bfg.png",
@@ -214,6 +196,24 @@
     "neckW": 75,
     "donor": "troizyyy",
     "donorId": "boa-troizyyy-silver-001"
+  },
+  "BST": {
+    "plate": "/assets/kits/bst.png",
+    "collarY": 308,
+    "neckY": 308,
+    "neckCx": 188.0,
+    "neckW": 91,
+    "donor": "david",
+    "donorId": "12872"
+  },
+  "C9": {
+    "plate": "/assets/kits/c9.png",
+    "collarY": 285,
+    "neckY": 285,
+    "neckCx": 197.5,
+    "neckW": 88,
+    "donor": "Zellsis",
+    "donorId": "729"
   },
   "CGN": {
     "plate": "/assets/kits/cgn.png",
@@ -341,6 +341,15 @@
     "donor": "sturNN",
     "donorId": "efp-sturnn-bronze-001"
   },
+  "EG": {
+    "plate": "/assets/kits/eg.png",
+    "collarY": 285,
+    "neckY": 285,
+    "neckCx": 198.0,
+    "neckW": 83,
+    "donor": "zerona",
+    "donorId": "14048"
+  },
   "EGA": {
     "plate": "/assets/kits/ega.png",
     "collarY": 285,
@@ -358,6 +367,15 @@
     "neckW": 81,
     "donor": "kramarick",
     "donorId": "elv-kramarick-silver-001"
+  },
+  "ENVY": {
+    "plate": "/assets/kits/envy.png",
+    "collarY": 263,
+    "neckY": 263,
+    "neckCx": 199.0,
+    "neckW": 79,
+    "donor": "Inspire",
+    "donorId": "53"
   },
   "EP": {
     "plate": "/assets/kits/ep.png",
@@ -548,6 +566,15 @@
     "donor": "UdoTan",
     "donorId": "ge-udotan-silver-001"
   },
+  "GEN": {
+    "plate": "/assets/kits/gen.png",
+    "collarY": 258,
+    "neckY": 258,
+    "neckCx": 229.5,
+    "neckW": 74,
+    "donor": "Raxcal",
+    "donorId": "48925"
+  },
   "GG": {
     "plate": "/assets/kits/gg.png",
     "collarY": 314,
@@ -601,6 +628,15 @@
     "neckW": 102,
     "donor": "WerlasS",
     "donorId": "gs-werlass-silver-001"
+  },
+  "GX": {
+    "plate": "/assets/kits/gx.png",
+    "collarY": 273,
+    "neckY": 273,
+    "neckCx": 207.0,
+    "neckW": 87,
+    "donor": "westside",
+    "donorId": "34684"
   },
   "HGE": {
     "plate": "/assets/kits/hge.png",
@@ -665,6 +701,15 @@
     "donor": "UNFAKE",
     "donorId": "jl-unfake-silver-001"
   },
+  "KC": {
+    "plate": "/assets/kits/kc.png",
+    "collarY": 284,
+    "neckY": 284,
+    "neckCx": 199.5,
+    "neckW": 84,
+    "donor": "N4RRATE",
+    "donorId": "36245"
+  },
   "KPI": {
     "plate": "/assets/kits/kpi.png",
     "collarY": 266,
@@ -726,7 +771,7 @@
     "neckCx": 199.0,
     "neckW": 101,
     "donor": "SykTap",
-    "donorId": "leva-syktap-bronze-001"
+    "donorId": "59179"
   },
   "LOUD": {
     "plate": "/assets/kits/loud.png",
@@ -854,6 +899,15 @@
     "donor": "Mojer",
     "donorId": "naos-mojer-silver-001"
   },
+  "NAVI": {
+    "plate": "/assets/kits/navi.png",
+    "collarY": 248,
+    "neckY": 248,
+    "neckCx": 201.0,
+    "neckW": 61,
+    "donor": "hiro",
+    "donorId": "29867"
+  },
   "NBG": {
     "plate": "/assets/kits/nbg.png",
     "collarY": 275,
@@ -962,6 +1016,15 @@
     "donor": "jcz",
     "donorId": "oxen-jcz-bronze-001"
   },
+  "PCF": {
+    "plate": "/assets/kits/pcf.png",
+    "collarY": 255,
+    "neckY": 255,
+    "neckCx": 195.0,
+    "neckW": 77,
+    "donor": "qpert",
+    "donorId": "7105"
+  },
   "PD": {
     "plate": "/assets/kits/pd.png",
     "collarY": 249,
@@ -988,6 +1051,15 @@
     "neckW": 75,
     "donor": "szimpli",
     "donorId": "pxl-szimpli-bronze-001"
+  },
+  "QAD": {
+    "plate": "/assets/kits/qad.png",
+    "collarY": 257,
+    "neckY": 257,
+    "neckCx": 197.0,
+    "neckW": 63,
+    "donor": "sickrey",
+    "donorId": "5795"
   },
   "QOR": {
     "plate": "/assets/kits/qor.png",
@@ -1105,6 +1177,24 @@
     "neckW": 83,
     "donor": "SkRossi",
     "donorId": "s8ul-skrossi-silver-001"
+  },
+  "SAD": {
+    "plate": "/assets/kits/sad.png",
+    "collarY": 321,
+    "neckY": 321,
+    "neckCx": 193.0,
+    "neckW": 97,
+    "donor": "welyy",
+    "donorId": "16671"
+  },
+  "SEN": {
+    "plate": "/assets/kits/sen.png",
+    "collarY": 269,
+    "neckY": 269,
+    "neckCx": 216.0,
+    "neckW": 75,
+    "donor": "Kyu",
+    "donorId": "30470"
   },
   "SGE": {
     "plate": "/assets/kits/sge.png",
@@ -1241,6 +1331,15 @@
     "donor": "qu1ckz",
     "donorId": "tla-qu1ckz-silver-001"
   },
+  "TS": {
+    "plate": "/assets/kits/ts.png",
+    "collarY": 247,
+    "neckY": 247,
+    "neckCx": 199.5,
+    "neckW": 64,
+    "donor": "BerserX",
+    "donorId": "4874"
+  },
   "TSE": {
     "plate": "/assets/kits/tse.png",
     "collarY": 264,
@@ -1286,6 +1385,15 @@
     "donor": "B1SK",
     "donorId": "ucam-b1sk-bronze-001"
   },
+  "ULF": {
+    "plate": "/assets/kits/ulf.png",
+    "collarY": 261,
+    "neckY": 261,
+    "neckCx": 196.5,
+    "neckW": 76,
+    "donor": "sturNN",
+    "donorId": "12226"
+  },
   "UW": {
     "plate": "/assets/kits/uw.png",
     "collarY": 272,
@@ -1312,6 +1420,15 @@
     "neckW": 76,
     "donor": "Sayonara",
     "donorId": "vit-sayonara-gold-001"
+  },
+  "VL": {
+    "plate": "/assets/kits/vl.png",
+    "collarY": 280,
+    "neckY": 280,
+    "neckCx": 196.5,
+    "neckW": 76,
+    "donor": "C1ndeR",
+    "donorId": "2149"
   },
   "VR2": {
     "plate": "/assets/kits/vr2.png",
@@ -1393,6 +1510,15 @@
     "neckW": 63,
     "donor": "XXiF",
     "donorId": "yft-xxif-silver-001"
+  },
+  "ZETA": {
+    "plate": "/assets/kits/zeta.png",
+    "collarY": 326,
+    "neckY": 326,
+    "neckCx": 197.0,
+    "neckW": 109,
+    "donor": "Xdll",
+    "donorId": "25221"
   },
   "200": {
     "collarY": 261,
@@ -1491,14 +1617,6 @@
     "neutral": true
   },
   "MYM": {
-    "collarY": 261,
-    "neckY": 261,
-    "neckCx": 198.0,
-    "neckW": 67,
-    "plate": "/assets/kits/_neutral.png",
-    "neutral": true
-  },
-  "SAD": {
     "collarY": 261,
     "neckY": 261,
     "neckCx": 198.0,

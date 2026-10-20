@@ -151,7 +151,7 @@ export function effectiveRoster(cards, dev = {}) {
 // lose ability but gain mentality and, with continuity, synergy), which is
 // the mechanical statement of "your veterans are still worth keeping".
 export const SOFT_SLOPE = 0.9993;
-export const SOFT_INTERCEPT = 0.296;
+export const SOFT_INTERCEPT = 0.706; // refit to the Oct 2026 card pool (was 0.296); refit whenever the pool is regenerated
 export const SOFT_WEIGHT = 0.8;
 
 export function softResidual(roster) {

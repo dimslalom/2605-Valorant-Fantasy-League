@@ -28,7 +28,7 @@ import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import {
-  EVENTS, PLAYER_OVERRIDES, PLATE_OVERRIDES, IGL_NAMES, ICONS,
+  EVENTS, PLAYER_OVERRIDES, PLATE_OVERRIDES, IGL_NAMES, ICONS, FREE_AGENTS, ICON_ONLY_IDS,
   TIER2_QUERY, TIER2_TITLE_MUST, TIER2_TITLE_SKIP, TIER2_EVENTS,
   TIER2_REGION_KEYWORDS, TIER2_REGION_FALLBACK, TIER2_STAT_PENALTY,
   VCT_STAT_BONUS,
@@ -334,10 +334,12 @@ async function fetchBaselines(apiRegion) {
 
   // Compute raw composite scores using stats-endpoint field names
   const raws = segments.map(s => {
-    const fkpr = p(s.first_kills_per_round);         // e.g. "0.19" → 0.19
+    // vlr.gg now prints these two as a percent of rounds ("24%"); the player endpoint still gives 0.24
+    const perRound = v => (String(v).includes('%') ? p(v) / 100 : p(v));
+    const fkpr = perRound(s.first_kills_per_round);   // e.g. "24%" → 0.24
     const kd   = p(s.kill_deaths);                   // e.g. "1.19" → 1.19
     const kpr  = p(s.kills_per_round);               // e.g. "0.81" → 0.81
-    const fdpr = p(s.first_deaths_per_round);        // e.g. "0.13" → 0.13
+    const fdpr = perRound(s.first_deaths_per_round);  // e.g. "12%" → 0.12
     const kast = p(s.kill_assists_survived_traded);  // e.g. "72%"  → 72
     const adr  = p(s.average_damage_per_round);      // e.g. "158.4"
     const apr  = p(s.assists_per_round);             // e.g. "0.29"
@@ -428,7 +430,7 @@ async function fetchIcons(manifest) {
       const res = await get(`/v2/player?id=${playerId}&timespan=all`);
       const info = res?.data?.segments?.[0] ?? {};
       let hasAvatar = false;
-      if (isRealAvatar(info.avatar)) {
+      if (info.avatar && (icon.silhouette || isRealAvatar(info.avatar))) { // silhouette: vlr has no photo, the user wants the placeholder bust
         hasAvatar = await download(info.avatar, resolve(CACHE_DIR, `${playerId}.png`));
       }
       if (hasAvatar) manifest[playerId] = { file: `icon-${slug(icon.name)}.png`, style: 'icon' };
@@ -539,6 +541,11 @@ async function main() {
     }
   }
 
+  for (const fa of FREE_AGENTS) {
+    if (playerMeta[fa.id]) continue; // found on a roster: keep their team
+    playerMeta[fa.id] = { name: fa.name, flag: '', teamName: '', teamId: '', region: fa.region, apiRegion: fa.apiRegion, league: 'vct', freeAgent: true };
+  }
+
   const playerIds = Object.keys(playerMeta);
   console.log(`  Found ${playerIds.length} unique players across ${teamIds.size} teams`);
 
@@ -628,6 +635,7 @@ async function main() {
   const cards = [];
 
   for (const { playerId, meta, info, agentStats, playerName } of players) {
+    if (ICON_ONLY_IDS.has(playerId)) continue;
     const nationality = info.country
       ? toISO2(info.country)
       : parseFlag(meta.flag);
@@ -677,15 +685,15 @@ async function main() {
 
     const team    = teamInfo[meta.teamId] ?? {};
     const orgTag  = team.tag || meta.teamName;
-    const cardId  = `${slug(orgTag)}-${slug(playerName)}-${tier}-001`;
+    const cardId  = `${meta.freeAgent ? 'fa' : slug(orgTag)}-${slug(playerName)}-${tier}-001`;
 
     cards.push({
       __playerId:  playerId,
       id:          cardId,
       player:      playerName,
       org:         orgTag,
-      org_name:    team.name || orgTag,
-      org_logo:    team.logoPath || `/assets/orgs/${slug(orgTag)}.png`,
+      org_name:    meta.freeAgent ? 'Free Agent' : team.name || orgTag,
+      org_logo:    meta.freeAgent ? '' : team.logoPath || `/assets/orgs/${slug(orgTag)}.png`,
       region:      meta.region,
       nationality,
       tier,

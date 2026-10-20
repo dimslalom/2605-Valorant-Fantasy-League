@@ -1,15 +1,25 @@
 {
-  "cgn-zyppan-silver-001": {
+  "cgn-zyppan-bronze-001": {
     "head": "/assets/heads/zyppan.png",
     "hair": null,
     "headGeom": {
       "neckY": 238,
       "neckCx": 193.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
-  "m80-gmd-silver-001": {
+  "envy-inspire-silver-001": {
+    "head": "/assets/heads/inspire.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 199.0,
+      "neckW": 77
+    },
+    "hasRealHead": true
+  },
+  "m80-gmd-bronze-001": {
     "head": "/assets/heads/gmd.png",
     "hair": null,
     "headGeom": {
@@ -25,7 +35,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 179.5,
-      "neckW": 104
+      "neckW": 102
     },
     "hasRealHead": true
   },
@@ -35,7 +45,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 200.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -54,18 +64,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 197.0,
-      "neckW": 81
+      "neckCx": 196.0,
+      "neckW": 79
     },
     "hasRealHead": true
   },
-  "bme-d3ffo-silver-001": {
+  "bme-d3ffo-bronze-001": {
     "head": "/assets/heads/d3ffo.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.5,
-      "neckW": 90
+      "neckW": 88
     },
     "hasRealHead": true
   },
@@ -85,17 +95,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 231.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
-  "ep-patitek-silver-001": {
+  "ep-patitek-gold-001": {
     "head": "/assets/heads/patitek.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.5,
-      "neckW": 78
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -105,7 +115,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 100
+      "neckW": 98
+    },
+    "hasRealHead": true
+  },
+  "navi-shao-gold-001": {
+    "head": "/assets/heads/shao.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 213.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -115,7 +135,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.0,
-      "neckW": 91
+      "neckW": 89
     },
     "hasRealHead": true
   },
@@ -123,9 +143,9 @@
     "head": "/assets/heads/boaster.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
+      "neckY": 255,
+      "neckCx": 197.0,
+      "neckW": 65
     },
     "hasRealHead": true
   },
@@ -133,9 +153,9 @@
     "head": "/assets/heads/nats.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 187.0,
-      "neckW": 81
+      "neckY": 249,
+      "neckCx": 186.5,
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -143,19 +163,19 @@
     "head": "/assets/heads/chronicle.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckY": 249,
+      "neckCx": 202.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
-  "t1-stax-gold-001": {
+  "t1-stax-silver-001": {
     "head": "/assets/heads/stax.png",
     "hair": null,
     "headGeom": {
-      "neckY": 249,
-      "neckCx": 184.5,
-      "neckW": 68
+      "neckY": 243,
+      "neckCx": 183.0,
+      "neckW": 65
     },
     "hasRealHead": true
   },
@@ -164,7 +184,7 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 208.0,
+      "neckCx": 207.0,
       "neckW": 65
     },
     "hasRealHead": true
@@ -175,7 +195,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -185,7 +205,7 @@
     "headGeom": {
       "neckY": 248,
       "neckCx": 185.5,
-      "neckW": 70
+      "neckW": 68
     },
     "hasRealHead": true
   },
@@ -195,7 +215,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 86
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -205,57 +225,67 @@
     "headGeom": {
       "neckY": 245,
       "neckCx": 197.5,
-      "neckW": 70
+      "neckW": 68
     },
     "hasRealHead": true
   },
-  "ega-mitch-silver-001": {
+  "ega-mitch-bronze-001": {
     "head": "/assets/heads/mitch.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.0,
-      "neckW": 87
+      "neckW": 85
     },
     "hasRealHead": true
   },
-  "2g-frz-silver-001": {
+  "fur-c0m-silver-001": {
+    "head": "/assets/heads/c0m.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 186.5,
+      "neckW": 98
+    },
+    "hasRealHead": true
+  },
+  "2g-frz-bronze-001": {
     "head": "/assets/heads/frz.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 196.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
-  "kr-saadhak-gold-001": {
+  "kr-saadhak-silver-001": {
     "head": "/assets/heads/saadhak.png",
     "hair": null,
     "headGeom": {
       "neckY": 239,
-      "neckCx": 201.0,
-      "neckW": 75
+      "neckCx": 201.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "nbg-stellar-silver-001": {
+  "c9-zellsis-gold-001": {
+    "head": "/assets/heads/zellsis.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 197.5,
+      "neckW": 86
+    },
+    "hasRealHead": true
+  },
+  "nbg-stellar-bronze-001": {
     "head": "/assets/heads/stellar.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 205.5,
-      "neckW": 82
-    },
-    "hasRealHead": true
-  },
-  "fur-nerve-gold-001": {
-    "head": "/assets/heads/nerve.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 223,
-      "neckCx": 212.5,
-      "neckW": 222
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -265,7 +295,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 227.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -275,7 +305,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -283,7 +313,7 @@
     "head": "/assets/heads/eeiu.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 242,
       "neckCx": 229.0,
       "neckW": 73
     },
@@ -303,19 +333,29 @@
     "head": "/assets/heads/moothie.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 206.5,
-      "neckW": 76
+      "neckY": 252,
+      "neckCx": 205.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "ega-bdog-silver-001": {
+  "eg-supamen-silver-001": {
+    "head": "/assets/heads/supamen.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 200.0,
+      "neckW": 91
+    },
+    "hasRealHead": true
+  },
+  "ega-bdog-bronze-001": {
     "head": "/assets/heads/bdog.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 179.0,
-      "neckW": 107
+      "neckW": 105
     },
     "hasRealHead": true
   },
@@ -333,9 +373,19 @@
     "head": "/assets/heads/mwzera.png",
     "hair": null,
     "headGeom": {
-      "neckY": 239,
-      "neckCx": 200.5,
-      "neckW": 76
+      "neckY": 238,
+      "neckCx": 201.0,
+      "neckW": 75
+    },
+    "hasRealHead": true
+  },
+  "gen-efina-silver-001": {
+    "head": "/assets/heads/efina.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 218.0,
+      "neckW": 45
     },
     "hasRealHead": true
   },
@@ -343,9 +393,19 @@
     "head": "/assets/heads/xxif.png",
     "hair": null,
     "headGeom": {
-      "neckY": 222,
-      "neckCx": 196.0,
-      "neckW": 63
+      "neckY": 220,
+      "neckCx": 196.5,
+      "neckW": 60
+    },
+    "hasRealHead": true
+  },
+  "envy-rossy-gold-001": {
+    "head": "/assets/heads/rossy.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 246,
+      "neckCx": 203.5,
+      "neckW": 62
     },
     "hasRealHead": true
   },
@@ -355,7 +415,7 @@
     "headGeom": {
       "neckY": 248,
       "neckCx": 216.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -369,13 +429,23 @@
     },
     "hasRealHead": true
   },
+  "sen-johnqt-gold-001": {
+    "head": "/assets/heads/johnqt.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 154.0,
+      "neckW": 115
+    },
+    "hasRealHead": true
+  },
   "fks-molsi-silver-001": {
     "head": "/assets/heads/molsi.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 184.0,
-      "neckW": 85
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -385,37 +455,37 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 173.0,
-      "neckW": 95
+      "neckW": 93
     },
     "hasRealHead": true
   },
-  "krus-nagz-silver-001": {
+  "kr-nagz-gold-001": {
     "head": "/assets/heads/nagz.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 207.5,
-      "neckW": 76
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "bestia-melser-bronze-001": {
+  "bst-melser-bronze-001": {
     "head": "/assets/heads/melser.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 200.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
-  "fue-javiierh-silver-001": {
+  "fue-javiierh-bronze-001": {
     "head": "/assets/heads/javiierh.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 171.5,
-      "neckW": 160
+      "neckW": 158
     },
     "hasRealHead": true
   },
@@ -445,7 +515,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 176.0,
-      "neckW": 101
+      "neckW": 99
+    },
+    "hasRealHead": true
+  },
+  "kc-sheydos-gold-001": {
+    "head": "/assets/heads/sheydos.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 231,
+      "neckCx": 227.5,
+      "neckW": 68
     },
     "hasRealHead": true
   },
@@ -453,9 +533,9 @@
     "head": "/assets/heads/crazyguy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 249,
       "neckCx": 198.0,
-      "neckW": 91
+      "neckW": 89
     },
     "hasRealHead": true
   },
@@ -465,7 +545,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 214.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -475,7 +555,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 188.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -485,17 +565,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 191.5,
-      "neckW": 134
+      "neckW": 132
     },
     "hasRealHead": true
   },
-  "wip-h1ber-silver-001": {
+  "wip-h1ber-bronze-001": {
     "head": "/assets/heads/h1ber.png",
     "hair": null,
     "headGeom": {
       "neckY": 245,
       "neckCx": 203.5,
-      "neckW": 66
+      "neckW": 64
     },
     "hasRealHead": true
   },
@@ -503,9 +583,9 @@
     "head": "/assets/heads/derrek.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 98
+      "neckY": 259,
+      "neckCx": 199.5,
+      "neckW": 96
     },
     "hasRealHead": true
   },
@@ -515,7 +595,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 159.5,
-      "neckW": 122
+      "neckW": 120
     },
     "hasRealHead": true
   },
@@ -533,9 +613,9 @@
     "head": "/assets/heads/guhrvn.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 85
+      "neckY": 248,
+      "neckCx": 200.0,
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -545,7 +625,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.5,
-      "neckW": 86
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -553,19 +633,19 @@
     "head": "/assets/heads/destrian.png",
     "hair": null,
     "headGeom": {
-      "neckY": 222,
+      "neckY": 220,
       "neckCx": 194.5,
       "neckW": 72
     },
     "hasRealHead": true
   },
-  "tbk-kon4n-silver-001": {
+  "tbk-kon4n-bronze-001": {
     "head": "/assets/heads/kon4n.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 193.5,
-      "neckW": 104
+      "neckY": 235,
+      "neckCx": 185.5,
+      "neckW": 100
     },
     "hasRealHead": true
   },
@@ -573,7 +653,7 @@
     "head": "/assets/heads/tex.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 248,
       "neckCx": 194.0,
       "neckW": 83
     },
@@ -583,9 +663,9 @@
     "head": "/assets/heads/elllement.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 248,
       "neckCx": 206.5,
-      "neckW": 94
+      "neckW": 92
     },
     "hasRealHead": true
   },
@@ -593,9 +673,9 @@
     "head": "/assets/heads/purp0.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 189.5,
-      "neckW": 82
+      "neckY": 246,
+      "neckCx": 189.0,
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -605,7 +685,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 175.5,
-      "neckW": 84
+      "neckW": 82
+    },
+    "hasRealHead": true
+  },
+  "zeta-eko-silver-001": {
+    "head": "/assets/heads/eko.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 166.0,
+      "neckW": 107
     },
     "hasRealHead": true
   },
@@ -615,7 +705,7 @@
     "headGeom": {
       "neckY": 239,
       "neckCx": 198.0,
-      "neckW": 57
+      "neckW": 55
     },
     "hasRealHead": true
   },
@@ -624,18 +714,38 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 80
+      "neckCx": 193.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
-  "ega-paincakes-silver-001": {
+  "vl-c1nder-silver-001": {
+    "head": "/assets/heads/c1nder.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 196.5,
+      "neckW": 76
+    },
+    "hasRealHead": true
+  },
+  "eg-paincakes-gold-001": {
     "head": "/assets/heads/paincakes.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 80
+      "neckW": 78
+    },
+    "hasRealHead": true
+  },
+  "tl-trexx-gold-001": {
+    "head": "/assets/heads/trexx.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 249,
+      "neckCx": 202.0,
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -649,13 +759,13 @@
     },
     "hasRealHead": true
   },
-  "ep-magnum-bronze-001": {
+  "ep-magnum-silver-001": {
     "head": "/assets/heads/magnum.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -665,7 +775,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -675,7 +785,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 185.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -685,7 +795,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 191.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -693,9 +803,19 @@
     "head": "/assets/heads/borkum.png",
     "hair": null,
     "headGeom": {
-      "neckY": 249,
-      "neckCx": 214.5,
-      "neckW": 78
+      "neckY": 248,
+      "neckCx": 215.0,
+      "neckW": 77
+    },
+    "hasRealHead": true
+  },
+  "ts-jessievash-silver-001": {
+    "head": "/assets/heads/jessievash.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 246,
+      "neckCx": 211.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -704,28 +824,38 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 228.5,
-      "neckW": 80
+      "neckCx": 227.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
-  "mas-tuyz-silver-001": {
+  "mas-tuyz-bronze-001": {
     "head": "/assets/heads/tuyz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 249,
       "neckCx": 199.0,
-      "neckW": 105
+      "neckW": 103
     },
     "hasRealHead": true
   },
-  "novo-moner-silver-001": {
+  "novo-moner-bronze-001": {
     "head": "/assets/heads/moner.png",
     "hair": null,
     "headGeom": {
+      "neckY": 235,
+      "neckCx": 207.0,
+      "neckW": 85
+    },
+    "hasRealHead": true
+  },
+  "envy-keznit-gold-001": {
+    "head": "/assets/heads/keznit.png",
+    "hair": null,
+    "headGeom": {
       "neckY": 250,
-      "neckCx": 206.5,
-      "neckW": 84
+      "neckCx": 193.0,
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -733,9 +863,9 @@
     "head": "/assets/heads/munchkin.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 201.5,
-      "neckW": 82
+      "neckY": 249,
+      "neckCx": 202.0,
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -743,19 +873,19 @@
     "head": "/assets/heads/szimpli.png",
     "hair": null,
     "headGeom": {
-      "neckY": 225,
-      "neckCx": 200.0,
-      "neckW": 75
+      "neckY": 223,
+      "neckCx": 199.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
-  "tss-liazzi-silver-001": {
+  "tss-liazzi-bronze-001": {
     "head": "/assets/heads/liazzi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 168.5,
-      "neckW": 108
+      "neckY": 249,
+      "neckCx": 179.0,
+      "neckW": 89
     },
     "hasRealHead": true
   },
@@ -765,7 +895,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -773,9 +903,9 @@
     "head": "/assets/heads/clz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 197.5,
-      "neckW": 78
+      "neckY": 249,
+      "neckCx": 202.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -789,7 +919,7 @@
     },
     "hasRealHead": true
   },
-  "mdr-sh1n-silver-001": {
+  "mdr-sh1n-bronze-001": {
     "head": "/assets/heads/sh1n.png",
     "hair": null,
     "headGeom": {
@@ -803,9 +933,9 @@
     "head": "/assets/heads/jesse.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 228.5,
-      "neckW": 68
+      "neckY": 256,
+      "neckCx": 227.5,
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -813,9 +943,9 @@
     "head": "/assets/heads/xuss.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 218.5,
-      "neckW": 126
+      "neckY": 248,
+      "neckCx": 214.0,
+      "neckW": 133
     },
     "hasRealHead": true
   },
@@ -823,29 +953,29 @@
     "head": "/assets/heads/popogachi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 209.5,
-      "neckW": 102
+      "neckY": 249,
+      "neckCx": 214.0,
+      "neckW": 93
     },
     "hasRealHead": true
   },
-  "wip-hoody-silver-001": {
+  "fmg-hoody-silver-001": {
     "head": "/assets/heads/hoody.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 199.0,
-      "neckW": 95
+      "neckY": 249,
+      "neckCx": 200.0,
+      "neckW": 93
     },
     "hasRealHead": true
   },
-  "dsy-jas-silver-001": {
+  "dsy-jas-bronze-001": {
     "head": "/assets/heads/jas.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 205.5,
-      "neckW": 74
+      "neckCx": 205.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -875,7 +1005,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 104
+      "neckW": 102
+    },
+    "hasRealHead": true
+  },
+  "kc-suygetsu-gold-001": {
+    "head": "/assets/heads/suygetsu.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 189.5,
+      "neckW": 58
     },
     "hasRealHead": true
   },
@@ -883,9 +1023,9 @@
     "head": "/assets/heads/ease.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 214.5,
-      "neckW": 108
+      "neckY": 255,
+      "neckCx": 213.5,
+      "neckW": 106
     },
     "hasRealHead": true
   },
@@ -895,17 +1035,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
-  "uw-alca-silver-001": {
+  "uw-alca-bronze-001": {
     "head": "/assets/heads/alca.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -913,7 +1053,7 @@
     "head": "/assets/heads/vaiz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
+      "neckY": 231,
       "neckCx": 191.5,
       "neckW": 70
     },
@@ -924,18 +1064,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 214.5,
-      "neckW": 64
+      "neckCx": 213.5,
+      "neckW": 62
     },
     "hasRealHead": true
   },
-  "fpx-life-gold-001": {
+  "fpx-life-silver-001": {
     "head": "/assets/heads/life.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 195.0,
-      "neckW": 69
+      "neckCx": 194.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -945,7 +1085,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 180.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -959,33 +1099,33 @@
     },
     "hasRealHead": true
   },
-  "sge-monsteerr-silver-001": {
+  "sge-monsteerr-gold-001": {
     "head": "/assets/heads/monsteerr.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 195.5,
-      "neckW": 132
+      "neckY": 248,
+      "neckCx": 194.0,
+      "neckW": 131
     },
     "hasRealHead": true
   },
-  "tbk-zap-silver-001": {
+  "tbk-zap-bronze-001": {
     "head": "/assets/heads/zap.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 254,
       "neckCx": 209.0,
-      "neckW": 95
+      "neckW": 93
     },
     "hasRealHead": true
   },
-  "tzc-screwface-silver-001": {
+  "tzc-screwface-bronze-001": {
     "head": "/assets/heads/screwface.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 202.5,
-      "neckW": 76
+      "neckY": 256,
+      "neckCx": 201.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -993,29 +1133,29 @@
     "head": "/assets/heads/ptc.png",
     "hair": null,
     "headGeom": {
-      "neckY": 249,
+      "neckY": 243,
       "neckCx": 224.0,
       "neckW": 77
     },
     "hasRealHead": true
   },
-  "intz-siduzord-silver-001": {
+  "intz-siduzord-bronze-001": {
     "head": "/assets/heads/siduzord.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 244.0,
-      "neckW": 107
+      "neckY": 252,
+      "neckCx": 243.0,
+      "neckW": 105
     },
     "hasRealHead": true
   },
-  "mas-zanatsu-silver-001": {
+  "mas-zanatsu-bronze-001": {
     "head": "/assets/heads/zanatsu.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 196.0,
-      "neckW": 81
+      "neckY": 249,
+      "neckCx": 195.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -1023,7 +1163,7 @@
     "head": "/assets/heads/jkuro.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 245,
       "neckCx": 183.0,
       "neckW": 67
     },
@@ -1034,28 +1174,28 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 216.5,
-      "neckW": 66
+      "neckCx": 216.0,
+      "neckW": 65
     },
     "hasRealHead": true
   },
-  "nsp-lightningfast-silver-001": {
+  "gdr-lightningfast-silver-001": {
     "head": "/assets/heads/lightningfast.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 236.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
-  "nsp-hellff-bronze-001": {
+  "gdr-hellff-bronze-001": {
     "head": "/assets/heads/hellff.png",
     "hair": null,
     "headGeom": {
       "neckY": 238,
       "neckCx": 205.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -1063,19 +1203,19 @@
     "head": "/assets/heads/hoax.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 192.0,
-      "neckW": 81
+      "neckY": 247,
+      "neckCx": 191.5,
+      "neckW": 82
     },
     "hasRealHead": true
   },
-  "ep-iluri-bronze-001": {
+  "ep-iluri-silver-001": {
     "head": "/assets/heads/iluri.png",
     "hair": null,
     "headGeom": {
       "neckY": 245,
       "neckCx": 193.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -1083,9 +1223,9 @@
     "head": "/assets/heads/koalanoob.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 186.5,
-      "neckW": 94
+      "neckY": 248,
+      "neckCx": 187.0,
+      "neckW": 93
     },
     "hasRealHead": true
   },
@@ -1093,29 +1233,29 @@
     "head": "/assets/heads/vo0kashu.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 184.5,
-      "neckW": 98
+      "neckY": 251,
+      "neckCx": 183.5,
+      "neckW": 96
     },
     "hasRealHead": true
   },
-  "shi-adverso-silver-001": {
+  "shi-adverso-bronze-001": {
     "head": "/assets/heads/adverso.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 207.5,
-      "neckW": 88
+      "neckW": 86
     },
     "hasRealHead": true
   },
-  "bestia-tacolilla-silver-001": {
+  "bst-tacolilla-bronze-001": {
     "head": "/assets/heads/tacolilla.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 213.5,
-      "neckW": 78
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -1125,7 +1265,7 @@
     "headGeom": {
       "neckY": 218,
       "neckCx": 214.0,
-      "neckW": 185
+      "neckW": 183
     },
     "hasRealHead": true
   },
@@ -1153,8 +1293,8 @@
     "head": "/assets/heads/valyn.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
-      "neckCx": 210.5,
+      "neckY": 232,
+      "neckCx": 209.5,
       "neckW": 66
     },
     "hasRealHead": true
@@ -1164,12 +1304,22 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 74
+      "neckCx": 199.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "loud-virtyy-gold-001": {
+  "kr-governor-silver-001": {
+    "head": "/assets/heads/governor.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 218.5,
+      "neckW": 70
+    },
+    "hasRealHead": true
+  },
+  "loud-virtyy-silver-001": {
     "head": "/assets/heads/virtyy.png",
     "hair": null,
     "headGeom": {
@@ -1179,13 +1329,13 @@
     },
     "hasRealHead": true
   },
-  "g2-jawgemo-gold-001": {
+  "g2-jawgemo-silver-001": {
     "head": "/assets/heads/jawgemo.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 110
+      "neckW": 108
     },
     "hasRealHead": true
   },
@@ -1194,8 +1344,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 195.5,
+      "neckW": 84
+    },
+    "hasRealHead": true
+  },
+  "ts-sylvan-gold-001": {
+    "head": "/assets/heads/sylvan.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 211.5,
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -1205,7 +1365,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -1214,8 +1374,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 237,
-      "neckCx": 192.5,
-      "neckW": 68
+      "neckCx": 191.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -1223,9 +1383,19 @@
     "head": "/assets/heads/cryocells.png",
     "hair": null,
     "headGeom": {
-      "neckY": 247,
-      "neckCx": 205.5,
-      "neckW": 100
+      "neckY": 245,
+      "neckCx": 205.0,
+      "neckW": 101
+    },
+    "hasRealHead": true
+  },
+  "gx-cloud-gold-001": {
+    "head": "/assets/heads/cloud.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 190.0,
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -1239,12 +1409,12 @@
     },
     "hasRealHead": true
   },
-  "sge-musashi-silver-001": {
+  "sge-musashi-gold-001": {
     "head": "/assets/heads/musashi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 204.0,
+      "neckY": 248,
+      "neckCx": 205.0,
       "neckW": 115
     },
     "hasRealHead": true
@@ -1254,8 +1424,8 @@
     "hair": "/assets/hair/vince.png",
     "headGeom": {
       "neckY": 197,
-      "neckCx": 204.0,
-      "neckW": 161
+      "neckCx": 203.0,
+      "neckW": 165
     },
     "hasRealHead": true
   },
@@ -1263,9 +1433,9 @@
     "head": "/assets/heads/sscary.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.0,
-      "neckW": 71
+      "neckY": 263,
+      "neckCx": 200.5,
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -1274,8 +1444,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 200.0,
-      "neckW": 75
+      "neckCx": 199.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -1289,7 +1459,7 @@
     },
     "hasRealHead": true
   },
-  "jl-unfake-silver-001": {
+  "vit-unfake-gold-001": {
     "head": "/assets/heads/unfake.png",
     "hair": null,
     "headGeom": {
@@ -1299,13 +1469,23 @@
     },
     "hasRealHead": true
   },
-  "misa-burzzy-silver-001": {
+  "navi-filu-gold-001": {
+    "head": "/assets/heads/filu.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 185.0,
+      "neckW": 109
+    },
+    "hasRealHead": true
+  },
+  "misa-burzzy-bronze-001": {
     "head": "/assets/heads/burzzy.png",
     "hair": "/assets/hair/burzzy.png",
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.0,
-      "neckW": 153
+      "neckY": 249,
+      "neckCx": 201.0,
+      "neckW": 157
     },
     "hasRealHead": true
   },
@@ -1323,19 +1503,19 @@
     "head": "/assets/heads/mada\u00f4.png",
     "hair": null,
     "headGeom": {
-      "neckY": 233,
-      "neckCx": 200.5,
-      "neckW": 78
+      "neckY": 230,
+      "neckCx": 201.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
-  "sge-azury-bronze-001": {
+  "sge-azury-gold-001": {
     "head": "/assets/heads/azury.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 122
+      "neckY": 247,
+      "neckCx": 202.5,
+      "neckW": 118
     },
     "hasRealHead": true
   },
@@ -1343,19 +1523,19 @@
     "head": "/assets/heads/joxjo.png",
     "hair": "/assets/hair/joxjo.png",
     "headGeom": {
-      "neckY": 199,
-      "neckCx": 190.5,
-      "neckW": 140
+      "neckY": 197,
+      "neckCx": 190.0,
+      "neckW": 139
     },
     "hasRealHead": true
   },
-  "fl-gangpin-silver-001": {
+  "fl-gangpin-bronze-001": {
     "head": "/assets/heads/gangpin.png",
     "hair": null,
     "headGeom": {
-      "neckY": 242,
-      "neckCx": 201.0,
-      "neckW": 57
+      "neckY": 241,
+      "neckCx": 201.5,
+      "neckW": 56
     },
     "hasRealHead": true
   },
@@ -1365,7 +1545,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 187.0,
-      "neckW": 67
+      "neckW": 65
     },
     "hasRealHead": true
   },
@@ -1375,17 +1555,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 233.5,
-      "neckW": 64
-    },
-    "hasRealHead": true
-  },
-  "nova-heybay-silver-001": {
-    "head": "/assets/heads/heybay.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 248,
-      "neckCx": 243.5,
-      "neckW": 196
+      "neckW": 62
     },
     "hasRealHead": true
   },
@@ -1395,7 +1565,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 157.5,
-      "neckW": 100
+      "neckW": 98
     },
     "hasRealHead": true
   },
@@ -1403,7 +1573,7 @@
     "head": "/assets/heads/smoggy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 247,
       "neckCx": 197.0,
       "neckW": 69
     },
@@ -1415,7 +1585,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 220.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -1435,7 +1605,7 @@
     "headGeom": {
       "neckY": 242,
       "neckCx": 197.5,
-      "neckW": 94
+      "neckW": 92
     },
     "hasRealHead": true
   },
@@ -1445,7 +1615,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 78
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -1459,13 +1629,23 @@
     },
     "hasRealHead": true
   },
+  "ts-berserx-gold-001": {
+    "head": "/assets/heads/berserx.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 247,
+      "neckCx": 199.5,
+      "neckW": 62
+    },
+    "hasRealHead": true
+  },
   "blg-whzy-gold-001": {
     "head": "/assets/heads/whzy.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 151.0,
-      "neckW": 75
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -1473,7 +1653,7 @@
     "head": "/assets/heads/mersa.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 246,
       "neckCx": 199.0,
       "neckW": 103
     },
@@ -1485,7 +1665,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 96
+      "neckW": 94
     },
     "hasRealHead": true
   },
@@ -1493,9 +1673,9 @@
     "head": "/assets/heads/shazeon.png",
     "hair": "/assets/hair/shazeon.png",
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 207.0,
-      "neckW": 139
+      "neckY": 249,
+      "neckCx": 200.0,
+      "neckW": 127
     },
     "hasRealHead": true
   },
@@ -1513,8 +1693,8 @@
     "head": "/assets/heads/abo.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 211.0,
+      "neckY": 244,
+      "neckCx": 212.0,
       "neckW": 73
     },
     "hasRealHead": true
@@ -1524,8 +1704,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
+      "neckCx": 195.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -1535,7 +1715,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.0,
-      "neckW": 99
+      "neckW": 97
     },
     "hasRealHead": true
   },
@@ -1543,9 +1723,9 @@
     "head": "/assets/heads/mada.png",
     "hair": null,
     "headGeom": {
-      "neckY": 233,
-      "neckCx": 200.5,
-      "neckW": 78
+      "neckY": 230,
+      "neckCx": 201.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -1555,7 +1735,7 @@
     "headGeom": {
       "neckY": 238,
       "neckCx": 199.5,
-      "neckW": 70
+      "neckW": 68
     },
     "hasRealHead": true
   },
@@ -1565,27 +1745,47 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 88
+      "neckW": 86
     },
     "hasRealHead": true
   },
-  "red-rglmeister-silver-001": {
+  "pcf-al0rante-gold-001": {
+    "head": "/assets/heads/al0rante.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 169.5,
+      "neckW": 74
+    },
+    "hasRealHead": true
+  },
+  "red-rglmeister-bronze-001": {
     "head": "/assets/heads/rglmeister.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 199.0,
-      "neckW": 69
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
-  "rid-minty-silver-001": {
+  "sen-cortezia-gold-001": {
+    "head": "/assets/heads/cortezia.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 206.0,
+      "neckW": 79
+    },
+    "hasRealHead": true
+  },
+  "rid-minty-bronze-001": {
     "head": "/assets/heads/minty.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 181.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -1593,7 +1793,7 @@
     "head": "/assets/heads/leon.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 248,
       "neckCx": 196.5,
       "neckW": 90
     },
@@ -1603,7 +1803,7 @@
     "head": "/assets/heads/kipperman.png",
     "hair": null,
     "headGeom": {
-      "neckY": 236,
+      "neckY": 249,
       "neckCx": 206.5,
       "neckW": 64
     },
@@ -1615,7 +1815,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 192.0,
-      "neckW": 81
+      "neckW": 79
+    },
+    "hasRealHead": true
+  },
+  "gx-grubinho-silver-001": {
+    "head": "/assets/heads/grubinho.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 247,
+      "neckCx": 237.0,
+      "neckW": 65
     },
     "hasRealHead": true
   },
@@ -1625,17 +1835,17 @@
     "headGeom": {
       "neckY": 228,
       "neckCx": 193.5,
-      "neckW": 66
+      "neckW": 64
     },
     "hasRealHead": true
   },
-  "reborn-deadink-bronze-001": {
+  "ff-deadink-silver-001": {
     "head": "/assets/heads/deadink.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 208.5,
-      "neckW": 100
+      "neckY": 257,
+      "neckCx": 207.5,
+      "neckW": 98
     },
     "hasRealHead": true
   },
@@ -1645,7 +1855,7 @@
     "headGeom": {
       "neckY": 244,
       "neckCx": 222.0,
-      "neckW": 85
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -1653,29 +1863,39 @@
     "head": "/assets/heads/sociablee.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 208.5,
-      "neckW": 88
+      "neckY": 245,
+      "neckCx": 208.0,
+      "neckW": 89
     },
     "hasRealHead": true
   },
-  "valorando-luc1d-silver-001": {
+  "valorando-luc1d-bronze-001": {
     "head": "/assets/heads/luc1d.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 88
+      "neckW": 86
     },
     "hasRealHead": true
   },
-  "alqadsiahesports-sickrey-silver-001": {
+  "kc-avez-gold-001": {
+    "head": "/assets/heads/avez.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 266,
+      "neckCx": 227.5,
+      "neckW": 72
+    },
+    "hasRealHead": true
+  },
+  "qad-sickrey-silver-001": {
     "head": "/assets/heads/sickrey.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 63
+      "neckW": 61
     },
     "hasRealHead": true
   },
@@ -1683,19 +1903,19 @@
     "head": "/assets/heads/kr1stal.png",
     "hair": null,
     "headGeom": {
-      "neckY": 224,
-      "neckCx": 182.0,
-      "neckW": 77
+      "neckY": 223,
+      "neckCx": 182.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
-  "mtv-flaring-silver-001": {
+  "mtv-flaring-bronze-001": {
     "head": "/assets/heads/flaring.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 70
+      "neckCx": 199.5,
+      "neckW": 68
     },
     "hasRealHead": true
   },
@@ -1703,9 +1923,9 @@
     "head": "/assets/heads/artzin.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 86
+      "neckY": 262,
+      "neckCx": 193.5,
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -1719,13 +1939,13 @@
     },
     "hasRealHead": true
   },
-  "loud-cauanzin-gold-001": {
+  "loud-cauanzin-silver-001": {
     "head": "/assets/heads/cauanzin.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 75
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -1733,9 +1953,9 @@
     "head": "/assets/heads/lz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 205.0,
-      "neckW": 91
+      "neckY": 248,
+      "neckCx": 206.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -1745,7 +1965,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 87
+      "neckW": 85
     },
     "hasRealHead": true
   },
@@ -1755,17 +1975,27 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 167.5,
-      "neckW": 94
+      "neckW": 92
     },
     "hasRealHead": true
   },
-  "raad-sand-silver-001": {
+  "raad-sand-bronze-001": {
     "head": "/assets/heads/sand.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 223.5,
-      "neckW": 80
+      "neckW": 78
+    },
+    "hasRealHead": true
+  },
+  "zeta-sugarz3ro-silver-001": {
+    "head": "/assets/heads/sugarz3ro.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 165.5,
+      "neckW": 110
     },
     "hasRealHead": true
   },
@@ -1773,19 +2003,19 @@
     "head": "/assets/heads/meiy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 182.5,
-      "neckW": 100
+      "neckY": 248,
+      "neckCx": 182.0,
+      "neckW": 101
     },
     "hasRealHead": true
   },
-  "fl-anthem-silver-001": {
+  "fl-anthem-bronze-001": {
     "head": "/assets/heads/anthem.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 252.5,
-      "neckW": 96
+      "neckY": 249,
+      "neckCx": 242.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -1795,11 +2025,11 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "wip-chadi-silver-001": {
+  "wip-chadi-bronze-001": {
     "head": "/assets/heads/chadi.png",
     "hair": null,
     "headGeom": {
@@ -1809,13 +2039,23 @@
     },
     "hasRealHead": true
   },
-  "bme-ncslasher-silver-001": {
+  "gx-flickless-gold-001": {
+    "head": "/assets/heads/flickless.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 220.0,
+      "neckW": 79
+    },
+    "hasRealHead": true
+  },
+  "bme-ncslasher-bronze-001": {
     "head": "/assets/heads/ncslasher.png",
     "hair": null,
     "headGeom": {
       "neckY": 237,
       "neckCx": 219.5,
-      "neckW": 66
+      "neckW": 64
     },
     "hasRealHead": true
   },
@@ -1829,13 +2069,23 @@
     },
     "hasRealHead": true
   },
+  "pcf-qpert-silver-001": {
+    "head": "/assets/heads/qpert.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 195.0,
+      "neckW": 77
+    },
+    "hasRealHead": true
+  },
   "gl-wackie-silver-001": {
     "head": "/assets/heads/wackie.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 200.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -1843,9 +2093,9 @@
     "head": "/assets/heads/saiz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 186.5,
-      "neckW": 88
+      "neckY": 249,
+      "neckCx": 187.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -1855,7 +2105,7 @@
     "headGeom": {
       "neckY": 243,
       "neckCx": 207.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -1865,7 +2115,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 86
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -1875,7 +2125,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 213.5,
-      "neckW": 66
+      "neckW": 64
+    },
+    "hasRealHead": true
+  },
+  "ts-kellys-gold-001": {
+    "head": "/assets/heads/kellys.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 198.0,
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -1885,17 +2145,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 155.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
-  "fmg-anguist-silver-001": {
+  "evo-anguist-bronze-001": {
     "head": "/assets/heads/anguist.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 214.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -1913,7 +2173,7 @@
     "head": "/assets/heads/feniz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 249,
       "neckCx": 206.0,
       "neckW": 111
     },
@@ -1923,9 +2183,9 @@
     "head": "/assets/heads/theory.png",
     "hair": null,
     "headGeom": {
-      "neckY": 241,
-      "neckCx": 145.5,
-      "neckW": 146
+      "neckY": 240,
+      "neckCx": 146.0,
+      "neckW": 145
     },
     "hasRealHead": true
   },
@@ -1935,27 +2195,37 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.0,
-      "neckW": 107
+      "neckW": 105
     },
     "hasRealHead": true
   },
-  "9zg-tuli-silver-001": {
+  "9zg-tuli-bronze-001": {
     "head": "/assets/heads/tuli.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 216.0,
-      "neckW": 71
+      "neckCx": 215.0,
+      "neckW": 69
     },
     "hasRealHead": true
   },
-  "sge-fizzy-silver-001": {
+  "sge-fizzy-gold-001": {
     "head": "/assets/heads/fizzy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 193.0,
-      "neckW": 121
+      "neckY": 249,
+      "neckCx": 193.5,
+      "neckW": 122
+    },
+    "hasRealHead": true
+  },
+  "c9-penny-gold-001": {
+    "head": "/assets/heads/penny.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 247,
+      "neckCx": 189.0,
+      "neckW": 63
     },
     "hasRealHead": true
   },
@@ -1965,7 +2235,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 213.5,
-      "neckW": 116
+      "neckW": 114
     },
     "hasRealHead": true
   },
@@ -1974,8 +2244,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 243,
-      "neckCx": 197.0,
-      "neckW": 89
+      "neckCx": 196.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -1985,11 +2255,11 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 202.0,
-      "neckW": 85
+      "neckW": 83
     },
     "hasRealHead": true
   },
-  "wol-siufatbb-silver-001": {
+  "tyl-siufatbb-silver-001": {
     "head": "/assets/heads/siufatbb.png",
     "hair": null,
     "headGeom": {
@@ -1999,17 +2269,27 @@
     },
     "hasRealHead": true
   },
-  "fpx-berlin-silver-001": {
+  "jdg-berlin-silver-001": {
     "head": "/assets/heads/berlin.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 188.0,
-      "neckW": 65
+      "neckW": 63
     },
     "hasRealHead": true
   },
-  "g2-leaf-gold-001": {
+  "c9-xeppaa-gold-001": {
+    "head": "/assets/heads/xeppaa.png",
+    "hair": "/assets/hair/xeppaa.png",
+    "headGeom": {
+      "neckY": 199,
+      "neckCx": 195.0,
+      "neckW": 161
+    },
+    "hasRealHead": true
+  },
+  "g2-leaf-silver-001": {
     "head": "/assets/heads/leaf.png",
     "hair": "/assets/hair/leaf.png",
     "headGeom": {
@@ -2023,9 +2303,9 @@
     "head": "/assets/heads/stavros.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.0,
-      "neckW": 107
+      "neckY": 244,
+      "neckCx": 193.5,
+      "neckW": 108
     },
     "hasRealHead": true
   },
@@ -2039,13 +2319,13 @@
     },
     "hasRealHead": true
   },
-  "rbt-vaek-bronze-001": {
+  "evo-vaek-bronze-001": {
     "head": "/assets/heads/va\u0161ek.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 199.0,
-      "neckW": 91
+      "neckY": 247,
+      "neckCx": 198.5,
+      "neckW": 92
     },
     "hasRealHead": true
   },
@@ -2053,9 +2333,19 @@
     "head": "/assets/heads/brave.png",
     "hair": null,
     "headGeom": {
+      "neckY": 244,
+      "neckCx": 201.5,
+      "neckW": 100
+    },
+    "hasRealHead": true
+  },
+  "fut-mrfalin-gold-001": {
+    "head": "/assets/heads/mrfalin.png",
+    "hair": null,
+    "headGeom": {
       "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 99
+      "neckCx": 196.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -2065,7 +2355,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -2074,8 +2364,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 200.0,
-      "neckW": 67
+      "neckCx": 199.0,
+      "neckW": 65
     },
     "hasRealHead": true
   },
@@ -2095,7 +2385,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 219.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -2115,11 +2405,11 @@
     "headGeom": {
       "neckY": 249,
       "neckCx": 154.0,
-      "neckW": 69
+      "neckW": 67
     },
     "hasRealHead": true
   },
-  "fut-yetujey-gold-001": {
+  "fut-yetujey-silver-001": {
     "head": "/assets/heads/yetujey.png",
     "hair": null,
     "headGeom": {
@@ -2129,23 +2419,53 @@
     },
     "hasRealHead": true
   },
+  "eg-okeanos-silver-001": {
+    "head": "/assets/heads/okeanos.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 249,
+      "neckCx": 171.0,
+      "neckW": 75
+    },
+    "hasRealHead": true
+  },
+  "pcf-seven-gold-001": {
+    "head": "/assets/heads/seven.png",
+    "hair": "/assets/hair/seven.png",
+    "headGeom": {
+      "neckY": 249,
+      "neckCx": 169.5,
+      "neckW": 116
+    },
+    "hasRealHead": true
+  },
+  "sen-reduxx-gold-001": {
+    "head": "/assets/heads/reduxx.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 206.5,
+      "neckW": 86
+    },
+    "hasRealHead": true
+  },
   "rzn-puggy-bronze-001": {
     "head": "/assets/heads/puggy.png",
     "hair": null,
     "headGeom": {
       "neckY": 244,
       "neckCx": 206.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
-  "kr-less-gold-001": {
+  "kr-less-silver-001": {
     "head": "/assets/heads/less.png",
     "hair": null,
     "headGeom": {
-      "neckY": 246,
-      "neckCx": 199.5,
-      "neckW": 86
+      "neckY": 245,
+      "neckCx": 200.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -2155,7 +2475,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 106
+      "neckW": 104
     },
     "hasRealHead": true
   },
@@ -2163,9 +2483,9 @@
     "head": "/assets/heads/olizera.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 152.5,
-      "neckW": 128
+      "neckY": 263,
+      "neckCx": 151.5,
+      "neckW": 126
     },
     "hasRealHead": true
   },
@@ -2173,9 +2493,9 @@
     "head": "/assets/heads/invy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 100
+      "neckY": 254,
+      "neckCx": 199.5,
+      "neckW": 98
     },
     "hasRealHead": true
   },
@@ -2185,7 +2505,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 104
+      "neckW": 102
     },
     "hasRealHead": true
   },
@@ -2195,7 +2515,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 219.0,
-      "neckW": 79
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -2204,18 +2524,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 204.5,
-      "neckW": 88
+      "neckCx": 203.5,
+      "neckW": 86
     },
     "hasRealHead": true
   },
-  "tzc-mininiwde-silver-001": {
+  "tzc-mininiwde-bronze-001": {
     "head": "/assets/heads/mininiwde.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 228.5,
-      "neckW": 78
+      "neckY": 262,
+      "neckCx": 227.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -2229,7 +2549,7 @@
     },
     "hasRealHead": true
   },
-  "bfg-pyrolll-silver-001": {
+  "fks-pyrolll-bronze-001": {
     "head": "/assets/heads/pyrolll.png",
     "hair": null,
     "headGeom": {
@@ -2243,9 +2563,9 @@
     "head": "/assets/heads/bucher.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 243.0,
-      "neckW": 85
+      "neckY": 266,
+      "neckCx": 242.0,
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -2259,13 +2579,23 @@
     },
     "hasRealHead": true
   },
-  "tbk-snw-silver-001": {
+  "eg-dgzin-silver-001": {
+    "head": "/assets/heads/dgzin.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 183.5,
+      "neckW": 86
+    },
+    "hasRealHead": true
+  },
+  "tbk-snw-bronze-001": {
     "head": "/assets/heads/snw.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 188.5,
-      "neckW": 94
+      "neckCx": 187.5,
+      "neckW": 92
     },
     "hasRealHead": true
   },
@@ -2275,7 +2605,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 210.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -2284,8 +2614,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 244,
-      "neckCx": 200.5,
-      "neckW": 86
+      "neckCx": 199.5,
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -2295,21 +2625,31 @@
     "headGeom": {
       "neckY": 248,
       "neckCx": 197.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
-  "ong-cloudy-bronze-001": {
+  "ong-cloudy-silver-001": {
     "head": "/assets/heads/cloudy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 227,
+      "neckY": 225,
       "neckCx": 202.5,
       "neckW": 62
     },
     "hasRealHead": true
   },
-  "nsp-sayoo-silver-001": {
+  "gen-t3xture-gold-001": {
+    "head": "/assets/heads/t3xture.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 244,
+      "neckCx": 219.0,
+      "neckW": 75
+    },
+    "hasRealHead": true
+  },
+  "nsp-sayoo-bronze-001": {
     "head": "/assets/heads/sayoo.png",
     "hair": null,
     "headGeom": {
@@ -2319,13 +2659,13 @@
     },
     "hasRealHead": true
   },
-  "intz-tisora-silver-001": {
+  "intz-tisora-bronze-001": {
     "head": "/assets/heads/tisora.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 177.0,
-      "neckW": 133
+      "neckY": 249,
+      "neckCx": 186.5,
+      "neckW": 154
     },
     "hasRealHead": true
   },
@@ -2335,7 +2675,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 192.0,
-      "neckW": 105
+      "neckW": 103
     },
     "hasRealHead": true
   },
@@ -2343,9 +2683,9 @@
     "head": "/assets/heads/pryxi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 106
+      "neckY": 247,
+      "neckCx": 201.0,
+      "neckW": 105
     },
     "hasRealHead": true
   },
@@ -2353,9 +2693,9 @@
     "head": "/assets/heads/rxyal.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 97
+      "neckY": 255,
+      "neckCx": 200.0,
+      "neckW": 95
     },
     "hasRealHead": true
   },
@@ -2364,18 +2704,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 208.0,
+      "neckCx": 209.0,
       "neckW": 69
     },
     "hasRealHead": true
   },
-  "evo-demek-bronze-001": {
+  "leo-demek-bronze-001": {
     "head": "/assets/heads/demek.png",
     "hair": "/assets/hair/demek.png",
     "headGeom": {
       "neckY": 204,
       "neckCx": 193.5,
-      "neckW": 172
+      "neckW": 170
     },
     "hasRealHead": true
   },
@@ -2395,7 +2735,7 @@
     "headGeom": {
       "neckY": 227,
       "neckCx": 191.0,
-      "neckW": 79
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -2405,7 +2745,7 @@
     "headGeom": {
       "neckY": 240,
       "neckCx": 185.0,
-      "neckW": 87
+      "neckW": 85
     },
     "hasRealHead": true
   },
@@ -2413,9 +2753,9 @@
     "head": "/assets/heads/2ge.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 199.0,
-      "neckW": 77
+      "neckY": 258,
+      "neckCx": 198.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -2453,9 +2793,9 @@
     "head": "/assets/heads/d4v41.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 190.5,
-      "neckW": 110
+      "neckY": 249,
+      "neckCx": 195.0,
+      "neckW": 101
     },
     "hasRealHead": true
   },
@@ -2469,17 +2809,27 @@
     },
     "hasRealHead": true
   },
+  "fut-baha-silver-001": {
+    "head": "/assets/heads/baha.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 244,
+      "neckCx": 195.5,
+      "neckW": 80
+    },
+    "hasRealHead": true
+  },
   "ff-ip0tt-bronze-001": {
     "head": "/assets/heads/ip0tt.png",
     "hair": null,
     "headGeom": {
       "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 76
+      "neckCx": 195.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "reborn-reazy-silver-001": {
+  "ff-reazy-gold-001": {
     "head": "/assets/heads/reazy.png",
     "hair": null,
     "headGeom": {
@@ -2494,8 +2844,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 209.0,
-      "neckW": 93
+      "neckCx": 208.0,
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -2505,7 +2855,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 196.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -2519,11 +2869,11 @@
     },
     "hasRealHead": true
   },
-  "home-gabbydiz-silver-001": {
+  "home-gabbydiz-bronze-001": {
     "head": "/assets/heads/gabbydiz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 249,
       "neckCx": 234.5,
       "neckW": 74
     },
@@ -2535,7 +2885,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.0,
-      "neckW": 87
+      "neckW": 85
     },
     "hasRealHead": true
   },
@@ -2544,8 +2894,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 188.5,
-      "neckW": 78
+      "neckCx": 187.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -2553,9 +2903,9 @@
     "head": "/assets/heads/slathom999.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 188.5,
-      "neckW": 82
+      "neckY": 243,
+      "neckCx": 187.0,
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -2565,17 +2915,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.5,
-      "neckW": 64
+      "neckW": 62
     },
     "hasRealHead": true
   },
-  "ep-lime-silver-001": {
+  "ep-lime-gold-001": {
     "head": "/assets/heads/lime.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 191.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -2589,13 +2939,13 @@
     },
     "hasRealHead": true
   },
-  "wip-kozok-silver-001": {
+  "wip-kozok-bronze-001": {
     "head": "/assets/heads/kozok.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -2605,7 +2955,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -2615,7 +2965,7 @@
     "headGeom": {
       "neckY": 248,
       "neckCx": 199.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -2625,7 +2975,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 190.0,
-      "neckW": 101
+      "neckW": 99
     },
     "hasRealHead": true
   },
@@ -2645,15 +2995,15 @@
     "headGeom": {
       "neckY": 245,
       "neckCx": 195.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
-  "rntx-k1ngkappa-silver-001": {
+  "rntx-k1ngkappa-bronze-001": {
     "head": "/assets/heads/k1ngkappa.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 244,
       "neckCx": 200.5,
       "neckW": 76
     },
@@ -2663,23 +3013,23 @@
     "head": "/assets/heads/kohliii.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 68
+      "neckY": 260,
+      "neckCx": 201.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
-  "te-delb-bronze-001": {
+  "te-delb-silver-001": {
     "head": "/assets/heads/delb.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 76
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "cgn-davih-silver-001": {
+  "loud-davih-gold-001": {
     "head": "/assets/heads/davih.png",
     "hair": null,
     "headGeom": {
@@ -2693,9 +3043,9 @@
     "head": "/assets/heads/riens.png",
     "hair": null,
     "headGeom": {
-      "neckY": 248,
-      "neckCx": 186.0,
-      "neckW": 75
+      "neckY": 249,
+      "neckCx": 185.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -2703,19 +3053,19 @@
     "head": "/assets/heads/skuba.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 111
+      "neckY": 249,
+      "neckCx": 200.0,
+      "neckW": 109
     },
     "hasRealHead": true
   },
-  "tla-kicks-silver-001": {
+  "tl-kicks-gold-001": {
     "head": "/assets/heads/kicks.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 151.0,
-      "neckW": 111
+      "neckW": 109
     },
     "hasRealHead": true
   },
@@ -2725,27 +3075,27 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 237.5,
-      "neckW": 100
+      "neckW": 98
     },
     "hasRealHead": true
   },
-  "nrg-ethan-gold-001": {
+  "nrg-ethan-silver-001": {
     "head": "/assets/heads/ethan.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 206.5,
-      "neckW": 80
+      "neckCx": 205.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
-  "mdr-sevire-silver-001": {
+  "mdr-sevire-bronze-001": {
     "head": "/assets/heads/sevire.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 237.0,
-      "neckW": 91
+      "neckW": 89
     },
     "hasRealHead": true
   },
@@ -2753,9 +3103,9 @@
     "head": "/assets/heads/keiko.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 104
+      "neckY": 248,
+      "neckCx": 200.0,
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -2763,9 +3113,19 @@
     "head": "/assets/heads/nicc.png",
     "hair": null,
     "headGeom": {
+      "neckY": 239,
+      "neckCx": 194.0,
+      "neckW": 77
+    },
+    "hasRealHead": true
+  },
+  "vl-foxy9-silver-001": {
+    "head": "/assets/heads/foxy9.png",
+    "hair": null,
+    "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 177.5,
+      "neckW": 58
     },
     "hasRealHead": true
   },
@@ -2779,13 +3139,13 @@
     },
     "hasRealHead": true
   },
-  "kr-silentzz-gold-001": {
+  "kr-silentzz-silver-001": {
     "head": "/assets/heads/silentzz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 244,
-      "neckCx": 196.0,
-      "neckW": 81
+      "neckY": 235,
+      "neckCx": 195.5,
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -2799,13 +3159,13 @@
     },
     "hasRealHead": true
   },
-  "efp-sturnn-bronze-001": {
+  "ulf-sturnn-silver-001": {
     "head": "/assets/heads/sturnn.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 76
+      "neckY": 265,
+      "neckCx": 195.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -2815,7 +3175,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -2825,17 +3185,17 @@
     "headGeom": {
       "neckY": 249,
       "neckCx": 208.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
-  "jdg-coconut-gold-001": {
+  "jdg-coconut-silver-001": {
     "head": "/assets/heads/coconut.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 182.0,
-      "neckW": 65
+      "neckW": 63
     },
     "hasRealHead": true
   },
@@ -2843,9 +3203,9 @@
     "head": "/assets/heads/tag.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 202.5,
-      "neckW": 80
+      "neckY": 266,
+      "neckCx": 201.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -2853,9 +3213,9 @@
     "head": "/assets/heads/ticey.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 82
+      "neckY": 246,
+      "neckCx": 194.0,
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -2865,7 +3225,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 221.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -2895,7 +3255,7 @@
     "headGeom": {
       "neckY": 240,
       "neckCx": 179.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -2904,8 +3264,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 245,
-      "neckCx": 193.0,
-      "neckW": 73
+      "neckCx": 192.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -2913,29 +3273,49 @@
     "head": "/assets/heads/crewen.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 202.0,
-      "neckW": 77
+      "neckY": 244,
+      "neckCx": 205.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "bestia-david-silver-001": {
+  "bst-david-silver-001": {
     "head": "/assets/heads/david.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 188.0,
+      "neckY": 251,
+      "neckCx": 187.0,
+      "neckW": 89
+    },
+    "hasRealHead": true
+  },
+  "fnc-veqaj-gold-001": {
+    "head": "/assets/heads/veqaj.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 206.0,
       "neckW": 91
     },
     "hasRealHead": true
   },
-  "nrga-geeza-silver-001": {
+  "nrga-geeza-bronze-001": {
     "head": "/assets/heads/geeza.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 165.5,
-      "neckW": 106
+      "neckW": 104
+    },
+    "hasRealHead": true
+  },
+  "zeta-syouta-gold-001": {
+    "head": "/assets/heads/syouta.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 246,
+      "neckCx": 216.5,
+      "neckW": 94
     },
     "hasRealHead": true
   },
@@ -2945,7 +3325,7 @@
     "headGeom": {
       "neckY": 245,
       "neckCx": 202.0,
-      "neckW": 65
+      "neckW": 63
     },
     "hasRealHead": true
   },
@@ -2955,27 +3335,27 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 219.5,
-      "neckW": 64
+      "neckW": 62
     },
     "hasRealHead": true
   },
-  "t1-meteor-gold-001": {
+  "t1-meteor-silver-001": {
     "head": "/assets/heads/meteor.png",
     "hair": null,
     "headGeom": {
-      "neckY": 241,
-      "neckCx": 194.0,
-      "neckW": 69
+      "neckY": 240,
+      "neckCx": 193.5,
+      "neckW": 68
     },
     "hasRealHead": true
   },
-  "mas-jzz-silver-001": {
+  "mas-jzz-bronze-001": {
     "head": "/assets/heads/jzz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 242,
-      "neckCx": 176.5,
-      "neckW": 78
+      "neckY": 236,
+      "neckCx": 175.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -2984,8 +3364,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 110
+      "neckCx": 195.5,
+      "neckW": 108
     },
     "hasRealHead": true
   },
@@ -2993,7 +3373,7 @@
     "head": "/assets/heads/cyvoph.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 245,
       "neckCx": 203.0,
       "neckW": 105
     },
@@ -3023,9 +3403,9 @@
     "head": "/assets/heads/musz3kk.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 192.0,
-      "neckW": 73
+      "neckY": 247,
+      "neckCx": 191.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -3033,9 +3413,9 @@
     "head": "/assets/heads/patmen.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 80
+      "neckY": 248,
+      "neckCx": 195.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -3045,7 +3425,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 217.5,
-      "neckW": 78
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -3053,9 +3433,19 @@
     "head": "/assets/heads/jitboys.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 205.5,
-      "neckW": 78
+      "neckY": 247,
+      "neckCx": 204.0,
+      "neckW": 75
+    },
+    "hasRealHead": true
+  },
+  "lev-pxs-gold-001": {
+    "head": "/assets/heads/pxs.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 199.0,
+      "neckW": 99
     },
     "hasRealHead": true
   },
@@ -3065,7 +3455,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -3075,11 +3465,11 @@
     "headGeom": {
       "neckY": 239,
       "neckCx": 225.0,
-      "neckW": 67
+      "neckW": 65
     },
     "hasRealHead": true
   },
-  "ega-zerona-silver-001": {
+  "eg-zerona-gold-001": {
     "head": "/assets/heads/zerona.png",
     "hair": null,
     "headGeom": {
@@ -3105,7 +3495,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 173.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -3115,7 +3505,7 @@
     "headGeom": {
       "neckY": 229,
       "neckCx": 221.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -3129,13 +3519,13 @@
     },
     "hasRealHead": true
   },
-  "2g-gobera-silver-001": {
+  "2g-gobera-bronze-001": {
     "head": "/assets/heads/gobera.png",
     "hair": null,
     "headGeom": {
-      "neckY": 226,
-      "neckCx": 193.0,
-      "neckW": 69
+      "neckY": 233,
+      "neckCx": 192.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -3143,9 +3533,9 @@
     "head": "/assets/heads/kajuks.png",
     "hair": null,
     "headGeom": {
-      "neckY": 240,
-      "neckCx": 192.0,
-      "neckW": 63
+      "neckY": 231,
+      "neckCx": 190.5,
+      "neckW": 64
     },
     "hasRealHead": true
   },
@@ -3163,9 +3553,9 @@
     "head": "/assets/heads/kongi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 186.5,
-      "neckW": 68
+      "neckY": 253,
+      "neckCx": 185.5,
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -3175,7 +3565,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 228.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -3185,7 +3575,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -3195,7 +3585,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 198.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -3215,17 +3605,17 @@
     "headGeom": {
       "neckY": 247,
       "neckCx": 205.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
-  "mas-palla-silver-001": {
+  "mas-palla-bronze-001": {
     "head": "/assets/heads/palla.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 192.0,
-      "neckW": 83
+      "neckY": 254,
+      "neckCx": 191.0,
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -3235,7 +3625,7 @@
     "headGeom": {
       "neckY": 246,
       "neckCx": 197.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -3245,7 +3635,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -3255,7 +3645,7 @@
     "headGeom": {
       "neckY": 248,
       "neckCx": 211.0,
-      "neckW": 75
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -3275,7 +3665,7 @@
     "headGeom": {
       "neckY": 241,
       "neckCx": 202.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -3283,9 +3673,9 @@
     "head": "/assets/heads/akira.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 80
+      "neckY": 252,
+      "neckCx": 195.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -3299,13 +3689,23 @@
     },
     "hasRealHead": true
   },
+  "kc-dos9-gold-001": {
+    "head": "/assets/heads/dos9.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 183.5,
+      "neckW": 82
+    },
+    "hasRealHead": true
+  },
   "cls-che-bronze-001": {
     "head": "/assets/heads/che.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 94
+      "neckW": 92
     },
     "hasRealHead": true
   },
@@ -3315,11 +3715,21 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 178.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
-  "naos-mojer-silver-001": {
+  "sad-welyy-silver-001": {
+    "head": "/assets/heads/welyy.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 193.0,
+      "neckW": 97
+    },
+    "hasRealHead": true
+  },
+  "naos-mojer-bronze-001": {
     "head": "/assets/heads/mojer.png",
     "hair": null,
     "headGeom": {
@@ -3335,7 +3745,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 223.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -3343,7 +3753,7 @@
     "head": "/assets/heads/stew.png",
     "hair": null,
     "headGeom": {
-      "neckY": 243,
+      "neckY": 242,
       "neckCx": 199.0,
       "neckW": 63
     },
@@ -3355,7 +3765,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -3365,7 +3775,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 213.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -3373,9 +3783,9 @@
     "head": "/assets/heads/allen.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 236.0,
-      "neckW": 87
+      "neckY": 253,
+      "neckCx": 235.0,
+      "neckW": 85
     },
     "hasRealHead": true
   },
@@ -3383,9 +3793,19 @@
     "head": "/assets/heads/blossi.png",
     "hair": "/assets/hair/blossi.png",
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 236.0,
-      "neckW": 169
+      "neckY": 248,
+      "neckCx": 236.5,
+      "neckW": 166
+    },
+    "hasRealHead": true
+  },
+  "c9-v1c-gold-001": {
+    "head": "/assets/heads/v1c.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 242,
+      "neckCx": 195.0,
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -3399,23 +3819,23 @@
     },
     "hasRealHead": true
   },
-  "fks-serial-silver-001": {
+  "fks-serial-bronze-001": {
     "head": "/assets/heads/serial.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 174.0,
-      "neckW": 69
+      "neckY": 238,
+      "neckCx": 173.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
-  "tl-miniboo-gold-001": {
+  "tl-miniboo-silver-001": {
     "head": "/assets/heads/miniboo.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 169.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -3423,19 +3843,39 @@
     "head": "/assets/heads/bipo.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 210.5,
-      "neckW": 62
+      "neckY": 257,
+      "neckCx": 209.5,
+      "neckW": 60
     },
     "hasRealHead": true
   },
-  "reborn-batujnax-bronze-001": {
+  "ff-batujnax-silver-001": {
     "head": "/assets/heads/batujnax.png",
     "hair": null,
     "headGeom": {
       "neckY": 248,
       "neckCx": 201.5,
-      "neckW": 72
+      "neckW": 70
+    },
+    "hasRealHead": true
+  },
+  "navi-ruxic-gold-001": {
+    "head": "/assets/heads/ruxic.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 177.0,
+      "neckW": 77
+    },
+    "hasRealHead": true
+  },
+  "c9-oxy-gold-001": {
+    "head": "/assets/heads/oxy.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 249,
+      "neckCx": 168.5,
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -3443,9 +3883,9 @@
     "head": "/assets/heads/kibojn.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 226.5,
-      "neckW": 68
+      "neckY": 251,
+      "neckCx": 225.5,
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -3465,7 +3905,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 221.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -3475,7 +3915,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 108
+      "neckW": 106
     },
     "hasRealHead": true
   },
@@ -3489,23 +3929,33 @@
     },
     "hasRealHead": true
   },
-  "intz-askia-silver-001": {
+  "kc-lewn-silver-001": {
+    "head": "/assets/heads/lewn.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 244,
+      "neckCx": 196.5,
+      "neckW": 100
+    },
+    "hasRealHead": true
+  },
+  "intz-askia-bronze-001": {
     "head": "/assets/heads/askia.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 173.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
-  "2g-xenom-silver-001": {
+  "2g-xenom-bronze-001": {
     "head": "/assets/heads/xenom.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.0,
-      "neckW": 75
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -3513,13 +3963,13 @@
     "head": "/assets/heads/jini.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 94
+      "neckY": 254,
+      "neckCx": 195.5,
+      "neckW": 92
     },
     "hasRealHead": true
   },
-  "alqadsiahesports-yassien-silver-001": {
+  "qad-yassien-silver-001": {
     "head": "/assets/heads/yassien.png",
     "hair": null,
     "headGeom": {
@@ -3534,8 +3984,8 @@
     "hair": "/assets/hair/karina.png",
     "headGeom": {
       "neckY": 195,
-      "neckCx": 258.0,
-      "neckW": 151
+      "neckCx": 256.0,
+      "neckW": 163
     },
     "hasRealHead": true
   },
@@ -3545,7 +3995,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 172.0,
-      "neckW": 97
+      "neckW": 95
     },
     "hasRealHead": true
   },
@@ -3553,9 +4003,9 @@
     "head": "/assets/heads/stunna.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 180.0,
-      "neckW": 85
+      "neckY": 247,
+      "neckCx": 179.5,
+      "neckW": 86
     },
     "hasRealHead": true
   },
@@ -3565,7 +4015,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -3583,19 +4033,19 @@
     "head": "/assets/heads/wo0t.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 166.0,
-      "neckW": 79
+      "neckY": 255,
+      "neckCx": 165.0,
+      "neckW": 77
     },
     "hasRealHead": true
   },
-  "bbb-crunch-silver-001": {
+  "bbb-crunch-bronze-001": {
     "head": "/assets/heads/crunch.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 219.5,
-      "neckW": 74
+      "neckY": 249,
+      "neckCx": 217.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -3605,7 +4055,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 60
+      "neckW": 58
     },
     "hasRealHead": true
   },
@@ -3624,8 +4074,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 159.0,
-      "neckW": 77
+      "neckCx": 158.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -3643,19 +4093,19 @@
     "head": "/assets/heads/sato.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 173.0,
-      "neckW": 141
+      "neckY": 244,
+      "neckCx": 201.0,
+      "neckW": 85
     },
     "hasRealHead": true
   },
-  "lev-spike-gold-001": {
+  "lev-spike-silver-001": {
     "head": "/assets/heads/spike.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 205.5,
-      "neckW": 92
+      "neckY": 246,
+      "neckCx": 206.0,
+      "neckW": 93
     },
     "hasRealHead": true
   },
@@ -3665,7 +4115,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -3685,7 +4135,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 222.0,
-      "neckW": 69
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -3695,7 +4145,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 179.5,
-      "neckW": 76
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -3705,7 +4155,7 @@
     "headGeom": {
       "neckY": 249,
       "neckCx": 217.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -3713,19 +4163,19 @@
     "head": "/assets/heads/kel.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 221.0,
-      "neckW": 73
+      "neckY": 244,
+      "neckCx": 220.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "red-forbanz-silver-001": {
+  "red-forbanz-bronze-001": {
     "head": "/assets/heads/forbanz.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 221.5,
-      "neckW": 78
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -3733,13 +4183,13 @@
     "head": "/assets/heads/nicksz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.0,
-      "neckW": 83
+      "neckY": 243,
+      "neckCx": 202.0,
+      "neckW": 81
     },
     "hasRealHead": true
   },
-  "gng-loop-silver-001": {
+  "gng-loop-bronze-001": {
     "head": "/assets/heads/loop.png",
     "hair": null,
     "headGeom": {
@@ -3755,7 +4205,7 @@
     "headGeom": {
       "neckY": 242,
       "neckCx": 190.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -3763,9 +4213,9 @@
     "head": "/assets/heads/hiiro.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 248,
       "neckCx": 211.5,
-      "neckW": 90
+      "neckW": 88
     },
     "hasRealHead": true
   },
@@ -3775,17 +4225,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.0,
-      "neckW": 115
+      "neckW": 113
     },
     "hasRealHead": true
   },
-  "mkg-shyy-silver-001": {
+  "fur-shyy-silver-001": {
     "head": "/assets/heads/shyy.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 190.5,
-      "neckW": 76
+      "neckCx": 189.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -3799,13 +4249,13 @@
     },
     "hasRealHead": true
   },
-  "fue-generalsteak-silver-001": {
+  "fue-generalsteak-bronze-001": {
     "head": "/assets/heads/generalsteak.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -3813,9 +4263,9 @@
     "head": "/assets/heads/wsleo.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 62
+      "neckY": 245,
+      "neckCx": 205.0,
+      "neckW": 61
     },
     "hasRealHead": true
   },
@@ -3823,9 +4273,9 @@
     "head": "/assets/heads/loita.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 174.0,
-      "neckW": 85
+      "neckY": 248,
+      "neckCx": 166.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -3834,8 +4284,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 240,
-      "neckCx": 226.5,
-      "neckW": 100
+      "neckCx": 225.5,
+      "neckW": 98
     },
     "hasRealHead": true
   },
@@ -3843,9 +4293,9 @@
     "head": "/assets/heads/pa1ze.png",
     "hair": null,
     "headGeom": {
-      "neckY": 235,
-      "neckCx": 188.0,
-      "neckW": 79
+      "neckY": 237,
+      "neckCx": 187.0,
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -3854,8 +4304,8 @@
     "hair": "/assets/hair/yohpa.png",
     "headGeom": {
       "neckY": 193,
-      "neckCx": 210.0,
-      "neckW": 171
+      "neckCx": 209.0,
+      "neckW": 169
     },
     "hasRealHead": true
   },
@@ -3875,7 +4325,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -3885,7 +4335,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 207.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -3893,13 +4343,13 @@
     "head": "/assets/heads/jemkin.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 102
+      "neckY": 260,
+      "neckCx": 199.5,
+      "neckW": 100
     },
     "hasRealHead": true
   },
-  "igz-sid-silver-001": {
+  "igz-sid-bronze-001": {
     "head": "/assets/heads/sid.png",
     "hair": null,
     "headGeom": {
@@ -3909,13 +4359,23 @@
     },
     "hasRealHead": true
   },
+  "zeta-xdll-silver-001": {
+    "head": "/assets/heads/xdll.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 197.0,
+      "neckW": 109
+    },
+    "hasRealHead": true
+  },
   "fs-primmie-gold-001": {
     "head": "/assets/heads/primmie.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.0,
-      "neckW": 79
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -3925,7 +4385,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -3934,38 +4394,38 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 198.5,
-      "neckW": 110
+      "neckCx": 197.5,
+      "neckW": 108
     },
     "hasRealHead": true
   },
-  "red-sw-silver-001": {
+  "red-sw-bronze-001": {
     "head": "/assets/heads/sw.png",
     "hair": null,
     "headGeom": {
       "neckY": 238,
       "neckCx": 230.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
-  "fmg-alexiiik-bronze-001": {
+  "evo-alexiiik-bronze-001": {
     "head": "/assets/heads/alexiiik.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 210.0,
-      "neckW": 103
+      "neckY": 266,
+      "neckCx": 209.0,
+      "neckW": 101
     },
     "hasRealHead": true
   },
-  "nsp-deecee-bronze-001": {
+  "gdr-deecee-bronze-001": {
     "head": "/assets/heads/deecee.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 219.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -3973,29 +4433,29 @@
     "head": "/assets/heads/tenshi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 202.5,
-      "neckW": 118
+      "neckY": 248,
+      "neckCx": 212.0,
+      "neckW": 101
     },
     "hasRealHead": true
   },
-  "nsp-damaraa-silver-001": {
+  "nsp-damaraa-bronze-001": {
     "head": "/assets/heads/damaraa.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 186.0,
-      "neckW": 69
+      "neckW": 67
     },
     "hasRealHead": true
   },
-  "nbg-zeek-silver-001": {
-    "head": "/assets/heads/zeek-ilver001.png",
+  "nbg-zeek-bronze-001": {
+    "head": "/assets/heads/zeek-ronze001.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -4025,7 +4485,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -4039,13 +4499,13 @@
     },
     "hasRealHead": true
   },
-  "rntx-venka-silver-001": {
+  "rntx-venka-bronze-001": {
     "head": "/assets/heads/venka.png",
     "hair": null,
     "headGeom": {
       "neckY": 230,
       "neckCx": 203.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -4055,27 +4515,17 @@
     "headGeom": {
       "neckY": 239,
       "neckCx": 203.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
-  "agl-banger-bronze-001": {
-    "head": "/assets/heads/banger.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 239,
-      "neckCx": 166.0,
-      "neckW": 203
-    },
-    "hasRealHead": true
-  },
-  "rntx-techno-silver-001": {
+  "rntx-techno-bronze-001": {
     "head": "/assets/heads/techno.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 201.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -4093,13 +4543,13 @@
     "head": "/assets/heads/hyunmin.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 163.5,
-      "neckW": 86
+      "neckY": 249,
+      "neckCx": 160.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
-  "loud-lukxo-gold-001": {
+  "loud-lukxo-silver-001": {
     "head": "/assets/heads/lukxo.png",
     "hair": null,
     "headGeom": {
@@ -4113,19 +4563,29 @@
     "head": "/assets/heads/muddy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 188.5,
-      "neckW": 72
+      "neckY": 248,
+      "neckCx": 189.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
-  "srb-satellite-silver-001": {
+  "pcf-ninja-gold-001": {
+    "head": "/assets/heads/ninja.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 242,
+      "neckCx": 190.0,
+      "neckW": 67
+    },
+    "hasRealHead": true
+  },
+  "srb-satellite-bronze-001": {
     "head": "/assets/heads/satellite.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 184.0,
-      "neckW": 71
+      "neckY": 247,
+      "neckCx": 184.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -4133,19 +4593,19 @@
     "head": "/assets/heads/skyppervz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 234.5,
-      "neckW": 108
+      "neckY": 252,
+      "neckCx": 233.5,
+      "neckW": 106
     },
     "hasRealHead": true
   },
-  "9zg-miradaninja-silver-001": {
+  "9zg-miradaninja-bronze-001": {
     "head": "/assets/heads/miradaninja.png",
     "hair": null,
     "headGeom": {
       "neckY": 244,
       "neckCx": 209.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -4155,7 +4615,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 96
+      "neckW": 94
     },
     "hasRealHead": true
   },
@@ -4165,7 +4625,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 192.0,
-      "neckW": 89
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -4174,8 +4634,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 209.0,
-      "neckW": 89
+      "neckCx": 208.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -4185,7 +4645,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 192.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -4195,7 +4655,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 173.0,
-      "neckW": 95
+      "neckW": 93
     },
     "hasRealHead": true
   },
@@ -4205,17 +4665,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
-  "t1a-tenten-silver-001": {
+  "ts-tenten-gold-001": {
     "head": "/assets/heads/tenten.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -4223,13 +4683,13 @@
     "head": "/assets/heads/yuran.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 220.5,
-      "neckW": 116
+      "neckY": 247,
+      "neckCx": 221.5,
+      "neckW": 114
     },
     "hasRealHead": true
   },
-  "dfm-caedye-gold-001": {
+  "dfm-caedye-silver-001": {
     "head": "/assets/heads/caedye.png",
     "hair": null,
     "headGeom": {
@@ -4243,9 +4703,19 @@
     "head": "/assets/heads/yatsuka.png",
     "hair": null,
     "headGeom": {
-      "neckY": 234,
-      "neckCx": 147.5,
+      "neckY": 227,
+      "neckCx": 145.5,
       "neckW": 92
+    },
+    "hasRealHead": true
+  },
+  "navi-hiro-gold-001": {
+    "head": "/assets/heads/hiro.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 200.0,
+      "neckW": 59
     },
     "hasRealHead": true
   },
@@ -4253,9 +4723,9 @@
     "head": "/assets/heads/benjyfishy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 249,
       "neckCx": 178.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -4263,9 +4733,9 @@
     "head": "/assets/heads/timotino.png",
     "hair": null,
     "headGeom": {
-      "neckY": 236,
-      "neckCx": 204.5,
-      "neckW": 78
+      "neckY": 239,
+      "neckCx": 203.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -4274,18 +4744,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 168.5,
-      "neckW": 72
+      "neckCx": 168.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
-  "m80-kyu-silver-001": {
+  "sen-kyu-gold-001": {
     "head": "/assets/heads/kyu.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 216.0,
-      "neckW": 75
+      "neckY": 248,
+      "neckCx": 217.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -4294,8 +4764,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 245,
-      "neckCx": 187.0,
-      "neckW": 69
+      "neckCx": 186.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -4303,9 +4773,9 @@
     "head": "/assets/heads/exa.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 212.0,
-      "neckW": 77
+      "neckY": 248,
+      "neckCx": 211.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -4313,9 +4783,9 @@
     "head": "/assets/heads/r1sen.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 220.0,
-      "neckW": 73
+      "neckY": 248,
+      "neckCx": 220.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -4325,11 +4795,11 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 200.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
-  "6gpa-r1zvan-silver-001": {
+  "6gpa-r1zvan-bronze-001": {
     "head": "/assets/heads/r1zvan.png",
     "hair": null,
     "headGeom": {
@@ -4343,9 +4813,9 @@
     "head": "/assets/heads/kpro.png",
     "hair": null,
     "headGeom": {
-      "neckY": 242,
+      "neckY": 241,
       "neckCx": 205.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -4354,8 +4824,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 180.0,
-      "neckW": 81
+      "neckCx": 180.5,
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -4363,9 +4833,9 @@
     "head": "/assets/heads/rehn.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 86
+      "neckY": 259,
+      "neckCx": 199.5,
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -4373,8 +4843,8 @@
     "head": "/assets/heads/luca.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 195.5,
+      "neckY": 246,
+      "neckCx": 194.5,
       "neckW": 60
     },
     "hasRealHead": true
@@ -4385,7 +4855,7 @@
     "headGeom": {
       "neckY": 246,
       "neckCx": 201.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -4394,8 +4864,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 218.5,
-      "neckW": 76
+      "neckCx": 217.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -4405,7 +4875,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 202.0,
-      "neckW": 69
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -4413,63 +4883,63 @@
     "head": "/assets/heads/dambi.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 196.0,
-      "neckW": 73
+      "neckY": 247,
+      "neckCx": 197.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
-  "ns-francis-gold-001": {
+  "ns-francis-silver-001": {
     "head": "/assets/heads/francis.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 248,
       "neckCx": 200.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "ns-ivy-gold-001": {
+  "ns-ivy-silver-001": {
     "head": "/assets/heads/ivy.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 177.0,
-      "neckW": 67
+      "neckW": 65
     },
     "hasRealHead": true
   },
-  "mibrac-kring-silver-001": {
+  "mibrac-kring-bronze-001": {
     "head": "/assets/heads/kring.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 198.0,
-      "neckW": 89
+      "neckW": 87
     },
     "hasRealHead": true
   },
-  "tbk-maestr0-silver-001": {
+  "tbk-maestr0-bronze-001": {
     "head": "/assets/heads/maestr0.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.5,
-      "neckW": 78
+      "neckW": 76
     },
     "hasRealHead": true
   },
-  "mibrac-turkish-silver-001": {
+  "mibrac-turkish-bronze-001": {
     "head": "/assets/heads/turkish.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "mibrac-luid-silver-001": {
+  "mibrac-luid-bronze-001": {
     "head": "/assets/heads/luid.png",
     "hair": null,
     "headGeom": {
@@ -4479,13 +4949,13 @@
     },
     "hasRealHead": true
   },
-  "furac-stwz1-silver-001": {
+  "furac-stwz1-bronze-001": {
     "head": "/assets/heads/stwz1.png",
     "hair": null,
     "headGeom": {
-      "neckY": 249,
-      "neckCx": 184.5,
-      "neckW": 80
+      "neckY": 252,
+      "neckCx": 183.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -4495,7 +4965,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 191.0,
-      "neckW": 75
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -4505,7 +4975,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 210.0,
-      "neckW": 69
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -4515,11 +4985,21 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 207.0,
-      "neckW": 79
+      "neckW": 77
     },
     "hasRealHead": true
   },
-  "bestia-chubizin-silver-001": {
+  "fa-slaughter-silver-001": {
+    "head": "/assets/heads/slaughter.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 183.5,
+      "neckW": 94
+    },
+    "hasRealHead": true
+  },
+  "bst-chubizin-bronze-001": {
     "head": "/assets/heads/chubizin.png",
     "hair": null,
     "headGeom": {
@@ -4535,7 +5015,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
@@ -4545,7 +5025,7 @@
     "headGeom": {
       "neckY": 240,
       "neckCx": 199.5,
-      "neckW": 68
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -4565,7 +5045,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 199.5,
-      "neckW": 76
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -4574,8 +5054,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 92
+      "neckCx": 193.5,
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -4583,9 +5063,9 @@
     "head": "/assets/heads/inf.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 182.0,
-      "neckW": 67
+      "neckY": 256,
+      "neckCx": 182.5,
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -4595,27 +5075,57 @@
     "headGeom": {
       "neckY": 247,
       "neckCx": 203.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
-  "igz-kayle-silver-001": {
+  "gx-westside-silver-001": {
+    "head": "/assets/heads/westside.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 207.0,
+      "neckW": 85
+    },
+    "hasRealHead": true
+  },
+  "igz-kayle-bronze-001": {
     "head": "/assets/heads/kayle.png",
     "hair": null,
     "headGeom": {
       "neckY": 243,
       "neckCx": 205.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
-  "fl-hals-silver-001": {
-    "head": "/assets/heads/hals.png",
+  "zeta-absol-silver-001": {
+    "head": "/assets/heads/absol.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 82
+      "neckCx": 152.0,
+      "neckW": 123
+    },
+    "hasRealHead": true
+  },
+  "fl-hals-bronze-001": {
+    "head": "/assets/heads/hals.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 207.5,
+      "neckW": 68
+    },
+    "hasRealHead": true
+  },
+  "gen-karon-gold-001": {
+    "head": "/assets/heads/karon.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 211.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -4623,9 +5133,9 @@
     "head": "/assets/heads/athan.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 190.5,
-      "neckW": 76
+      "neckY": 254,
+      "neckCx": 189.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -4633,19 +5143,19 @@
     "head": "/assets/heads/samed.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.5,
-      "neckW": 76
+      "neckY": 255,
+      "neckCx": 197.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "sta-dlasqx1-silver-001": {
+  "sta-dlasqx1-bronze-001": {
     "head": "/assets/heads/dlasqx1.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckY": 247,
+      "neckCx": 203.0,
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -4655,7 +5165,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 195.5,
-      "neckW": 82
+      "neckW": 80
     },
     "hasRealHead": true
   },
@@ -4665,7 +5175,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 212.0,
-      "neckW": 109
+      "neckW": 107
     },
     "hasRealHead": true
   },
@@ -4679,13 +5189,13 @@
     },
     "hasRealHead": true
   },
-  "sts-al7b-silver-001": {
+  "sts-al7b-bronze-001": {
     "head": "/assets/heads/al7b.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 98
+      "neckW": 96
     },
     "hasRealHead": true
   },
@@ -4693,9 +5203,9 @@
     "head": "/assets/heads/skz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 230,
-      "neckCx": 188.5,
-      "neckW": 70
+      "neckY": 227,
+      "neckCx": 189.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -4705,7 +5215,27 @@
     "headGeom": {
       "neckY": 240,
       "neckCx": 204.0,
-      "neckW": 81
+      "neckW": 79
+    },
+    "hasRealHead": true
+  },
+  "kr-mta-silver-001": {
+    "head": "/assets/heads/mta.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 262.5,
+      "neckW": 100
+    },
+    "hasRealHead": true
+  },
+  "kc-n4rrate-gold-001": {
+    "head": "/assets/heads/n4rrate.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 241,
+      "neckCx": 200.0,
+      "neckW": 85
     },
     "hasRealHead": true
   },
@@ -4735,7 +5265,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 92
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -4745,37 +5275,47 @@
     "headGeom": {
       "neckY": 212,
       "neckCx": 191.0,
-      "neckW": 179
+      "neckW": 177
     },
     "hasRealHead": true
   },
-  "furac-peixeh-silver-001": {
+  "furac-peixeh-bronze-001": {
     "head": "/assets/heads/peixeh.png",
     "hair": null,
     "headGeom": {
       "neckY": 243,
-      "neckCx": 194.0,
-      "neckW": 75
+      "neckCx": 193.0,
+      "neckW": 73
     },
     "hasRealHead": true
   },
-  "elv-tiezzi-silver-001": {
+  "elv-tiezzi-bronze-001": {
     "head": "/assets/heads/tiezzi.png",
     "hair": null,
     "headGeom": {
       "neckY": 213,
       "neckCx": 199.0,
-      "neckW": 83
+      "neckW": 81
     },
     "hasRealHead": true
   },
-  "bestia-loss-silver-001": {
+  "bst-loss-bronze-001": {
     "head": "/assets/heads/loss.png",
     "hair": null,
     "headGeom": {
+      "neckY": 247,
+      "neckCx": 201.5,
+      "neckW": 86
+    },
+    "hasRealHead": true
+  },
+  "fur-basic-gold-001": {
+    "head": "/assets/heads/basic.png",
+    "hair": null,
+    "headGeom": {
       "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 85
+      "neckCx": 211.5,
+      "neckW": 100
     },
     "hasRealHead": true
   },
@@ -4783,8 +5323,8 @@
     "head": "/assets/heads/luca-ronze001.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 195.5,
+      "neckY": 246,
+      "neckCx": 194.5,
       "neckW": 60
     },
     "hasRealHead": true
@@ -4795,7 +5335,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 66
+      "neckW": 64
     },
     "hasRealHead": true
   },
@@ -4805,7 +5345,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 206.0,
-      "neckW": 65
+      "neckW": 63
     },
     "hasRealHead": true
   },
@@ -4813,8 +5353,8 @@
     "head": "/assets/heads/jaebin.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 212.0,
+      "neckY": 248,
+      "neckCx": 211.0,
       "neckW": 79
     },
     "hasRealHead": true
@@ -4825,7 +5365,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 106
+      "neckW": 104
     },
     "hasRealHead": true
   },
@@ -4835,7 +5375,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 217.5,
-      "neckW": 72
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -4845,17 +5385,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 213.0,
-      "neckW": 63
+      "neckW": 61
     },
     "hasRealHead": true
   },
-  "krus-beng-bronze-001": {
+  "kr-beng-silver-001": {
     "head": "/assets/heads/beng.png",
     "hair": null,
     "headGeom": {
-      "neckY": 240,
-      "neckCx": 198.0,
-      "neckW": 81
+      "neckY": 239,
+      "neckCx": 199.0,
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -4863,19 +5403,19 @@
     "head": "/assets/heads/wezzy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 88
+      "neckY": 243,
+      "neckCx": 204.0,
+      "neckW": 89
     },
     "hasRealHead": true
   },
-  "tyl-scales-bronze-001": {
+  "tyl-scales-silver-001": {
     "head": "/assets/heads/scales.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 205.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -4889,13 +5429,13 @@
     },
     "hasRealHead": true
   },
-  "edg-cb-bronze-001": {
+  "nova-cb-silver-001": {
     "head": "/assets/heads/cb.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 227.0,
-      "neckW": 67
+      "neckCx": 227.5,
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -4903,9 +5443,19 @@
     "head": "/assets/heads/globex.png",
     "hair": null,
     "headGeom": {
-      "neckY": 242,
+      "neckY": 240,
       "neckCx": 197.0,
       "neckW": 63
+    },
+    "hasRealHead": true
+  },
+  "th-comeback-gold-001": {
+    "head": "/assets/heads/comeback.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 231.0,
+      "neckW": 77
     },
     "hasRealHead": true
   },
@@ -4925,7 +5475,7 @@
     "headGeom": {
       "neckY": 248,
       "neckCx": 197.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -4935,7 +5485,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -4944,8 +5494,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 245,
-      "neckCx": 178.5,
-      "neckW": 80
+      "neckCx": 177.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -4955,7 +5505,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 202.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -4965,16 +5515,16 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 206.0,
-      "neckW": 85
+      "neckW": 83
     },
     "hasRealHead": true
   },
-  "furac-taka-silver-001": {
+  "furac-taka-bronze-001": {
     "head": "/assets/heads/taka.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 212.0,
+      "neckY": 247,
+      "neckCx": 213.0,
       "neckW": 81
     },
     "hasRealHead": true
@@ -4983,8 +5533,8 @@
     "head": "/assets/heads/consz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.0,
+      "neckY": 248,
+      "neckCx": 201.0,
       "neckW": 75
     },
     "hasRealHead": true
@@ -5003,9 +5553,9 @@
     "head": "/assets/heads/guang.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 197.0,
-      "neckW": 67
+      "neckY": 249,
+      "neckCx": 197.5,
+      "neckW": 66
     },
     "hasRealHead": true
   },
@@ -5015,7 +5565,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 225.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -5024,18 +5574,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 74
+      "neckCx": 195.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "kr-dantedeu5-gold-001": {
+  "kr-dantedeu5-silver-001": {
     "head": "/assets/heads/dantedeu5.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 223.0,
-      "neckW": 135
+      "neckY": 249,
+      "neckCx": 191.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -5044,8 +5594,8 @@
     "hair": "/assets/hair/jade.png",
     "headGeom": {
       "neckY": 208,
-      "neckCx": 184.0,
-      "neckW": 183
+      "neckCx": 183.0,
+      "neckW": 181
     },
     "hasRealHead": true
   },
@@ -5054,32 +5604,32 @@
     "hair": null,
     "headGeom": {
       "neckY": 248,
-      "neckCx": 215.0,
-      "neckW": 77
+      "neckCx": 214.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
-  "krus-tkzin-silver-001": {
+  "loud-tkzin-silver-001": {
     "head": "/assets/heads/tkzin.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 193.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "elv-kramarick-silver-001": {
+  "elv-kramarick-bronze-001": {
     "head": "/assets/heads/kramarick.png",
     "hair": null,
     "headGeom": {
       "neckY": 231,
       "neckCx": 200.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
-  "boa-troizyyy-silver-001": {
+  "boa-troizyyy-bronze-001": {
     "head": "/assets/heads/troizyyy.png",
     "hair": null,
     "headGeom": {
@@ -5089,13 +5639,13 @@
     },
     "hasRealHead": true
   },
-  "elv-dth-silver-001": {
+  "elv-dth-bronze-001": {
     "head": "/assets/heads/dth.png",
     "hair": null,
     "headGeom": {
       "neckY": 240,
       "neckCx": 204.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -5113,9 +5663,9 @@
     "head": "/assets/heads/mepeezy.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 187.5,
-      "neckW": 84
+      "neckY": 242,
+      "neckCx": 187.0,
+      "neckW": 85
     },
     "hasRealHead": true
   },
@@ -5123,19 +5673,29 @@
     "head": "/assets/heads/favian.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.0,
-      "neckW": 89
+      "neckY": 252,
+      "neckCx": 202.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
-  "tyl-slowly-silver-001": {
+  "tyl-slowly-gold-001": {
     "head": "/assets/heads/slowly.png",
     "hair": null,
     "headGeom": {
+      "neckY": 249,
+      "neckCx": 183.0,
+      "neckW": 71
+    },
+    "hasRealHead": true
+  },
+  "ff-pawn1-bronze-001": {
+    "head": "/assets/heads/pawn1.png",
+    "hair": null,
+    "headGeom": {
       "neckY": 250,
-      "neckCx": 220.0,
-      "neckW": 145
+      "neckCx": 213.5,
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -5143,9 +5703,9 @@
     "head": "/assets/heads/dynamite.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 211.0,
-      "neckW": 77
+      "neckY": 249,
+      "neckCx": 212.5,
+      "neckW": 72
     },
     "hasRealHead": true
   },
@@ -5163,9 +5723,9 @@
     "head": "/assets/heads/darxcioo.png",
     "hair": null,
     "headGeom": {
-      "neckY": 233,
-      "neckCx": 196.5,
-      "neckW": 60
+      "neckY": 239,
+      "neckCx": 195.5,
+      "neckW": 58
     },
     "hasRealHead": true
   },
@@ -5183,9 +5743,9 @@
     "head": "/assets/heads/tickso.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 247,
       "neckCx": 205.5,
-      "neckW": 90
+      "neckW": 88
     },
     "hasRealHead": true
   },
@@ -5195,17 +5755,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 221.5,
-      "neckW": 76
+      "neckW": 74
     },
     "hasRealHead": true
   },
-  "rzn-barck-bronze-001": {
+  "rzn-barck-silver-001": {
     "head": "/assets/heads/barck.png",
     "hair": null,
     "headGeom": {
       "neckY": 248,
       "neckCx": 203.0,
-      "neckW": 75
+      "neckW": 73
     },
     "hasRealHead": true
   },
@@ -5215,7 +5775,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 188.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -5225,7 +5785,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 214.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -5233,9 +5793,9 @@
     "head": "/assets/heads/xross.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 200.5,
-      "neckW": 72
+      "neckY": 248,
+      "neckCx": 199.5,
+      "neckW": 70
     },
     "hasRealHead": true
   },
@@ -5249,13 +5809,23 @@
     },
     "hasRealHead": true
   },
-  "wol-qiutian-bronze-001": {
-    "head": "/assets/heads/qiutian.png",
+  "fs-thyy-silver-001": {
+    "head": "/assets/heads/thyy.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 192.5,
-      "neckW": 68
+      "neckCx": 199.0,
+      "neckW": 69
+    },
+    "hasRealHead": true
+  },
+  "nova-qiutian-bronze-001": {
+    "head": "/assets/heads/qiutian.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 249,
+      "neckCx": 193.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -5265,7 +5835,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -5273,9 +5843,9 @@
     "head": "/assets/heads/aace.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 209.0,
-      "neckW": 71
+      "neckY": 249,
+      "neckCx": 220.5,
+      "neckW": 48
     },
     "hasRealHead": true
   },
@@ -5295,7 +5865,7 @@
     "headGeom": {
       "neckY": 216,
       "neckCx": 199.0,
-      "neckW": 167
+      "neckW": 165
     },
     "hasRealHead": true
   },
@@ -5304,8 +5874,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 165.0,
-      "neckW": 73
+      "neckCx": 164.0,
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -5313,9 +5883,9 @@
     "head": "/assets/heads/aplycs.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 207.0,
-      "neckW": 89
+      "neckY": 264,
+      "neckCx": 206.0,
+      "neckW": 87
     },
     "hasRealHead": true
   },
@@ -5324,8 +5894,8 @@
     "hair": "/assets/hair/purity.png",
     "headGeom": {
       "neckY": 202,
-      "neckCx": 169.0,
-      "neckW": 189
+      "neckCx": 168.0,
+      "neckW": 187
     },
     "hasRealHead": true
   },
@@ -5335,7 +5905,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 96
+      "neckW": 94
     },
     "hasRealHead": true
   },
@@ -5343,7 +5913,7 @@
     "head": "/assets/heads/bruxo.png",
     "hair": null,
     "headGeom": {
-      "neckY": 239,
+      "neckY": 238,
       "neckCx": 207.0,
       "neckW": 79
     },
@@ -5365,7 +5935,7 @@
     "headGeom": {
       "neckY": 237,
       "neckCx": 199.5,
-      "neckW": 84
+      "neckW": 82
     },
     "hasRealHead": true
   },
@@ -5373,9 +5943,9 @@
     "head": "/assets/heads/helas.png",
     "hair": null,
     "headGeom": {
-      "neckY": 212,
+      "neckY": 211,
       "neckCx": 188.0,
-      "neckW": 107
+      "neckW": 105
     },
     "hasRealHead": true
   },
@@ -5385,7 +5955,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 180.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
@@ -5395,7 +5965,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 205.5,
-      "neckW": 62
+      "neckW": 60
+    },
+    "hasRealHead": true
+  },
+  "fcy-twilight-silver-001": {
+    "head": "/assets/heads/twilight.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 195,
+      "neckCx": 208.5,
+      "neckW": 122
     },
     "hasRealHead": true
   },
@@ -5403,9 +5983,9 @@
     "head": "/assets/heads/frazune.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 81
+      "neckY": 252,
+      "neckCx": 200.0,
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -5415,37 +5995,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 202.0,
-      "neckW": 69
+      "neckW": 67
     },
     "hasRealHead": true
   },
-  "igz-frxeez-bronze-001": {
-    "head": "/assets/heads/frxeez.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 243,
-      "neckCx": 252.0,
-      "neckW": 225
-    },
-    "hasRealHead": true
-  },
-  "mibrac-sanoj-silver-001": {
+  "mibrac-sanoj-bronze-001": {
     "head": "/assets/heads/sanoj.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 194.0,
-      "neckW": 85
-    },
-    "hasRealHead": true
-  },
-  "tec-coco-silver-001": {
-    "head": "/assets/heads/coco.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 228.0,
-      "neckW": 197
+      "neckW": 83
     },
     "hasRealHead": true
   },
@@ -5455,7 +6015,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 193.5,
-      "neckW": 90
+      "neckW": 88
     },
     "hasRealHead": true
   },
@@ -5465,7 +6025,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 203.5,
-      "neckW": 88
+      "neckW": 86
     },
     "hasRealHead": true
   },
@@ -5475,7 +6035,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 86
+      "neckW": 84
     },
     "hasRealHead": true
   },
@@ -5489,13 +6049,33 @@
     },
     "hasRealHead": true
   },
-  "cls-shadow1-silver-001": {
+  "fcy-nia-bronze-001": {
+    "head": "/assets/heads/nia.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 242,
+      "neckCx": 209.5,
+      "neckW": 64
+    },
+    "hasRealHead": true
+  },
+  "fcy-bucute-gold-001": {
+    "head": "/assets/heads/bucute.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 202,
+      "neckCx": 195.5,
+      "neckW": 112
+    },
+    "hasRealHead": true
+  },
+  "cls-shadow1-bronze-001": {
     "head": "/assets/heads/shadow1.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 206.5,
-      "neckW": 78
+      "neckCx": 205.5,
+      "neckW": 76
     },
     "hasRealHead": true
   },
@@ -5505,7 +6085,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 208.0,
-      "neckW": 81
+      "neckW": 79
     },
     "hasRealHead": true
   },
@@ -5513,33 +6093,33 @@
     "head": "/assets/heads/mrtnssj.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 206.0,
-      "neckW": 103
+      "neckY": 252,
+      "neckCx": 204.5,
+      "neckW": 100
     },
     "hasRealHead": true
   },
-  "blg-rushia-gold-001": {
+  "blg-rushia-silver-001": {
     "head": "/assets/heads/rushia.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 204.0,
-      "neckW": 73
+      "neckW": 71
     },
     "hasRealHead": true
   },
-  "gga-raxcal-bronze-001": {
+  "gen-raxcal-silver-001": {
     "head": "/assets/heads/raxcal.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 229.5,
-      "neckW": 74
+      "neckW": 72
     },
     "hasRealHead": true
   },
-  "bnk-keatz-bronze-001": {
+  "6gpa-keatz-bronze-001": {
     "head": "/assets/heads/keatz.png",
     "hair": null,
     "headGeom": {
@@ -5573,9 +6153,9 @@
     "head": "/assets/heads/secre.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 202.5,
-      "neckW": 98
+      "neckY": 249,
+      "neckCx": 203.5,
+      "neckW": 94
     },
     "hasRealHead": true
   },
@@ -5583,9 +6163,9 @@
     "head": "/assets/heads/sh0ut.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 184.5,
-      "neckW": 94
+      "neckY": 244,
+      "neckCx": 184.0,
+      "neckW": 95
     },
     "hasRealHead": true
   },
@@ -5595,7 +6175,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -5604,8 +6184,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 201.0,
-      "neckW": 77
+      "neckCx": 200.0,
+      "neckW": 75
     },
     "hasRealHead": true
   },
@@ -5625,7 +6205,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 228.0,
-      "neckW": 93
+      "neckW": 91
     },
     "hasRealHead": true
   },
@@ -5635,7 +6215,7 @@
     "headGeom": {
       "neckY": 243,
       "neckCx": 219.5,
-      "neckW": 66
+      "neckW": 64
     },
     "hasRealHead": true
   },
@@ -5643,9 +6223,9 @@
     "head": "/assets/heads/movv.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 210.0,
-      "neckW": 87
+      "neckY": 248,
+      "neckCx": 210.5,
+      "neckW": 86
     },
     "hasRealHead": true
   },
@@ -5655,17 +6235,17 @@
     "headGeom": {
       "neckY": 224,
       "neckCx": 193.5,
-      "neckW": 70
+      "neckW": 68
     },
     "hasRealHead": true
   },
-  "leva-tunaso-silver-001": {
+  "leva-tunaso-bronze-001": {
     "head": "/assets/heads/tunaso.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 104
+      "neckY": 246,
+      "neckCx": 203.0,
+      "neckW": 105
     },
     "hasRealHead": true
   },
@@ -5675,7 +6255,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 100
+      "neckW": 98
     },
     "hasRealHead": true
   },
@@ -5683,7 +6263,7 @@
     "head": "/assets/heads/influx.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 246,
       "neckCx": 157.5,
       "neckW": 82
     },
@@ -5695,7 +6275,7 @@
     "headGeom": {
       "neckY": 226,
       "neckCx": 197.5,
-      "neckW": 110
+      "neckW": 108
     },
     "hasRealHead": true
   },
@@ -5704,8 +6284,8 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 198.5,
-      "neckW": 106
+      "neckCx": 197.5,
+      "neckW": 104
     },
     "hasRealHead": true
   },
@@ -5714,8 +6294,18 @@
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 218.5,
-      "neckW": 72
+      "neckCx": 217.5,
+      "neckW": 70
+    },
+    "hasRealHead": true
+  },
+  "ag-bai-bronze-001": {
+    "head": "/assets/heads/bai.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 210.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -5725,17 +6315,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 182.0,
-      "neckW": 77
+      "neckW": 75
     },
     "hasRealHead": true
   },
-  "tzc-weegle-silver-001": {
+  "tzc-weegle-bronze-001": {
     "head": "/assets/heads/weegle.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 223.5,
-      "neckW": 80
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -5753,9 +6343,9 @@
     "head": "/assets/heads/whiteslow.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 195.0,
-      "neckW": 69
+      "neckY": 265,
+      "neckCx": 194.0,
+      "neckW": 67
     },
     "hasRealHead": true
   },
@@ -5763,9 +6353,9 @@
     "head": "/assets/heads/sebzz.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 218.0,
-      "neckW": 91
+      "neckY": 248,
+      "neckCx": 211.5,
+      "neckW": 78
     },
     "hasRealHead": true
   },
@@ -5775,17 +6365,17 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 189.5,
-      "neckW": 100
+      "neckW": 98
     },
     "hasRealHead": true
   },
-  "reborn-hezacoil-silver-001": {
+  "ff-hezacoil-gold-001": {
     "head": "/assets/heads/hezacoil.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 100
+      "neckW": 98
     },
     "hasRealHead": true
   },
@@ -5799,33 +6389,33 @@
     },
     "hasRealHead": true
   },
-  "oxen-darky-bronze-001": {
-    "head": "/assets/heads/darky.png",
+  "home-13rd-silver-001": {
+    "head": "/assets/heads/13rd.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 225.5,
-      "neckW": 172
+      "neckCx": 207.5,
+      "neckW": 94
     },
     "hasRealHead": true
   },
-  "sge-jamelinho213-silver-001": {
+  "sge-jamelinho213-gold-001": {
     "head": "/assets/heads/jamelinho213.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 202.5,
-      "neckW": 120
+      "neckY": 249,
+      "neckCx": 203.0,
+      "neckW": 117
     },
     "hasRealHead": true
   },
-  "krus-mont1-silver-001": {
+  "krus-mont1-bronze-001": {
     "head": "/assets/heads/mont1.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 246,
       "neckCx": 198.0,
-      "neckW": 71
+      "neckW": 69
     },
     "hasRealHead": true
   },
@@ -5843,9 +6433,9 @@
     "head": "/assets/heads/ef1ss.png",
     "hair": null,
     "headGeom": {
-      "neckY": 234,
-      "neckCx": 196.5,
-      "neckW": 62
+      "neckY": 247,
+      "neckCx": 197.0,
+      "neckW": 61
     },
     "hasRealHead": true
   },
@@ -5854,12 +6444,12 @@
     "hair": "/assets/hair/caelia.png",
     "headGeom": {
       "neckY": 202,
-      "neckCx": 178.5,
-      "neckW": 180
+      "neckCx": 177.5,
+      "neckW": 178
     },
     "hasRealHead": true
   },
-  "reborn-kachoww-silver-001": {
+  "ff-kachoww-gold-001": {
     "head": "/assets/heads/kachoww.png",
     "hair": null,
     "headGeom": {
@@ -5875,7 +6465,7 @@
     "headGeom": {
       "neckY": 250,
       "neckCx": 197.5,
-      "neckW": 76
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -5889,13 +6479,13 @@
     },
     "hasRealHead": true
   },
-  "shi-leadssj-silver-001": {
+  "shi-leadssj-bronze-001": {
     "head": "/assets/heads/leadssj.png",
     "hair": null,
     "headGeom": {
       "neckY": 238,
-      "neckCx": 198.5,
-      "neckW": 76
+      "neckCx": 197.5,
+      "neckW": 74
     },
     "hasRealHead": true
   },
@@ -5909,7 +6499,7 @@
     },
     "hasRealHead": true
   },
-  "vib-ztmonarch-silver-001": {
+  "vib-ztmonarch-bronze-001": {
     "head": "/assets/heads/ztmonarch.png",
     "hair": null,
     "headGeom": {
@@ -5923,9 +6513,9 @@
     "head": "/assets/heads/b00nrealcul.png",
     "hair": null,
     "headGeom": {
-      "neckY": 248,
-      "neckCx": 203.0,
-      "neckW": 61
+      "neckY": 245,
+      "neckCx": 203.5,
+      "neckW": 60
     },
     "hasRealHead": true
   },
@@ -5933,9 +6523,19 @@
     "head": "/assets/heads/fl1xxd.png",
     "hair": null,
     "headGeom": {
+      "neckY": 248,
+      "neckCx": 184.0,
+      "neckW": 87
+    },
+    "hasRealHead": true
+  },
+  "leva-lolo-bronze-001": {
+    "head": "/assets/heads/lolo.png",
+    "hair": null,
+    "headGeom": {
       "neckY": 250,
-      "neckCx": 184.5,
-      "neckW": 86
+      "neckCx": 177.5,
+      "neckW": 104
     },
     "hasRealHead": true
   },
@@ -5943,9 +6543,69 @@
     "head": "/assets/heads/matkazeta.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
+      "neckY": 247,
       "neckCx": 189.0,
-      "neckW": 75
+      "neckW": 73
+    },
+    "hasRealHead": true
+  },
+  "reborn-deadink-bronze-001": {
+    "head": "/assets/heads/deadink-ronze001.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 257,
+      "neckCx": 207.5,
+      "neckW": 98
+    },
+    "hasRealHead": true
+  },
+  "reborn-reazy-silver-001": {
+    "head": "/assets/heads/reazy-ilver001.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 206.0,
+      "neckW": 99
+    },
+    "hasRealHead": true
+  },
+  "reborn-batujnax-bronze-001": {
+    "head": "/assets/heads/batujnax-ronze001.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 248,
+      "neckCx": 201.5,
+      "neckW": 70
+    },
+    "hasRealHead": true
+  },
+  "mkg-shyy-silver-001": {
+    "head": "/assets/heads/shyy-ilver001.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 189.5,
+      "neckW": 74
+    },
+    "hasRealHead": true
+  },
+  "reborn-hezacoil-silver-001": {
+    "head": "/assets/heads/hezacoil-ilver001.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 197.5,
+      "neckW": 98
+    },
+    "hasRealHead": true
+  },
+  "reborn-kachoww-silver-001": {
+    "head": "/assets/heads/kachoww-ilver001.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 188.5,
+      "neckW": 90
     },
     "hasRealHead": true
   },
@@ -5999,6 +6659,28 @@
     },
     "hasRealHead": false
   },
+  "pcf-cned-gold-001": {
+    "head": "/assets/heads/grey-3.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 198.0,
+      "neckW": 67
+    },
+    "hasRealHead": false,
+    "greyVariant": 3
+  },
+  "loud-pancada-silver-001": {
+    "head": "/assets/heads/grey-0.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 0
+  },
   "9zg-pule-bronze-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
@@ -6010,29 +6692,40 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "alqadsiahesports-simond4rk-silver-001": {
-    "head": "/assets/heads/grey-1.png",
+  "fur-nerve-gold-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 3
   },
-  "alqadsiahesports-spyzera-silver-001": {
-    "head": "/assets/heads/grey-1.png",
+  "gen-lakia-gold-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 4
   },
-  "nrga-renz-silver-001": {
+  "qad-simond4rk-silver-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
+  },
+  "qad-spyzera-silver-001": {
     "head": "/assets/heads/grey-0.png",
     "hair": null,
     "headGeom": {
@@ -6042,6 +6735,17 @@
     },
     "hasRealHead": false,
     "greyVariant": 0
+  },
+  "nrga-renz-bronze-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
   },
   "nrg-brawk-gold-001": {
     "head": "/assets/heads/grey-1.png",
@@ -6098,6 +6802,17 @@
     "hasRealHead": false,
     "greyVariant": 0
   },
+  "vl-klaus-silver-001": {
+    "head": "/assets/heads/grey-3.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 198.0,
+      "neckW": 67
+    },
+    "hasRealHead": false,
+    "greyVariant": 3
+  },
   "200-sferon-bronze-001": {
     "head": "/assets/heads/grey-4.png",
     "hair": null,
@@ -6109,18 +6824,18 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "bam-syratch-silver-001": {
-    "head": "/assets/heads/grey-3.png",
+  "bam-syratch-bronze-001": {
+    "head": "/assets/heads/grey-0.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 3
+    "greyVariant": 0
   },
-  "adg-kaoticc-silver-001": {
+  "nova-heybay-silver-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
@@ -6131,7 +6846,18 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "alqadsiahesports-khaalid-silver-001": {
+  "adg-kaoticc-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 196.5,
+      "neckW": 86
+    },
+    "hasRealHead": false,
+    "greyVariant": 1
+  },
+  "qad-khaalid-bronze-001": {
     "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
@@ -6164,7 +6890,7 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "mym-xelouz-silver-001": {
+  "mym-xelouz-bronze-001": {
     "head": "/assets/heads/grey-0.png",
     "hair": null,
     "headGeom": {
@@ -6351,7 +7077,7 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "ega-jakee-silver-001": {
+  "ega-jakee-bronze-001": {
     "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
@@ -6362,7 +7088,7 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "d1-dynamic-silver-001": {
+  "d1-dynamic-bronze-001": {
     "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
@@ -6373,16 +7099,16 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "qor-infiltrator-silver-001": {
-    "head": "/assets/heads/grey-4.png",
+  "kr-infiltrator-silver-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 4
+    "greyVariant": 3
   },
   "rzn-demiurge-silver-001": {
     "head": "/assets/heads/grey-1.png",
@@ -6450,16 +7176,27 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "cgz-nobita-silver-001": {
-    "head": "/assets/heads/grey-3.png",
+  "cgz-nobita-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
+      "neckCx": 196.5,
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 3
+    "greyVariant": 1
+  },
+  "gx-ara-gold-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
   },
   "bfg-archiw0w-silver-001": {
     "head": "/assets/heads/grey-0.png",
@@ -6483,16 +7220,16 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "alqadsiahesports-exit-bronze-001": {
-    "head": "/assets/heads/grey-0.png",
+  "qad-exit-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
+      "neckY": 250,
       "neckCx": 196.5,
-      "neckW": 78
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 0
+    "greyVariant": 1
   },
   "tse-szoren-silver-001": {
     "head": "/assets/heads/grey-4.png",
@@ -6538,16 +7275,16 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "adg-sacred-silver-001": {
-    "head": "/assets/heads/grey-4.png",
+  "adg-sacred-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 4
+    "greyVariant": 3
   },
   "555-krx-bronze-001": {
     "head": "/assets/heads/grey-1.png",
@@ -6560,16 +7297,16 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "sad-welyy-silver-001": {
-    "head": "/assets/heads/grey-1.png",
+  "ulf-d3mur-silver-001": {
+    "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 194.5,
+      "neckW": 76
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 2
   },
   "axe-yaki-bronze-001": {
     "head": "/assets/heads/grey-4.png",
@@ -6582,7 +7319,7 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "krx-hermes-silver-001": {
+  "ong-hermes-silver-001": {
     "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
@@ -6593,7 +7330,18 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "lyon-jow-silver-001": {
+  "lyon-jow-bronze-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
+  },
+  "m80-alvinboy-bronze-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
@@ -6603,17 +7351,6 @@
     },
     "hasRealHead": false,
     "greyVariant": 2
-  },
-  "m80-alvinboy-silver-001": {
-    "head": "/assets/heads/grey-0.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
-    },
-    "hasRealHead": false,
-    "greyVariant": 0
   },
   "tse-bully-bronze-001": {
     "head": "/assets/heads/grey-0.png",
@@ -6648,16 +7385,16 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "tla-rexxtoned-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "tla-rexxtoned-bronze-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 4
   },
   "tec-lucas-gold-001": {
     "head": "/assets/heads/grey-3.png",
@@ -6713,6 +7450,17 @@
     },
     "hasRealHead": false,
     "greyVariant": 3
+  },
+  "envy-p0ppin-silver-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
   },
   "yft-stallion-silver-001": {
     "head": "/assets/heads/grey-3.png",
@@ -6824,27 +7572,38 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "drxa-cloy-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "drxa-cloy-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 3
   },
-  "ong-wolverine-bronze-001": {
-    "head": "/assets/heads/grey-1.png",
+  "gen-ash-silver-001": {
+    "head": "/assets/heads/grey-0.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 0
+  },
+  "ong-wolverine-silver-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 3
   },
   "art-rico-bronze-001": {
     "head": "/assets/heads/grey-1.png",
@@ -6857,7 +7616,18 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "dk-cabeza-silver-001": {
+  "dk-cabeza-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
+  "qor-kumi-bronze-001": {
     "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
@@ -6867,17 +7637,6 @@
     },
     "hasRealHead": false,
     "greyVariant": 3
-  },
-  "qor-kumi-silver-001": {
-    "head": "/assets/heads/grey-0.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
-    },
-    "hasRealHead": false,
-    "greyVariant": 0
   },
   "nrga-shondex-silver-001": {
     "head": "/assets/heads/grey-2.png",
@@ -6901,16 +7660,16 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "chv-otaq-silver-001": {
-    "head": "/assets/heads/grey-3.png",
+  "chv-otaq-bronze-001": {
+    "head": "/assets/heads/grey-0.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 3
+    "greyVariant": 0
   },
   "sts-koji-bronze-001": {
     "head": "/assets/heads/grey-4.png",
@@ -6945,18 +7704,40 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "dxg-zery-silver-001": {
-    "head": "/assets/heads/grey-3.png",
+  "agl-banger-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
+      "neckCx": 194.5,
+      "neckW": 76
     },
     "hasRealHead": false,
-    "greyVariant": 3
+    "greyVariant": 2
   },
-  "chv-clewy-silver-001": {
+  "dxg-zery-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 196.5,
+      "neckW": 86
+    },
+    "hasRealHead": false,
+    "greyVariant": 1
+  },
+  "chv-clewy-bronze-001": {
+    "head": "/assets/heads/grey-0.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 0
+  },
+  "yft-devy-bronze-001": {
     "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
@@ -6967,7 +7748,7 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "yft-devy-silver-001": {
+  "qtd-pkm-bronze-001": {
     "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
@@ -6977,17 +7758,6 @@
     },
     "hasRealHead": false,
     "greyVariant": 3
-  },
-  "qtd-pkm-silver-001": {
-    "head": "/assets/heads/grey-0.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
-    },
-    "hasRealHead": false,
-    "greyVariant": 0
   },
   "nbg-sonofcar-silver-001": {
     "head": "/assets/heads/grey-4.png",
@@ -7121,16 +7891,16 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "yft-atlas-silver-001": {
-    "head": "/assets/heads/grey-0.png",
+  "yft-atlas-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
     },
     "hasRealHead": false,
-    "greyVariant": 0
+    "greyVariant": 2
   },
   "vib-saqr-bronze-001": {
     "head": "/assets/heads/grey-0.png",
@@ -7165,17 +7935,6 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "fa-slaughter-silver-001": {
-    "head": "/assets/heads/grey-2.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
-    },
-    "hasRealHead": false,
-    "greyVariant": 2
-  },
   "rbt-luky-bronze-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
@@ -7198,16 +7957,27 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "sad-jerrwin-silver-001": {
-    "head": "/assets/heads/grey-1.png",
+  "sad-jerrwin-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 3
+  },
+  "eg-bao-gold-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
   },
   "ins-meatpien-bronze-001": {
     "head": "/assets/heads/grey-3.png",
@@ -7220,6 +7990,17 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
+  "vl-oonzmlp-silver-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
   "drxa-apex-silver-001": {
     "head": "/assets/heads/grey-3.png",
     "hair": null,
@@ -7230,6 +8011,17 @@
     },
     "hasRealHead": false,
     "greyVariant": 3
+  },
+  "envy-eggsterr-silver-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
   },
   "sta-crz-bronze-001": {
     "head": "/assets/heads/grey-1.png",
@@ -7242,27 +8034,27 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "alqadsiahesports-zimo-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "qad-zimo-silver-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 196.5,
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 1
   },
-  "f9-izana-silver-001": {
-    "head": "/assets/heads/grey-0.png",
+  "f9-izana-bronze-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
+      "neckY": 250,
+      "neckCx": 203.5,
       "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 0
+    "greyVariant": 4
   },
   "otk-azazin-bronze-001": {
     "head": "/assets/heads/grey-2.png",
@@ -7318,6 +8110,17 @@
     },
     "hasRealHead": false,
     "greyVariant": 0
+  },
+  "vl-zexy-silver-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
   },
   "cs-matus-bronze-001": {
     "head": "/assets/heads/grey-2.png",
@@ -7396,16 +8199,16 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "sad-payne-silver-001": {
-    "head": "/assets/heads/grey-0.png",
+  "sad-payne-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
+      "neckY": 250,
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 0
+    "greyVariant": 3
   },
   "bnk-fezisss-silver-001": {
     "head": "/assets/heads/grey-4.png",
@@ -7429,16 +8232,16 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "ega-recoil-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "ega-recoil-bronze-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 4
   },
   "tla-wanzeru-silver-001": {
     "head": "/assets/heads/grey-0.png",
@@ -7550,16 +8353,16 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "sad-zaj-silver-001": {
-    "head": "/assets/heads/grey-4.png",
+  "sad-zaj-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 4
+    "greyVariant": 3
   },
   "dp-doozy-bronze-001": {
     "head": "/assets/heads/grey-0.png",
@@ -7594,29 +8397,18 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "ff-pawn1-bronze-001": {
-    "head": "/assets/heads/grey-4.png",
+  "adg-hieu-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckCx": 196.5,
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 4
+    "greyVariant": 1
   },
-  "adg-hieu-silver-001": {
-    "head": "/assets/heads/grey-2.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
-    },
-    "hasRealHead": false,
-    "greyVariant": 2
-  },
-  "fue-rei-silver-001": {
+  "fue-rei-bronze-001": {
     "head": "/assets/heads/grey-0.png",
     "hair": null,
     "headGeom": {
@@ -7660,7 +8452,18 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "dk-kally-silver-001": {
+  "vl-xuna-gold-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
+  "dk-kally-bronze-001": {
     "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
@@ -7704,27 +8507,27 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "evx-shawz-silver-001": {
-    "head": "/assets/heads/grey-4.png",
+  "evx-shawz-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckCx": 196.5,
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 4
+    "greyVariant": 1
   },
-  "fly-ducq-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "eepy-ducq-silver-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 3
   },
   "evx-dre-silver-001": {
     "head": "/assets/heads/grey-0.png",
@@ -7792,16 +8595,16 @@
     "hasRealHead": false,
     "greyVariant": 0
   },
-  "ep-swagzor-bronze-001": {
-    "head": "/assets/heads/grey-1.png",
+  "nova-swagzor-gold-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 3
   },
   "sad-vita-silver-001": {
     "head": "/assets/heads/grey-4.png",
@@ -7814,16 +8617,16 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "fly-solada-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "eepy-solada-silver-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 4
   },
   "bnk-waddles-silver-001": {
     "head": "/assets/heads/grey-1.png",
@@ -7924,16 +8727,16 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "s8ul-yuvi-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "s8ul-yuvi-bronze-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 4
   },
   "vw-oten-silver-001": {
     "head": "/assets/heads/grey-0.png",
@@ -7956,17 +8759,6 @@
     },
     "hasRealHead": false,
     "greyVariant": 4
-  },
-  "fcy-twilight-silver-001": {
-    "head": "/assets/heads/grey-3.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
-    },
-    "hasRealHead": false,
-    "greyVariant": 3
   },
   "rbt-shaimon-silver-001": {
     "head": "/assets/heads/grey-1.png",
@@ -8001,6 +8793,17 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
+  "igz-frxeez-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
   "ins-flora-bronze-001": {
     "head": "/assets/heads/grey-0.png",
     "hair": null,
@@ -8012,16 +8815,16 @@
     "hasRealHead": false,
     "greyVariant": 0
   },
-  "bnk-kaaru-silver-001": {
-    "head": "/assets/heads/grey-1.png",
+  "bnk-kaaru-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 194.5,
+      "neckW": 76
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 2
   },
   "mir-raz-silver-001": {
     "head": "/assets/heads/grey-3.png",
@@ -8034,7 +8837,7 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "d1-boomy-silver-001": {
+  "tec-coco-silver-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
@@ -8045,7 +8848,29 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "fly-leo-silver-001": {
+  "d1-boomy-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 198.0,
+      "neckW": 67
+    },
+    "hasRealHead": false,
+    "greyVariant": 3
+  },
+  "eepy-leo-silver-001": {
+    "head": "/assets/heads/grey-0.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 0
+  },
+  "d1-calamity-bronze-001": {
     "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
@@ -8055,17 +8880,6 @@
     },
     "hasRealHead": false,
     "greyVariant": 4
-  },
-  "d1-calamity-silver-001": {
-    "head": "/assets/heads/grey-2.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
-    },
-    "hasRealHead": false,
-    "greyVariant": 2
   },
   "dsy-chapix-silver-001": {
     "head": "/assets/heads/grey-4.png",
@@ -8078,7 +8892,7 @@
     "hasRealHead": false,
     "greyVariant": 4
   },
-  "fly-sorex-silver-001": {
+  "eepy-sorex-silver-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
@@ -8143,28 +8957,6 @@
     },
     "hasRealHead": false,
     "greyVariant": 1
-  },
-  "fcy-nia-bronze-001": {
-    "head": "/assets/heads/grey-4.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
-    },
-    "hasRealHead": false,
-    "greyVariant": 4
-  },
-  "fcy-bucute-gold-001": {
-    "head": "/assets/heads/grey-3.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
-    },
-    "hasRealHead": false,
-    "greyVariant": 3
   },
   "rid-gyen-bronze-001": {
     "head": "/assets/heads/grey-2.png",
@@ -8298,28 +9090,6 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "200-sulunist-bronze-001": {
-    "head": "/assets/heads/grey-3.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
-    },
-    "hasRealHead": false,
-    "greyVariant": 3
-  },
-  "fmg-hydro-bronze-001": {
-    "head": "/assets/heads/grey-4.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
-    },
-    "hasRealHead": false,
-    "greyVariant": 4
-  },
   "fmg-br0zga-bronze-001": {
     "head": "/assets/heads/grey-1.png",
     "hair": null,
@@ -8331,27 +9101,27 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "bnk-narky-bronze-001": {
-    "head": "/assets/heads/grey-3.png",
+  "ctrl-narky-bronze-001": {
+    "head": "/assets/heads/grey-0.png",
     "hair": null,
     "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
-    },
-    "hasRealHead": false,
-    "greyVariant": 3
-  },
-  "s8ul-xexxar-silver-001": {
-    "head": "/assets/heads/grey-1.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
+      "neckY": 237,
       "neckCx": 196.5,
-      "neckW": 86
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 0
+  },
+  "s8ul-xexxar-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
   },
   "trn-140-silver-001": {
     "head": "/assets/heads/grey-1.png",
@@ -8386,16 +9156,16 @@
     "hasRealHead": false,
     "greyVariant": 0
   },
-  "t1a-gnadel-bronze-001": {
-    "head": "/assets/heads/grey-1.png",
+  "gen-zynx-silver-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 4
   },
   "cgz-flicker-bronze-001": {
     "head": "/assets/heads/grey-0.png",
@@ -8418,6 +9188,17 @@
     },
     "hasRealHead": false,
     "greyVariant": 3
+  },
+  "te-fkey-bronze-001": {
+    "head": "/assets/heads/grey-0.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 0
   },
   "ski-shinigami-bronze-001": {
     "head": "/assets/heads/grey-2.png",
@@ -8705,17 +9486,6 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "home-13rd-silver-001": {
-    "head": "/assets/heads/grey-0.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 237,
-      "neckCx": 196.5,
-      "neckW": 78
-    },
-    "hasRealHead": false,
-    "greyVariant": 0
-  },
   "blg-bud-bronze-001": {
     "head": "/assets/heads/grey-0.png",
     "hair": null,
@@ -8738,6 +9508,17 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
+  "oxen-darky-bronze-001": {
+    "head": "/assets/heads/grey-0.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 237,
+      "neckCx": 196.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 0
+  },
   "oas-whitecat-bronze-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
@@ -8749,16 +9530,16 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "fly-tonza-silver-001": {
-    "head": "/assets/heads/grey-1.png",
+  "eepy-tonza-silver-001": {
+    "head": "/assets/heads/grey-4.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
+      "neckCx": 203.5,
+      "neckW": 78
     },
     "hasRealHead": false,
-    "greyVariant": 1
+    "greyVariant": 4
   },
   "1m-noryy-bronze-001": {
     "head": "/assets/heads/grey-3.png",
@@ -8793,16 +9574,16 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "wip-77even-silver-001": {
-    "head": "/assets/heads/grey-0.png",
+  "fmg-77even-silver-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
-      "neckY": 237,
+      "neckY": 250,
       "neckCx": 196.5,
-      "neckW": 78
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 0
+    "greyVariant": 1
   },
   "mir-reblyik-bronze-001": {
     "head": "/assets/heads/grey-3.png",
@@ -8837,16 +9618,16 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
-  "dp-frostt-silver-001": {
-    "head": "/assets/heads/grey-4.png",
+  "dp-frostt-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 203.5,
-      "neckW": 78
+      "neckCx": 196.5,
+      "neckW": 86
     },
     "hasRealHead": false,
-    "greyVariant": 4
+    "greyVariant": 1
   },
   "axe-sami-bronze-001": {
     "head": "/assets/heads/grey-4.png",
@@ -8958,18 +9739,7 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "gg-wezey-silver-001": {
-    "head": "/assets/heads/grey-3.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 198.0,
-      "neckW": 67
-    },
-    "hasRealHead": false,
-    "greyVariant": 3
-  },
-  "sts-susano-silver-001": {
+  "gg-wezey-bronze-001": {
     "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {
@@ -8979,6 +9749,17 @@
     },
     "hasRealHead": false,
     "greyVariant": 1
+  },
+  "sts-susano-bronze-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
   },
   "via-senor-bronze-001": {
     "head": "/assets/heads/grey-0.png",
@@ -9068,17 +9849,6 @@
     "hasRealHead": false,
     "greyVariant": 2
   },
-  "leva-lolo-bronze-001": {
-    "head": "/assets/heads/grey-1.png",
-    "hair": null,
-    "headGeom": {
-      "neckY": 250,
-      "neckCx": 196.5,
-      "neckW": 86
-    },
-    "hasRealHead": false,
-    "greyVariant": 1
-  },
   "ong-xiesta-gold-001": {
     "head": "/assets/heads/grey-0.png",
     "hair": null,
@@ -9090,7 +9860,7 @@
     "hasRealHead": false,
     "greyVariant": 0
   },
-  "gga-kitae-silver-001": {
+  "gga-kitae-bronze-001": {
     "head": "/assets/heads/grey-2.png",
     "hair": null,
     "headGeom": {
@@ -9200,6 +9970,17 @@
     "hasRealHead": false,
     "greyVariant": 1
   },
+  "tec-ra1ny-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 196.5,
+      "neckW": 86
+    },
+    "hasRealHead": false,
+    "greyVariant": 1
+  },
   "drxa-xons-bronze-001": {
     "head": "/assets/heads/grey-3.png",
     "hair": null,
@@ -9222,16 +10003,16 @@
     "hasRealHead": false,
     "greyVariant": 3
   },
-  "xc-taegeuk-silver-001": {
-    "head": "/assets/heads/grey-2.png",
+  "xc-taegeuk-bronze-001": {
+    "head": "/assets/heads/grey-3.png",
     "hair": null,
     "headGeom": {
       "neckY": 250,
-      "neckCx": 194.5,
-      "neckW": 76
+      "neckCx": 198.0,
+      "neckW": 67
     },
     "hasRealHead": false,
-    "greyVariant": 2
+    "greyVariant": 3
   },
   "xc-beom-bronze-001": {
     "head": "/assets/heads/grey-0.png",
@@ -9245,6 +10026,72 @@
     "greyVariant": 0
   },
   "xc-yj-bronze-001": {
+    "head": "/assets/heads/grey-1.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 196.5,
+      "neckW": 86
+    },
+    "hasRealHead": false,
+    "greyVariant": 1
+  },
+  "jdg-crownfisher-silver-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
+  },
+  "fly-ducq-silver-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
+  "fly-solada-silver-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
+  "fly-leo-silver-001": {
+    "head": "/assets/heads/grey-4.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 203.5,
+      "neckW": 78
+    },
+    "hasRealHead": false,
+    "greyVariant": 4
+  },
+  "fly-sorex-silver-001": {
+    "head": "/assets/heads/grey-2.png",
+    "hair": null,
+    "headGeom": {
+      "neckY": 250,
+      "neckCx": 194.5,
+      "neckW": 76
+    },
+    "hasRealHead": false,
+    "greyVariant": 2
+  },
+  "fly-tonza-silver-001": {
     "head": "/assets/heads/grey-1.png",
     "hair": null,
     "headGeom": {

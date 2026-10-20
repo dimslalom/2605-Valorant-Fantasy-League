@@ -1,10 +1,20 @@
 // VCT 2026 events: source of player IDs + team membership.
 // Event detail endpoint gives us: team ID, team name/logo, player IDs, player names.
 export const EVENTS = [
+  // Stage 2 first: first-seen wins, so these carry the newest rosters.
+  { id: 2977, region: 'Americas', apiRegion: 'na' },
+  { id: 2976, region: 'EMEA',     apiRegion: 'eu' },
+  { id: 2776, region: 'Pacific',  apiRegion: 'ap' },
+  { id: 2978, region: 'China',    apiRegion: 'cn' },
   { id: 2860, region: 'Americas', apiRegion: 'na' },
   { id: 2863, region: 'EMEA',     apiRegion: 'eu' },
   { id: 2775, region: 'Pacific',  apiRegion: 'ap' },
   { id: 2685, region: 'China',    apiRegion: 'cn' },
+  // Kickoff events list every franchised team (Stage 1 playoffs only list 8). Listed last: first-seen wins,
+  // so the newer Stage 1 rosters take priority and Kickoff only adds the teams that missed playoffs.
+  { id: 2682, region: 'Americas', apiRegion: 'na' },
+  { id: 2684, region: 'EMEA',     apiRegion: 'eu' },
+  { id: 2683, region: 'Pacific',  apiRegion: 'ap' },
 ];
 
 // ── Tier 2 (Challengers) ─────────────────────────────────────────────────────
@@ -37,6 +47,36 @@ export const TIER2_STAT_PENALTY = 9;
 // Tier-1 players are the best ~180 in the world: lift them so the franchised
 // league reads as elite. Added to every VCT stat, capped at 99.
 export const VCT_STAT_BONUS = 3;
+
+// ── Free agents ──────────────────────────────────────────────────────────────
+// Real players without a franchised team (retired, benched, or off the VCT rosters). Stats come from their vlr.gg
+// career like any other card; the card is org-less ("Free Agent"). Anyone already found on an event roster keeps
+// that team instead, so signing someone just means they stop needing an entry here.
+export const FREE_AGENTS = [
+  // Pacific
+  { id: '9800',  name: 'Mindfreak', region: 'Pacific',  apiRegion: 'ap' },
+  { id: '24679', name: 'CGRS',      region: 'Pacific',  apiRegion: 'ap' },
+  { id: '9802',  name: 'Benkai',    region: 'Pacific',  apiRegion: 'ap' },
+  { id: '3342',  name: 'Sushiboys', region: 'Pacific',  apiRegion: 'ap' },
+  { id: '6723',  name: 'Foxz',      region: 'Pacific',  apiRegion: 'ap' },
+  // Americas
+  { id: '604',   name: 'Boostio',   region: 'Americas', apiRegion: 'na' },
+  { id: '4164',  name: 'S0m',       region: 'Americas', apiRegion: 'na' },
+  { id: '864',   name: 'BcJ',       region: 'Americas', apiRegion: 'na' },
+  { id: '725',   name: 'nzr',       region: 'Americas', apiRegion: 'na' },
+  { id: '1129',  name: 'Rossy',     region: 'Americas', apiRegion: 'na' },
+  // EMEA
+  { id: '451',   name: 'ShadoW',    region: 'EMEA',     apiRegion: 'eu' },
+  { id: '2858',  name: 'suygetsu',  region: 'EMEA',     apiRegion: 'eu' },
+  { id: '98',    name: 'ardiis',    region: 'EMEA',     apiRegion: 'eu' },
+  { id: '1428',  name: 'Sheydos',   region: 'EMEA',     apiRegion: 'eu' },
+  { id: '384',   name: 'Shao',      region: 'EMEA',     apiRegion: 'eu' },
+  { id: '4056',  name: 'Sylvan',    region: 'EMEA',     apiRegion: 'eu' },
+  { id: '14669', name: 'Nivera',    region: 'EMEA',     apiRegion: 'eu' },
+];
+
+// vlr ids kept out of the roster pool because they are icons instead (no duplicate card on their last team).
+export const ICON_ONLY_IDS = new Set(['26171', '817']); // Demon1, FiNESSE
 
 // ── Real IGLs ────────────────────────────────────────────────────────────────
 // Lowercased aliases of players who actually call the game. Best-effort list,
@@ -113,6 +153,7 @@ export const ICONS = [
   { name: 'ScreaM',     nationality: 'BE', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['reyna', 'jett'],     stats: { aim: 98, positioning: 92, ability: 90, mentality: 93, synergy: 91 } },
   { name: 'yay',        nationality: 'US', region: 'Americas', role: 'Duelist',    igl: false, agents: ['chamber', 'jett'],   stats: { aim: 98, positioning: 94, ability: 91, mentality: 90, synergy: 90 } },
   { name: 'cNed',       nationality: 'TR', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['jett', 'chamber'],   stats: { aim: 97, positioning: 92, ability: 91, mentality: 91, synergy: 90 } },
+  { name: 'Demon1',     vlrId: '26171', silhouette: true, nationality: 'US', region: 'Americas', role: 'Duelist',    igl: false, agents: ['chamber', 'jett'],   stats: { aim: 96, positioning: 91, ability: 91, mentality: 93, synergy: 90 } },
   { name: 'Wardell',    nationality: 'CA', region: 'Americas', role: 'Duelist',    igl: false, agents: ['jett', 'chamber'],   stats: { aim: 96, positioning: 91, ability: 90, mentality: 90, synergy: 91 } },
   { name: 'Mixwell',    nationality: 'ES', region: 'EMEA',     role: 'Duelist',    igl: false, agents: ['jett', 'omen'],      stats: { aim: 94, positioning: 92, ability: 91, mentality: 93, synergy: 94 } },
   { name: 'Victor',     nationality: 'US', region: 'Americas', role: 'Duelist',    igl: false, agents: ['raze', 'phoenix'],   stats: { aim: 93, positioning: 92, ability: 94, mentality: 92, synergy: 94 } },
@@ -139,6 +180,7 @@ export const ICONS = [
   { name: 'dapr',       nationality: 'US', region: 'Americas', role: 'Sentinel',   igl: false, agents: ['killjoy', 'cypher'], stats: { aim: 91, positioning: 97, ability: 94, mentality: 93, synergy: 95 } },
   { name: 'steel',      nationality: 'CA', region: 'Americas', role: 'Sentinel',   igl: true,  agents: ['killjoy', 'cypher'], stats: { aim: 90, positioning: 96, ability: 93, mentality: 98, synergy: 96 } },
   { name: 'BONECOLD',   nationality: 'FI', region: 'EMEA',     role: 'Sentinel',   igl: true,  agents: ['killjoy', 'sage'],   stats: { aim: 90, positioning: 95, ability: 93, mentality: 97, synergy: 96 } },
+  { name: 'FiNESSE',    vlrId: '817',   nationality: 'CA', region: 'Americas', role: 'Sentinel',   igl: false, agents: ['cypher', 'killjoy'], stats: { aim: 90, positioning: 95, ability: 92, mentality: 94, synergy: 93 } },
   { name: 'shroud',     nationality: 'CA', region: 'Americas', role: 'Sentinel',   igl: false, agents: ['chamber', 'sage'],   stats: { aim: 96, positioning: 95, ability: 91, mentality: 92, synergy: 90 } },
 ];
 
