@@ -7,6 +7,8 @@ import { handleWeeklyBingo } from './weeklyBingo.js';
 import { ensureWallet } from './wallet.js';
 import { gameAction } from './gameActions.js';
 import { calibrationStatus } from './calibration.js';
+import { handleTransferBets } from './transferBets.js';
+import { publicProfile } from './profile.js';
 
 const COOKIE = 'opval_session';
 const SESSION_SECS = 60 * 60 * 24 * 30;
@@ -292,6 +294,15 @@ export async function handleAccounts(request, env, url) {
     if (!user) return reply({ error: 'not signed in' }, 401);
     const body = method === 'PUT' ? await readJson(request, MAX_BINGO_BYTES) : null;
     return handleBingo(user, env, url, method, body);
+  }
+
+  const profile = path.match(/^\/api\/profile\/([a-z0-9_]{3,20})$/i);
+  if (profile && method === 'GET') return publicProfile(env, profile[1]);
+
+  if (path === '/api/transfer-bets' && (method === 'GET' || method === 'POST')) {
+    const user = await currentUser(request, env);
+    if (!user) return reply({ error: 'not signed in' }, 401);
+    return handleTransferBets(user, env, method, method === 'POST' ? await readJson(request, 4096) : null);
   }
 
   if (path === '/api/game/action' && method === 'POST') {

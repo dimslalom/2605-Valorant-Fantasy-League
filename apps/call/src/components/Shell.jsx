@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
+  IconArrowsExchange,
   IconCalendarEvent,
   IconCards,
   IconGridDots,
@@ -17,6 +18,7 @@ import { useGame } from '../lib/gameContext';
 import { longDay, todayKey } from '../lib/time';
 import HowTo from './HowTo';
 import Sheet from './Sheet';
+import AccountForm from './AccountForm';
 import MatchDashboard from './MatchDashboard';
 import useBingoUpdate from '../lib/useBingoUpdate';
 
@@ -29,6 +31,7 @@ const ICONS = {
   help: IconHelp,
   stats: IconChartBar,
   matches: IconCalendarEvent,
+  rosters: IconArrowsExchange,
   bingo: IconGridDots,
   cards: IconCards,
   ranks: IconTrophy,
@@ -45,7 +48,7 @@ const Icon = ({ name, size = 22 }) => {
 const TABS = [
   { to: '/', label: 'Matches', icon: 'matches', end: true },
   { to: '/collection', label: 'Cards', icon: 'cards' },
-  { to: '/bingo', label: 'Bingo', icon: 'bingo' },
+  { to: '/roster', label: 'Rosters', icon: 'rosters' },
 ];
 
 const store = (kind, key, value) => {
@@ -57,8 +60,8 @@ const store = (kind, key, value) => {
   return null;
 };
 
-function Stats() {
-  const { state, score, record } = useGame();
+function Stats({ onDone }) {
+  const { state, score, record, account } = useGame();
   if (!state) return <p className="note">Dealing your cards</p>;
   const pct = record.made ? Math.round((record.right / record.made) * 100) : 0;
   return (
@@ -75,93 +78,11 @@ function Stats() {
         <div><strong>{state.packsOpened ?? 0}</strong><span>Packs</span></div>
         <div><strong>{state.freeSwaps}</strong><span>Free swaps</span></div>
       </div>
+      {account.user && <Link className="secondary profile-link" to={`/u/${account.user.username}`} onClick={onDone}>Profile and past guesses</Link>}
     </>
   );
 }
 
-// The title of a signed-out screen, with an optional line under it that belongs to the title.
-const Head = ({ title, children }) => (
-  <header className="account-head">
-    <h2>{title}</h2>
-    {children && <p>{children}</p>}
-  </header>
-);
-
-function RecoveryCode({ code, onDone }) {
-  const { account } = useGame();
-  const [copied, setCopied] = useState(false);
-  const copy = () => navigator.clipboard?.writeText(code).then(() => setCopied(true), () => {});
-  return (
-    <div className="account">
-      <Head title="Save your recovery code">If you forget your password, this is the <strong>only</strong> way back into your account. It is shown once.</Head>
-      <p className="code" aria-label="Recovery code">{code}</p>
-      <button className="secondary" onClick={copy}>{copied ? 'Copied' : 'Copy code'}</button>
-      <button className="primary" onClick={() => { account.ackRecoveryCode(); onDone(); }}>I saved it</button>
-    </div>
-  );
-}
-
-function AccountForm({ onDone }) {
-  const { account } = useGame();
-  const { user, login, signup, reset, newCode, logout } = account;
-  const [mode, setMode] = useState('login'); // login | signup | forgot
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-
-  const run = fn => async e => {
-    e.preventDefault();
-    const f = Object.fromEntries(new FormData(e.currentTarget));
-    setBusy(true); setErr('');
-    try { await fn(f); } catch (x) { setErr(x.message); }
-    setBusy(false);
-  };
-  const go = m => { setMode(m); setErr(''); };
-  const error = err && <p className="form-error" role="alert">{err}</p>;
-
-  if (account.recoveryCode) return <RecoveryCode code={account.recoveryCode} onDone={onDone} />;
-
-  if (user) {
-    return (
-      <>
-        <p className="note">Signed in as <strong>{user.username}</strong>. Your cards, calls and points save to your account, so any device you sign in on picks up where you left off.</p>
-        <form className="account" onSubmit={run(f => newCode(f.password))}>
-          <p className="note">Lost your recovery code, or never got one? Make a new one. The old one stops working.</p>
-          <label>Password<input name="password" type="password" autoComplete="current-password" required maxLength={128} /></label>
-          {error}
-          <button className="secondary" disabled={busy}>New recovery code</button>
-        </form>
-        <button className="secondary" onClick={async () => { await logout(); onDone(); }}>Sign out</button>
-      </>
-    );
-  }
-
-  if (mode === 'forgot') {
-    return (
-      <form className="account" onSubmit={run(async f => { await reset({ username: f.username, code: f.code, password: f.password }); })}>
-        <Head title="Reset password">Enter your username, the recovery code you saved at signup, and a new password.</Head>
-        <label>Username<input name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" required maxLength={20} /></label>
-        <label>Recovery code<input name="code" autoComplete="off" autoCapitalize="characters" spellCheck="false" required maxLength={24} placeholder="XXXX-XXXX-XXXX-XXXX" /></label>
-        <label>New password<input name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={128} /></label>
-        {error}
-        <button className="primary" disabled={busy}>Set new password</button>
-        <button type="button" className="ghost" onClick={() => go('login')}>Back to sign in</button>
-      </form>
-    );
-  }
-
-  const signingUp = mode === 'signup';
-  return (
-    <form className="account" onSubmit={run(async f => { await (signingUp ? signup : login)({ username: f.username, password: f.password }); if (!signingUp) onDone(); })}>
-      <Head title={signingUp ? 'Create account' : 'Sign in'} />
-      <label>Username<input name="username" autoComplete="username" autoCapitalize="none" spellCheck="false" required minLength={3} maxLength={20} pattern="[A-Za-z0-9_]+" /></label>
-      <label>Password<input name="password" type="password" autoComplete={signingUp ? 'new-password' : 'current-password'} required minLength={signingUp ? 8 : 1} maxLength={128} /></label>
-      {error}
-      <button className="primary" disabled={busy}>{signingUp ? 'Create account' : 'Sign in'}</button>
-      <button type="button" className="ghost" onClick={() => go(signingUp ? 'login' : 'signup')}>{signingUp ? 'Have an account? Sign in' : 'New here? Create an account'}</button>
-      {!signingUp && <button type="button" className="ghost" onClick={() => go('forgot')}>Forgot password?</button>}
-    </form>
-  );
-}
 
 // Nothing in the game works without an account, so signed-out visitors get this instead of the app.
 function Gate() {
@@ -243,8 +164,10 @@ export default function Shell() {
       <Sheet open={sheet === 'menu'} onClose={close} title="Menu" side="left" head={<img className="menu-brand" src="/opval-logo.svg" alt="OpVAL" />}>
         <nav className="menu">
           <Link to="/leaderboard" onClick={close}><Icon name="ranks" />Leaderboard</Link>
-          <Link to="/roster" onClick={close}><Icon name="matches" />Rosters</Link>
-          <button onClick={() => setSheet('account')}><Icon name="user" />Account</button>
+          {account.user
+            ? <Link to={`/u/${account.user.username}`} onClick={close}><Icon name="user" />Profile</Link>
+            : <button onClick={() => setSheet('account')}><Icon name="user" />Sign in</button>}
+          <Link to="/bingo" onClick={close}><Icon name="bingo" />Bingo</Link>
           <button onClick={() => setSheet('help')}><Icon name="help" />How to play</button>
           <button onClick={() => setSheet('stats')}><Icon name="stats" />Statistics</button>
           {import.meta.env.DEV && <button onClick={() => { devCredits(1000); close(); }}><Icon name="stats" />Dev: +1000 credits</button>}
@@ -256,9 +179,9 @@ export default function Shell() {
         {account.user && <button className="secondary menu-out" onClick={async () => { await account.logout(); close(); }}>Sign out</button>}
         <p className="menu-foot">Free fan game. No betting and no real money. Not endorsed by Riot Games.</p>
       </Sheet>
-      <Sheet open={sheet === 'account'} onClose={close} title="Account"><AccountForm onDone={close} /></Sheet>
+      <Sheet open={sheet === 'account'} onClose={close} title={account.user ? 'Account' : 'Sign in'}><AccountForm onDone={close} /></Sheet>
       <Sheet open={sheet === 'help'} onClose={close} title="How to play" size="guide"><HowTo onDone={close} /></Sheet>
-      <Sheet open={sheet === 'stats'} onClose={close} title="Statistics"><Stats /></Sheet>
+      <Sheet open={sheet === 'stats'} onClose={close} title="Statistics"><Stats onDone={close} /></Sheet>
     </div>
   );
 }

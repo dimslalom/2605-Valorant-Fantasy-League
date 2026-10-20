@@ -7,6 +7,7 @@ import CallPanel from './CallPanel';
 import Fan from './Fan';
 import { CallSummary, MatchHead, MatchHero, MatchStrip } from './MatchFacts';
 import Sheet from './Sheet';
+import Receipt from './Receipt';
 
 // A player's cutout portrait, bare on the card (no tile), or nothing when the card has no image.
 function Face({ player }) {
@@ -60,10 +61,11 @@ const sign = n => (n > 0 ? `+${n}` : String(n));
 // One real series. Upcoming: call it. Started: your call is locked. Finished: spoiler-guarded
 // until you reveal it, then it shows the result and exactly how your call and Tracked cards scored.
 export default function MatchCard({ match, eventLabel, now }) {
-  const { state, players, call: setCall, reveal } = useGame();
+  const { state, players, account, call: setCall, reveal } = useGame();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [printed, setPrinted] = useState(false);
 
   const [a, b] = match.teams;
   const started = match.status !== 'upcoming' || (match.startsAt && match.startsAt <= now);
@@ -101,16 +103,18 @@ export default function MatchCard({ match, eventLabel, now }) {
             {myCall?.winner ? <CallSummary call={myCall} players={players} /> : <span className="callsum-none">No call yet</span>}
             <span className="callbtn-go">{myCall?.winner ? 'Edit' : 'Make call'} <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" /></svg></span>
           </button>
-          <Sheet open={open} onClose={() => setOpen(false)} title={`${a.tag} vs ${b.tag}`} head={<MatchHead match={match} now={now} live={live} />} size="full" pickedSide={pickedSide} style={{
+          <Sheet open={open} onClose={() => { setOpen(false); setPrinted(false); }} title={`${a.tag} vs ${b.tag}`} head={<MatchHead match={match} now={now} live={live} />} size="full" pickedSide={pickedSide} style={{
             '--team-left-1': leftColors[0], '--team-left-2': leftColors[1] ?? leftColors[0], '--team-left-3': leftColors[2] ?? leftColors[0],
             '--team-right-1': rightColors[0], '--team-right-2': rightColors[1] ?? rightColors[0], '--team-right-3': rightColors[2] ?? rightColors[0],
           }}>
-            <MatchHero match={match} eventLabel={eventLabel} />
-            <CallPanel match={match} call={myCall} players={players} tracked={state.tracked} onChange={c => setCall(match.matchId, c)} />
-            <div className="call-commit">
-              {myCall?.winner && <span className="call-saved">Saved</span>}
-              <button className="primary big" onClick={() => setOpen(false)}>Done</button>
-            </div>
+            {printed && myCall?.winner ? <Receipt match={match} call={myCall} players={players} username={account.user?.username} /> : <>
+              <MatchHero match={match} eventLabel={eventLabel} />
+              <CallPanel match={match} call={myCall} players={players} tracked={state.tracked} onChange={c => setCall(match.matchId, c)} />
+              <div className="call-commit">
+                {myCall?.winner && <span className="call-saved">Saved</span>}
+                <button className="primary big" onClick={() => (myCall?.winner ? setPrinted(true) : setOpen(false))}>Done</button>
+              </div>
+            </>}
           </Sheet>
         </div>
       )}

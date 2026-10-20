@@ -10,6 +10,7 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Bingo = lazy(() => import('./pages/Bingo'));
 const Roster = lazy(() => import('./pages/Roster'));
 const Legal = lazy(() => import('./pages/Legal'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 // PlayerCard (shared with the old site) animates with the `m` namespace under a
 // strict LazyMotion, so the same providers wrap this app.
@@ -29,6 +30,7 @@ export default function App() {
                 <Route path="leaderboard" element={<Suspense fallback={<p className="loading">Loading</p>}><Leaderboard /></Suspense>} />
                 <Route path="roster" element={<Suspense fallback={<p className="loading">Loading</p>}><Roster /></Suspense>} />
                 <Route path="bingo" element={<Suspense fallback={<p className="loading">Loading</p>}><Bingo /></Suspense>} />
+                <Route path="u/:username" element={<Suspense fallback={<p className="loading">Loading</p>}><Profile /></Suspense>} />
                 <Route path="legal" element={<Suspense fallback={<p className="loading">Loading</p>}><Legal /></Suspense>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>

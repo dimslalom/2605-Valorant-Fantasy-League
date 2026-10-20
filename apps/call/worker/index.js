@@ -4,6 +4,7 @@ import { handleAccounts } from './accounts.js';
 import { settleAll } from './settle.js';
 import { settleWeeklyBingo } from './weeklyBingo.js';
 import { calibratePaid } from './calibration.js';
+import { settleTransferBets } from './transferBets.js';
 
 // OpVAL's Worker: a read-only window onto the shared feed database, plus accounts
 // and cloud saves (accounts.js). Ingest stays on the old site's Worker, so
@@ -58,6 +59,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(dispatchFeed(env));
     ctx.waitUntil((async () => { await settleWeeklyBingo(env); await calibratePaid(env); })().catch(e => console.error(`weekly bingo settlement/calibration failed: ${e.stack ?? e}`)));
+    ctx.waitUntil(settleTransferBets(env).catch(e => console.error(`transfer bet settlement failed: ${e.stack ?? e}`)));
     ctx.waitUntil(settleAll(env).catch(e => console.error(`settle failed: ${e.stack ?? e}`)));
   },
 

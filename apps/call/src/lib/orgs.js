@@ -25,3 +25,9 @@ for (const [tag, team] of Object.entries(teams)) {
   for (const name of [tag, team.name]) byName[loose(name)] = team.logo;
 }
 export const logoForName = name => byName[loose(name)] ?? null;
+
+// The same loose names to a team tag, for team colors and jersey kits. Cards first, teams.json wins.
+const tagByName = { kruvisa: 'KRÜ', drx: 'DRX', geng: 'GEN', giantx: 'GX', sentinels: 'SEN' };
+for (const c of cards) if (c.org) for (const k of [c.org, c.org_name]) if (k && !tagByName[loose(k)]) tagByName[loose(k)] = c.org;
+for (const [tag, team] of Object.entries(teams)) for (const name of [tag, team.name]) tagByName[loose(name)] = tag;
+export const tagForName = name => tagByName[loose(name)] ?? null;

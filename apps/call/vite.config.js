@@ -26,6 +26,8 @@ export default defineConfig({
       '/api/bingo': 'http://localhost:8787',
       '/api/weekly-bingo': 'http://localhost:8787',
       '/api/game': 'http://localhost:8787',
+      '/api/transfer-bets': 'http://localhost:8787',
+      '/api/profile': 'http://localhost:8787',
     },
   },
   build: {

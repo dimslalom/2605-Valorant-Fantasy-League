@@ -5,6 +5,8 @@ import { logoFor } from '../lib/orgs';
 
 const virtyy = cards.find(card => card.id === 'loud-virtyy-gold-001');
 const valyn = cards.find(card => card.id === 'g2-valyn-gold-001');
+const monyet = cards.find(card => card.player === 'Monyet' && card.org === 'RRQ');
+const xavi = cards.find(card => card.player.toLowerCase() === 'xavi8k');
 
 function Team({ tag }) {
   const logo = logoFor(tag);
@@ -35,6 +37,18 @@ export default function HowTo({ onDone }) {
       <div className="guide-match" role="img" aria-label="Example call: LOUD selected over GE">
         <span className="guide-match-picked"><Team tag="LOUD" /><span aria-hidden="true">✓</span></span>
         <span className="guide-match-other"><Team tag="GE" /></span>
+      </div>
+    </section>
+
+    <section className="guide-row">
+      <div className="guide-copy">
+        <h3>Guess roster moves</h3>
+        <p>In Rosters, tap a team, then a player: who replaces them, or where they go. Stake credits. Every move Riot confirms before the roster lock pays.</p>
+      </div>
+      <div className="guide-swap guide-move" role="img" aria-label="Example guess: xavi8k replaces Monyet on RRQ">
+        <span className="guide-move-out"><small>Out</small><Player card={monyet} /></span>
+        <span className="guide-swap-arrow" aria-hidden="true">→</span>
+        <span><small>In</small><Player card={xavi} /></span>
       </div>
     </section>
 
